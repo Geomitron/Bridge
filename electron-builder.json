@@ -1,0 +1,29 @@
+{
+  "productName": "Bridge",
+  "directories": {
+    "output": "release/"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "win": {
+    "icon": "dist/assets/images/system/icons/win/icon.ico",
+    "compression": "store",
+    "target": [
+      "portable"
+    ]
+  },
+  "mac": {
+    "icon": "dist/assets/images/system/icons/mac/icon.icns",
+    "compression": "maximum",
+    "target": [
+      "dmg"
+    ]
+  },
+  "linux": {
+    "compression": "maximum",
+    "target": [
+      "AppImage"
+    ]
+  }
+}

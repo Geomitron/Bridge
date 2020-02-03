@@ -16,9 +16,7 @@
       "es2016",
       "es2015",
       "dom"
-    ],
-
-    "outDir": "dist/electron"
+    ]
   },
   "include": [
     "src/electron/**/*.ts"

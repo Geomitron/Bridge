@@ -59,12 +59,14 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
+              "baseHref": "./",
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
               "extractCss": true,
               "namedChunks": false,
               "aot": true,
+              "watch": false,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true

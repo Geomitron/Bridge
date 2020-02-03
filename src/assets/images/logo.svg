@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 835 445" style="enable-background:new 0 0 835 445;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;}
+</style>
+<path class="st0" d="M5,5L5,5v180c0,41.4,33.6,75,75,75l0,0l0,0c41.4,0,75-33.6,75-75l0,0c0-41.4-33.6-75-75-75l0,0
+	c-41.4,0-75,33.6-75,75"/>
+<path class="st0" d="M185,260L185,260v-75c0-41.4,33.6-75,75-75"/>
+<path class="st0" d="M290,110L290,110v150"/>
+<path class="st0" d="M470,185c0-41.4-33.6-75-75-75l0,0c-41.4,0-75,33.6-75,75l0,0c0,41.4,33.6,75,75,75l0,0
+	C436.4,260,470,226.4,470,185L470,185V5"/>
+<path class="st0" d="M650,185c0,41.4-33.6,75-75,75l0,0c-41.4,0-75-33.6-75-75s33.6-75,75-75S650,143.6,650,185L650,185v180
+	c0,41.4-33.6,75-75,75l0,0c-41.4,0-75-33.6-75-75"/>
+<path class="st0" d="M680,185L680,185h150c0-41.4-33.6-75-75-75S680,143.6,680,185L680,185c0,41.4,33.6,75,75,75"/>
+</svg>

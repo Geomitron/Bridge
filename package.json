@@ -1,14 +1,21 @@
 {
   "name": "bridge",
   "version": "0.0.0",
+  "description": "A handy CloneHero library management tool with built in chart searching and downloading.",
+  "homepage": "https://github.com/maximegris/angular-electron",
+  "author": {
+    "name": "Geo",
+    "email": "geomitron@gmail.com"
+  },
   "main": "dist/electron/main.js",
   "scripts": {
     "start": "run-p serve:angular serve:electron",
-    "serve:electron": "wait-on http-get://localhost:4200/ && tsc -p tsconfig.electron.json && electron . --serve",
-    "serve:angular": "ng serve",
     "lint": "ng lint",
-    "clean": "rimraf dist",
-    "prod:windows": ""
+    "clean": "rimraf dist release",
+    "build:windows": "ng build -c production && npm run build:electron && electron-builder build --windows",
+    "serve:angular": "ng serve",
+    "serve:electron": "wait-on http-get://localhost:4200/ && npm run build:electron && electron . --dev",
+    "build:electron": "tsc -p tsconfig.electron.json"
   },
   "private": true,
   "dependencies": {
@@ -31,12 +38,13 @@
     "@angular/language-service": "~8.2.14",
     "@types/node": "~8.9.4",
     "electron": "^7.1.11",
-    "npm-run-all": "^4.1.5",
-    "wait-on": "^4.0.0",
+    "electron-builder": "^22.3.2",
     "electron-reload": "^1.5.0",
+    "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.1",
     "ts-node": "~7.0.0",
     "tslint": "~5.15.0",
-    "typescript": "~3.5.3"
+    "typescript": "~3.5.3",
+    "wait-on": "^4.0.0"
   }
 }

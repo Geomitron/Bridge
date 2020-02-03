@@ -7,7 +7,7 @@ import * as url from 'url'
 
 let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
-const isDevBuild = args.some(val => val == '--serve')
+const isDevBuild = args.some(val => val == '--dev')
 
 restrictToSingleInstance()
 handleOSXWindowClosed()
@@ -103,7 +103,7 @@ function createBrowserWindow() {
 function getLoadUrl() {
   return url.format({
     protocol: isDevBuild ? 'http:' : 'file:',
-    pathname: isDevBuild ? '//localhost:4200/' : path.join(__dirname, 'index.html'),
+    pathname: isDevBuild ? '//localhost:4200/' : path.join(__dirname, '..', 'index.html'),
     slashes: true
   })
 }
@@ -115,7 +115,6 @@ function setUpDevTools() {
   require('electron-reload')(__dirname, {
     electron: require(`${__dirname}/../../node_modules/electron`)
   })
-  mainWindow.loadURL('http://localhost:4200')
 
   mainWindow.webContents.openDevTools()
 }
