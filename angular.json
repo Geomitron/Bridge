@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "NewBridge": {
+    "Bridge": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -36,7 +36,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/NewBridge",
+            "outputPath": "dist/Bridge",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -86,21 +86,15 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "NewBridge:build"
+            "browserTarget": "Bridge:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "NewBridge:build:production"
+              "browserTarget": "Bridge:build:production"
             }
-          }
-        },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "browserTarget": "NewBridge:build"
           }
         }
       }
     }},
-  "defaultProject": "NewBridge"
+  "defaultProject": "Bridge"
 }
