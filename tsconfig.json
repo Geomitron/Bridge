@@ -2,25 +2,25 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
-    "outDir": "./dist/out-tsc",
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "module": "esnext",
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2015",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
+    "target": "ES5",
     "lib": [
-      "es2018",
+      "es2017",
+      "es2016",
+      "es2015",
       "dom"
-    ]
+    ],
+
+    "outDir": "dist/electron"
   },
-  "angularCompilerOptions": {
-    "fullTemplateTypeCheck": true,
-    "strictInjectionParameters": true
-  }
+  "include": [
+    "src/electron/**/*.ts"
+  ]
 }
