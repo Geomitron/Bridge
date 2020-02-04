@@ -66,7 +66,7 @@ function createBridgeWindow() {
   mainWindow.loadURL(getLoadUrl())
 
   if (isDevBuild) {
-   setUpDevTools()
+    setUpDevTools()
   }
 
   mainWindow.on('closed', () => {

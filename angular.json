@@ -83,6 +83,18 @@
               "browserTarget": "Bridge:build:production"
             }
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "eslintConfig": "./eslintrc.json",
+            "tsConfig": [
+              "./tsconfig.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
         }
       }
     }},
