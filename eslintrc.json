@@ -17,9 +17,6 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "@typescript-eslint/no-empty-function": 0,
-    "@typescript-eslint/no-var-requires": 0,
-    "@typescript-eslint/no-explicit-any": 0,
     "eol-last": ["error", "never"],
     "semi": ["off", "never"],
     "brace-style": "off",
@@ -29,6 +26,23 @@
     "@typescript-eslint/brace-style": ["error"],
     "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/space-before-function-paren": ["error", "never"],
+    "@typescript-eslint/no-var-requires": ["off"],
+    "@typescript-eslint/no-empty-function": ["error", {
+      "allow": [
+        "constructors"
+      ]
+    }],
+    "@typescript-eslint/no-explicit-any": ["error"],
+    "@typescript-eslint/interface-name-prefix": ["off"],
+    "@typescript-eslint/member-delimiter-style": ["error", {
+      "multiline": {
+        "delimiter": "none"
+      },
+      "singleline": {
+        "delimiter": "semi",
+        "requireLast": false
+      }
+    }],
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-use-before-define": ["error", {
       "functions": false,

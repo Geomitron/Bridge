@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as url from 'url'
 
 // IPC Handlers
-// import { getIPCHandlers } from './src/assets/electron/shared/IPCHandler'
+import { getIPCHandlers } from './shared/IPCHandler'
 
 let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -60,7 +60,7 @@ function createBridgeWindow() {
   mainWindow.setMenu(null)
 
   // IPC handlers
-  // getIPCHandlers().map(handler => ipcMain.handle(handler.event, (_event, ...args) => handler.handler(args[0])))
+  getIPCHandlers().map(handler => ipcMain.handle(handler.event, (_event, ...args) => handler.handler(args[0])))
 
   // Load angular app
   mainWindow.loadURL(getLoadUrl())
