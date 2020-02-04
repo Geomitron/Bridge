@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "A handy CloneHero library management tool with built in chart searching and downloading.",
   "homepage": "https://github.com/Geomitron/Bridge",
+  "license": "GPL-3.0",
   "author": {
     "name": "Geo",
     "email": "geomitron@gmail.com"
