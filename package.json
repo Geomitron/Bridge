@@ -18,6 +18,8 @@
     "lint": "ng lint",
     "clean": "rimraf dist release",
     "build:windows": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --windows",
+    "build:mac": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --mac",
+    "build:linux": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --linux",
     "serve:angular": "ng serve",
     "serve:electron": "wait-on http-get://localhost:4200/ && tsc -p tsconfig.electron.json && electron . --dev"
   },
@@ -30,6 +32,8 @@
     "@angular/platform-browser": "~8.2.14",
     "@angular/platform-browser-dynamic": "~8.2.14",
     "@angular/router": "~8.2.14",
+    "fomantic-ui": "^2.8.3",
+    "jquery": "^3.4.1",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"
@@ -40,6 +44,7 @@
     "@angular/cli": "~8.3.24",
     "@angular/compiler-cli": "~8.2.14",
     "@angular/language-service": "~8.2.14",
+    "@types/jquery": "^3.3.31",
     "@types/node": "~8.9.4",
     "@typescript-eslint/eslint-plugin": "^2.19.0",
     "@typescript-eslint/parser": "^2.19.0",

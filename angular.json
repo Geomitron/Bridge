@@ -43,13 +43,16 @@
             "tsConfig": "tsconfig.angular.json",
             "watch": true,
             "assets": [
-              "src/favicon.ico",
               "src/assets"
             ],
             "styles": [
+              "src/assets/semantic/dist/semantic.min.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/semantic/jqueryImport.js",
+              "src/assets/semantic/dist/semantic.min.js"
+            ]
           },
           "configurations": {
             "production": {
