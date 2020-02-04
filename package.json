@@ -2,20 +2,23 @@
   "name": "bridge",
   "version": "0.0.0",
   "description": "A handy CloneHero library management tool with built in chart searching and downloading.",
-  "homepage": "https://github.com/maximegris/angular-electron",
+  "homepage": "https://github.com/Geomitron/Bridge",
   "author": {
     "name": "Geo",
     "email": "geomitron@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Geomitron/Bridge"
   },
   "main": "dist/electron/main.js",
   "scripts": {
     "start": "run-p serve:angular serve:electron",
     "lint": "ng lint",
     "clean": "rimraf dist release",
-    "build:windows": "ng build -c production && npm run build:electron && electron-builder build --windows",
+    "build:windows": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --windows",
     "serve:angular": "ng serve",
-    "serve:electron": "wait-on http-get://localhost:4200/ && npm run build:electron && electron . --dev",
-    "build:electron": "tsc -p tsconfig.electron.json"
+    "serve:electron": "wait-on http-get://localhost:4200/ && tsc -p tsconfig.electron.json && electron . --dev"
   },
   "private": true,
   "dependencies": {

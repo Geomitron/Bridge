@@ -17,8 +17,5 @@
       "es2015",
       "dom"
     ]
-  },
-  "include": [
-    "src/electron/**/*.ts"
-  ]
+  }
 }
