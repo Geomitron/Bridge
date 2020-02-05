@@ -1,0 +1,12 @@
+<div class="ui top fixed menu">
+  <a class="item" routerLinkActive="active" routerLink="/browse">Browse</a>
+  <a class="item" routerLinkActive="active" routerLink="/library">Library</a>
+  <a class="item" routerLinkActive="active" routerLink="/settings">Settings</a>
+  <a class="item" routerLinkActive="active" routerLink="/about">About</a>
+
+  <div class="right menu">
+    <a class="item traffic-light" (click)="minimize()"><i class="minus icon"></i></a>
+    <a class="item traffic-light" (click)="maximize()"><i class="plus icon"></i></a>
+    <a class="item traffic-light" (click)="close()"><i class="x icon"></i></a>
+  </div>
+</div>

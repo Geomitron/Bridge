@@ -1,0 +1,122 @@
+body ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+body ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+app-browse, app-downloads, app-library, app-settings, app-about {
+  background-color: #1E1E1E;
+  color: #CCCCCC !important;
+}
+
+app-about img.logo {
+  filter: drop-shadow(0 0px 14px white);
+}
+
+.ui.dimmer {
+  background: rgba(0,0,0,0.85) !important;
+}
+
+.ui.inverted.dimmer .ui.loader, .ui.loader {
+  color: #888888 !important;
+}
+
+.ui.segment {
+  background: #3C3C3C;
+}
+
+.ui.header, .ui.form .field>label, .ui.basic.button, .ui.basic.buttons .button {
+  color: #CCCCCC !important;
+}
+
+/* Loading */
+app-app-loading {
+  background-color: #1E1E1E !important;
+}
+
+app-app-loading svg .st0 {
+  stroke: #CCCCCC !important;
+}
+
+/* Menu */
+.ui[class*="top fixed"].menu {
+  background-color: #3C3C3C; 
+}
+
+.ui.menu:not(.vertical) .item {
+  color: #CCCCCC !important;
+}
+
+.ui.link.menu .item:hover, .ui.menu .dropdown.item:hover, .ui.menu .link.item:hover, .ui.menu a.item:hover {
+  background: rgba(0,0,0,0.2) !important;
+}
+
+.ui.menu .active.item {
+  color: white !important;
+  background: rgba(0,0,0,0.4) !important;
+}
+
+/* Display Items */
+.ui.items>.item>.content>*:not(.button) {
+  color: rgb(218, 218, 218) !important;
+}
+
+/* Inputs */
+.ui.input>input, .ui.selection.dropdown {
+  background: #383838 !important;
+  color: #AEAEAE !important;
+}
+
+/* Buttons */
+.ui.button {
+  box-shadow: 0 0 0 2px #fff inset !important;
+  background: transparent none;
+  color: #fff;
+  text-shadow: none !important;
+}
+
+.ui.button:hover {
+  background: #fff;
+  box-shadow: 0 0 0 2px #fff inset!important;
+  color: rgba(0,0,0,.8);
+}
+
+.ui.teal.button, .ui.teal.buttons .button {
+  background-color: transparent;
+  box-shadow: 0 0 0 2px #00b5ad inset !important;
+  color: #02e0d6;
+  text-shadow: none !important;
+}
+
+.ui.teal.button:hover, .ui.teal.buttons .button:hover {
+  background-color: #00b5ad;
+  color: white;
+}
+
+.ui.teal.button:active, .ui.teal.buttons .button:active {
+  background-color: #00827c !important;
+  box-shadow: 0 0 0 2px #00827c inset !important;
+  color: #fff;
+  text-shadow: none;
+}
+
+.ui.buttons .button:first-child {
+  margin-left: 0;
+}
+
+.ui.buttons .button {
+  margin: 0 0 0 -2px;
+}
+
+.ui.green.button, .ui.green.buttons .button {
+  background-color: transparent;
+  box-shadow: 0 0 0 2px #21BA45 inset !important;
+  color: #21BA45;
+  text-shadow: none !important;
+}
+.ui.green.button:hover, .ui.green.buttons .button:hover {
+  background-color: #21BA45;
+  color: white;
+}

@@ -1,1 +1,49 @@
-/* You can add global styles to this file, and also import other style files */
+// @import './assets/themes/dark.css';
+
+* {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.flex-row {
+  display: flex;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.ui.inverted.teal.button,
+.ui.inverted.teal.buttons .button {
+  background-color: transparent;
+  box-shadow: 0 0 0 2px #00b5ad inset !important;
+  color: #02e0d6;
+}
+
+.ui.inverted.teal.button:hover,
+.ui.inverted.teal.buttons .button:hover {
+  background-color: #00b5ad;
+  color: white;
+}
+
+.ui.inverted.teal.button:active,
+.ui.inverted.teal.buttons .button:active {
+  background-color: #089C95;
+  color: white;
+}

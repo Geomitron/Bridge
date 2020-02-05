@@ -1,0 +1,24 @@
+.menu {
+  -webkit-app-region: drag;
+  z-index: 9000 !important;
+
+  .item,
+  .item * {
+    -webkit-app-region: no-drag;
+    cursor: default !important;
+  }
+}
+
+.traffic-light {
+  &:before {
+    display: none !important;
+  }
+
+  i {
+    margin: 0 !important;
+  }
+
+  &:last-child:hover {
+    background: rgba(255, 0, 0, .1) !important;
+  }
+}
