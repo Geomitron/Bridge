@@ -6,6 +6,7 @@ interface NodeModule {
 
 // @ts-ignore
 declare var window: Window
+declare var $: any
 interface Window {
   process: any
   require: any

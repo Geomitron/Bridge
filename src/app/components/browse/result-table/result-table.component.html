@@ -1,0 +1,30 @@
+<table class="ui unstackable selectable single line striped celled table">
+  <thead>
+    <tr>
+      <th class="collapsing">
+        <div class="ui checkbox">
+          <input type="checkbox">
+        </div>
+      </th>
+      <th>Name</th>
+      <th>Artist</th>
+      <th>Album</th>
+      <th>Genre</th>
+      <th>Year</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let result of results">
+      <td>
+        <div class="ui checkbox">
+          <input type="checkbox">
+        </div>
+      </td>
+      <td>{{result.name}}</td>
+      <td>{{result.artist}}</td>
+      <td>{{result.album}}</td>
+      <td>{{result.genre}}</td>
+      <td>{{result.year}}</td>
+    </tr>
+  </tbody>
+</table>

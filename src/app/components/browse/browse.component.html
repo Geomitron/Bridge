@@ -1,1 +1,12 @@
-<p>browse works!</p>
+<app-search-bar (resultsUpdated)="resultTable.results = $event"></app-search-bar>
+<div class="ui celled two column grid">
+  <div class="row">
+    <div class="column twelve wide">
+      <app-result-table #resultTable></app-result-table>
+    </div>
+    <div id="sidebar-column" class="column four wide">
+      <app-chart-sidebar></app-chart-sidebar>
+    </div>
+  </div>
+</div>
+<app-status-bar></app-status-bar>

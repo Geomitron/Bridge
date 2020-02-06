@@ -1,0 +1,16 @@
+:host {
+  display: contents;
+}
+
+.ui.celled.grid {
+  flex-grow: 1;
+  margin: 0;
+}
+
+#sidebar-column {
+  display: flex;
+}
+
+.ui.celled.grid > .row > .column {
+  padding: 0;
+}

@@ -1,0 +1,16 @@
+:host {
+  display: contents;
+}
+
+.ui.card {
+  display: flex;
+  flex-direction: column;
+}
+
+#textPanel {
+  flex-grow: 1;
+}
+
+#versionButton {
+  max-width: 30px;
+}

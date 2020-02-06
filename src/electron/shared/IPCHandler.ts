@@ -1,5 +1,5 @@
-import TestHandler from '../ipc/TestHandler.ipc'
-import { TestInput } from './interfaces/test.interface'
+import SearchHandler from '../ipc/SearchHandler.ipc'
+import { SongSearch, SongResult } from './interfaces/search.interface'
 
 /**
  * To add a new IPC listener:
@@ -11,14 +11,14 @@ import { TestInput } from './interfaces/test.interface'
 
 export function getIPCHandlers(): IPCHandler<keyof IPCEvents>[] {
   return [
-    new TestHandler()
+    new SearchHandler()
   ]
 }
 
 export type IPCEvents = {
-  ['test-event-A']: {
-    input: TestInput
-    output: string
+  ['song-search']: {
+    input: SongSearch
+    output: SongResult[]
   }
   ['test-event-B']: {
     input: number
