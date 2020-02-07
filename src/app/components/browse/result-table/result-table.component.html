@@ -1,16 +1,19 @@
-<table class="ui unstackable selectable single line striped celled table">
+<table class="ui stackable selectable single fixed line striped compact small table">
+  <!-- TODO: maybe have some of these tags customizable? E.g. small/large/compact/padded -->
+  <!-- TODO: maybe make add the sortable class? -->
+  <!-- TODO: learn semantic themes in order to change the $mobileBreakpoint global variable (better search table adjustment) -->
   <thead>
+    <!-- NOTE: it would be nice to make this header sticky, but Fomantic-UI doesn't currently support that -->
     <tr>
-      <th class="collapsing">
+      <th id="checkboxColumn" class="collapsing">
         <div class="ui checkbox">
           <input type="checkbox">
         </div>
       </th>
-      <th>Name</th>
-      <th>Artist</th>
-      <th>Album</th>
-      <th>Genre</th>
-      <th>Year</th>
+      <th class="four wide">Name</th>
+      <th class="four wide">Artist</th>
+      <th class="four wide">Album</th>
+      <th class="four wide">Genre</th>
     </tr>
   </thead>
   <tbody>
@@ -24,7 +27,6 @@
       <td>{{result.artist}}</td>
       <td>{{result.album}}</td>
       <td>{{result.genre}}</td>
-      <td>{{result.year}}</td>
     </tr>
   </tbody>
 </table>

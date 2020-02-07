@@ -1,4 +1,11 @@
+:host {
+  display: contents;
+}
+
 .ui.checkbox {
   display: block;
-  max-width: 17px;
+}
+
+#checkboxColumn {
+  width: 34.64px;
 }

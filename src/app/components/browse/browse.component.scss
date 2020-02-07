@@ -2,15 +2,25 @@
   display: contents;
 }
 
-.ui.celled.grid {
-  flex-grow: 1;
+.two.column.grid {
+  display: contents;
   margin: 0;
+}
+
+#table-row {
+  flex-grow: 1;
+  min-height: 0;
+  flex-wrap: nowrap;
+}
+
+#table-column {
+  overflow-y: auto;
+  padding: 0;
 }
 
 #sidebar-column {
   display: flex;
-}
-
-.ui.celled.grid > .row > .column {
+  min-width: 175px;
+  overflow: hidden;
   padding: 0;
 }

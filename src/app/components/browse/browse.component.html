@@ -1,7 +1,7 @@
 <app-search-bar (resultsUpdated)="resultTable.results = $event"></app-search-bar>
 <div class="ui celled two column grid">
-  <div class="row">
-    <div class="column twelve wide">
+  <div id="table-row" class="row">
+    <div id="table-column" class="column twelve wide">
       <app-result-table #resultTable></app-result-table>
     </div>
     <div id="sidebar-column" class="column four wide">
