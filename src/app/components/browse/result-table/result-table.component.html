@@ -17,16 +17,10 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let result of results">
-      <td>
-        <div class="ui checkbox">
-          <input type="checkbox">
-        </div>
-      </td>
-      <td>{{result.name}}</td>
-      <td>{{result.artist}}</td>
-      <td>{{result.album}}</td>
-      <td>{{result.genre}}</td>
-    </tr>
+    <tr
+    app-result-table-row
+    *ngFor="let result of results"
+    (click)="onRowClicked(result)"
+    [result]="result"></tr>
   </tbody>
 </table>

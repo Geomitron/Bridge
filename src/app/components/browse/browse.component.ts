@@ -12,5 +12,4 @@ export class BrowseComponent implements OnInit {
   ngOnInit() {
     console.log('Browse component loaded.')
   }
-
 }

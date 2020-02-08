@@ -2,10 +2,10 @@
 <div class="ui celled two column grid">
   <div id="table-row" class="row">
     <div id="table-column" class="column twelve wide">
-      <app-result-table #resultTable></app-result-table>
+      <app-result-table #resultTable (rowClicked)="chartSidebar.onRowClicked($event)"></app-result-table>
     </div>
     <div id="sidebar-column" class="column four wide">
-      <app-chart-sidebar></app-chart-sidebar>
+      <app-chart-sidebar #chartSidebar></app-chart-sidebar>
     </div>
   </div>
 </div>

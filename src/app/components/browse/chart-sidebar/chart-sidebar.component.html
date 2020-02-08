@@ -2,20 +2,27 @@
   <div class="ui placeholder">
     <div class="square image"></div>
   </div>
-  <div class="ui fluid selection dropdown">
+  <div id="chartDropdown" class="ui fluid selection dropdown">
     <input type="hidden" name="Chart">
     <i class="dropdown icon"></i>
     <div class="default text">Chart</div>
     <div class="menu">
-      <div class="item" data-value="1">Chart 1</div>
+      <div class="item" data-value="1">
+        <h4 class="ui header">Chart1</h4>
+        <div>row2</div>
+      </div>
       <div class="item" data-value="0">Chart 2</div>
     </div>
   </div>
   <div id="textPanel" class="content">
-    <span class="header">Funknitium-99</span>
-    <div class="meta">
-      <span>Fearofdark</span>
+    <span class="header">{{selectedVersion?.avTagName}}</span>
+    <div *ngIf="selectedVersion" class="description">
+      <div>{{charterPlural}} {{selectedVersion?.charters}}</div>
+      <div *ngIf="selectedVersion?.tags">Tags: {{selectedVersion.tags}}</div>
+      <div>Audio Length: {{getSongLength()}}</div>
+      <!-- TODO: add difficulty icons -->
     </div>
+
   </div>
   <div class="ui positive buttons">
     <div class="ui button">Download Latest</div>

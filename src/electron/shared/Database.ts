@@ -49,6 +49,12 @@ export default class Database {
     })
   }
 
+  static closeConnection() {
+    if (this.database != undefined) {
+      this.database.conn.destroy()
+    }
+  }
+
   /**
    * Sends <query> to the database.
    * @param query The query string to be sent.

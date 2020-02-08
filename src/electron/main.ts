@@ -4,6 +4,7 @@ import * as url from 'url'
 
 // IPC Handlers
 import { getIPCHandlers } from './shared/IPCHandler'
+import Database from './shared/Database'
 
 let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -70,6 +71,7 @@ function createBridgeWindow() {
   }
 
   mainWindow.on('closed', () => {
+    Database.closeConnection()
     mainWindow = null // Dereference mainWindow when the window is closed
   })
 }

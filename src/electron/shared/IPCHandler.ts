@@ -1,5 +1,7 @@
 import SearchHandler from '../ipc/SearchHandler.ipc'
 import { SongSearch, SongResult } from './interfaces/search.interface'
+import { VersionResult } from './interfaces/songDetails.interface'
+import SongDetailsHandler from '../ipc/SongDetailsHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -11,7 +13,8 @@ import { SongSearch, SongResult } from './interfaces/search.interface'
 
 export function getIPCHandlers(): IPCHandler<keyof IPCEvents>[] {
   return [
-    new SearchHandler()
+    new SearchHandler(),
+    new SongDetailsHandler()
   ]
 }
 
@@ -20,9 +23,9 @@ export type IPCEvents = {
     input: SongSearch
     output: SongResult[]
   }
-  ['test-event-B']: {
-    input: number
-    output: number
+  ['song-details']: {
+    input: SongResult['id']
+    output: VersionResult[]
   }
 }
 
