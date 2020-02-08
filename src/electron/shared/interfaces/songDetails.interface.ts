@@ -1,3 +1,7 @@
+export interface AlbumArtResult {
+  art: Buffer
+}
+
 export interface VersionResult {
   versionID: number
   chartID: number

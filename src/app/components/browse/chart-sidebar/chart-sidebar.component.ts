@@ -2,6 +2,7 @@ import { Component } from '@angular/core'
 import { SongResult } from 'src/electron/shared/interfaces/search.interface'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
+import { AlbumArtService } from 'src/app/core/services/album-art.service'
 
 @Component({
   selector: 'app-chart-sidebar',
@@ -12,12 +13,14 @@ export class ChartSidebarComponent {
 
   selectedVersion: VersionResult
   charterPlural: string
+  albumArtBuffer: Buffer
 
   private charts: { chartID: number, versions: VersionResult[] }[]
 
-  constructor(private electronService: ElectronService) { }
+  constructor(private electronService: ElectronService, private albumArtService: AlbumArtService) { }
 
   async onRowClicked(result: SongResult) {
+    const albumArt = this.albumArtService.getImage(result.id)
     const results = await this.electronService.invoke('song-details', result.id)
 
     // Group results by chartID
@@ -30,8 +33,17 @@ export class ChartSidebarComponent {
         this.charts.push({ chartID: result.chartID, versions: [result] })
       }
     }
-
     this.initChartDropdown()
+
+    this.albumArtBuffer = await albumArt
+  }
+
+  getAlbumArtSrc() {
+    if (this.albumArtBuffer) {
+      return 'data:image/jpg;base64,' + this.albumArtBuffer.toString('base64')
+    } else {
+      return undefined
+    }
   }
 
   /**
@@ -66,9 +78,12 @@ export class ChartSidebarComponent {
     const chart = this.charts.find(chart => chart.chartID == chartID)
     this.selectedVersion = chart.versions[0]
     this.charterPlural = this.selectedVersion.charterIDs.split('&').length == 1 ? 'Charter:' : 'Charters:'
-    //TODO init version dropdown
+    this.initVersionDropdown()
   }
 
+  /**
+   * Converts <this.selectedVersion.song_length> into a readable duration.
+   */
   getSongLength() {
     if (this.selectedVersion.song_length == 0) {
       return 'Unknown'
@@ -82,5 +97,43 @@ export class ChartSidebarComponent {
     }
     seconds = Math.floor(seconds % 60)
     return `${hours == 0 ? '' : hours + ':'}${minutes == 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
+  }
+
+  /**
+   * Initializes the version dropdown from <this.selectedVersion> (or removes it if there's only one version)
+   */
+  private initVersionDropdown() {
+    const $versionDropdown = $('#versionDropdown')
+    const versions = this.charts.find(chart => chart.chartID == this.selectedVersion.chartID).versions
+    if (versions.length < 2) {
+      $versionDropdown.hide()
+    } else {
+      const values = versions.map(version => {
+        return {
+          value: version.versionID,
+          text: this.getLastModified(version.lastModified),
+          name: this.getLastModified(version.lastModified)
+        }
+      })
+      $versionDropdown.dropdown('setup menu', { values })
+      $versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
+        console.log(`Selected version: ${versionID}`)
+        return this.selectedVersion = versions.find(version => version.versionID = versionID)
+      })
+      $versionDropdown.dropdown('set selected', values[0].value)
+      $versionDropdown.show()
+    }
+  }
+
+  /**
+   * Converts the <lastModified> value to a user-readable format.
+   * @param lastModified The UNIX timestamp for the lastModified date.
+   */
+  private getLastModified(lastModified: number) {
+    return new Date(lastModified).toLocaleDateString()
+  }
+
+  onDownloadClicked() {
+    console.log(this.selectedVersion.downloadLink)
   }
 }

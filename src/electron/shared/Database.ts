@@ -9,8 +9,8 @@ export default class Database {
   static async getInstance() {
     if (this.database == undefined) {
       this.database = new Database()
+      await this.database.initDatabaseConnection()
     }
-    await this.database.initDatabaseConnection()
     return this.database
   }
 
@@ -62,7 +62,7 @@ export default class Database {
    * @returns one of the responses as type <ResponseType[]>, or an empty array if the query fails.
    */
   async sendQuery<ResponseType>(query: string, queryStatement?: number) {
-    return new Promise<ResponseType[]>(resolve => {
+    return new Promise<ResponseType[] | ResponseType>(resolve => {
       this.conn.query(query, (err, results) => {
         if (err) {
           failQuery(query, err)

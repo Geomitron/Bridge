@@ -1,6 +1,6 @@
-<div class="ui fluid card">
-  <div class="ui placeholder">
-    <div class="square image"></div>
+<div *ngIf="selectedVersion" class="ui fluid card">
+  <div class="ui placeholder" [ngClass]="{'placeholder': !albumArtBuffer}">
+    <img class="ui square image" [src]="getAlbumArtSrc()">
   </div>
   <div id="chartDropdown" class="ui fluid selection dropdown">
     <input type="hidden" name="Chart">
@@ -16,7 +16,7 @@
   </div>
   <div id="textPanel" class="content">
     <span class="header">{{selectedVersion?.avTagName}}</span>
-    <div *ngIf="selectedVersion" class="description">
+    <div class="description">
       <div>{{charterPlural}} {{selectedVersion?.charters}}</div>
       <div *ngIf="selectedVersion?.tags">Tags: {{selectedVersion.tags}}</div>
       <div>Audio Length: {{getSongLength()}}</div>
@@ -25,8 +25,8 @@
 
   </div>
   <div class="ui positive buttons">
-    <div class="ui button">Download Latest</div>
-    <div id="versionButton" class="ui floating dropdown icon button">
+    <div class="ui button" (click)="onDownloadClicked()">Download Latest</div>
+    <div id="versionDropdown" class="ui floating dropdown icon button">
       <i class="dropdown icon"></i>
       <div class="menu">
         <div class="item">Version 1</div>
