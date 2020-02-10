@@ -16,8 +16,6 @@ const mkdir = promisify(_mkdir)
 export class AddDownloadHandler implements IPCEmitHandler<'add-download'> {
   event: 'add-download' = 'add-download'
 
-  //TODO: update percent in a way that makes its progress seem as smooth as possible
-
   async handler(data: NewDownload) {
     const download: Download = {
       versionID: data.versionID,

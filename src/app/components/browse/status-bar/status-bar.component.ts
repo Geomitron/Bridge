@@ -25,4 +25,20 @@ export class StatusBarComponent {
   showDownloads() {
     $('#downloadsModal').modal('show')
   }
+
+  onSongChecked(result: SongResult) {
+    if (this.selectedResults.findIndex(oldResult => oldResult.id == result.id) == -1) {
+      this.selectedResults.push(result)
+    }
+  }
+
+  onSongUnchecked(result: SongResult) {
+    this.selectedResults = this.selectedResults.filter(oldResult => oldResult.id != result.id)
+  }
+
+  downloadSelected() {
+    // TODO send query to get versions; for any with more than one chart, show modal for confirmation:
+    // "some selected songs have more than one chart: ___" [download all charts for each song] [deselect these songs] [X]
+    console.log(this.selectedResults)
+  }
 }

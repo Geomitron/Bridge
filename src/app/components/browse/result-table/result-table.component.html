@@ -5,7 +5,7 @@
   <thead>
     <!-- NOTE: it would be nice to make this header sticky, but Fomantic-UI doesn't currently support that -->
     <tr>
-      <th id="checkboxColumn" class="collapsing">
+      <th appCheckbox (checked)="checkAll($event)" id="checkboxColumn" class="collapsing">
         <div class="ui checkbox">
           <input type="checkbox">
         </div>
@@ -19,8 +19,11 @@
   <tbody>
     <tr
     app-result-table-row
+    #tableRow
     *ngFor="let result of results"
     (click)="onRowClicked(result)"
+    (songChecked)="onSongChecked($event)"
+    (songUnchecked)="onSongUnchecked($event)"
     [result]="result"></tr>
   </tbody>
 </table>
