@@ -1,7 +1,6 @@
 import { Component, ChangeDetectorRef } from '@angular/core'
 import { Download } from '../../../../../electron/shared/interfaces/download.interface'
 import { DownloadService } from '../../../../core/services/download.service'
-import * as _ from 'underscore'
 
 @Component({
   selector: 'app-downloads-modal',
@@ -12,8 +11,7 @@ export class DownloadsModalComponent {
 
   downloads: Download[] = []
 
-  constructor(downloadService: DownloadService, private ref: ChangeDetectorRef) {
-    const detectChanges = _.throttle(() => this.ref.detectChanges(), 30)
+  constructor(downloadService: DownloadService, ref: ChangeDetectorRef) {
     downloadService.onDownloadUpdated(download => {
       const index = this.downloads.findIndex(thisDownload => thisDownload.versionID == download.versionID)
       if (index == -1) {
@@ -21,7 +19,7 @@ export class DownloadsModalComponent {
       } else {
         this.downloads[index] = download
       }
-      detectChanges()
+      ref.detectChanges()
     })
   }
 

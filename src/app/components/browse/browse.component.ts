@@ -1,15 +1,25 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, ViewChild } from '@angular/core'
+import { ChartSidebarComponent } from './chart-sidebar/chart-sidebar.component'
+import { StatusBarComponent } from './status-bar/status-bar.component'
+import { SongResult } from 'src/electron/shared/interfaces/search.interface'
+import { ResultTableComponent } from './result-table/result-table.component'
 
 @Component({
   selector: 'app-browse',
   templateUrl: './browse.component.html',
   styleUrls: ['./browse.component.scss']
 })
-export class BrowseComponent implements OnInit {
+export class BrowseComponent {
+
+  @ViewChild('resultTable', { static: true }) resultTable: ResultTableComponent
+  @ViewChild('chartSidebar', { static: true }) chartSidebar: ChartSidebarComponent
+  @ViewChild('statusBar', { static: true }) statusBar: StatusBarComponent
 
   constructor() { }
 
-  ngOnInit() {
-    console.log('Browse component loaded.')
+  onResultsUpdated(results: SongResult[]) {
+    this.resultTable.results = results
+    this.chartSidebar.selectedVersion = undefined
+    this.statusBar.resultCount = results.length
   }
 }

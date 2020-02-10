@@ -1,4 +1,4 @@
-<app-search-bar (resultsUpdated)="resultTable.results = $event"></app-search-bar>
+<app-search-bar (resultsUpdated)="onResultsUpdated($event)"></app-search-bar>
 <div class="ui celled two column grid">
   <div id="table-row" class="row">
     <div id="table-column" class="column twelve wide">
@@ -9,4 +9,4 @@
     </div>
   </div>
 </div>
-<app-status-bar></app-status-bar>
+<app-status-bar #statusBar></app-status-bar>
