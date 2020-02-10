@@ -1,19 +1,11 @@
-export class Settings {
+export interface Settings {
+  rateLimitDelay: number // Number of seconds to wait between each file download from Google servers
+  theme: string          // The name of the currently enabled UI theme
+  libraryPath: string    // The path to the user's library
+}
 
-  // Singleton
-  private constructor() { }
-  private static settings: Settings
-  static async getInstance() {
-    if (this.settings == undefined) {
-      this.settings = new Settings()
-    }
-    await this.settings.initSettings()
-    return this.settings
-  }
-
-  songsFolderPath: string
-
-  private async initSettings() {
-    // TODO: load settings from settings file or set defaults
-  }
+export const defaultSettings: Settings = {
+  rateLimitDelay: 31,
+  theme: 'Default',
+  libraryPath: 'C:/Users/bouviejs/Desktop/Bridge Notes/TestLibrary'
 }

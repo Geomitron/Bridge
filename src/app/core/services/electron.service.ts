@@ -6,7 +6,7 @@ import { ipcRenderer, webFrame, remote } from 'electron'
 import * as childProcess from 'child_process'
 import * as fs from 'fs'
 import * as util from 'util'
-import { IPCEvents } from '../../../electron/shared/IPCHandler'
+import { IPCInvokeEvents, IPCEmitEvents } from '../../../electron/shared/IPCHandler'
 
 @Injectable({
   providedIn: 'root'
@@ -42,7 +42,27 @@ export class ElectronService {
    * @param data The data object to send across IPC.
    * @returns A promise that resolves to the output data.
    */
-  async invoke<E extends keyof IPCEvents>(event: E, data: IPCEvents[E]['input']) {
-    return this.ipcRenderer.invoke(event, data) as Promise<IPCEvents[E]['output']>
+  async invoke<E extends keyof IPCInvokeEvents>(event: E, data: IPCInvokeEvents[E]['input']) {
+    return this.ipcRenderer.invoke(event, data) as Promise<IPCInvokeEvents[E]['output']>
+  }
+
+  /**
+   * Sends an IPC message to the main process.
+   * @param event The name of the IPC event to send.
+   * @param data The data object to send across IPC.
+   */
+  sendIPC<E extends keyof IPCEmitEvents>(event: E, data: IPCEmitEvents[E]) {
+    this.ipcRenderer.send(event, data)
+  }
+
+  /**
+   * Receives an IPC message from the main process.
+   * @param event The name of the IPC event to receive.
+   * @param callback The data object to receive across IPC.
+   */
+  receiveIPC<E extends keyof IPCEmitEvents>(event: E, callback: (result: IPCEmitEvents[E]) => void) {
+    this.ipcRenderer.on(event, (_event, ...results) => {
+      callback(results[0])
+    })
   }
 }

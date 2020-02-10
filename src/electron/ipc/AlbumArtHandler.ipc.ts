@@ -1,8 +1,8 @@
-import { IPCHandler } from '../shared/IPCHandler'
+import { IPCInvokeHandler } from '../shared/IPCHandler'
 import Database from '../shared/Database'
 import { AlbumArtResult } from '../shared/interfaces/songDetails.interface'
 
-export default class AlbumArtHandler implements IPCHandler<'album-art'> {
+export default class AlbumArtHandler implements IPCInvokeHandler<'album-art'> {
   event: 'album-art' = 'album-art'
   // TODO: add method documentation
 

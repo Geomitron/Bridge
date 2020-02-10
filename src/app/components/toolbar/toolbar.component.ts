@@ -1,5 +1,5 @@
 import { Component } from '@angular/core'
-import { ElectronService } from 'src/app/core/services/electron.service'
+import { ElectronService } from '../../core/services/electron.service'
 
 @Component({
   selector: 'app-toolbar',

@@ -3,12 +3,19 @@
   <div class="item">
     <button class="ui positive button">Download Selected</button>
   </div>
-
-  <a class="item right">
-    <div #progressBar class="ui progress">
+  <a *ngIf="!downloading" class="item right" (click)="showDownloads()">
+    <div #progressBar appProgressBar [percent]="percent" class="ui progress">
       <div class="bar">
         <div class="progress"></div>
       </div>
     </div>
   </a>
+
+  <div id="downloadsModal" class="ui modal">
+    <i class="inside close icon"></i>
+    <div class="header">Downloads</div>
+    <div class="scrolling content">
+      <app-downloads-modal></app-downloads-modal>
+    </div>
+  </div>
 </div>

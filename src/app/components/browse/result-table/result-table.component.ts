@@ -1,5 +1,5 @@
 import { Component, AfterViewInit, Input, Output, EventEmitter } from '@angular/core'
-import { SongResult } from 'src/electron/shared/interfaces/search.interface'
+import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
 
 @Component({
   selector: 'app-result-table',

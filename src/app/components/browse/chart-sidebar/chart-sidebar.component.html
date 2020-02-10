@@ -2,7 +2,7 @@
   <div class="ui placeholder" [ngClass]="{'placeholder': !albumArtBuffer}">
     <img class="ui square image" [src]="getAlbumArtSrc()">
   </div>
-  <div id="chartDropdown" class="ui fluid selection dropdown">
+  <div *ngIf="charts.length > 1" id="chartDropdown" class="ui fluid selection dropdown">
     <input type="hidden" name="Chart">
     <i class="dropdown icon"></i>
     <div class="default text">Chart</div>
@@ -26,7 +26,7 @@
   </div>
   <div class="ui positive buttons">
     <div class="ui button" (click)="onDownloadClicked()">Download Latest</div>
-    <div id="versionDropdown" class="ui floating dropdown icon button">
+    <div *ngIf="getVersions().length > 1" id="versionDropdown" class="ui floating dropdown icon button">
       <i class="dropdown icon"></i>
       <div class="menu">
         <div class="item">Version 1</div>

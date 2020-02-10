@@ -1,8 +1,9 @@
 import { Component } from '@angular/core'
-import { SongResult } from 'src/electron/shared/interfaces/search.interface'
-import { ElectronService } from 'src/app/core/services/electron.service'
-import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
-import { AlbumArtService } from 'src/app/core/services/album-art.service'
+import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
+import { ElectronService } from '../../../core/services/electron.service'
+import { VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
+import { AlbumArtService } from '../../../core/services/album-art.service'
+import { DownloadService } from '../../../core/services/download.service'
 
 @Component({
   selector: 'app-chart-sidebar',
@@ -11,15 +12,17 @@ import { AlbumArtService } from 'src/app/core/services/album-art.service'
 })
 export class ChartSidebarComponent {
 
+  private songResult: SongResult
   selectedVersion: VersionResult
   charterPlural: string
   albumArtBuffer: Buffer
 
-  private charts: { chartID: number, versions: VersionResult[] }[]
+  charts: { chartID: number, versions: VersionResult[] }[]
 
-  constructor(private electronService: ElectronService, private albumArtService: AlbumArtService) { }
+  constructor(private electronService: ElectronService, private albumArtService: AlbumArtService, private downloadService: DownloadService) { }
 
   async onRowClicked(result: SongResult) {
+    this.songResult = result
     const albumArt = this.albumArtService.getImage(result.id)
     const results = await this.electronService.invoke('song-details', result.id)
 
@@ -42,32 +45,28 @@ export class ChartSidebarComponent {
     if (this.albumArtBuffer) {
       return 'data:image/jpg;base64,' + this.albumArtBuffer.toString('base64')
     } else {
-      return undefined
+      return ''
     }
   }
 
   /**
    * Initializes the chart dropdown from <this.charts> (or removes it if there's only one chart)
    */
-  private initChartDropdown() {
+  private async initChartDropdown() {
+    this.switchChart(this.charts[0].chartID)
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 0)) // Wait for *ngIf to update DOM
+    const values = this.charts.map(chart => {
+      const version = chart.versions[0]
+      return {
+        value: chart.chartID,
+        text: version.avTagName,
+        name: `${version.avTagName} <b>[${version.charters}]</b>`
+      }
+    })
     const $chartDropdown = $('#chartDropdown')
-    if (this.charts.length < 2) {
-      $chartDropdown.hide()
-      this.switchChart(this.charts[0].chartID)
-    } else {
-      const values = this.charts.map(chart => {
-        const version = chart.versions[0]
-        return {
-          value: chart.chartID,
-          text: version.avTagName,
-          name: `${version.avTagName} <b>[${version.charters}]</b>`
-        }
-      })
-      $chartDropdown.dropdown('setup menu', { values })
-      $chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.switchChart(chartID))
-      $chartDropdown.dropdown('set selected', values[0].value)
-      $chartDropdown.show()
-    }
+    $chartDropdown.dropdown('setup menu', { values })
+    $chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.switchChart(chartID))
+    $chartDropdown.dropdown('set selected', values[0].value)
   }
 
   /**
@@ -104,25 +103,20 @@ export class ChartSidebarComponent {
    */
   private initVersionDropdown() {
     const $versionDropdown = $('#versionDropdown')
-    const versions = this.charts.find(chart => chart.chartID == this.selectedVersion.chartID).versions
-    if (versions.length < 2) {
-      $versionDropdown.hide()
-    } else {
-      const values = versions.map(version => {
-        return {
-          value: version.versionID,
-          text: this.getLastModified(version.lastModified),
-          name: this.getLastModified(version.lastModified)
-        }
-      })
-      $versionDropdown.dropdown('setup menu', { values })
-      $versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
-        console.log(`Selected version: ${versionID}`)
-        return this.selectedVersion = versions.find(version => version.versionID = versionID)
-      })
-      $versionDropdown.dropdown('set selected', values[0].value)
-      $versionDropdown.show()
-    }
+    const versions = this.getVersions()
+    const values = versions.map(version => {
+      return {
+        value: version.versionID,
+        text: this.getLastModified(version.lastModified),
+        name: this.getLastModified(version.lastModified)
+      }
+    })
+    $versionDropdown.dropdown('setup menu', { values })
+    $versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
+      console.log(`Selected version: ${versionID}`)
+      this.selectedVersion = versions.find(version => version.versionID = versionID)
+    })
+    $versionDropdown.dropdown('set selected', values[0].value)
   }
 
   /**
@@ -134,6 +128,16 @@ export class ChartSidebarComponent {
   }
 
   onDownloadClicked() {
-    console.log(this.selectedVersion.downloadLink)
+    this.downloadService.addDownload({
+      versionID: this.selectedVersion.versionID,
+      avTagName: this.selectedVersion.avTagName,
+      artist: this.songResult.artist,
+      charter: this.selectedVersion.charters,
+      links: JSON.parse(this.selectedVersion.downloadLink)
+    })
+  }
+
+  getVersions() {
+    return this.charts.find(chart => chart.chartID == this.selectedVersion.chartID).versions
   }
 }

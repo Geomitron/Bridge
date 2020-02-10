@@ -9,7 +9,9 @@ import { SearchBarComponent } from './components/browse/search-bar/search-bar.co
 import { StatusBarComponent } from './components/browse/status-bar/status-bar.component';
 import { ResultTableComponent } from './components/browse/result-table/result-table.component';
 import { ChartSidebarComponent } from './components/browse/chart-sidebar/chart-sidebar.component';
-import { ResultTableRowComponent } from './components/browse/result-table/result-table-row/result-table-row.component'
+import { ResultTableRowComponent } from './components/browse/result-table/result-table-row/result-table-row.component';
+import { DownloadsModalComponent } from './components/browse/status-bar/downloads-modal/downloads-modal.component';
+import { ProgressBarDirective } from './core/directives/progress-bar.directive'
 
 @NgModule({
   declarations: [
@@ -20,7 +22,9 @@ import { ResultTableRowComponent } from './components/browse/result-table/result
     StatusBarComponent,
     ResultTableComponent,
     ChartSidebarComponent,
-    ResultTableRowComponent
+    ResultTableRowComponent,
+    DownloadsModalComponent,
+    ProgressBarDirective
   ],
   imports: [
     BrowserModule,

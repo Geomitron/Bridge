@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as url from 'url'
 
 // IPC Handlers
-import { getIPCHandlers } from './shared/IPCHandler'
+import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
 import Database from './shared/Database'
 
 let mainWindow: BrowserWindow
@@ -61,7 +61,8 @@ function createBridgeWindow() {
   mainWindow.setMenu(null)
 
   // IPC handlers
-  getIPCHandlers().map(handler => ipcMain.handle(handler.event, (_event, ...args) => handler.handler(args[0])))
+  getIPCInvokeHandlers().map(handler => ipcMain.handle(handler.event, (_event, ...args) => handler.handler(args[0])))
+  getIPCEmitHandlers().map(handler => ipcMain.on(handler.event, (_event, ...args) => handler.handler(args[0])))
 
   // Load angular app
   mainWindow.loadURL(getLoadUrl())
@@ -119,4 +120,8 @@ function setUpDevTools() {
   })
 
   mainWindow.webContents.openDevTools()
+}
+
+export function emitIPCEvent<E extends keyof IPCEmitEvents>(event: E, data: IPCEmitEvents[E]) {
+  mainWindow.webContents.send(event, data)
 }

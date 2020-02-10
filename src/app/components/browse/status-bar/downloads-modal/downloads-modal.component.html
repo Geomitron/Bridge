@@ -1,0 +1,16 @@
+<div class="ui cards">
+  <div *ngFor="let download of downloads; trackBy:trackByVersionID" class="card">
+    <div class="content">
+      <div class="header">{{download.title}}</div>
+    </div>
+    <div class="content">
+      <div class="header">{{download.header}}</div>
+      <div class="description">{{download.description}}</div>
+      <div appProgressBar [percent]="download.percent" class="ui progress">
+        <div class="bar">
+          <div class="progress"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

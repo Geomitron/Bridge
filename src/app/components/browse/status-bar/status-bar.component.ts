@@ -7,6 +7,11 @@ import { Component } from '@angular/core'
 })
 export class StatusBarComponent {
 
+  downloading = false
+
   constructor() { }
 
+  showDownloads() {
+    $('#downloadsModal').modal('show')
+  }
 }

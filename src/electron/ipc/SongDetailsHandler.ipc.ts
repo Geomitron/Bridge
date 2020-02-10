@@ -1,8 +1,8 @@
-import { IPCHandler } from '../shared/IPCHandler'
+import { IPCInvokeHandler } from '../shared/IPCHandler'
 import Database from '../shared/Database'
 import { VersionResult } from '../shared/interfaces/songDetails.interface'
 
-export default class SongDetailsHandler implements IPCHandler<'song-details'> {
+export default class SongDetailsHandler implements IPCInvokeHandler<'song-details'> {
   event: 'song-details' = 'song-details'
   // TODO: add method documentation
 

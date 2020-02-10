@@ -25,6 +25,7 @@
     "serve:electron": "wait-on http-get://localhost:4200/ && tsc -p tsconfig.electron.json && electron . --dev"
   },
   "dependencies": {
+    "7zip-bin": "^5.0.3",
     "@angular/animations": "~8.2.14",
     "@angular/common": "~8.2.14",
     "@angular/compiler": "~8.2.14",
@@ -35,12 +36,19 @@
     "@angular/router": "~8.2.14",
     "@types/cli-color": "^2.0.0",
     "@types/mysql": "^2.15.8",
+    "@types/needle": "^2.0.4",
+    "@types/underscore": "^1.9.4",
     "cli-color": "^2.0.0",
     "fomantic-ui": "^2.8.3",
     "jquery": "^3.4.1",
     "mysql": "^2.18.1",
+    "needle": "^2.3.2",
+    "node-7z": "^2.0.5",
+    "node-unrar-js": "^0.8.1",
     "rxjs": "~6.4.0",
+    "sanitize-filename": "^1.6.3",
     "tslib": "^1.10.0",
+    "underscore": "^1.9.2",
     "zone.js": "~0.9.1"
   },
   "devDependencies": {

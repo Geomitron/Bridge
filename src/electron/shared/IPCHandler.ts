@@ -3,6 +3,10 @@ import { VersionResult, AlbumArtResult } from './interfaces/songDetails.interfac
 import SearchHandler from '../ipc/SearchHandler.ipc'
 import SongDetailsHandler from '../ipc/SongDetailsHandler.ipc'
 import AlbumArtHandler from '../ipc/AlbumArtHandler.ipc'
+import { Download, NewDownload } from './interfaces/download.interface'
+import { AddDownloadHandler } from '../ipc/download/AddDownloadHandler'
+import { Settings } from './Settings'
+import InitSettingsHandler from '../ipc/InitSettingsHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -12,30 +16,51 @@ import AlbumArtHandler from '../ipc/AlbumArtHandler.ipc'
  * 4.) Add the class to getIPCHandlers
  */
 
-export function getIPCHandlers(): IPCHandler<keyof IPCEvents>[] {
+export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[] {
   return [
+    new InitSettingsHandler(),
     new SearchHandler(),
     new SongDetailsHandler(),
     new AlbumArtHandler()
   ]
 }
 
-export type IPCEvents = {
-  ['song-search']: {
+export type IPCInvokeEvents = {
+  'init-settings': {
+    input: undefined
+    output: Settings
+  }
+  'song-search': {
     input: SongSearch
     output: SongResult[]
   }
-  ['album-art']: {
+  'album-art': {
     input: SongResult['id']
     output: AlbumArtResult
   }
-  ['song-details']: {
+  'song-details': {
     input: SongResult['id']
     output: VersionResult[]
   }
 }
 
-export interface IPCHandler<E extends keyof IPCEvents> {
+export interface IPCInvokeHandler<E extends keyof IPCInvokeEvents> {
   event: E
-  handler(data: IPCEvents[E]['input']): Promise<IPCEvents[E]['output']> | IPCEvents[E]['output']
+  handler(data: IPCInvokeEvents[E]['input']): Promise<IPCInvokeEvents[E]['output']> | IPCInvokeEvents[E]['output']
+}
+
+export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[]{
+  return [
+    new AddDownloadHandler()
+  ]
+}
+
+export type IPCEmitEvents = {
+  'add-download': NewDownload
+  'download-updated': Download
+}
+
+export interface IPCEmitHandler<E extends keyof IPCEmitEvents> {
+  event: E
+  handler(data: IPCEmitEvents[E]): void
 }

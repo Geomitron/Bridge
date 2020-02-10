@@ -1,9 +1,9 @@
-import { IPCHandler } from '../shared/IPCHandler'
+import { IPCInvokeHandler } from '../shared/IPCHandler'
 import Database from '../shared/Database'
 import { SongSearch, SearchType, SongResult } from '../shared/interfaces/search.interface'
 import { escape } from 'mysql'
 
-export default class SearchHandler implements IPCHandler<'song-search'> {
+export default class SearchHandler implements IPCInvokeHandler<'song-search'> {
   event: 'song-search' = 'song-search'
   // TODO: add method documentation
 

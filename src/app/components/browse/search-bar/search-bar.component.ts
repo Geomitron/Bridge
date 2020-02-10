@@ -1,6 +1,6 @@
 import { Component, AfterViewInit, Output, EventEmitter } from '@angular/core'
-import { ElectronService } from 'src/app/core/services/electron.service'
-import { SearchType, SongResult } from 'src/electron/shared/interfaces/search.interface'
+import { ElectronService } from '../../../core/services/electron.service'
+import { SearchType, SongResult } from '../../../../electron/shared/interfaces/search.interface'
 
 @Component({
   selector: 'app-search-bar',
