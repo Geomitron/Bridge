@@ -17,15 +17,15 @@
   <div id="textPanel" class="content">
     <span class="header">{{selectedVersion?.avTagName}}</span>
     <div class="description">
-      <div>{{charterPlural}} {{selectedVersion?.charters}}</div>
-      <div *ngIf="selectedVersion?.tags">Tags: {{selectedVersion.tags}}</div>
-      <div>Audio Length: {{getSongLength()}}</div>
+      <div><b>{{charterPlural}}</b> {{selectedVersion?.charters}}</div>
+      <div *ngIf="selectedVersion?.tags"><b>Tags:</b> {{selectedVersion.tags}}</div>
+      <div><b>Audio Length:</b> {{getSongLength()}}</div>
       <!-- TODO: add difficulty icons -->
     </div>
 
   </div>
   <div class="ui positive buttons">
-    <div class="ui button" (click)="onDownloadClicked()">Download Latest</div>
+    <div class="ui button" (click)="onDownloadClicked()">Download{{getVersions().length > 1 ? ' Latest' : ''}}</div>
     <div *ngIf="getVersions().length > 1" id="versionDropdown" class="ui floating dropdown icon button">
       <i class="dropdown icon"></i>
       <div class="menu">

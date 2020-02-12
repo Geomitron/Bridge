@@ -19,7 +19,10 @@ export class BrowseComponent {
 
   onResultsUpdated(results: SongResult[]) {
     this.resultTable.results = results
+    this.resultTable.onNewSearch()
+    this.resultTable.checkAll
     this.chartSidebar.selectedVersion = undefined
     this.statusBar.resultCount = results.length
+    this.statusBar.selectedResults = []
   }
 }

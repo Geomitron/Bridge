@@ -41,7 +41,15 @@ export class DownloadService {
   }
 
   onDownloadUpdated(callback: (download: DownloadProgress) => void) {
-    this.downloadUpdatedEmitter.subscribe(_.throttle(callback, 30))
+    const debouncedCallback = _.throttle(callback, 30)
+    this.downloadUpdatedEmitter.subscribe((download: DownloadProgress) => {
+      if (this.downloads.findIndex(oldDownload => oldDownload.versionID == download.versionID) == -1) {
+        // If this is a new download item, don't call debouncedCallback; it may miss adding new versions to the list
+        callback(download)
+      } else {
+        debouncedCallback(download)
+      }
+    })
   }
 
   cancelDownload(versionID: number) {

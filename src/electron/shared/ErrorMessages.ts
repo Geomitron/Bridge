@@ -1,5 +1,5 @@
 import { red } from 'cli-color'
-import { getRelativeFilepath } from './UtilFunctions'
+import { getRelativeFilepath } from './ElectronUtilFunctions'
 
 // TODO: add better error reporting (through the UI)
 

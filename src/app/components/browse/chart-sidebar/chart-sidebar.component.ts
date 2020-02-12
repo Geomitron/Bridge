@@ -4,6 +4,7 @@ import { ElectronService } from '../../../core/services/electron.service'
 import { VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
 import { AlbumArtService } from '../../../core/services/album-art.service'
 import { DownloadService } from '../../../core/services/download.service'
+import { groupBy } from 'src/electron/shared/UtilFunctions'
 
 @Component({
   selector: 'app-chart-sidebar',
@@ -17,7 +18,7 @@ export class ChartSidebarComponent {
   charterPlural: string
   albumArtBuffer: Buffer
 
-  charts: { chartID: number, versions: VersionResult[] }[]
+  charts: VersionResult[][]
 
   constructor(private electronService: ElectronService, private albumArtService: AlbumArtService, private downloadService: DownloadService) { }
 
@@ -26,16 +27,7 @@ export class ChartSidebarComponent {
     const albumArt = this.albumArtService.getImage(result.id)
     const results = await this.electronService.invoke('song-details', result.id)
 
-    // Group results by chartID
-    this.charts = []
-    for (const result of results) {
-      const matchingChart = this.charts.find(chart => chart.chartID == result.chartID)
-      if (matchingChart != undefined) {
-        matchingChart.versions.push(result)
-      } else {
-        this.charts.push({ chartID: result.chartID, versions: [result] })
-      }
-    }
+    this.charts = groupBy(results, 'chartID')
     this.initChartDropdown()
 
     this.albumArtBuffer = await albumArt
@@ -53,12 +45,12 @@ export class ChartSidebarComponent {
    * Initializes the chart dropdown from <this.charts> (or removes it if there's only one chart)
    */
   private async initChartDropdown() {
-    this.switchChart(this.charts[0].chartID)
+    this.switchChart(this.charts[0][0].chartID)
     await new Promise<void>(resolve => setTimeout(() => resolve(), 0)) // Wait for *ngIf to update DOM
     const values = this.charts.map(chart => {
-      const version = chart.versions[0]
+      const version = chart[0]
       return {
-        value: chart.chartID,
+        value: version.chartID,
         text: version.avTagName,
         name: `${version.avTagName} <b>[${version.charters}]</b>`
       }
@@ -74,8 +66,8 @@ export class ChartSidebarComponent {
    * @param chartID The ID of the chart to display.
    */
   private switchChart(chartID: number) {
-    const chart = this.charts.find(chart => chart.chartID == chartID)
-    this.selectedVersion = chart.versions[0]
+    const chart = this.charts.find(chart => chart[0].chartID == chartID)
+    this.selectedVersion = chart[0]
     this.charterPlural = this.selectedVersion.charterIDs.split('&').length == 1 ? 'Charter:' : 'Charters:'
     this.initVersionDropdown()
   }
@@ -88,6 +80,7 @@ export class ChartSidebarComponent {
       return 'Unknown'
     }
     let seconds = Math.round(this.selectedVersion.song_length / 1000)
+    if (seconds < 60) { return `${seconds} second${seconds == 1 ? '' : 's'}` }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
     while (minutes > 59) {
@@ -138,6 +131,6 @@ export class ChartSidebarComponent {
   }
 
   getVersions() {
-    return this.charts.find(chart => chart.chartID == this.selectedVersion.chartID).versions
+    return this.charts.find(chart => chart[0].chartID == this.selectedVersion.chartID)
   }
 }

@@ -5,8 +5,8 @@
   <thead>
     <!-- NOTE: it would be nice to make this header sticky, but Fomantic-UI doesn't currently support that -->
     <tr>
-      <th appCheckbox (checked)="checkAll($event)" id="checkboxColumn" class="collapsing">
-        <div class="ui checkbox">
+      <th class="collapsing" id="checkboxColumn">
+        <div class="ui checkbox" id="checkbox" #checkboxColumn appCheckbox (checked)="checkAll($event)">
           <input type="checkbox">
         </div>
       </th>

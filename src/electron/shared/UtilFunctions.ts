@@ -1,17 +1,6 @@
 let sanitize = require('sanitize-filename')
 
 /**
- * @param absoluteFilepath The absolute filepath to a folder
- * @returns The relative filepath from the scanned folder to <absoluteFilepath>
- */
-export function getRelativeFilepath(absoluteFilepath: string) {
-  // TODO: figure out how these functions should use <settings> (like an async initialization script that
-  //          loads everything and connects to the database, etc...)
-  // return basename(scanSettings.songsFolderPath) + absoluteFilepath.substring(scanSettings.songsFolderPath.length)
-  return absoluteFilepath
-}
-
-/**
  * @returns A random UUID
  */
 export function generateUUID() { // Public Domain/MIT
@@ -53,4 +42,23 @@ export function sanitizeFilename(filename: string): string {
  */
 export function interpolate(val: number, fromA: number, fromB: number, toA: number, toB: number) {
   return ((val - fromA) / (fromB - fromA)) * (toB - toA) + toA
+}
+
+/**
+ * Splits <objectList> into multiple arrays, grouping by matching <key> values.
+ * @param objectList A list of objects.
+ * @param key A key from the list of objects.
+ */
+export function groupBy<T>(objectList: T[], key: keyof T) {
+  const results: T[][] = []
+  for (const object of objectList) {
+    const matchingGroup = results.find(result => result[0][key] == object[key])
+    if (matchingGroup != undefined) {
+      matchingGroup.push(object)
+    } else {
+      results.push([object])
+    }
+  }
+
+  return results
 }

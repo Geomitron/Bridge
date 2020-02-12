@@ -11,6 +11,22 @@
     </div>
   </a>
 
+  <div id="selectedModal" class="ui modal">
+    <div class="header">Some selected songs have more than one chart!</div>
+    <div class="scrolling content">
+      <div class="ui segments">
+        <div class="ui segment" *ngFor="let chartGroup of chartGroups">
+          <p *ngFor="let chart of chartGroup">{{chart.avTagName}} <b>[{{chart.charters}}]</b></p>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="ui approve button" (click)="downloadAllCharts()">Download all charts for each song</div>
+      <div class="ui cancel button" (click)="deselectSongsWithMultipleCharts()">Deselect these songs</div>
+      <div class="ui cancel button">Cancel</div>
+    </div>
+  </div>
+
   <div id="downloadsModal" class="ui modal">
     <i class="inside close icon"></i>
     <div class="header">Downloads</div>

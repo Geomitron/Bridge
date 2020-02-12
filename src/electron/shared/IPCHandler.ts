@@ -7,6 +7,7 @@ import { Download, NewDownload, DownloadProgress } from './interfaces/download.i
 import { DownloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
 import InitSettingsHandler from '../ipc/InitSettingsHandler.ipc'
+import BatchSongDetailsHandler from '../ipc/BatchSongDetailsHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -21,6 +22,7 @@ export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[
     new InitSettingsHandler(),
     new SearchHandler(),
     new SongDetailsHandler(),
+    new BatchSongDetailsHandler(),
     new AlbumArtHandler()
   ]
 }
@@ -40,6 +42,10 @@ export type IPCInvokeEvents = {
   }
   'song-details': {
     input: SongResult['id']
+    output: VersionResult[]
+  }
+  'batch-song-details': {
+    input: number[]
     output: VersionResult[]
   }
 }

@@ -15,6 +15,10 @@ export class ResultTableRowComponent implements AfterViewInit {
 
   constructor() { }
 
+  get songID() {
+    return this.result.id
+  }
+
   ngAfterViewInit() {
     $(this.checkbox.nativeElement).checkbox({
       onChecked: () => {
