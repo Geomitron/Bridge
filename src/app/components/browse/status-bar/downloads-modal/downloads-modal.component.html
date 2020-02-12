@@ -20,7 +20,10 @@
         Download Anyway
       </button>
       <div class="header">{{download.header}}</div>
-      <div class="description">{{download.description}}</div>
+      <div *ngIf="download.type != 'done'" class="description">{{download.description}}</div>
+      <div *ngIf="download.type == 'done'" class="description">
+        <a (click)="openFolder(download.description)">{{download.description}}</a>
+      </div>
       <div appProgressBar [percent]="download.percent" class="ui progress">
         <div class="bar">
           <div class="progress"></div>

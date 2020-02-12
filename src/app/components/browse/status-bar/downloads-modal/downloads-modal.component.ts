@@ -1,6 +1,7 @@
 import { Component, ChangeDetectorRef } from '@angular/core'
 import { DownloadProgress } from '../../../../../electron/shared/interfaces/download.interface'
 import { DownloadService } from '../../../../core/services/download.service'
+import { ElectronService } from 'src/app/core/services/electron.service'
 
 @Component({
   selector: 'app-downloads-modal',
@@ -11,7 +12,7 @@ export class DownloadsModalComponent {
 
   downloads: DownloadProgress[] = []
 
-  constructor(private downloadService: DownloadService, ref: ChangeDetectorRef) {
+  constructor(private electronService: ElectronService, private downloadService: DownloadService, ref: ChangeDetectorRef) {
     downloadService.onDownloadUpdated(download => {
       const index = this.downloads.findIndex(thisDownload => thisDownload.versionID == download.versionID)
       if (index == -1) {
@@ -45,8 +46,13 @@ export class DownloadsModalComponent {
   getBackgroundColor(download: DownloadProgress) {
     switch(download.type) {
       case 'good': return 'unset'
+      case 'done': return 'unset'
       case 'warning': return 'yellow'
       case 'error': return 'indianred'
     }
+  }
+
+  openFolder(filepath: string) {
+    this.electronService.sendIPC('open-folder', filepath)
   }
 }

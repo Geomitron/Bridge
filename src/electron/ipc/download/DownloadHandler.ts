@@ -161,7 +161,7 @@ export class DownloadHandler implements IPCEmitHandler<'download'> {
       download.header = `Download complete.`
       download.description = filepath
       download.percent = 100
-      download.type = 'good'
+      download.type = 'done'
       emitIPCEvent('download-updated', download)
     })
 

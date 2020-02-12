@@ -26,6 +26,7 @@ export class DownloadService {
   }
 
   addDownload(versionID: number, newDownload: NewDownload) {
+    if (this.downloads.findIndex(download => download.versionID == versionID) != -1) { return } // Don't download something twice
     this.electronService.receiveIPC('download-updated', result => {
       this.downloadUpdatedEmitter.emit(result)
 

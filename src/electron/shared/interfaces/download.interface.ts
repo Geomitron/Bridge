@@ -23,5 +23,5 @@ export interface DownloadProgress {
   header: string
   description: string
   percent: number
-  type: 'good' | 'warning' | 'error' | 'cancel'
+  type: 'good' | 'warning' | 'error' | 'cancel' | 'done'
 }
