@@ -128,8 +128,8 @@ export class ChartSidebarComponent {
   }
 
   onDownloadClicked() {
-    this.downloadService.addDownload({
-      versionID: this.selectedVersion.versionID,
+    this.downloadService.addDownload(
+      this.selectedVersion.versionID, {
       avTagName: this.selectedVersion.avTagName,
       artist: this.songResult.artist,
       charter: this.selectedVersion.charters,

@@ -1,9 +1,24 @@
 <div class="ui cards">
-  <div *ngFor="let download of downloads; trackBy:trackByVersionID" class="card">
+  <div *ngFor="let download of downloads; trackBy:trackByVersionID" class="card" [style.background-color]="getBackgroundColor(download)">
     <div class="content">
+      <i class="inside right floated close icon" (click)="cancelDownload(download.versionID)"></i>
       <div class="header">{{download.title}}</div>
     </div>
     <div class="content">
+      <button
+        *ngIf="download.type == 'error'"
+        class="ui right floated labeled icon button"
+        (click)="retryDownload(download.versionID)">
+        <i class="redo icon"></i>
+        Retry
+      </button>
+      <button
+        *ngIf="download.type == 'warning'"
+        class="ui right floated labeled icon button"
+        (click)="continueDownload(download.versionID)">
+        <i class="exclamation triangle icon"></i>
+        Download Anyway
+      </button>
       <div class="header">{{download.header}}</div>
       <div class="description">{{download.description}}</div>
       <div appProgressBar [percent]="download.percent" class="ui progress">

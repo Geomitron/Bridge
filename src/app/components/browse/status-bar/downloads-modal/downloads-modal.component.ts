@@ -1,5 +1,5 @@
 import { Component, ChangeDetectorRef } from '@angular/core'
-import { Download } from '../../../../../electron/shared/interfaces/download.interface'
+import { DownloadProgress } from '../../../../../electron/shared/interfaces/download.interface'
 import { DownloadService } from '../../../../core/services/download.service'
 
 @Component({
@@ -9,13 +9,15 @@ import { DownloadService } from '../../../../core/services/download.service'
 })
 export class DownloadsModalComponent {
 
-  downloads: Download[] = []
+  downloads: DownloadProgress[] = []
 
-  constructor(downloadService: DownloadService, ref: ChangeDetectorRef) {
+  constructor(private downloadService: DownloadService, ref: ChangeDetectorRef) {
     downloadService.onDownloadUpdated(download => {
       const index = this.downloads.findIndex(thisDownload => thisDownload.versionID == download.versionID)
       if (index == -1) {
         this.downloads.push(download)
+      } else if (download.type == 'cancel') {
+        this.downloads.splice(index, 1)
       } else {
         this.downloads[index] = download
       }
@@ -23,7 +25,28 @@ export class DownloadsModalComponent {
     })
   }
 
-  trackByVersionID(_index: number, item: Download) {
+  trackByVersionID(_index: number, item: DownloadProgress) {
     return item.versionID
+  }
+
+  cancelDownload(versionID: number) {
+    this.downloadService.cancelDownload(versionID)
+  }
+
+  retryDownload(versionID: number) {
+    this.downloadService.retryDownload(versionID)
+  }
+
+  continueDownload(versionID: number) {
+    // TODO: test this
+    this.downloadService.continueDownload(versionID)
+  }
+
+  getBackgroundColor(download: DownloadProgress) {
+    switch(download.type) {
+      case 'good': return 'unset'
+      case 'warning': return 'yellow'
+      case 'error': return 'indianred'
+    }
   }
 }

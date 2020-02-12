@@ -3,8 +3,8 @@ import { VersionResult, AlbumArtResult } from './interfaces/songDetails.interfac
 import SearchHandler from '../ipc/SearchHandler.ipc'
 import SongDetailsHandler from '../ipc/SongDetailsHandler.ipc'
 import AlbumArtHandler from '../ipc/AlbumArtHandler.ipc'
-import { Download, NewDownload } from './interfaces/download.interface'
-import { AddDownloadHandler } from '../ipc/download/AddDownloadHandler'
+import { Download, NewDownload, DownloadProgress } from './interfaces/download.interface'
+import { DownloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
 import InitSettingsHandler from '../ipc/InitSettingsHandler.ipc'
 
@@ -51,13 +51,13 @@ export interface IPCInvokeHandler<E extends keyof IPCInvokeEvents> {
 
 export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[]{
   return [
-    new AddDownloadHandler()
+    new DownloadHandler()
   ]
 }
 
 export type IPCEmitEvents = {
-  'add-download': NewDownload
-  'download-updated': Download
+  'download': Download
+  'download-updated': DownloadProgress
 }
 
 export interface IPCEmitHandler<E extends keyof IPCEmitEvents> {

@@ -19,12 +19,13 @@ export type DownloadError = { header: string, body: string }
 
 export class FileDownloader {
   private RATE_LIMIT_DELAY: number
-  private readonly RETRY_MAX = 3
+  private readonly RETRY_MAX = 2
   private static waitTime = 0
   private static clock: NodeJS.Timer
 
   private callbacks = {} as Callbacks
   private retryCount: number
+  private wasCanceled = false
 
   constructor(private url: string, private destinationFolder: string, private expectedHash?: string) {
     if (FileDownloader.clock == undefined) {
@@ -60,6 +61,7 @@ export class FileDownloader {
     }
     this.callbacks.wait(waitTime)
     const clock = setInterval(() => {
+      if (this.wasCanceled) { clearInterval(clock); return } // CANCEL POINT
       waitTime--
       this.callbacks.waitProgress(waitTime)
       if (waitTime <= 0) {
@@ -75,10 +77,12 @@ export class FileDownloader {
    * @param cookieHeader the "cookie=" header to include this request.
    */
   private requestDownload(cookieHeader?: string) {
+    if (this.wasCanceled) { return } // CANCEL POINT
     this.callbacks.request()
     let uuid = generateUUID()
     const req = needle.get(this.url, {
       follow_max: 10,
+      open_timeout: 5000,
       headers: Object.assign({
         'User-Agent': 'PostmanRuntime/7.22.0',
         'Referer': this.url,
@@ -99,12 +103,12 @@ export class FileDownloader {
       }
     })
 
-    req.on('err', (err) => {
-      // TODO: this is called on timeout; if there are other cases where this can fail, they should be printed correctly
-      // this.callbacks.error({ header: 'Error', description: `${err}` }, () => this.beginDownload())
+    req.on('err', (err: Error) => {
+      this.callbacks.error({ header: 'Connection Error', body: `${err.name}: ${err.message}` }, () => this.beginDownload())
     })
 
     req.on('header', (statusCode, headers: Headers) => {
+      if (this.wasCanceled) { return } // CANCEL POINT
       if (statusCode != 200) {
         this.callbacks.error({ header: 'Connection failed', body: `Server returned status code: ${statusCode}` }, () => this.beginDownload())
         return
@@ -117,10 +121,10 @@ export class FileDownloader {
         const fileName = this.getDownloadFileName(headers)
         const downloadHash = this.getDownloadHash(headers)
         if (this.expectedHash !== undefined && downloadHash !== this.expectedHash) {
+          req.pause()
           this.callbacks.warning(() => {
-            //TODO: check if this will actually work (or will the data get lost in the time before the button is clicked?)
-            // Maybe show the message at the end, and ask if they want to keep it.
             this.handleDownloadResponse(req, fileName, headers['content-length'])
+            req.resume()
           })
         } else {
           this.handleDownloadResponse(req, fileName, headers['content-length'])
@@ -219,5 +223,9 @@ export class FileDownloader {
       // GDrive specific jazz
       return headers['x-goog-hash']
     }
+  }
+
+  cancelDownload() {
+    this.wasCanceled = true
   }
 }

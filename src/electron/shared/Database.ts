@@ -37,6 +37,7 @@ export default class Database {
       }
     })
 
+    // TODO: make this error message more user-friendly (retry option?)
     return new Promise<void>((resolve, reject) => {
       this.conn.connect(err => {
         if (err) {

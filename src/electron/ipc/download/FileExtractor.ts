@@ -29,6 +29,7 @@ export class FileExtractor {
 
   private callbacks = {} as Callbacks
   private libraryFolder: string
+  private wasCanceled = false
   constructor(private sourceFolder: string, private isArchive: boolean, private destinationFolderName: string) { }
 
   /**
@@ -58,6 +59,7 @@ export class FileExtractor {
    * @param filename The name of the archive file.
    */
   private extract(filename: string) {
+    if (this.wasCanceled) { return } // CANCEL POINT
     this.callbacks.extract(filename)
     const source = join(this.sourceFolder, filename)
 
@@ -93,6 +95,7 @@ export class FileExtractor {
    * Deletes the archive at <archiveFilepath>, then transfers the extracted chart to <this.libraryFolder>.
    */
   private async transfer(archiveFilepath?: string) {
+    if (this.wasCanceled) { return } // CANCEL POINT
     try {
       
       // Create destiniation folder if it doesn't exist
@@ -117,6 +120,8 @@ export class FileExtractor {
         files = await readdir(this.sourceFolder)
       }
 
+      if (this.wasCanceled) { return } // CANCEL POINT
+
       // Copy the files from the temporary directory to the destination
       for (const file of files) {
         await copyFile(join(this.sourceFolder, file), join(destinationFolder, file))
@@ -132,5 +137,9 @@ export class FileExtractor {
     } catch (e) {
       this.callbacks.error({ header: 'Transfer Failed', body: `Unable to transfer downloaded files to the library folder: ${e.name}` }, undefined)
     }
+  }
+
+  cancelExtract() {
+    this.wasCanceled = true
   }
 }

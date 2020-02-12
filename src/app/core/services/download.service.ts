@@ -1,6 +1,6 @@
 import { Injectable, EventEmitter } from '@angular/core'
 import { ElectronService } from './electron.service'
-import { Download, NewDownload } from '../../../electron/shared/interfaces/download.interface'
+import { NewDownload, DownloadProgress } from '../../../electron/shared/interfaces/download.interface'
 import * as _ from 'underscore'
 
 @Injectable({
@@ -8,12 +8,24 @@ import * as _ from 'underscore'
 })
 export class DownloadService {
 
-  private downloadUpdatedEmitter = new EventEmitter<Download>()
-  private downloads: Download[] = []
+  private downloadUpdatedEmitter = new EventEmitter<DownloadProgress>()
+  private downloads: DownloadProgress[] = []
 
   constructor(private electronService: ElectronService) { }
 
-  addDownload(newDownload: NewDownload) {
+  get downloadCount() {
+    return this.downloads.length
+  }
+
+  get totalPercent() {
+    let total = 0
+    for (const download of this.downloads) {
+      total += download.percent
+    }
+    return total / this.downloads.length
+  }
+
+  addDownload(versionID: number, newDownload: NewDownload) {
     this.electronService.receiveIPC('download-updated', result => {
       this.downloadUpdatedEmitter.emit(result)
 
@@ -25,28 +37,26 @@ export class DownloadService {
         this.downloads[thisDownloadIndex] = result
       }
     })
-    this.electronService.sendIPC('add-download', newDownload)
+    this.electronService.sendIPC('download', { action: 'add', versionID, data: newDownload })
   }
 
-  onDownloadUpdated(callback: (download: Download) => void) {
+  onDownloadUpdated(callback: (download: DownloadProgress) => void) {
     this.downloadUpdatedEmitter.subscribe(_.throttle(callback, 30))
   }
 
-  get downloadCount() {
-    return this.downloads.length
-  }
-
-  removeDownload(versionID: number) {
+  cancelDownload(versionID: number) {
     const removedDownload = this.downloads.find(download => download.versionID == versionID)
     this.downloads = this.downloads.filter(download => download.versionID != versionID)
+    removedDownload.type = 'cancel'
     this.downloadUpdatedEmitter.emit(removedDownload)
+    this.electronService.sendIPC('download', { action: 'cancel', versionID })
   }
 
-  get totalPercent() {
-    let total = 0
-    for (const download of this.downloads) {
-      total += download.percent
-    }
-    return total / this.downloads.length
+  retryDownload(versionID: number) {
+    this.electronService.sendIPC('download', { action: 'retry', versionID })
+  }
+
+  continueDownload(versionID: number) {
+    this.electronService.sendIPC('download', { action: 'continue', versionID })
   }
 }
