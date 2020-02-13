@@ -3,6 +3,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as needle from 'needle'
 import InitSettingsHandler from '../InitSettingsHandler.ipc'
+import { Settings } from 'src/electron/shared/Settings'
+
 type EventCallback = {
   'wait': (waitTime: number) => void
   'waitProgress': (secondsRemaining: number) => void
@@ -20,17 +22,39 @@ export type DownloadError = { header: string, body: string }
 export class FileDownloader {
   private RATE_LIMIT_DELAY: number
   private readonly RETRY_MAX = 2
-  private static waitTime = 0
-  private static clock: NodeJS.Timer
+  private static fileQueue: { // Stores the overall order that files should be downloaded
+    destinationFolder: string
+    fileCount: number
+    clock?: () => void
+  }[] = []
+  private static waitTime: number
+  private static settings: Settings
 
   private callbacks = {} as Callbacks
   private retryCount: number
   private wasCanceled = false
 
-  constructor(private url: string, private destinationFolder: string, private expectedHash?: string) {
-    if (FileDownloader.clock == undefined) {
-      FileDownloader.clock = setInterval(() => FileDownloader.waitTime = Math.max(0, FileDownloader.waitTime - 1), 1000)
+  private constructor(private url: string, private destinationFolder: string, private numFiles: number, private expectedHash?: string) { }
+  static async asyncConstructor(url: string, destinationFolder: string, numFiles: number, expectedHash?: string) {
+    const downloader = new FileDownloader(url, destinationFolder, numFiles, expectedHash)
+    if (FileDownloader.settings == undefined) {
+      await downloader.firstInit()
     }
+    return downloader
+  }
+
+  async firstInit() {
+    FileDownloader.settings = await InitSettingsHandler.getSettings()
+    FileDownloader.waitTime = 0
+    setInterval(() => {
+      if (FileDownloader.waitTime > 0) {
+        FileDownloader.waitTime--
+      }
+      FileDownloader.fileQueue.forEach(download => { if (download.clock != undefined) download.clock() })
+      if (FileDownloader.waitTime == 0 && FileDownloader.fileQueue.length != 0) {
+        FileDownloader.waitTime = this.RATE_LIMIT_DELAY
+      }
+    }, 1000)
   }
 
   /**
@@ -46,30 +70,69 @@ export class FileDownloader {
    * Wait RATE_LIMIT_DELAY seconds between each download,
    * then download the file.
    */
-  async beginDownload() {
-    const settings = await InitSettingsHandler.getSettings()
-    if (settings.libraryPath == undefined) {
-      this.callbacks.error({header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.'}, () => this.beginDownload())
+  beginDownload() {
+    // Check that the library folder has been specified
+    if (FileDownloader.settings.libraryPath == undefined) {
+      this.callbacks.error({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }, () => this.beginDownload())
       return
     }
-    this.RATE_LIMIT_DELAY = (await InitSettingsHandler.getSettings()).rateLimitDelay
-    let waitTime = FileDownloader.waitTime
-    if (this.url.toLocaleLowerCase().includes('google')) {
-      FileDownloader.waitTime += this.RATE_LIMIT_DELAY
-    } else {
-      waitTime = 0 // Don't rate limit if not downloading from Google
+
+    // Skip the fileQueue if the file is not from Google
+    if (!this.url.toLocaleLowerCase().includes('google')) {
+      this.requestDownload()
+      return
     }
-    this.callbacks.wait(waitTime)
-    const clock = setInterval(() => {
-      if (this.wasCanceled) { clearInterval(clock); return } // CANCEL POINT
-      waitTime--
-      this.callbacks.waitProgress(waitTime)
-      if (waitTime <= 0) {
-        this.retryCount = 0
+
+    this.initWaitTime()
+    let queueWaitTime = this.getQueueWaitTime()
+    this.callbacks.wait(queueWaitTime + FileDownloader.waitTime)
+    if (queueWaitTime + FileDownloader.waitTime == 0) {
+      FileDownloader.waitTime = this.RATE_LIMIT_DELAY
+      this.requestDownload()
+      return
+    }
+
+    const fileQueue = FileDownloader.fileQueue.find(queue => queue.destinationFolder == this.destinationFolder)
+    fileQueue.clock = () => {
+      if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
+      queueWaitTime = this.getQueueWaitTime()
+      if (queueWaitTime + FileDownloader.waitTime == 0) {
         this.requestDownload()
-        clearInterval(clock)
+        fileQueue.clock = undefined
       }
-    }, 1000)
+      this.callbacks.waitProgress(queueWaitTime + FileDownloader.waitTime)
+    }
+  }
+
+  private initWaitTime() {
+    this.RATE_LIMIT_DELAY = FileDownloader.settings.rateLimitDelay
+    this.retryCount = 0
+    const entry = FileDownloader.fileQueue.find(entry => entry.destinationFolder == this.destinationFolder)
+    if (entry == undefined) {
+      // Note: assumes that either all the chart files are from Google, or none of the chart files are from Google
+      FileDownloader.fileQueue.push({ destinationFolder: this.destinationFolder, fileCount: this.numFiles })
+    }
+  }
+
+  /**
+   * Returns the number of files in front of this file in the fileQueue
+   */
+  private getQueueWaitTime() {
+    let fileCount = 0
+    for (let entry of FileDownloader.fileQueue) {
+      if (entry.destinationFolder != this.destinationFolder) {
+        fileCount += entry.fileCount
+      } else {
+        break
+      }
+    }
+
+    return fileCount * this.RATE_LIMIT_DELAY
+  }
+
+  private removeFromQueue() {
+    const index = FileDownloader.fileQueue.findIndex(entry => entry.destinationFolder == this.destinationFolder)
+    FileDownloader.fileQueue.splice(index, 1)
   }
 
   /**
@@ -77,7 +140,7 @@ export class FileDownloader {
    * @param cookieHeader the "cookie=" header to include this request.
    */
   private requestDownload(cookieHeader?: string) {
-    if (this.wasCanceled) { return } // CANCEL POINT
+    if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
     this.callbacks.request()
     let uuid = generateUUID()
     const req = needle.get(this.url, {
@@ -108,7 +171,7 @@ export class FileDownloader {
     })
 
     req.on('header', (statusCode, headers: Headers) => {
-      if (this.wasCanceled) { return } // CANCEL POINT
+      if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
       if (statusCode != 200) {
         this.callbacks.error({ header: 'Connection failed', body: `Server returned status code: ${statusCode}` }, () => this.beginDownload())
         return
@@ -185,6 +248,11 @@ export class FileDownloader {
 
     req.on('end', () => {
       this.callbacks.complete()
+      const index = FileDownloader.fileQueue.findIndex(entry => entry.destinationFolder == this.destinationFolder)
+      FileDownloader.fileQueue[index].fileCount--
+      if (FileDownloader.fileQueue[index].fileCount == 0) {
+        FileDownloader.fileQueue.splice(index, 1)
+      }
     })
   }
 

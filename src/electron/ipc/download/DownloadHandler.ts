@@ -47,23 +47,23 @@ export class DownloadHandler implements IPCEmitHandler<'download'> {
     const individualFileProgressPortion = 80 / fileKeys.length
     for (let i = 0; i < fileKeys.length; i++) {
       const typeHash = createHash('md5').update(data.data.links[fileKeys[i]]).digest('hex')
-      const downloader = new FileDownloader(data.data.links[fileKeys[i]], chartPath, data.data.links[typeHash])
+      const downloader = await FileDownloader.asyncConstructor(data.data.links[fileKeys[i]], chartPath, fileKeys.length, data.data.links[typeHash])
       this.downloadCallbacks[data.versionID].cancel = () => downloader.cancelDownload() // Make cancel button cancel this download
       let fileProgress = 0
 
-      let waitTime: number
-      downloader.on('wait', (_waitTime) => {
+      let initialWaitTime: number
+      downloader.on('wait', (waitTime) => {
         download.header = `[${fileKeys[i]}] (file ${i + 1}/${fileKeys.length})`
-        download.description = `Waiting for Google rate limit... (${_waitTime}s)`
-        download.type = 'good'
-        waitTime = _waitTime
+        download.description = `Waiting for Google rate limit... (${waitTime}s)`
+        download.type = 'wait'
+        initialWaitTime = waitTime
       })
 
       downloader.on('waitProgress', (secondsRemaining) => {
         download.description = `Waiting for Google rate limit... (${secondsRemaining}s)`
-        fileProgress = interpolate(secondsRemaining, waitTime, 0, 0, individualFileProgressPortion / 2)
+        fileProgress = interpolate(secondsRemaining, initialWaitTime, 0, 0, individualFileProgressPortion / 2)
         download.percent = allFilesProgress + fileProgress
-        download.type = 'good'
+        download.type = 'wait'
         emitIPCEvent('download-updated', download)
       })
 

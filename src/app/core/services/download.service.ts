@@ -47,6 +47,8 @@ export class DownloadService {
       if (this.downloads.findIndex(oldDownload => oldDownload.versionID == download.versionID) == -1) {
         // If this is a new download item, don't call debouncedCallback; it may miss adding new versions to the list
         callback(download)
+      } else if (download.type == 'wait') {
+        callback(download) // Many wait events can be recieved at once
       } else {
         debouncedCallback(download)
       }
