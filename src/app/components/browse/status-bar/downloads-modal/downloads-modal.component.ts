@@ -53,6 +53,6 @@ export class DownloadsModalComponent {
   }
 
   openFolder(filepath: string) {
-    this.electronService.sendIPC('open-folder', filepath)
+    this.electronService.showFolder(filepath)
   }
 }

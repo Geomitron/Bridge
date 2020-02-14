@@ -8,7 +8,7 @@ import { DownloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
 import InitSettingsHandler from '../ipc/InitSettingsHandler.ipc'
 import BatchSongDetailsHandler from '../ipc/BatchSongDetailsHandler.ipc'
-import OpenFolderHandler from '../ipc/OpenFolderHandler.ipc'
+import SaveSettingsHandler from '../ipc/SaveSettingsHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -59,14 +59,14 @@ export interface IPCInvokeHandler<E extends keyof IPCInvokeEvents> {
 export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[]{
   return [
     new DownloadHandler(),
-    new OpenFolderHandler()
+    new SaveSettingsHandler()
   ]
 }
 
 export type IPCEmitEvents = {
   'download': Download
   'download-updated': DownloadProgress
-  'open-folder': string
+  'update-settings': Settings
 }
 
 export interface IPCEmitHandler<E extends keyof IPCEmitEvents> {

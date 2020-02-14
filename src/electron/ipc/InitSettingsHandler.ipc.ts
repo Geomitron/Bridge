@@ -1,13 +1,13 @@
-import { exists as _exists, mkdir as _mkdir, readFile as _readFile, writeFile as _writeFile } from 'fs'
+import { exists as _exists, mkdir as _mkdir, readFile as _readFile } from 'fs'
 import { dataPath, tempPath, themesPath, settingsPath } from '../shared/Paths'
 import { promisify } from 'util'
 import { IPCInvokeHandler } from '../shared/IPCHandler'
 import { defaultSettings, Settings } from '../shared/Settings'
+import SaveSettingsHandler from './SaveSettingsHandler.ipc'
 
 const exists = promisify(_exists)
 const mkdir = promisify(_mkdir)
 const readFile = promisify(_readFile)
-const writeFile = promisify(_writeFile)
 
 export default class InitSettingsHandler implements IPCInvokeHandler<'init-settings'> {
   event: 'init-settings' = 'init-settings'
@@ -38,8 +38,7 @@ export default class InitSettingsHandler implements IPCInvokeHandler<'init-setti
       if (await exists(settingsPath)) {
         return JSON.parse(await readFile(settingsPath, 'utf8'))
       } else {
-        const newSettings = JSON.stringify(defaultSettings, undefined, 2)
-        await writeFile(settingsPath, newSettings, 'utf8')
+        await SaveSettingsHandler.saveSettings(defaultSettings)
         return defaultSettings
       }
     } catch (e) {

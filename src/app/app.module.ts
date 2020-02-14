@@ -12,7 +12,8 @@ import { ChartSidebarComponent } from './components/browse/chart-sidebar/chart-s
 import { ResultTableRowComponent } from './components/browse/result-table/result-table-row/result-table-row.component';
 import { DownloadsModalComponent } from './components/browse/status-bar/downloads-modal/downloads-modal.component';
 import { ProgressBarDirective } from './core/directives/progress-bar.directive';
-import { CheckboxDirective } from './core/directives/checkbox.directive'
+import { CheckboxDirective } from './core/directives/checkbox.directive';
+import { SettingsComponent } from './components/settings/settings.component'
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import { CheckboxDirective } from './core/directives/checkbox.directive'
     ResultTableRowComponent,
     DownloadsModalComponent,
     ProgressBarDirective,
-    CheckboxDirective
+    CheckboxDirective,
+    SettingsComponent
   ],
   imports: [
     BrowserModule,

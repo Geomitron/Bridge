@@ -1,0 +1,29 @@
+<h3 class="ui header">Paths</h3>
+<div class="ui form">
+  <div class="field">
+    <label>Chart library directory</label>
+    <div class="ui action input">
+      <input [value]="settingsService.libraryDirectory" class="default-cursor" readonly type="text"
+        placeholder="No directory selected!">
+      <button *ngIf="settingsService.libraryDirectory != undefined" (click)="openLibraryDirectory()"
+        class="ui button">Open Folder</button>
+      <button (click)="getLibraryDirectory()" class="ui button teal">Choose</button>
+    </div>
+  </div>
+</div>
+
+<h3 class="ui header">Cache</h3>
+<div>Current Cache Size: <div class="ui label" style="margin-left: 1em;">{{cacheSize}}</div>
+</div>
+<button style="margin-top: 0.5em;" (click)="clearCache()" class="ui button">Clear Cache</button>
+
+<h3 class="ui header">Theme</h3>
+<div #themeDropdown class="ui selection dropdown mr">
+  <input type="hidden" name="sort" [value]="settingsService.theme">
+  <i class="dropdown icon"></i>
+  <div class="default text">Default</div>
+  <div class="menu">
+    <div class="item" [attr.data-value]="i" *ngFor="let theme of settingsService.builtinThemes; let i = index">{{theme}}
+    </div>
+  </div>
+</div>

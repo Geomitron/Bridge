@@ -11,14 +11,14 @@ export class ToolbarComponent {
   constructor(private electronService: ElectronService) { }
 
   minimize() {
-    this.electronService.remote.getCurrentWindow().minimize()
+    this.electronService.currentWindow.minimize()
   }
 
   maximize() {
-    this.electronService.remote.getCurrentWindow().maximize()
+    this.electronService.currentWindow.maximize()
   }
 
   close() {
-    this.electronService.remote.app.quit()
+    this.electronService.quit()
   }
 }
