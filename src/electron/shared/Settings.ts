@@ -7,5 +7,5 @@ export interface Settings {
 export const defaultSettings: Settings = {
   rateLimitDelay: 31,
   theme: 'Default',
-  libraryPath: 'C:/Users/bouviejs/Desktop/Bridge Notes/TestLibrary' // TODO: default should be undefined
+  libraryPath: undefined
 }

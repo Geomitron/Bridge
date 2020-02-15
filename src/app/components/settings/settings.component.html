@@ -3,8 +3,8 @@
   <div class="field">
     <label>Chart library directory</label>
     <div class="ui action input">
-      <input [value]="settingsService.libraryDirectory" class="default-cursor" readonly type="text"
-        placeholder="No directory selected!">
+      <input [value]="settingsService.libraryDirectory || 'No folder selected'" class="default-cursor" readonly
+        type="text" placeholder="No directory selected!">
       <button *ngIf="settingsService.libraryDirectory != undefined" (click)="openLibraryDirectory()"
         class="ui button">Open Folder</button>
       <button (click)="getLibraryDirectory()" class="ui button teal">Choose</button>
@@ -17,6 +17,24 @@
 </div>
 <button style="margin-top: 0.5em;" (click)="clearCache()" class="ui button">Clear Cache</button>
 
+<h3 class="ui header">Downloads</h3>
+<div class="ui form">
+  <div class="field">
+    <label>Google rate limit delay</label>
+    <div id="rateLimitInput" class="ui right labeled input">
+      <input type="number" [value]="settingsService.rateLimitDelay" (input)="changeRateLimit($event)">
+      <div class="ui basic label">
+        sec
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="settingsService.rateLimitDelay < 30" class="ui warning message">
+  <i class="exclamation circle icon"></i>
+  <b>Warning:</b> downloading files from Google with a delay less than about 30 seconds will eventually cause Google to
+  refuse download requests from this program for a few hours. If you can find a way around this limitation, contact the devs.
+</div>
+
 <h3 class="ui header">Theme</h3>
 <div #themeDropdown class="ui selection dropdown mr">
   <input type="hidden" name="sort" [value]="settingsService.theme">
@@ -26,4 +44,11 @@
     <div class="item" [attr.data-value]="i" *ngFor="let theme of settingsService.builtinThemes; let i = index">{{theme}}
     </div>
   </div>
+</div>
+
+<div class="bottom">
+  <button class="ui basic icon button" data-tooltip="Toggle developer tools" data-position="top right"
+    (click)="toggleDevTools()">
+    <i class="cog icon"></i>
+  </button>
 </div>

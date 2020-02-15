@@ -62,4 +62,12 @@ export class SettingsService {
     this.changeTheme(newValue)
     this.saveSettings()
   }
+
+  get rateLimitDelay() {
+    return this.settings == undefined ? NaN : this.settings.rateLimitDelay
+  }
+  set rateLimitDelay(delay: number) {
+    this.settings.rateLimitDelay = delay
+    this.saveSettings()
+  }
 }

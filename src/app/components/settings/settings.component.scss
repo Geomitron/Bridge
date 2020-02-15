@@ -8,3 +8,13 @@
   cursor: default;
   pointer-events: none;
 }
+
+#rateLimitInput {
+  width: unset !important;
+}
+
+.bottom {
+  position: absolute;
+  bottom: 2em;
+  right: 2em;
+}

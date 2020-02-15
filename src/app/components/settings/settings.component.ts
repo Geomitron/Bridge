@@ -12,7 +12,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
   cacheSize = 'Calculating...'
 
-  constructor(private settingsService: SettingsService, private electronService: ElectronService) { }
+  constructor(public settingsService: SettingsService, private electronService: ElectronService) { }
 
   async ngOnInit() {
     const cacheSize = await this.settingsService.getCacheSize()
@@ -48,5 +48,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
   async openLibraryDirectory() {
     this.electronService.openFolder(this.settingsService.libraryDirectory)
+  }
+
+  changeRateLimit(event: Event) {
+    const inputElement = event.srcElement as HTMLInputElement
+    this.settingsService.rateLimitDelay = Number(inputElement.value)
+  }
+
+  toggleDevTools() {
+    const toolsOpened = this.electronService.currentWindow.webContents.isDevToolsOpened()
+
+    if (toolsOpened) {
+      this.electronService.currentWindow.webContents.closeDevTools()
+    } else {
+      this.electronService.currentWindow.webContents.openDevTools()
+    }
   }
 }
