@@ -80,7 +80,9 @@ export class ChartSidebarComponent {
       return 'Unknown'
     }
     let seconds = Math.round(this.selectedVersion.song_length / 1000)
-    if (seconds < 60) { return `${seconds} second${seconds == 1 ? '' : 's'}` }
+    if (seconds < 60) {
+      return `${seconds} second${seconds == 1 ? '' : 's'}`
+    }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
     while (minutes > 59) {
@@ -123,11 +125,11 @@ export class ChartSidebarComponent {
   onDownloadClicked() {
     this.downloadService.addDownload(
       this.selectedVersion.versionID, {
-      avTagName: this.selectedVersion.avTagName,
-      artist: this.songResult.artist,
-      charter: this.selectedVersion.charters,
-      links: JSON.parse(this.selectedVersion.downloadLink)
-    })
+        avTagName: this.selectedVersion.avTagName,
+        artist: this.songResult.artist,
+        charter: this.selectedVersion.charters,
+        links: JSON.parse(this.selectedVersion.downloadLink)
+      })
   }
 
   getVersions() {

@@ -1,11 +1,14 @@
+/**
+ * Represents a user's request to interact with the download system.
+ */
 export interface Download {
   action: 'add' | 'retry' | 'continue' | 'cancel'
   versionID: number
-  data ?: NewDownload
+  data?: NewDownload // Should be defined if action == 'add'
 }
 
 /**
- * Contains the data required to start downloading a single chart
+ * Contains the data required to start downloading a single chart.
  */
 export interface NewDownload {
   avTagName: string
@@ -15,7 +18,7 @@ export interface NewDownload {
 }
 
 /**
- * Represents the download progress of a single chart
+ * Represents the download progress of a single chart.
  */
 export interface DownloadProgress {
   versionID: number

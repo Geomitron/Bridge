@@ -5,6 +5,7 @@ import * as url from 'url'
 // IPC Handlers
 import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
 import Database from './shared/Database'
+import { GetSettingsHandler } from './ipc/SettingsHandler.ipc'
 
 let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -12,7 +13,10 @@ const isDevBuild = args.some(val => val == '--dev')
 
 restrictToSingleInstance()
 handleOSXWindowClosed()
-app.on('ready', createBridgeWindow)
+app.on('ready', () => {
+  // Load settings from file before the window is created
+  GetSettingsHandler.initSettings().then(createBridgeWindow)
+})
 
 /**
  * Only allow a single Bridge window to be open at any one time.

@@ -6,7 +6,7 @@ import { join, extname } from 'path'
 import * as node7z from 'node-7z'
 import * as zipBin from '7zip-bin'
 import * as unrarjs from 'node-unrar-js'
-import InitSettingsHandler from '../InitSettingsHandler.ipc'
+import { GetSettingsHandler } from '../SettingsHandler.ipc'
 
 const readdir = promisify(_readdir)
 const unlink = promisify(_unlink)
@@ -45,7 +45,7 @@ export class FileExtractor {
    * Starts the chart extraction process.
    */
   async beginExtract() {
-    this.libraryFolder = (await InitSettingsHandler.getSettings()).libraryPath
+    this.libraryFolder = (await GetSettingsHandler.getSettings()).libraryPath
     const files = await readdir(this.sourceFolder)
     if (this.isArchive) {
       this.extract(files[0])

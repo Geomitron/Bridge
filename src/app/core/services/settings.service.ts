@@ -11,21 +11,25 @@ export class SettingsService {
   private settings: Settings
   private currentThemeLink: HTMLLinkElement
 
-  constructor(private electronService: ElectronService) { }
+  constructor(private electronService: ElectronService) {
+    this.getSettings() // Should resolve immediately because GetSettingsHandler returns a value, not a promise
+    console.log(`QUICKLY RESOLVED SETTINGS: ${this.settings}`)
+  }
 
   async getSettings() {
     if (this.settings == undefined) {
-      this.settings = await this.electronService.invoke('init-settings', undefined)
+      this.settings = await this.electronService.invoke('get-settings', undefined)
     }
     return this.settings
   }
 
   saveSettings() {
     if (this.settings != undefined) {
-      this.electronService.sendIPC('update-settings', this.settings)
+      this.electronService.sendIPC('set-settings', this.settings)
     }
   }
 
+  // TODO: research how to make theme changes with fomantic UI
   changeTheme(theme: string) {
     if (this.currentThemeLink != undefined) this.currentThemeLink.remove()
     if (theme == 'Default') { return }
@@ -40,12 +44,14 @@ export class SettingsService {
   async getCacheSize() {
     return this.electronService.defaultSession.getCacheSize()
   }
-  
+
   async clearCache() {
     this.saveSettings()
     return this.electronService.defaultSession.clearCache()
   }
 
+  // Individual getters/setters
+  // TODO: remove the undefined checks if the constructor gets the settings every time
   get libraryDirectory() {
     return this.settings == undefined ? '' : this.settings.libraryPath
   }

@@ -26,19 +26,20 @@ export class DownloadService {
   }
 
   addDownload(versionID: number, newDownload: NewDownload) {
-    if (this.downloads.findIndex(download => download.versionID == versionID) != -1) { return } // Don't download something twice
-    this.electronService.receiveIPC('download-updated', result => {
-      this.downloadUpdatedEmitter.emit(result)
+    if (this.downloads.findIndex(download => download.versionID == versionID) == -1) { // Don't download something twice
+      this.electronService.receiveIPC('download-updated', result => {
+        this.downloadUpdatedEmitter.emit(result)
 
-      // Update <this.downloads> with result
-      const thisDownloadIndex = this.downloads.findIndex(download => download.versionID == result.versionID)
-      if (thisDownloadIndex == -1) {
-        this.downloads.push(result)
-      } else {
-        this.downloads[thisDownloadIndex] = result
-      }
-    })
-    this.electronService.sendIPC('download', { action: 'add', versionID, data: newDownload })
+        // Update <this.downloads> with result
+        const thisDownloadIndex = this.downloads.findIndex(download => download.versionID == result.versionID)
+        if (thisDownloadIndex == -1) {
+          this.downloads.push(result)
+        } else {
+          this.downloads[thisDownloadIndex] = result
+        }
+      })
+      this.electronService.sendIPC('download', { action: 'add', versionID, data: newDownload })
+    }
   }
 
   onDownloadUpdated(callback: (download: DownloadProgress) => void) {

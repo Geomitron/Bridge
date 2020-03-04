@@ -44,7 +44,7 @@ export class DownloadsModalComponent {
   }
 
   getBackgroundColor(download: DownloadProgress) {
-    switch(download.type) {
+    switch (download.type) {
       case 'good': return 'unset'
       case 'done': return 'unset'
       case 'warning': return 'yellow'

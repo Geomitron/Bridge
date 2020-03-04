@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core'
+import { Component } from '@angular/core'
 import { SettingsService } from './core/services/settings.service'
 
 @Component({
@@ -6,12 +6,7 @@ import { SettingsService } from './core/services/settings.service'
   templateUrl: './app.component.html',
   styles: []
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
 
   constructor(private settingsService: SettingsService) { }
-
-  ngOnInit() {
-    // Load settings
-    this.settingsService.getSettings()
-  }
 }

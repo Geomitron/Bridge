@@ -19,7 +19,7 @@ export class CheckboxDirective implements AfterViewInit {
     })
   }
 
-  async check(isChecked: boolean) {
+  check(isChecked: boolean) {
     if (isChecked) {
       $(this.checkbox.nativeElement).checkbox('check')
     } else {

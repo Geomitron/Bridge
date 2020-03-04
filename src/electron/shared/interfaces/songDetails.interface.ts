@@ -1,7 +1,13 @@
+/**
+ * The image data for a song's album art.
+ */
 export interface AlbumArtResult {
   art: Buffer
 }
 
+/**
+ * Represents a single chart version.
+ */
 export interface VersionResult {
   versionID: number
   chartID: number

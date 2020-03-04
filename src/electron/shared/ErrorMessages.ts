@@ -43,7 +43,7 @@ export function failDelete(filepath: string, error: any) {
  */
 export function failEncoding(filepath: string, error: any) {
   console.error(`${red('ERROR:')} Failed to read text file (${getRelativeFilepath(filepath)
-    }):\nJavaScript cannot parse using the detected text encoding of (${error})`)
+  }):\nJavaScript cannot parse using the detected text encoding of (${error})`)
 }
 
 /**

@@ -2,12 +2,11 @@ import { generateUUID, sanitizeFilename } from '../../shared/UtilFunctions'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as needle from 'needle'
-import InitSettingsHandler from '../InitSettingsHandler.ipc'
-import { Settings } from 'src/electron/shared/Settings'
+import { GetSettingsHandler } from '../SettingsHandler.ipc'
 
 type EventCallback = {
   'wait': (waitTime: number) => void
-  'waitProgress': (secondsRemaining: number) => void
+  'waitProgress': (secondsRemaining: number, initialWaitTime: number) => void
   'request': () => void
   'warning': (continueAnyway: () => void) => void
   'download': (filename: string, filesize?: number) => void
@@ -20,43 +19,41 @@ type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 export type DownloadError = { header: string, body: string }
 
 export class FileDownloader {
-  private RATE_LIMIT_DELAY: number
   private readonly RETRY_MAX = 2
   private static fileQueue: { // Stores the overall order that files should be downloaded
     destinationFolder: string
     fileCount: number
     clock?: () => void
-  }[] = []
+  }[]
   private static waitTime: number
-  private static settings: Settings
 
   private callbacks = {} as Callbacks
   private retryCount: number
   private wasCanceled = false
 
-  private constructor(private url: string, private destinationFolder: string, private numFiles: number, private expectedHash?: string) { }
-  static async asyncConstructor(url: string, destinationFolder: string, numFiles: number, expectedHash?: string) {
-    const downloader = new FileDownloader(url, destinationFolder, numFiles, expectedHash)
-    if (FileDownloader.settings == undefined) {
-      await downloader.firstInit()
+  constructor(private url: string, private destinationFolder: string, private numFiles: number, private expectedHash?: string) {
+    if (FileDownloader.fileQueue == undefined) {
+      // First initialization
+      FileDownloader.fileQueue = []
+      let lastRateLimitDelay = GetSettingsHandler.getSettings().rateLimitDelay
+      FileDownloader.waitTime = 0
+      setInterval(() => {
+        if (FileDownloader.waitTime > 0) { // Update current countdown if this setting changes
+          let newRateLimitDelay = GetSettingsHandler.getSettings().rateLimitDelay
+          if (newRateLimitDelay != lastRateLimitDelay) {
+            FileDownloader.waitTime -= Math.min(lastRateLimitDelay - newRateLimitDelay, FileDownloader.waitTime - 1)
+            lastRateLimitDelay = newRateLimitDelay
+          }
+          FileDownloader.waitTime--
+        }
+        FileDownloader.fileQueue.forEach(download => { if (download.clock != undefined) download.clock() })
+        if (FileDownloader.waitTime <= 0 && FileDownloader.fileQueue.length != 0) {
+          FileDownloader.waitTime = GetSettingsHandler.getSettings().rateLimitDelay
+        }
+      }, 1000)
     }
-    return downloader
   }
-
-  async firstInit() {
-    FileDownloader.settings = await InitSettingsHandler.getSettings()
-    FileDownloader.waitTime = 0
-    setInterval(() => {
-      if (FileDownloader.waitTime > 0) {
-        FileDownloader.waitTime--
-      }
-      FileDownloader.fileQueue.forEach(download => { if (download.clock != undefined) download.clock() })
-      if (FileDownloader.waitTime == 0 && FileDownloader.fileQueue.length != 0) {
-        FileDownloader.waitTime = this.RATE_LIMIT_DELAY
-      }
-    }, 1000)
-  }
-
+  
   /**
    * Calls <callback> when <event> fires.
    * @param event The event to listen for.
@@ -72,7 +69,7 @@ export class FileDownloader {
    */
   beginDownload() {
     // Check that the library folder has been specified
-    if (FileDownloader.settings.libraryPath == undefined) {
+    if (GetSettingsHandler.getSettings().libraryPath == undefined) {
       this.callbacks.error({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }, () => this.beginDownload())
       return
     }
@@ -82,12 +79,16 @@ export class FileDownloader {
       this.requestDownload()
       return
     }
-
+    // The starting point of a progress bar should be recalculated each clock cycle
+    // It will be what it would have been if rateLimitDelay was that value the entire time
     this.initWaitTime()
-    let queueWaitTime = this.getQueueWaitTime()
-    this.callbacks.wait(queueWaitTime + FileDownloader.waitTime)
-    if (queueWaitTime + FileDownloader.waitTime == 0) {
-      FileDownloader.waitTime = this.RATE_LIMIT_DELAY
+    // This is the number of seconds that had elapsed since the last file download (at the time of starting this download)
+    const initialTimeSinceLastDownload = GetSettingsHandler.getSettings().rateLimitDelay - FileDownloader.waitTime
+    const initialQueueCount = this.getQueueCount()
+    let waitTime = this.getWaitTime(initialTimeSinceLastDownload, initialQueueCount)
+    this.callbacks.wait(waitTime)
+    if (waitTime == 0) {
+      FileDownloader.waitTime = GetSettingsHandler.getSettings().rateLimitDelay
       this.requestDownload()
       return
     }
@@ -95,17 +96,21 @@ export class FileDownloader {
     const fileQueue = FileDownloader.fileQueue.find(queue => queue.destinationFolder == this.destinationFolder)
     fileQueue.clock = () => {
       if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
-      queueWaitTime = this.getQueueWaitTime()
-      if (queueWaitTime + FileDownloader.waitTime == 0) {
+      waitTime = this.getWaitTime(GetSettingsHandler.getSettings().rateLimitDelay - FileDownloader.waitTime, this.getQueueCount())
+      if (waitTime == 0) {
         this.requestDownload()
         fileQueue.clock = undefined
       }
-      this.callbacks.waitProgress(queueWaitTime + FileDownloader.waitTime)
+      this.callbacks.waitProgress(waitTime, this.getWaitTime(initialTimeSinceLastDownload, this.getQueueCount()))
     }
   }
 
+  private getWaitTime(timeSinceLastDownload: number, queueCount: number) {
+    const rateLimitDelay = GetSettingsHandler.getSettings().rateLimitDelay
+    return (queueCount * rateLimitDelay) + Math.max(0, rateLimitDelay - timeSinceLastDownload)
+  }
+
   private initWaitTime() {
-    this.RATE_LIMIT_DELAY = FileDownloader.settings.rateLimitDelay
     this.retryCount = 0
     const entry = FileDownloader.fileQueue.find(entry => entry.destinationFolder == this.destinationFolder)
     if (entry == undefined) {
@@ -117,7 +122,7 @@ export class FileDownloader {
   /**
    * Returns the number of files in front of this file in the fileQueue
    */
-  private getQueueWaitTime() {
+  private getQueueCount() {
     let fileCount = 0
     for (let entry of FileDownloader.fileQueue) {
       if (entry.destinationFolder != this.destinationFolder) {
@@ -127,7 +132,7 @@ export class FileDownloader {
       }
     }
 
-    return fileCount * this.RATE_LIMIT_DELAY
+    return fileCount
   }
 
   private removeFromQueue() {
@@ -207,9 +212,9 @@ export class FileDownloader {
     req.on('data', data => virusScanHTML += data)
     req.on('done', (err: Error) => {
       if (!err) {
-        const confirmTokenRegex = /confirm=([0-9A-Za-z\-_]+)&/g
-        const confirmTokenResults = confirmTokenRegex.exec(virusScanHTML)
-        if (confirmTokenResults != null) {
+        try {
+          const confirmTokenRegex = /confirm=([0-9A-Za-z\-_]+)&/g
+          const confirmTokenResults = confirmTokenRegex.exec(virusScanHTML)
           const confirmToken = confirmTokenResults[1]
           const downloadID = this.url.substr(this.url.indexOf('id=') + 'id='.length)
           this.url = `https://drive.google.com/uc?confirm=${confirmToken}&id=${downloadID}`
@@ -217,7 +222,7 @@ export class FileDownloader {
           const NID = /NID=([^;]*);/.exec(cookieHeader)[1].replace('=', '%')
           const newHeader = `download_warning_${warningCode}=${confirmToken}; NID=${NID}`
           this.requestDownload(newHeader)
-        } else {
+        } catch(e) {
           this.callbacks.error({ header: 'Invalid response', body: 'Download server returned HTML instead of a file.' }, () => this.beginDownload())
         }
       } else {

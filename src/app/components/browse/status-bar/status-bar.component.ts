@@ -60,15 +60,15 @@ export class StatusBarComponent {
         const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
         this.downloadService.addDownload(
           downloadVersion.versionID, {
-          avTagName: downloadVersion.avTagName,
-          artist: downloadSong.artist,
-          charter: downloadVersion.charters,
-          links: JSON.parse(downloadVersion.downloadLink)
-        })
+            avTagName: downloadVersion.avTagName,
+            artist: downloadSong.artist,
+            charter: downloadVersion.charters,
+            links: JSON.parse(downloadVersion.downloadLink)
+          })
       }
     } else {
       $('#selectedModal').modal('show')
-      //[download all charts for each song] [deselect these songs] [X]
+      // [download all charts for each song] [deselect these songs] [X]
     }
   }
 
@@ -78,11 +78,11 @@ export class StatusBarComponent {
       const downloadSong = this.selectedResults.find(song => song.id == version.songID)
       this.downloadService.addDownload(
         version.versionID, {
-        avTagName: version.avTagName,
-        artist: downloadSong.artist,
-        charter: version.charters,
-        links: JSON.parse(version.downloadLink)
-      })
+          avTagName: version.avTagName,
+          artist: downloadSong.artist,
+          charter: version.charters,
+          links: JSON.parse(version.downloadLink)
+        })
     }
   }
 

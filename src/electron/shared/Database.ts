@@ -50,6 +50,9 @@ export default class Database {
     })
   }
 
+  /**
+   * Destroys the database connection.
+   */
   static closeConnection() {
     if (this.database != undefined) {
       this.database.conn.destroy()
@@ -57,10 +60,9 @@ export default class Database {
   }
 
   /**
-   * Sends <query> to the database.
-   * @param query The query string to be sent.
-   * @param queryStatement The nth response statement to be returned.
-   * @returns one of the responses as type <ResponseType[]>, or an empty array if the query fails.
+   * Sends `query` to the database.
+   * @param queryStatement The nth response statement to be returned. If undefined, the entire response is returned.
+   * @returns the selected response statement, or an empty array if the query fails.
    */
   async sendQuery<ResponseType>(query: string, queryStatement?: number) {
     return new Promise<ResponseType[] | ResponseType>(resolve => {

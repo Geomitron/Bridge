@@ -3,12 +3,11 @@ import { VersionResult, AlbumArtResult } from './interfaces/songDetails.interfac
 import SearchHandler from '../ipc/SearchHandler.ipc'
 import SongDetailsHandler from '../ipc/SongDetailsHandler.ipc'
 import AlbumArtHandler from '../ipc/AlbumArtHandler.ipc'
-import { Download, NewDownload, DownloadProgress } from './interfaces/download.interface'
+import { Download, DownloadProgress } from './interfaces/download.interface'
 import { DownloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
-import InitSettingsHandler from '../ipc/InitSettingsHandler.ipc'
 import BatchSongDetailsHandler from '../ipc/BatchSongDetailsHandler.ipc'
-import SaveSettingsHandler from '../ipc/SaveSettingsHandler.ipc'
+import { GetSettingsHandler, SetSettingsHandler } from '../ipc/SettingsHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -20,7 +19,7 @@ import SaveSettingsHandler from '../ipc/SaveSettingsHandler.ipc'
 
 export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[] {
   return [
-    new InitSettingsHandler(),
+    new GetSettingsHandler(),
     new SearchHandler(),
     new SongDetailsHandler(),
     new BatchSongDetailsHandler(),
@@ -28,8 +27,11 @@ export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[
   ]
 }
 
+/**
+ * The list of possible async IPC events that return values, mapped to their input and output types.
+ */
 export type IPCInvokeEvents = {
-  'init-settings': {
+  'get-settings': {
     input: undefined
     output: Settings
   }
@@ -51,24 +53,34 @@ export type IPCInvokeEvents = {
   }
 }
 
+/**
+ * Describes an object that handles the `E` async IPC event that will return a value.
+ */
 export interface IPCInvokeHandler<E extends keyof IPCInvokeEvents> {
   event: E
   handler(data: IPCInvokeEvents[E]['input']): Promise<IPCInvokeEvents[E]['output']> | IPCInvokeEvents[E]['output']
 }
 
-export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[]{
+
+export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[] {
   return [
     new DownloadHandler(),
-    new SaveSettingsHandler()
+    new SetSettingsHandler()
   ]
 }
 
+/**
+ * The list of possible async IPC events that don't return values, mapped to their input types.
+ */
 export type IPCEmitEvents = {
   'download': Download
   'download-updated': DownloadProgress
-  'update-settings': Settings
+  'set-settings': Settings
 }
 
+/**
+ * Describes an object that handles the `E` async IPC event that will not return a value.
+ */
 export interface IPCEmitHandler<E extends keyof IPCEmitEvents> {
   event: E
   handler(data: IPCEmitEvents[E]): void

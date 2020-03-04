@@ -26,7 +26,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
       }
     })
   }
-  
+
   async clearCache() {
     this.cacheSize = 'Please wait...'
     await this.settingsService.clearCache()
@@ -46,7 +46,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async openLibraryDirectory() {
+  openLibraryDirectory() {
     this.electronService.openFolder(this.settingsService.libraryDirectory)
   }
 
