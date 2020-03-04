@@ -5,7 +5,7 @@ import { VersionResult } from '../shared/interfaces/songDetails.interface'
 /**
  * Handles the 'song-details' event.
  */
-export default class SongDetailsHandler implements IPCInvokeHandler<'song-details'> {
+class SongDetailsHandler implements IPCInvokeHandler<'song-details'> {
   event: 'song-details' = 'song-details'
 
   /**
@@ -28,3 +28,5 @@ export default class SongDetailsHandler implements IPCInvokeHandler<'song-detail
     `
   }
 }
+
+export const songDetailsHandler = new SongDetailsHandler()

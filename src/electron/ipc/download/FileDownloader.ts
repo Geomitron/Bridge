@@ -2,150 +2,67 @@ import { generateUUID, sanitizeFilename } from '../../shared/UtilFunctions'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as needle from 'needle'
-import { GetSettingsHandler } from '../SettingsHandler.ipc'
+// TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
+import { getSettingsHandler } from '../SettingsHandler.ipc'
+const getSettings = getSettingsHandler.getSettings
 
 type EventCallback = {
-  'wait': (waitTime: number) => void
-  'waitProgress': (secondsRemaining: number, initialWaitTime: number) => void
   'request': () => void
   'warning': (continueAnyway: () => void) => void
   'download': (filename: string, filesize?: number) => void
   'downloadProgress': (bytesDownloaded: number) => void
-  'complete': () => void
   'error': (error: DownloadError, retry: () => void) => void
+  'complete': () => void
 }
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
 export type DownloadError = { header: string, body: string }
 
+/**
+ * Downloads a file from `url` to `destinationFolder` and verifies that its hash matches `expectedHash`.
+ * Will handle google drive virus scan warnings. Provides event listeners for download progress.
+ * On error, provides the ability to retry.
+ */
 export class FileDownloader {
   private readonly RETRY_MAX = 2
-  private static fileQueue: { // Stores the overall order that files should be downloaded
-    destinationFolder: string
-    fileCount: number
-    clock?: () => void
-  }[]
-  private static waitTime: number
 
   private callbacks = {} as Callbacks
   private retryCount: number
   private wasCanceled = false
 
-  constructor(private url: string, private destinationFolder: string, private numFiles: number, private expectedHash?: string) {
-    if (FileDownloader.fileQueue == undefined) {
-      // First initialization
-      FileDownloader.fileQueue = []
-      let lastRateLimitDelay = GetSettingsHandler.getSettings().rateLimitDelay
-      FileDownloader.waitTime = 0
-      setInterval(() => {
-        if (FileDownloader.waitTime > 0) { // Update current countdown if this setting changes
-          let newRateLimitDelay = GetSettingsHandler.getSettings().rateLimitDelay
-          if (newRateLimitDelay != lastRateLimitDelay) {
-            FileDownloader.waitTime -= Math.min(lastRateLimitDelay - newRateLimitDelay, FileDownloader.waitTime - 1)
-            lastRateLimitDelay = newRateLimitDelay
-          }
-          FileDownloader.waitTime--
-        }
-        FileDownloader.fileQueue.forEach(download => { if (download.clock != undefined) download.clock() })
-        if (FileDownloader.waitTime <= 0 && FileDownloader.fileQueue.length != 0) {
-          FileDownloader.waitTime = GetSettingsHandler.getSettings().rateLimitDelay
-        }
-      }, 1000)
-    }
-  }
+  /**
+   * @param url The download link.
+   * @param destinationFolder The path to where this file should be stored.
+   * @param expectedHash The hash header value that is expected for this file.
+   */
+  constructor(private url: string, private destinationFolder: string, private expectedHash?: string) { }
   
   /**
-   * Calls <callback> when <event> fires.
-   * @param event The event to listen for.
-   * @param callback The function to be called when the event fires.
+   * Calls `callback` when `event` fires.
    */
   on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
     this.callbacks[event] = callback
   }
 
   /**
-   * Wait RATE_LIMIT_DELAY seconds between each download,
-   * then download the file.
+   * Download the file.
    */
   beginDownload() {
     // Check that the library folder has been specified
-    if (GetSettingsHandler.getSettings().libraryPath == undefined) {
+    if (getSettings().libraryPath == undefined) {
       this.callbacks.error({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }, () => this.beginDownload())
       return
     }
-
-    // Skip the fileQueue if the file is not from Google
-    if (!this.url.toLocaleLowerCase().includes('google')) {
-      this.requestDownload()
-      return
-    }
-    // The starting point of a progress bar should be recalculated each clock cycle
-    // It will be what it would have been if rateLimitDelay was that value the entire time
-    this.initWaitTime()
-    // This is the number of seconds that had elapsed since the last file download (at the time of starting this download)
-    const initialTimeSinceLastDownload = GetSettingsHandler.getSettings().rateLimitDelay - FileDownloader.waitTime
-    const initialQueueCount = this.getQueueCount()
-    let waitTime = this.getWaitTime(initialTimeSinceLastDownload, initialQueueCount)
-    this.callbacks.wait(waitTime)
-    if (waitTime == 0) {
-      FileDownloader.waitTime = GetSettingsHandler.getSettings().rateLimitDelay
-      this.requestDownload()
-      return
-    }
-
-    const fileQueue = FileDownloader.fileQueue.find(queue => queue.destinationFolder == this.destinationFolder)
-    fileQueue.clock = () => {
-      if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
-      waitTime = this.getWaitTime(GetSettingsHandler.getSettings().rateLimitDelay - FileDownloader.waitTime, this.getQueueCount())
-      if (waitTime == 0) {
-        this.requestDownload()
-        fileQueue.clock = undefined
-      }
-      this.callbacks.waitProgress(waitTime, this.getWaitTime(initialTimeSinceLastDownload, this.getQueueCount()))
-    }
-  }
-
-  private getWaitTime(timeSinceLastDownload: number, queueCount: number) {
-    const rateLimitDelay = GetSettingsHandler.getSettings().rateLimitDelay
-    return (queueCount * rateLimitDelay) + Math.max(0, rateLimitDelay - timeSinceLastDownload)
-  }
-
-  private initWaitTime() {
-    this.retryCount = 0
-    const entry = FileDownloader.fileQueue.find(entry => entry.destinationFolder == this.destinationFolder)
-    if (entry == undefined) {
-      // Note: assumes that either all the chart files are from Google, or none of the chart files are from Google
-      FileDownloader.fileQueue.push({ destinationFolder: this.destinationFolder, fileCount: this.numFiles })
-    }
+  
+    this.requestDownload()
   }
 
   /**
-   * Returns the number of files in front of this file in the fileQueue
-   */
-  private getQueueCount() {
-    let fileCount = 0
-    for (let entry of FileDownloader.fileQueue) {
-      if (entry.destinationFolder != this.destinationFolder) {
-        fileCount += entry.fileCount
-      } else {
-        break
-      }
-    }
-
-    return fileCount
-  }
-
-  private removeFromQueue() {
-    const index = FileDownloader.fileQueue.findIndex(entry => entry.destinationFolder == this.destinationFolder)
-    FileDownloader.fileQueue.splice(index, 1)
-  }
-
-  /**
-   * Sends a request to download the file at <this.url>.
+   * Sends a request to download the file at `this.url`.
    * @param cookieHeader the "cookie=" header to include this request.
    */
   private requestDownload(cookieHeader?: string) {
-    if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
+    if (this.wasCanceled) { return } // CANCEL POINT
     this.callbacks.request()
     let uuid = generateUUID()
     const req = needle.get(this.url, {
@@ -176,7 +93,7 @@ export class FileDownloader {
     })
 
     req.on('header', (statusCode, headers: Headers) => {
-      if (this.wasCanceled) { this.removeFromQueue(); return } // CANCEL POINT
+      if (this.wasCanceled) { return } // CANCEL POINT
       if (statusCode != 200) {
         this.callbacks.error({ header: 'Connection failed', body: `Server returned status code: ${statusCode}` }, () => this.beginDownload())
         return
@@ -187,23 +104,21 @@ export class FileDownloader {
         this.handleHTMLResponse(req, headers['set-cookie'])
       } else {
         const fileName = this.getDownloadFileName(headers)
-        const downloadHash = this.getDownloadHash(headers)
-        if (this.expectedHash !== undefined && downloadHash !== this.expectedHash) {
+        this.handleDownloadResponse(req, fileName, headers['content-length'])
+
+        if (this.expectedHash !== undefined && this.getDownloadHash(headers) !== this.expectedHash) {
           req.pause()
           this.callbacks.warning(() => {
-            this.handleDownloadResponse(req, fileName, headers['content-length'])
             req.resume()
           })
-        } else {
-          this.handleDownloadResponse(req, fileName, headers['content-length'])
         }
       }
     })
   }
 
   /**
-   * A Google Drive HTML response to a download request means this is the "file too large to scan for viruses" warning.
-   * This function sends the request that results from clicking "download anyway".
+   * A Google Drive HTML response to a download request usually means this is the "file too large to scan for viruses" warning.
+   * This function sends the request that results from clicking "download anyway", or throws an error if it can't be found.
    * @param req The download request.
    * @param cookieHeader The "cookie=" header of this request.
    */
@@ -232,10 +147,10 @@ export class FileDownloader {
   }
 
   /**
-   * Pipes the data from a download response to <filename> and extracts it if <isArchive> is true.
+   * Pipes the data from a download response to `fileName`.
    * @param req The download request.
    * @param fileName The name of the output file.
-   * @param contentLength The number of bytes to be downloaded.
+   * @param contentLength The number of bytes to be downloaded. If undefined, download progress is indicated by MB, not %.
    */
   private handleDownloadResponse(req: NodeJS.ReadableStream, fileName: string, contentLength?: number) {
     this.callbacks.download(fileName, contentLength)
@@ -252,18 +167,13 @@ export class FileDownloader {
     })
 
     req.on('end', () => {
+      if (this.wasCanceled) { return } // CANCEL POINT
       this.callbacks.complete()
-      const index = FileDownloader.fileQueue.findIndex(entry => entry.destinationFolder == this.destinationFolder)
-      FileDownloader.fileQueue[index].fileCount--
-      if (FileDownloader.fileQueue[index].fileCount == 0) {
-        FileDownloader.fileQueue.splice(index, 1)
-      }
     })
   }
 
   /**
-   * Extracts the downloaded file's filename from <headers> or <url>, depending on the file's host server.
-   * @param url The URL of this request.
+   * Extracts the downloaded file's filename from `headers` or `this.url`, depending on the file's host server.
    * @param headers The response headers for this request.
    */
   private getDownloadFileName(headers: Headers) {
@@ -284,14 +194,13 @@ export class FileDownloader {
   }
 
   /**
-   * Extracts the downloaded file's hash from <headers>, depending on the file's host server.
-   * @param url The URL of the request.
+   * Extracts the downloaded file's hash from `headers`, depending on the file's host server.
    * @param headers The response headers for this request.
    */
   private getDownloadHash(headers: Headers): string {
     if (headers['server'] && headers['server'] == 'cloudflare' || this.url.startsWith('https://public.fightthe.pw/')) {
       // Cloudflare and Chorus specific jazz
-      return String(headers['content-length']) // No good hash is provided in the header, so this is the next best thing
+      return String(headers['content-length']) // No actual hash is provided in the header, so this is the next best thing
     } else {
       // GDrive specific jazz
       return headers['x-goog-hash']

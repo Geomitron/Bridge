@@ -11,7 +11,9 @@ export class DownloadService {
   private downloadUpdatedEmitter = new EventEmitter<DownloadProgress>()
   private downloads: DownloadProgress[] = []
 
-  constructor(private electronService: ElectronService) { }
+  constructor(private electronService: ElectronService) {
+    process.setMaxListeners(100)
+  }
 
   get downloadCount() {
     return this.downloads.length
@@ -26,17 +28,18 @@ export class DownloadService {
   }
 
   addDownload(versionID: number, newDownload: NewDownload) {
-    if (this.downloads.findIndex(download => download.versionID == versionID) == -1) { // Don't download something twice
+    if (!this.downloads.find(download => download.versionID == versionID)) { // Don't download something twice
       this.electronService.receiveIPC('download-updated', result => {
-        this.downloadUpdatedEmitter.emit(result)
-
         // Update <this.downloads> with result
         const thisDownloadIndex = this.downloads.findIndex(download => download.versionID == result.versionID)
         if (thisDownloadIndex == -1) {
           this.downloads.push(result)
+          // TODO: this.downloads.sort(downloadSorter)
         } else {
           this.downloads[thisDownloadIndex] = result
         }
+
+        this.downloadUpdatedEmitter.emit(result)
       })
       this.electronService.sendIPC('download', { action: 'add', versionID, data: newDownload })
     }
@@ -45,13 +48,10 @@ export class DownloadService {
   onDownloadUpdated(callback: (download: DownloadProgress) => void) {
     const debouncedCallback = _.throttle(callback, 30)
     this.downloadUpdatedEmitter.subscribe((download: DownloadProgress) => {
-      if (this.downloads.findIndex(oldDownload => oldDownload.versionID == download.versionID) == -1) {
-        // If this is a new download item, don't call debouncedCallback; it may miss adding new versions to the list
-        callback(download)
-      } else if (download.type == 'wait') {
-        callback(download) // Many wait events can be recieved at once
-      } else {
+      if (download.type == 'fastUpdate') { // 'good' updates can happen so frequently that the UI doesn't update correctly
         debouncedCallback(download)
+      } else {
+        callback(download)
       }
     })
   }

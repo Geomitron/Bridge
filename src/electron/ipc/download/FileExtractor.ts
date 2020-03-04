@@ -6,7 +6,8 @@ import { join, extname } from 'path'
 import * as node7z from 'node-7z'
 import * as zipBin from '7zip-bin'
 import * as unrarjs from 'node-unrar-js'
-import { GetSettingsHandler } from '../SettingsHandler.ipc'
+import { getSettingsHandler } from '../SettingsHandler.ipc'
+const getSettings = getSettingsHandler.getSettings
 
 const readdir = promisify(_readdir)
 const unlink = promisify(_unlink)
@@ -33,9 +34,7 @@ export class FileExtractor {
   constructor(private sourceFolder: string, private isArchive: boolean, private destinationFolderName: string) { }
 
   /**
-   * Calls <callback> when <event> fires.
-   * @param event The event to listen for.
-   * @param callback The function to be called when the event fires.
+   * Calls `callback` when `event` fires.
    */
   on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
     this.callbacks[event] = callback
@@ -45,7 +44,7 @@ export class FileExtractor {
    * Starts the chart extraction process.
    */
   async beginExtract() {
-    this.libraryFolder = (await GetSettingsHandler.getSettings()).libraryPath
+    this.libraryFolder = getSettings().libraryPath
     const files = await readdir(this.sourceFolder)
     if (this.isArchive) {
       this.extract(files[0])
@@ -55,8 +54,7 @@ export class FileExtractor {
   }
 
   /**
-   * Extracts the file at <filename> to <this.sourceFolder>.
-   * @param filename The name of the archive file.
+   * Extracts the file at `filename` to `this.sourceFolder`.
    */
   private extract(filename: string) {
     if (this.wasCanceled) { return } // CANCEL POINT
@@ -64,6 +62,7 @@ export class FileExtractor {
     const source = join(this.sourceFolder, filename)
 
     if (extname(filename) == '.rar') {
+
       // Use node-unrar-js to extract the archive
       try {
         let extractor = unrarjs.createExtractorFromFile(source, this.sourceFolder)
@@ -73,7 +72,9 @@ export class FileExtractor {
         return
       }
       this.transfer(source)
+
     } else {
+
       // Use node-7z to extract the archive
       const stream = node7z.extractFull(source, this.sourceFolder, { $progress: true, $bin: zipBin.path7za })
 
@@ -88,11 +89,12 @@ export class FileExtractor {
       stream.on('end', () => {
         this.transfer(source)
       })
+
     }
   }
 
   /**
-   * Deletes the archive at <archiveFilepath>, then transfers the extracted chart to <this.libraryFolder>.
+   * Deletes the archive at `archiveFilepath`, then transfers the extracted chart to `this.libraryFolder`.
    */
   private async transfer(archiveFilepath?: string) {
     if (this.wasCanceled) { return } // CANCEL POINT
@@ -109,33 +111,40 @@ export class FileExtractor {
 
       // Delete archive
       if (archiveFilepath != undefined) {
-        await unlink(archiveFilepath)
+        try {
+          await unlink(archiveFilepath)
+        } catch (e) {
+          if (e.code != 'ENOENT') {
+            throw new Error(`Could not delete the archive file at [${archiveFilepath}]`)
+          }
+        }
       }
 
       // Check if it extracted to a folder instead of a list of files
-      let files = await readdir(this.sourceFolder)
-      const isFolderArchive = (files.length < 2 && !(await lstat(join(this.sourceFolder, files[0]))).isFile())
+      let sourceFolder = this.sourceFolder
+      let files = await readdir(sourceFolder)
+      const isFolderArchive = (files.length < 2 && !(await lstat(join(sourceFolder, files[0]))).isFile())
       if (isFolderArchive) {
-        this.sourceFolder = join(this.sourceFolder, files[0])
-        files = await readdir(this.sourceFolder)
+        sourceFolder = join(sourceFolder, files[0])
+        files = await readdir(sourceFolder)
       }
 
       if (this.wasCanceled) { return } // CANCEL POINT
 
       // Copy the files from the temporary directory to the destination
       for (const file of files) {
-        await copyFile(join(this.sourceFolder, file), join(destinationFolder, file))
-        await unlink(join(this.sourceFolder, file))
+        await copyFile(join(sourceFolder, file), join(destinationFolder, file))
+        await unlink(join(sourceFolder, file))
       }
 
       // Delete the temporary folders
-      await rmdir(this.sourceFolder)
+      await rmdir(sourceFolder)
       if (isFolderArchive) {
-        await rmdir(join(this.sourceFolder, '..'))
+        await rmdir(join(sourceFolder, '..'))
       }
       this.callbacks.complete(destinationFolder)
     } catch (e) {
-      this.callbacks.error({ header: 'Transfer Failed', body: `Unable to transfer downloaded files to the library folder: ${e.name}` }, undefined)
+      this.callbacks.error({ header: 'Transfer Failed', body: `Unable to transfer downloaded files to the library folder: ${e.name}` }, () => this.transfer(archiveFilepath))
     }
   }
 

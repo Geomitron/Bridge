@@ -12,8 +12,7 @@ export class SettingsService {
   private currentThemeLink: HTMLLinkElement
 
   constructor(private electronService: ElectronService) {
-    this.getSettings() // Should resolve immediately because GetSettingsHandler returns a value, not a promise
-    console.log(`QUICKLY RESOLVED SETTINGS: ${this.settings}`)
+    this.getSettings()
   }
 
   async getSettings() {
@@ -51,7 +50,6 @@ export class SettingsService {
   }
 
   // Individual getters/setters
-  // TODO: remove the undefined checks if the constructor gets the settings every time
   get libraryDirectory() {
     return this.settings == undefined ? '' : this.settings.libraryPath
   }

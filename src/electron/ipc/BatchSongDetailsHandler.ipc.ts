@@ -5,7 +5,7 @@ import { VersionResult } from '../shared/interfaces/songDetails.interface'
 /**
  * Handles the 'batch-song-details' event.
  */
-export default class BatchSongDetailsHandler implements IPCInvokeHandler<'batch-song-details'> {
+class BatchSongDetailsHandler implements IPCInvokeHandler<'batch-song-details'> {
   event: 'batch-song-details' = 'batch-song-details'
 
   /**
@@ -28,3 +28,5 @@ export default class BatchSongDetailsHandler implements IPCInvokeHandler<'batch-
     `
   }
 }
+
+export const batchSongDetailsHandler = new BatchSongDetailsHandler()

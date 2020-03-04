@@ -6,7 +6,7 @@ import { escape } from 'mysql'
 /**
  * Handles the 'song-search' event.
  */
-export default class SearchHandler implements IPCInvokeHandler<'song-search'> {
+class SearchHandler implements IPCInvokeHandler<'song-search'> {
   event: 'song-search' = 'song-search'
 
   /**
@@ -40,3 +40,5 @@ export default class SearchHandler implements IPCInvokeHandler<'song-search'> {
     ` // TODO: add parameters for the limit and offset
   }
 }
+
+export const searchHandler = new SearchHandler()

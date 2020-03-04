@@ -5,7 +5,7 @@ import * as url from 'url'
 // IPC Handlers
 import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
 import Database from './shared/Database'
-import { GetSettingsHandler } from './ipc/SettingsHandler.ipc'
+import { getSettingsHandler } from './ipc/SettingsHandler.ipc'
 
 let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -15,7 +15,7 @@ restrictToSingleInstance()
 handleOSXWindowClosed()
 app.on('ready', () => {
   // Load settings from file before the window is created
-  GetSettingsHandler.initSettings().then(createBridgeWindow)
+  getSettingsHandler.initSettings().then(createBridgeWindow)
 })
 
 /**

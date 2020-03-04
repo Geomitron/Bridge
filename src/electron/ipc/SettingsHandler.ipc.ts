@@ -14,20 +14,20 @@ let settings: Settings
 /**
  * Handles the 'get-settings' event.
  */
-export class GetSettingsHandler implements IPCInvokeHandler<'get-settings'> {
+class GetSettingsHandler implements IPCInvokeHandler<'get-settings'> {
   event: 'get-settings' = 'get-settings'
 
   /**
    * @returns the current settings oject, or default settings if they couldn't be loaded.
    */
   handler() {
-    return GetSettingsHandler.getSettings()
+    return this.getSettings()
   }
 
   /**
    * @returns the current settings oject, or default settings if they couldn't be loaded.
    */
-  static getSettings() {
+  getSettings() {
     if (settings == undefined) {
       return defaultSettings
     } else {
@@ -40,7 +40,7 @@ export class GetSettingsHandler implements IPCInvokeHandler<'get-settings'> {
    * Otherwise, loads user settings from data directories.
    * If this process fails, default settings are used.
    */
-  static async initSettings() {
+  async initSettings() {
     try {
       // Create data directories if they don't exists
       for (const path of [dataPath, tempPath, themesPath]) {
@@ -67,7 +67,7 @@ export class GetSettingsHandler implements IPCInvokeHandler<'get-settings'> {
 /**
  * Handles the 'set-settings' event.
  */
-export class SetSettingsHandler implements IPCEmitHandler<'set-settings'> {
+class SetSettingsHandler implements IPCEmitHandler<'set-settings'> {
   event: 'set-settings' = 'set-settings'
 
   /**
@@ -86,3 +86,6 @@ export class SetSettingsHandler implements IPCEmitHandler<'set-settings'> {
     await writeFile(settingsPath, settingsJSON, 'utf8')
   }
 }
+
+export const getSettingsHandler = new GetSettingsHandler()
+export const setSettingsHandler = new SetSettingsHandler()

@@ -5,7 +5,7 @@ import { AlbumArtResult } from '../shared/interfaces/songDetails.interface'
 /**
  * Handles the 'album-art' event.
  */
-export default class AlbumArtHandler implements IPCInvokeHandler<'album-art'> {
+class AlbumArtHandler implements IPCInvokeHandler<'album-art'> {
   event: 'album-art' = 'album-art'
 
   /**
@@ -28,3 +28,5 @@ export default class AlbumArtHandler implements IPCInvokeHandler<'album-art'> {
     `
   }
 }
+
+export const albumArtHandler = new AlbumArtHandler()

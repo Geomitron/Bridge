@@ -1,13 +1,13 @@
 import { SongSearch, SongResult } from './interfaces/search.interface'
 import { VersionResult, AlbumArtResult } from './interfaces/songDetails.interface'
-import SearchHandler from '../ipc/SearchHandler.ipc'
-import SongDetailsHandler from '../ipc/SongDetailsHandler.ipc'
-import AlbumArtHandler from '../ipc/AlbumArtHandler.ipc'
+import { searchHandler } from '../ipc/SearchHandler.ipc'
+import { songDetailsHandler } from '../ipc/SongDetailsHandler.ipc'
+import { albumArtHandler } from '../ipc/AlbumArtHandler.ipc'
 import { Download, DownloadProgress } from './interfaces/download.interface'
-import { DownloadHandler } from '../ipc/download/DownloadHandler'
+import { downloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
-import BatchSongDetailsHandler from '../ipc/BatchSongDetailsHandler.ipc'
-import { GetSettingsHandler, SetSettingsHandler } from '../ipc/SettingsHandler.ipc'
+import { batchSongDetailsHandler } from '../ipc/BatchSongDetailsHandler.ipc'
+import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -19,11 +19,11 @@ import { GetSettingsHandler, SetSettingsHandler } from '../ipc/SettingsHandler.i
 
 export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[] {
   return [
-    new GetSettingsHandler(),
-    new SearchHandler(),
-    new SongDetailsHandler(),
-    new BatchSongDetailsHandler(),
-    new AlbumArtHandler()
+    getSettingsHandler,
+    searchHandler,
+    songDetailsHandler,
+    batchSongDetailsHandler,
+    albumArtHandler
   ]
 }
 
@@ -64,8 +64,8 @@ export interface IPCInvokeHandler<E extends keyof IPCInvokeEvents> {
 
 export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[] {
   return [
-    new DownloadHandler(),
-    new SetSettingsHandler()
+    downloadHandler,
+    setSettingsHandler
   ]
 }
 

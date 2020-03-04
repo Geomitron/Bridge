@@ -26,5 +26,11 @@ export interface DownloadProgress {
   header: string
   description: string
   percent: number
-  type: 'good' | 'warning' | 'error' | 'cancel' | 'done' | 'wait'
+  type: ProgressType
 }
+
+export type ProgressType = 'good' | 'warning' | 'error' | 'cancel' | 'done' | 'fastUpdate'
+// export function downloadSorter(p1: DownloadProgress, p2: DownloadProgress) {
+//   return 0
+//   // return p1 - p2 // negative if p1 < p2
+// }

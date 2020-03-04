@@ -1,223 +1,52 @@
-import { FileDownloader } from './FileDownloader'
 import { IPCEmitHandler } from '../../shared/IPCHandler'
-import { createHash, randomBytes as _randomBytes } from 'crypto'
-import { tempPath } from '../../shared/Paths'
-import { promisify } from 'util'
-import { join } from 'path'
-import { Download, DownloadProgress } from '../../shared/interfaces/download.interface'
-import { emitIPCEvent } from '../../main'
+import { randomBytes as _randomBytes } from 'crypto'
+import { Download } from '../../shared/interfaces/download.interface'
 import { mkdir as _mkdir } from 'fs'
-import { FileExtractor } from './FileExtractor'
-import { sanitizeFilename, interpolate } from '../../shared/UtilFunctions'
-import { GetSettingsHandler } from '../SettingsHandler.ipc'
+import { ChartDownload } from './ChartDownload'
 
-const randomBytes = promisify(_randomBytes)
-const mkdir = promisify(_mkdir)
-
-export class DownloadHandler implements IPCEmitHandler<'download'> {
+class DownloadHandler implements IPCEmitHandler<'download'> {
   event: 'download' = 'download'
 
-  // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
-
-  downloadCallbacks: { [versionID: number]: { cancel: () => void, retry: () => void, continue: () => void } } = {}
-  private allFilesProgress = 0
+  downloads: { [versionID: number]: ChartDownload } = {}
+  downloadQueue: ChartDownload[] = []
+  isGoogleDownloading = false // This is a lock controlled by only one ChartDownload at a time
 
   async handler(data: Download) {
-    switch (data.action) {
-      case 'cancel': this.downloadCallbacks[data.versionID].cancel(); return
-      case 'retry': this.downloadCallbacks[data.versionID].retry(); return
-      case 'continue': this.downloadCallbacks[data.versionID].continue(); return
-      case 'add': this.downloadCallbacks[data.versionID] = { cancel: () => { }, retry: () => { }, continue: () => { } }
-    }
-    // after this point, (data.action == add), so data.data should be defined
-
-    // Initialize download object
-    const download: DownloadProgress = {
-      versionID: data.versionID,
-      title: `${data.data.avTagName} - ${data.data.artist}`,
-      header: '',
-      description: '',
-      percent: 0,
-      type: 'good'
+    if (data.action == 'add') {
+      this.downloads[data.versionID] = new ChartDownload(data.versionID, data.data)
     }
 
-    // Create a temporary folder to store the downloaded files
-    let chartPath: string
-    try {
-      chartPath = await this.createDownloadFolder()
-    } catch (e) {
-      download.header = 'Access Error'
-      download.description = e.message
-      download.type = 'error'
-      this.downloadCallbacks[data.versionID].retry = () => { this.handler(data) }
-      emitIPCEvent('download-updated', download)
-      return
-    }
+    const download = this.downloads[data.versionID]
 
-    // For each actual download link in <data.data.links>, download the file to <chartPath>
-    // Only iterate over the keys in data.links that have link values (not hashes)
-    const fileKeys = Object.keys(data.data.links).filter(link => data.data.links[link].includes('.'))
-    for (let i = 0; i < fileKeys.length; i++) {
-      // INITIALIZE DOWNLOADER
-      // <data.data.links[typeHash]> stores the expected hash value found in the download header
-      const typeHash = createHash('md5').update(data.data.links[fileKeys[i]]).digest('hex')
-      const downloader = new FileDownloader(data.data.links[fileKeys[i]], chartPath, fileKeys.length, data.data.links[typeHash])
-      this.downloadCallbacks[data.versionID].cancel = () => downloader.cancelDownload() // Make cancel button cancel this download
-      const downloadComplete = this.addDownloadEventListeners(downloader, download, fileKeys, i)
-
-      // DOWNLOAD THE NEXT FILE
-      downloader.beginDownload()
-      await downloadComplete // Wait for this download to finish before downloading the next file
-    }
-
-    // INITIALIZE FILE EXTRACTOR
-    const destinationFolderName = sanitizeFilename(`${data.data.artist} - ${data.data.avTagName} (${data.data.charter})`)
-    const extractor = new FileExtractor(chartPath, fileKeys.includes('archive'), destinationFolderName)
-    this.downloadCallbacks[data.versionID].cancel = () => extractor.cancelExtract() // Make cancel button cancel the file extraction
-    this.addExtractorEventListeners(extractor, download)
-
-    // EXTRACT THE DOWNLOADED ARCHIVE
-    extractor.beginExtract()
-  }
-
-  private async createDownloadFolder() {
-    let retryCount = 0
-    while (true) {
-      const randomString = (await randomBytes(5)).toString('hex')
-      const chartPath = join(tempPath, `chart_${randomString}`)
-      try {
-        await mkdir(chartPath)
-        return chartPath
-      } catch (e) {
-        if (retryCount > 5) {
-          throw new Error(`Bridge was unable to create a directory at [${chartPath}]`)
-        } else {
-          console.log(`Error creating folder [${chartPath}], retrying with a different folder...`)
-          retryCount++
-        }
-      }
+    if (data.action == 'cancel') {
+      download.cancel() // Might change isGoogleDownloading and call updateQueue()
+      this.downloadQueue = this.downloadQueue.filter(download => download.versionID != data.versionID)
+      this.downloads[data.versionID] = undefined
+    } else {
+      download.setInQueue()
+      this.downloadQueue.push(download) // Add, retry, or continue will re-add the download to the queue
+      this.updateQueue()
     }
   }
 
-  private addDownloadEventListeners(downloader: FileDownloader, download: DownloadProgress, fileKeys: string[], i: number) {
-    const individualFileProgressPortion = 80 / fileKeys.length
-    let fileProgress = 0
-
-    downloader.on('wait', (waitTime) => {
-      download.header = `[${fileKeys[i]}] (file ${i + 1}/${fileKeys.length})`
-      download.description = `Waiting for Google rate limit... (${waitTime}s)`
-      download.type = 'wait'
+  /**
+   * Called when at least one download in the queue can potentially be started.
+   */
+  updateQueue() {
+    this.downloadQueue.sort((cd1: ChartDownload, cd2: ChartDownload) => {
+      const value1 = (cd1.isGoogle ? 100 : 0) + (99 - cd1.allFilesProgress)
+      const value2 = (cd2.isGoogle ? 100 : 0) + (99 - cd2.allFilesProgress)
+      return value1 - value2 // Sorts in the order to get the most downloads completed early
     })
 
-    downloader.on('waitProgress', (secondsRemaining, initialWaitTime) => {
-      download.description = `Waiting for Google rate limit... (${secondsRemaining}s)`
-      fileProgress = interpolate(secondsRemaining, initialWaitTime, 0, 0, individualFileProgressPortion / 2)
-      console.log(`${initialWaitTime} ... ${secondsRemaining} ... 0`)
-      download.percent = this.allFilesProgress + fileProgress
-      download.type = 'wait'
-      emitIPCEvent('download-updated', download)
-    })
-
-    downloader.on('request', () => {
-      download.description = `Sending request...`
-      fileProgress = individualFileProgressPortion / 2
-      download.percent = this.allFilesProgress + fileProgress
-      download.type = 'good'
-      emitIPCEvent('download-updated', download)
-    })
-
-    downloader.on('warning', (continueAnyway) => {
-      download.description = 'WARNING'
-      this.downloadCallbacks[download.versionID].continue = continueAnyway
-      download.type = 'warning'
-      emitIPCEvent('download-updated', download)
-    })
-
-    let filesize = -1
-    downloader.on('download', (filename, _filesize) => {
-      download.header = `[${filename}] (file ${i + 1}/${fileKeys.length})`
-      if (_filesize != undefined) {
-        filesize = _filesize
-        download.description = `Downloading... (0%)`
-      } else {
-        download.description = `Downloading... (0 MB)`
+    while (this.downloadQueue[0] != undefined && !(this.downloadQueue[0].isGoogle && this.isGoogleDownloading)) {
+      const nextDownload = this.downloadQueue.shift()
+      nextDownload.run()
+      if (nextDownload.isGoogle) {
+        this.isGoogleDownloading = true
       }
-      download.type = 'good'
-      emitIPCEvent('download-updated', download)
-    })
-
-    downloader.on('downloadProgress', (bytesDownloaded) => {
-      if (filesize != -1) {
-        download.description = `Downloading... (${Math.round(1000 * bytesDownloaded / filesize) / 10}%)`
-        fileProgress = interpolate(bytesDownloaded, 0, filesize, individualFileProgressPortion / 2, individualFileProgressPortion)
-        download.percent = this.allFilesProgress + fileProgress
-      } else {
-        download.description = `Downloading... (${Math.round(bytesDownloaded / 1e+5) / 10} MB)`
-        download.percent = this.allFilesProgress + fileProgress
-      }
-      download.type = 'good'
-      emitIPCEvent('download-updated', download)
-    })
-
-    downloader.on('error', (error, retry) => {
-      download.header = error.header
-      download.description = error.body
-      download.type = 'error'
-      this.downloadCallbacks[download.versionID].retry = retry
-      emitIPCEvent('download-updated', download)
-    })
-
-    // Returns a promise that resolves when the download is finished
-    return new Promise<void>(resolve => {
-      downloader.on('complete', () => {
-        emitIPCEvent('download-updated', download)
-        this.allFilesProgress += individualFileProgressPortion
-        resolve()
-      })
-    })
-  }
-
-  private addExtractorEventListeners(extractor: FileExtractor, download: DownloadProgress) {
-    let archive = ''
-
-    extractor.on('extract', (filename) => {
-      archive = filename
-      download.header = `[${archive}]`
-      download.description = `Extracting...`
-      download.type = 'good'
-      emitIPCEvent('download-updated', download)
-    })
-
-    extractor.on('extractProgress', (percent, filecount) => {
-      download.header = `[${archive}] (${filecount} file${filecount == 1 ? '' : 's'} extracted)`
-      download.description = `Extracting... (${percent}%)`
-      download.percent = interpolate(percent, 0, 100, 80, 95)
-      download.type = 'good'
-      emitIPCEvent('download-updated', download)
-    })
-
-    extractor.on('transfer', (filepath) => {
-      download.header = `Moving files to library folder...`
-      download.description = filepath
-      download.percent = 95
-      download.type = 'good'
-      emitIPCEvent('download-updated', download)
-    })
-
-    extractor.on('complete', (filepath) => {
-      download.header = `Download complete.`
-      download.description = filepath
-      download.percent = 100
-      download.type = 'done'
-      emitIPCEvent('download-updated', download)
-    })
-
-    extractor.on('error', (error, retry) => {
-      download.header = error.header
-      download.description = error.body
-      download.type = 'error'
-      this.downloadCallbacks[download.versionID].retry = retry
-      emitIPCEvent('download-updated', download)
-    })
+    }
   }
 }
+
+export const downloadHandler = new DownloadHandler()
