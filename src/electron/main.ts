@@ -82,7 +82,7 @@ function createBridgeWindow() {
   mainWindow.loadURL(getLoadUrl())
 
   if (isDevBuild) {
-    setUpDevTools()
+    mainWindow.webContents.openDevTools()
   }
 
   mainWindow.on('closed', () => {
@@ -121,17 +121,6 @@ function getLoadUrl() {
     pathname: isDevBuild ? '//localhost:4200/' : path.join(__dirname, '..', 'index.html'),
     slashes: true
   })
-}
-
-/**
- * Automatically reload the electron process on changes, and open the dev tools
- */
-function setUpDevTools() {
-  require('electron-reload')(__dirname, {
-    electron: require(`${__dirname}/../../node_modules/electron`)
-  })
-
-  mainWindow.webContents.openDevTools()
 }
 
 export function emitIPCEvent<E extends keyof IPCEmitEvents>(event: E, data: IPCEmitEvents[E]) {
