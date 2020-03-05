@@ -1,6 +1,6 @@
 <div *ngIf="selectedVersion" class="ui fluid card">
-  <div class="ui placeholder" [ngClass]="{'placeholder': !albumArtBuffer}">
-    <img class="ui square image" [src]="getAlbumArtSrc()">
+  <div class="ui placeholder" [ngClass]="{'placeholder': albumArtSrc == ''}">
+    <img class="ui square image" [src]="albumArtSrc">
   </div>
   <div *ngIf="charts.length > 1" id="chartDropdown" class="ui fluid selection dropdown">
     <input type="hidden" name="Chart">
@@ -15,24 +15,19 @@
     </div>
   </div>
   <div id="textPanel" class="content">
-    <span class="header">{{selectedVersion?.avTagName}}</span>
+    <span class="header">{{selectedVersion.avTagName}}</span>
     <div class="description">
-      <div><b>{{charterPlural}}</b> {{selectedVersion?.charters}}</div>
-      <div *ngIf="selectedVersion?.tags"><b>Tags:</b> {{selectedVersion.tags}}</div>
-      <div><b>Audio Length:</b> {{getSongLength()}}</div>
+      <div><b>{{charterPlural}}</b> {{selectedVersion.charters}}</div>
+      <div *ngIf="selectedVersion.tags"><b>Tags:</b> {{selectedVersion.tags}}</div>
+      <div><b>Audio Length:</b> {{songLength}}</div>
       <!-- TODO: add difficulty icons -->
     </div>
 
   </div>
   <div class="ui positive buttons">
-    <div class="ui button" (click)="onDownloadClicked()">Download{{getVersions().length > 1 ? ' Latest' : ''}}</div>
-    <div *ngIf="getVersions().length > 1" id="versionDropdown" class="ui floating dropdown icon button">
+    <div class="ui button" (click)="onDownloadClicked()">{{downloadButtonText}}</div>
+    <div *ngIf="getSelectedChartVersions().length > 1" id="versionDropdown" class="ui floating dropdown icon button">
       <i class="dropdown icon"></i>
-      <div class="menu">
-        <div class="item">Version 1</div>
-        <div class="item">Version 2</div>
-        <div class="item">Version 3</div>
-      </div>
     </div>
   </div>
 </div>

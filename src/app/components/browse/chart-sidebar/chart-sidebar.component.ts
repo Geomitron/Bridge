@@ -15,38 +15,43 @@ export class ChartSidebarComponent {
 
   private songResult: SongResult
   selectedVersion: VersionResult
-  charterPlural: string
-  albumArtBuffer: Buffer
-
   charts: VersionResult[][]
 
   constructor(private electronService: ElectronService, private albumArtService: AlbumArtService, private downloadService: DownloadService) { }
 
+  /**
+   * Displays the information for the selected song.
+   */
   async onRowClicked(result: SongResult) {
-    this.songResult = result
-    const albumArt = this.albumArtService.getImage(result.id)
-    const results = await this.electronService.invoke('song-details', result.id)
+    if (this.songResult == undefined || result.id != this.songResult.id) { // Clicking the same row again will not reload
+      this.songResult = result
+      const albumArt = this.albumArtService.getImage(result.id)
+      const results = await this.electronService.invoke('song-details', result.id)
+      this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].avTagName.length - v2[0].avTagName.length)
+      this.charts.forEach(chart => chart.sort((v1, v2) => v2.lastModified - v1.lastModified))
+      await this.selectChart(0)
+      this.initChartDropdown()
 
-    this.charts = groupBy(results, 'chartID')
-    this.initChartDropdown()
-
-    this.albumArtBuffer = await albumArt
+      this.updateAlbumArtSrc(await albumArt)
+    }
   }
 
-  getAlbumArtSrc() {
-    if (this.albumArtBuffer) {
-      return 'data:image/jpg;base64,' + this.albumArtBuffer.toString('base64')
+  albumArtSrc = ''
+  /**
+   * Updates the sidebar to display the album art.
+   */
+  updateAlbumArtSrc(albumArtBuffer?: Buffer) {
+    if (albumArtBuffer) {
+      this.albumArtSrc = 'data:image/jpg;base64,' + albumArtBuffer.toString('base64')
     } else {
-      return ''
+      this.albumArtSrc = ''
     }
   }
 
   /**
-   * Initializes the chart dropdown from <this.charts> (or removes it if there's only one chart)
+   * Initializes the chart dropdown from `this.charts` (or removes it if there's only one chart).
    */
-  private async initChartDropdown() {
-    this.switchChart(this.charts[0][0].chartID)
-    await new Promise<void>(resolve => setTimeout(() => resolve(), 0)) // Wait for *ngIf to update DOM
+  private initChartDropdown() {
     const values = this.charts.map(chart => {
       const version = chart[0]
       return {
@@ -57,31 +62,49 @@ export class ChartSidebarComponent {
     })
     const $chartDropdown = $('#chartDropdown')
     $chartDropdown.dropdown('setup menu', { values })
-    $chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.switchChart(chartID))
+    $chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.selectChart(chartID))
     $chartDropdown.dropdown('set selected', values[0].value)
   }
 
-  /**
-   * Updates the sidebar to display the metadata for the chart with <chartID>.
-   * @param chartID The ID of the chart to display.
-   */
-  private switchChart(chartID: number) {
+  private async selectChart(chartID: number) {
     const chart = this.charts.find(chart => chart[0].chartID == chartID)
-    this.selectedVersion = chart[0]
-    this.charterPlural = this.selectedVersion.charterIDs.split('&').length == 1 ? 'Charter:' : 'Charters:'
+    await this.selectVersion(chart[0])
     this.initVersionDropdown()
   }
 
   /**
+   * Updates the sidebar to display the metadata for `selectedVersion`.
+   */
+  async selectVersion(selectedVersion: VersionResult) {
+    this.selectedVersion = selectedVersion
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 0)) // Wait for *ngIf to update DOM
+
+    if (this.selectedVersion != undefined) {
+      this.updateCharterPlural()
+      this.updateSongLength()
+      this.updateDownloadButtonText()
+    }
+  }
+
+  charterPlural: string
+  /**
+   * Chooses to display 'Charter:' or 'Charters:'.
+   */
+  updateCharterPlural() {
+    this.charterPlural = this.selectedVersion.charterIDs.split('&').length == 1 ? 'Charter:' : 'Charters:'
+  }
+
+  songLength: string
+  /**
    * Converts <this.selectedVersion.song_length> into a readable duration.
    */
-  getSongLength() {
+  updateSongLength() {
     if (this.selectedVersion.song_length == 0) {
-      return 'Unknown'
+      this.songLength = 'Unknown'
     }
     let seconds = Math.round(this.selectedVersion.song_length / 1000)
     if (seconds < 60) {
-      return `${seconds} second${seconds == 1 ? '' : 's'}`
+      this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}`
     }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
@@ -90,49 +113,67 @@ export class ChartSidebarComponent {
       minutes -= 60
     }
     seconds = Math.floor(seconds % 60)
-    return `${hours == 0 ? '' : hours + ':'}${minutes == 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
+    this.songLength = `${hours == 0 ? '' : hours + ':'}${minutes == 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
+  }
+
+  downloadButtonText: string
+  /**
+   * Chooses the text to display on the download button.
+   */
+  updateDownloadButtonText() {
+    if (this.getSelectedChartVersions().length <= 1) {
+      this.downloadButtonText = 'Download'
+    } else if (this.selectedVersion.versionID == this.selectedVersion.latestVersionID) {
+      this.downloadButtonText = 'Download Latest'
+    } else {
+      this.downloadButtonText = `Download (${this.getLastModifiedText(this.selectedVersion.lastModified)})`
+    }
   }
 
   /**
-   * Initializes the version dropdown from <this.selectedVersion> (or removes it if there's only one version)
+   * Initializes the version dropdown from `this.selectedVersion` (or removes it if there's only one version).
    */
   private initVersionDropdown() {
     const $versionDropdown = $('#versionDropdown')
-    const versions = this.getVersions()
-    const values = versions.map(version => {
-      return {
-        value: version.versionID,
-        text: this.getLastModified(version.lastModified),
-        name: this.getLastModified(version.lastModified)
-      }
-    })
+    const versions = this.getSelectedChartVersions()
+    const values = versions.map(version => ({
+      value: version.versionID,
+      text: this.getLastModifiedText(version.lastModified),
+      name: this.getLastModifiedText(version.lastModified)
+    }))
+
     $versionDropdown.dropdown('setup menu', { values })
     $versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
-      console.log(`Selected version: ${versionID}`)
-      this.selectedVersion = versions.find(version => version.versionID = versionID)
+      this.selectVersion(versions.find(version => version.versionID == versionID))
     })
     $versionDropdown.dropdown('set selected', values[0].value)
+  }
+
+  /**
+   * Returns the list of versions for the selected chart, sorted by `lastModified`.
+   */
+  getSelectedChartVersions() {
+    return this.charts.find(chart => chart[0].chartID == this.selectedVersion.chartID)
   }
 
   /**
    * Converts the <lastModified> value to a user-readable format.
    * @param lastModified The UNIX timestamp for the lastModified date.
    */
-  private getLastModified(lastModified: number) {
+  private getLastModifiedText(lastModified: number) {
     return new Date(lastModified).toLocaleDateString()
   }
 
+  /**
+   * Adds the selected version to the download queue.
+   */
   onDownloadClicked() {
     this.downloadService.addDownload(
       this.selectedVersion.versionID, {
-        avTagName: this.selectedVersion.avTagName,
-        artist: this.songResult.artist,
-        charter: this.selectedVersion.charters,
-        links: JSON.parse(this.selectedVersion.downloadLink)
-      })
-  }
-
-  getVersions() {
-    return this.charts.find(chart => chart[0].chartID == this.selectedVersion.chartID)
+      avTagName: this.selectedVersion.avTagName,
+      artist: this.songResult.artist,
+      charter: this.selectedVersion.charters,
+      links: JSON.parse(this.selectedVersion.downloadLink)
+    })
   }
 }

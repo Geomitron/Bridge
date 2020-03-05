@@ -21,7 +21,7 @@ export class BrowseComponent {
     this.resultTable.results = results
     this.resultTable.onNewSearch()
     this.resultTable.checkAll(false)
-    this.chartSidebar.selectedVersion = undefined
+    this.chartSidebar.selectVersion(undefined)
     this.statusBar.resultCount = results.length
     this.statusBar.selectedResults = []
   }
