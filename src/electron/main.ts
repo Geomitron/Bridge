@@ -1,4 +1,5 @@
-import { app, BrowserWindow, screen, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
+import * as windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
 
@@ -6,6 +7,7 @@ import * as url from 'url'
 import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
 import Database from './shared/Database'
 import { getSettingsHandler } from './ipc/SettingsHandler.ipc'
+import { dataPath } from './shared/Paths'
 
 let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -56,10 +58,18 @@ function handleOSXWindowClosed() {
  */
 function createBridgeWindow() {
 
+  // Load window size and maximized/restored state from previous session
+  const windowState = windowStateKeeper({
+    defaultWidth: 1000,
+    defaultHeight: 800,
+    path: dataPath
+  })
+  
   // Create the browser window
-  mainWindow = createBrowserWindow()
+  mainWindow = createBrowserWindow(windowState)
 
-  mainWindow.maximize()
+  // Store window size and maximized/restored state for next session
+  windowState.manage(mainWindow)
 
   // Don't use a system menu
   mainWindow.setMenu(null)
@@ -84,14 +94,12 @@ function createBridgeWindow() {
 /**
  * Initialize a BrowserWindow object with initial parameters
  */
-function createBrowserWindow() {
-  const targetWindowSize = screen.getPrimaryDisplay().workAreaSize
-
+function createBrowserWindow(windowState: windowStateKeeper.State) {
   return new BrowserWindow({
-    x: 0,
-    y: 0,
-    width: targetWindowSize.width,
-    height: targetWindowSize.height,
+    x: windowState.x,
+    y: windowState.y,
+    width: windowState.width,
+    height: windowState.height,
     frame: false,
     title: 'Bridge',
     webPreferences: {
