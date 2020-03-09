@@ -1,13 +1,13 @@
-import { exists as _exists, mkdir as _mkdir, readFile as _readFile, writeFile as _writeFile } from 'fs'
+import * as fs from 'fs'
 import { dataPath, tempPath, themesPath, settingsPath } from '../shared/Paths'
 import { promisify } from 'util'
 import { IPCInvokeHandler, IPCEmitHandler } from '../shared/IPCHandler'
 import { defaultSettings, Settings } from '../shared/Settings'
 
-const exists = promisify(_exists)
-const mkdir = promisify(_mkdir)
-const readFile = promisify(_readFile)
-const writeFile = promisify(_writeFile)
+const exists = promisify(fs.exists)
+const mkdir = promisify(fs.mkdir)
+const readFile = promisify(fs.readFile)
+const writeFile = promisify(fs.writeFile)
 
 let settings: Settings
 

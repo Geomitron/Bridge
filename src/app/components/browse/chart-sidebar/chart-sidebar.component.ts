@@ -172,7 +172,7 @@ export class ChartSidebarComponent {
       this.selectedVersion.versionID, {
       avTagName: this.selectedVersion.avTagName,
       artist: this.songResult.artist,
-      charter: this.selectedVersion.charters,
+      charter: this.selectedVersion.charters, //TODO: get the charter name associated with this particular version
       links: JSON.parse(this.selectedVersion.downloadLink)
     })
   }

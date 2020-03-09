@@ -6,7 +6,7 @@
 
   <div class="right menu">
     <a class="item traffic-light" (click)="minimize()"><i class="minus icon"></i></a>
-    <a class="item traffic-light" (click)="maximize()"><i class="icon window" [ngClass]="isMaximized ? 'restore' : 'maximize'"></i></a>
+    <a class="item traffic-light" (click)="toggleMaximized()"><i class="icon window" [ngClass]="isMaximized ? 'restore' : 'maximize'"></i></a>
     <a class="item traffic-light" (click)="close()"><i class="x icon"></i></a>
   </div>
 </div>

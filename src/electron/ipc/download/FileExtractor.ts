@@ -1,21 +1,20 @@
 import { DownloadError } from './FileDownloader'
-import { readdir as _readdir, unlink as _unlink, lstat as _lstat, copyFile as _copyFile,
-  rmdir as _rmdir, access as _access, mkdir as _mkdir, constants } from 'fs'
+import * as fs from 'fs'
 import { promisify } from 'util'
 import { join, extname } from 'path'
 import * as node7z from 'node-7z'
 import * as zipBin from '7zip-bin'
-import * as unrarjs from 'node-unrar-js'
 import { getSettingsHandler } from '../SettingsHandler.ipc'
+import { extractRar } from './RarExtractor'
 const getSettings = getSettingsHandler.getSettings
 
-const readdir = promisify(_readdir)
-const unlink = promisify(_unlink)
-const lstat = promisify(_lstat)
-const copyFile = promisify(_copyFile)
-const rmdir = promisify(_rmdir)
-const access = promisify(_access)
-const mkdir = promisify(_mkdir)
+const readdir = promisify(fs.readdir)
+const unlink = promisify(fs.unlink)
+const lstat = promisify(fs.lstat)
+const copyFile = promisify(fs.copyFile)
+const rmdir = promisify(fs.rmdir)
+const access = promisify(fs.access)
+const mkdir = promisify(fs.mkdir)
 
 type EventCallback = {
   'extract': (filename: string) => void
@@ -47,7 +46,7 @@ export class FileExtractor {
     this.libraryFolder = getSettings().libraryPath
     const files = await readdir(this.sourceFolder)
     if (this.isArchive) {
-      this.extract(files[0])
+      this.extract(files[0], extname(files[0]) == '.rar')
     } else {
       this.transfer()
     }
@@ -56,19 +55,24 @@ export class FileExtractor {
   /**
    * Extracts the file at `filename` to `this.sourceFolder`.
    */
-  private extract(filename: string) {
+  private async extract(filename: string, useRarExtractor: boolean) {
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 100)) // Wait for filesystem to process downloaded file...
     if (this.wasCanceled) { return } // CANCEL POINT
     this.callbacks.extract(filename)
     const source = join(this.sourceFolder, filename)
 
-    if (extname(filename) == '.rar') {
+    if (useRarExtractor) {
 
       // Use node-unrar-js to extract the archive
       try {
-        let extractor = unrarjs.createExtractorFromFile(source, this.sourceFolder)
-        extractor.extractAll()
+        await extractRar(source, this.sourceFolder)
       } catch (err) {
-        this.callbacks.error({ header: 'Extract Failed.', body: `Unable to extract [${filename}]: ${err.name}` }, () => this.extract(filename))
+        this.callbacks.error({
+            header: 'Extract Failed.',
+            body: `Unable to extract [${filename}]: ${err}`
+          },
+          () => this.extract(filename, extname(filename) == '.rar')
+        )
         return
       }
       this.transfer(source)
@@ -82,12 +86,17 @@ export class FileExtractor {
         this.callbacks.extractProgress(progress.percent, progress.fileCount)
       })
 
-      stream.on('error', (err: Error) => {
-        this.callbacks.error({ header: 'Extract Failed.', body: `Unable to extract [${filename}]: ${err.name}` }, () => this.extract(filename))
+      let extractErrorOccured = false
+      stream.on('error', () => {
+        extractErrorOccured = true
+        console.log(`Failed to extract [${filename}], retrying with .rar extractor...`)
+        this.extract(filename, true)
       })
 
       stream.on('end', () => {
-        this.transfer(source)
+        if (!extractErrorOccured) {
+          this.transfer(source)
+        }
       })
 
     }
@@ -104,7 +113,7 @@ export class FileExtractor {
       const destinationFolder = join(this.libraryFolder, this.destinationFolderName)
       this.callbacks.transfer(destinationFolder)
       try {
-        await access(destinationFolder, constants.F_OK)
+        await access(destinationFolder, fs.constants.F_OK)
       } catch (e) {
         await mkdir(destinationFolder)
       }
