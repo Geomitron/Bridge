@@ -25,7 +25,7 @@ export class StatusBarComponent {
   constructor(
     private electronService: ElectronService,
     private downloadService: DownloadService,
-    searchService: SearchService,
+    private searchService: SearchService,
     ref: ChangeDetectorRef
   ) {
     downloadService.onDownloadUpdated(() => {
@@ -41,6 +41,10 @@ export class StatusBarComponent {
     searchService.onNewSearch(() => {
       this.selectedResults = []
     })
+  }
+
+  get allResultsVisible() {
+    return this.searchService.allResultsVisible
   }
 
   showDownloads() {

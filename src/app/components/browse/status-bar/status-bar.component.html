@@ -1,5 +1,5 @@
 <div class="ui bottom borderless menu">
-  <div *ngIf="resultCount > 0" class="item">{{resultCount}} Result{{resultCount == 1 ? '' : 's'}}</div>
+  <div *ngIf="resultCount > 0" class="item">{{resultCount}}{{allResultsVisible ? '' : '+'}} Result{{resultCount == 1 ? '' : 's'}}</div>
   <div class="item">
     <button *ngIf="selectedResults.length > 0" (click)="downloadSelected()" class="ui positive button">Download Selected</button>
   </div>

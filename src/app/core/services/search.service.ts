@@ -10,9 +10,9 @@ export class SearchService {
   private resultsChangedEmitter = new EventEmitter<SongResult[]>() // For when any results change
   private newResultsEmitter = new EventEmitter<SongResult[]>()     // For when a new search happens
   private results: SongResult[] = []
-  private awaitingResults = false
+  private awaitingResults = false // TODO: add loading icon below table when this is true
   private currentQuery: SongSearch
-  private allResultsVisible = true
+  private _allResultsVisible = true
 
   constructor(private electronService: ElectronService) { }
 
@@ -39,7 +39,7 @@ export class SearchService {
   }
 
   async updateScroll() {
-    if (!this.awaitingResults && !this.allResultsVisible) {
+    if (!this.awaitingResults && !this._allResultsVisible) {
       this.awaitingResults = true
       this.currentQuery.offset += 20
       this.results.push(...this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery)))
@@ -52,11 +52,15 @@ export class SearchService {
   trimLastChart(results: SongResult[]) {
     if (results.length > 20) {
       results.splice(20, 1)
-      this.allResultsVisible = false
+      this._allResultsVisible = false
     } else {
-      this.allResultsVisible = true
+      this._allResultsVisible = true
     }
 
     return results
+  }
+
+  get allResultsVisible() {
+    return this._allResultsVisible
   }
 }
