@@ -19,13 +19,7 @@ export class SearchService {
   async newSearch(query: string) {
     this.awaitingResults = true
     this.currentQuery = { query, type: SearchType.Any, offset: 0, length: 20 + 1 } // TODO: make length a setting
-    this.results = await this.electronService.invoke('song-search', this.currentQuery)
-    if (this.results.length > 20) {
-      this.results.splice(20, 1)
-      this.allResultsVisible = false
-    } else {
-      this.allResultsVisible = true
-    }
+    this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
     this.awaitingResults = false
 
     this.newResultsEmitter.emit(this.results)
@@ -48,17 +42,21 @@ export class SearchService {
     if (!this.awaitingResults && !this.allResultsVisible) {
       this.awaitingResults = true
       this.currentQuery.offset += 20
-      const newResults = await this.electronService.invoke('song-search', this.currentQuery)
-      if (newResults.length > 20) {
-        newResults.splice(20, 1)
-        this.allResultsVisible = false
-      } else {
-        this.allResultsVisible = true
-      }
-      this.results.push(...newResults)
+      this.results.push(...this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery)))
       this.awaitingResults = false
 
       this.resultsChangedEmitter.emit(this.results)
     }
+  }
+
+  trimLastChart(results: SongResult[]) {
+    if (results.length > 20) {
+      results.splice(20, 1)
+      this.allResultsVisible = false
+    } else {
+      this.allResultsVisible = true
+    }
+
+    return results
   }
 }

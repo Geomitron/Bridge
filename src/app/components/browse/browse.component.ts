@@ -19,17 +19,11 @@ export class BrowseComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     const $tableColumn = $('#table-column')
-    $tableColumn.visibility({
-      once: false,
-      continuous: true,
-      context: $tableColumn,
-      observeChanges: true,
-      onUpdate: () => {
-        let pos = $tableColumn[0].scrollTop + $tableColumn[0].offsetHeight
-        let max = $tableColumn[0].scrollHeight
-        if (pos >= max - 5) {
-          this.searchService.updateScroll()
-        }
+    $tableColumn.on('scroll', () => {
+      let pos = $tableColumn[0].scrollTop + $tableColumn[0].offsetHeight
+      let max = $tableColumn[0].scrollHeight
+      if (pos >= max - 5) {
+        this.searchService.updateScroll()
       }
     })
   }
