@@ -4,6 +4,8 @@
 export interface SongSearch {
   query: string
   type: SearchType
+  offset: number
+  length: number
 }
 
 /**

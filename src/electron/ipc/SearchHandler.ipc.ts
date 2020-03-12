@@ -23,7 +23,7 @@ class SearchHandler implements IPCInvokeHandler<'song-search'> {
    */
   private getSearchQuery(search: SongSearch) {
     switch (search.type) {
-      case SearchType.Any: return this.getGeneralSearchQuery(search.query)
+      case SearchType.Any: return this.getGeneralSearchQuery(search)
       default: return '<<<ERROR>>>' // TODO: add more search types
     }
   }
@@ -31,12 +31,12 @@ class SearchHandler implements IPCInvokeHandler<'song-search'> {
   /**
    * @returns a database query that returns the top 20 songs that match `search`.
    */
-  private getGeneralSearchQuery(searchString: string) {
+  private getGeneralSearchQuery(search: SongSearch) {
     return `
       SELECT id, name, artist, album, genre, year
       FROM Song
-      WHERE MATCH (name,artist,album,genre) AGAINST (${escape(searchString)}) > 0
-      LIMIT ${20} OFFSET ${0};
+      WHERE MATCH (name,artist,album,genre) AGAINST (${escape(search.query)}) > 0
+      LIMIT ${search.length} OFFSET ${search.offset};
     ` // TODO: add parameters for the limit and offset
   }
 }
