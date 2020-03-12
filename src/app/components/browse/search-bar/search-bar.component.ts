@@ -1,6 +1,5 @@
-import { Component, AfterViewInit, Output, EventEmitter } from '@angular/core'
-import { ElectronService } from '../../../core/services/electron.service'
-import { SearchType, SongResult } from '../../../../electron/shared/interfaces/search.interface'
+import { Component, AfterViewInit } from '@angular/core'
+import { SearchService } from 'src/app/core/services/search.service'
 
 @Component({
   selector: 'app-search-bar',
@@ -8,17 +7,14 @@ import { SearchType, SongResult } from '../../../../electron/shared/interfaces/s
   styleUrls: ['./search-bar.component.scss']
 })
 export class SearchBarComponent implements AfterViewInit {
-  @Output() resultsUpdated = new EventEmitter<SongResult[]>()
 
-  constructor(private electronService: ElectronService) { }
+  constructor(private searchService: SearchService) { }
 
   ngAfterViewInit() {
     $('.ui.dropdown').dropdown()
   }
 
   async onSearch(query: string) {
-    const results = await this.electronService.invoke('song-search', { query, type: SearchType.Any })
-
-    this.resultsUpdated.emit(results)
+    this.searchService.newSearch(query)
   }
 }

@@ -1,23 +1,35 @@
-import { Component } from '@angular/core'
+import { Component, OnInit } from '@angular/core'
 import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
 import { ElectronService } from '../../../core/services/electron.service'
 import { VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
 import { AlbumArtService } from '../../../core/services/album-art.service'
 import { DownloadService } from '../../../core/services/download.service'
 import { groupBy } from 'src/electron/shared/UtilFunctions'
+import { SearchService } from 'src/app/core/services/search.service'
 
 @Component({
   selector: 'app-chart-sidebar',
   templateUrl: './chart-sidebar.component.html',
   styleUrls: ['./chart-sidebar.component.scss']
 })
-export class ChartSidebarComponent {
+export class ChartSidebarComponent implements OnInit {
 
   private songResult: SongResult
   selectedVersion: VersionResult
   charts: VersionResult[][]
 
-  constructor(private electronService: ElectronService, private albumArtService: AlbumArtService, private downloadService: DownloadService) { }
+  constructor(
+    private electronService: ElectronService,
+    private albumArtService: AlbumArtService,
+    private downloadService: DownloadService,
+    private searchService: SearchService
+  ) { }
+
+  ngOnInit() {
+    this.searchService.onNewSearch(() => {
+      this.selectVersion(undefined)
+    })
+  }
 
   /**
    * Displays the information for the selected song.

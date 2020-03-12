@@ -4,6 +4,7 @@ import { DownloadService } from 'src/app/core/services/download.service'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { groupBy } from 'src/electron/shared/UtilFunctions'
 import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
+import { SearchService } from 'src/app/core/services/search.service'
 
 @Component({
   selector: 'app-status-bar',
@@ -21,11 +22,24 @@ export class StatusBarComponent {
   batchResults: VersionResult[]
   chartGroups: VersionResult[][]
 
-  constructor(private electronService: ElectronService, private downloadService: DownloadService, ref: ChangeDetectorRef) {
+  constructor(
+    private electronService: ElectronService,
+    private downloadService: DownloadService,
+    searchService: SearchService,
+    ref: ChangeDetectorRef
+  ) {
     downloadService.onDownloadUpdated(() => {
       this.downloading = downloadService.downloadCount > 0
       this.percent = downloadService.totalPercent
       ref.detectChanges()
+    })
+
+    searchService.onSearchChanged(() => {
+      this.resultCount = searchService.resultCount
+    })
+
+    searchService.onNewSearch(() => {
+      this.selectedResults = []
     })
   }
 
@@ -60,11 +74,11 @@ export class StatusBarComponent {
         const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
         this.downloadService.addDownload(
           downloadVersion.versionID, {
-            avTagName: downloadVersion.avTagName,
-            artist: downloadSong.artist,
-            charter: downloadVersion.charters,
-            links: JSON.parse(downloadVersion.downloadLink)
-          })
+          avTagName: downloadVersion.avTagName,
+          artist: downloadSong.artist,
+          charter: downloadVersion.charters,
+          links: JSON.parse(downloadVersion.downloadLink)
+        })
       }
     } else {
       $('#selectedModal').modal('show')
@@ -78,11 +92,11 @@ export class StatusBarComponent {
       const downloadSong = this.selectedResults.find(song => song.id == version.songID)
       this.downloadService.addDownload(
         version.versionID, {
-          avTagName: version.avTagName,
-          artist: downloadSong.artist,
-          charter: version.charters,
-          links: JSON.parse(version.downloadLink)
-        })
+        avTagName: version.avTagName,
+        artist: downloadSong.artist,
+        charter: version.charters,
+        links: JSON.parse(version.downloadLink)
+      })
     }
   }
 

@@ -1,7 +1,6 @@
 import { Component, ViewChild, AfterViewInit } from '@angular/core'
 import { ChartSidebarComponent } from './chart-sidebar/chart-sidebar.component'
 import { StatusBarComponent } from './status-bar/status-bar.component'
-import { SongResult } from 'src/electron/shared/interfaces/search.interface'
 import { ResultTableComponent } from './result-table/result-table.component'
 
 @Component({
@@ -33,15 +32,6 @@ export class BrowseComponent implements AfterViewInit {
         }
       }
     })
-  }
-
-  onResultsUpdated(results: SongResult[]) {
-    this.resultTable.results = results
-    this.resultTable.onNewSearch()
-    this.resultTable.checkAll(false)
-    this.chartSidebar.selectVersion(undefined)
-    this.statusBar.resultCount = results.length
-    this.statusBar.selectedResults = []
   }
 
   loadMoreResults() {
