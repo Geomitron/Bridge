@@ -1,2 +1,2 @@
 # Ignore semantic UI in GitHub Language Statistics
-- src/assets/semantic/
+src/assets/semantic/** linguist-vendored
