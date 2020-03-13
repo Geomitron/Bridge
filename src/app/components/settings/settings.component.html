@@ -7,7 +7,7 @@
         type="text" placeholder="No directory selected!">
       <button *ngIf="settingsService.libraryDirectory != undefined" (click)="openLibraryDirectory()"
         class="ui button">Open Folder</button>
-      <button (click)="getLibraryDirectory()" class="ui button teal">Choose</button>
+      <button (click)="getLibraryDirectory()" class="ui button positive">Choose</button>
     </div>
   </div>
 </div>
@@ -39,10 +39,9 @@
 <div #themeDropdown class="ui selection dropdown mr">
   <input type="hidden" name="sort" [value]="settingsService.theme">
   <i class="dropdown icon"></i>
-  <div class="default text">Default</div>
+  <div class="default text">{{settingsService.theme}}</div>
   <div class="menu">
-    <div class="item" [attr.data-value]="i" *ngFor="let theme of settingsService.builtinThemes; let i = index">{{theme}}
-    </div>
+    <div class="item" [attr.data-value]="i" *ngFor="let theme of settingsService.builtinThemes; let i = index">{{theme}}</div>
   </div>
 </div>
 

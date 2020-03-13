@@ -1,122 +1,96 @@
-body ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1) !important;
+body {
+  background-color: #222222;
 }
 
-body ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25) !important;
-}
-
-app-browse, app-downloads, app-library, app-settings, app-about {
-  background-color: #1E1E1E;
+/* Text Color */
+.ui.menu .item,
+.ui.header,
+.ui.form .field>label,
+.ui.input input,
+.ui.button,
+div {
   color: #CCCCCC !important;
 }
 
-app-about img.logo {
-  filter: drop-shadow(0 0px 14px white);
+/* Toolbar */
+
+.ui.menu, .menu>.item.traffic-light {
+  background-color: #303030 !important;
 }
 
-.ui.dimmer {
-  background: rgba(0,0,0,0.85) !important;
-}
-
-.ui.inverted.dimmer .ui.loader, .ui.loader {
-  color: #888888 !important;
-}
-
-.ui.segment {
-  background: #3C3C3C;
-}
-
-.ui.header, .ui.form .field>label, .ui.basic.button, .ui.basic.buttons .button {
-  color: #CCCCCC !important;
-}
-
-/* Loading */
-app-app-loading {
-  background-color: #1E1E1E !important;
-}
-
-app-app-loading svg .st0 {
-  stroke: #CCCCCC !important;
-}
-
-/* Menu */
-.ui[class*="top fixed"].menu {
-  background-color: #3C3C3C; 
-}
-
-.ui.menu:not(.vertical) .item {
-  color: #CCCCCC !important;
-}
-
-.ui.link.menu .item:hover, .ui.menu .dropdown.item:hover, .ui.menu .link.item:hover, .ui.menu a.item:hover {
-  background: rgba(0,0,0,0.2) !important;
+.ui.menu .active.item:hover {
+  background-color: #222222;
 }
 
 .ui.menu .active.item {
-  color: white !important;
-  background: rgba(0,0,0,0.4) !important;
+  background-color: #222222 !important;
 }
 
-/* Display Items */
-.ui.items>.item>.content>*:not(.button) {
-  color: rgb(218, 218, 218) !important;
+.ui.menu .item:hover {
+  background: rgba(0, 0, 0, .1) !important;
 }
 
-/* Inputs */
-.ui.input>input, .ui.selection.dropdown {
-  background: #383838 !important;
-  color: #AEAEAE !important;
+.ui.menu .close:hover {
+  background: rgba(255, 0, 0, .15) !important;
 }
 
-/* Buttons */
-.ui.button {
-  box-shadow: 0 0 0 2px #fff inset !important;
-  background: transparent none;
-  color: #fff;
-  text-shadow: none !important;
+/* Settings Page */
+.ui.input input {
+  background-color: #555555 !important;
 }
 
-.ui.button:hover {
-  background: #fff;
-  box-shadow: 0 0 0 2px #fff inset!important;
-  color: rgba(0,0,0,.8);
+.ui.label, .ui.basic.label {
+  background-color: #555555;
 }
 
-.ui.teal.button, .ui.teal.buttons .button {
+.ui.button,
+.ui.basic.button {
+  background-color: #444444;
+}
+
+.ui.positive.button {
   background-color: transparent;
-  box-shadow: 0 0 0 2px #00b5ad inset !important;
-  color: #02e0d6;
-  text-shadow: none !important;
+  color: #16ab39 !important;
+  box-shadow: 0 0 0 2px #16ab39 inset !important;
 }
 
-.ui.teal.button:hover, .ui.teal.buttons .button:hover {
-  background-color: #00b5ad;
-  color: white;
+.ui.positive.button:hover {
+  color: #222222 !important;
 }
 
-.ui.teal.button:active, .ui.teal.buttons .button:active {
-  background-color: #00827c !important;
-  box-shadow: 0 0 0 2px #00827c inset !important;
-  color: #fff;
-  text-shadow: none;
+.ui.button:hover,
+.ui.basic.button:hover,
+.ui.basic.button:active,
+.ui.basic.button:focus {
+  background-color: #666666;
 }
 
-.ui.buttons .button:first-child {
-  margin-left: 0;
+.ui.selection, .menu>.item {
+  background-color: #555555 !important;
 }
 
-.ui.buttons .button {
-  margin: 0 0 0 -2px;
+.ui.selection.dropdown:focus,
+.ui.selection.dropdown:hover,
+.ui.selection.active.dropdown,
+.ui.selection.dropdown .menu,
+.ui.selection.active.dropdown .menu,
+.ui.selection.active.dropdown .menu:active,
+.ui.selection.dropdown .menu>.item,
+input:active,
+.ui[class*="right labeled"].input>input:focus {
+  border-color: #7E8388 !important;
 }
 
-.ui.green.button, .ui.green.buttons .button {
-  background-color: transparent;
-  box-shadow: 0 0 0 2px #21BA45 inset !important;
-  color: #21BA45;
-  text-shadow: none !important;
+input[type=number]::-webkit-inner-spin-button {
+  background-color: #FF0000;
 }
-.ui.green.button:hover, .ui.green.buttons .button:hover {
-  background-color: #21BA45;
-  color: white;
+
+.ui.warning.message {
+  background-color: #333333;
+  box-shadow: 0 0 0 1px #7E8388 inset,
+  0 0 0 0 transparent;
+}
+
+.ui.selection.dropdown .menu>.item.selected {
+  background-color: #222222 !important;
 }

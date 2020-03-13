@@ -12,7 +12,11 @@ export class SettingsService {
   private currentThemeLink: HTMLLinkElement
 
   constructor(private electronService: ElectronService) {
-    this.getSettings()
+    this.getSettings().then(() => {
+      if (this.settings.theme != this.builtinThemes[0]) {
+        this.changeTheme(this.settings.theme)
+      }
+    })
   }
 
   async getSettings() {
@@ -28,7 +32,6 @@ export class SettingsService {
     }
   }
 
-  // TODO: research how to make theme changes with fomantic UI
   changeTheme(theme: string) {
     if (this.currentThemeLink != undefined) this.currentThemeLink.remove()
     if (theme == 'Default') { return }
@@ -36,7 +39,7 @@ export class SettingsService {
     const link = document.createElement('link')
     link.type = 'text/css'
     link.rel = 'stylesheet'
-    link.href = `assets/themes/${theme}.css`
+    link.href = `/assets/themes/${theme}.css`
     this.currentThemeLink = document.head.appendChild(link)
   }
 

@@ -106,6 +106,7 @@ export class FileExtractor {
    * Deletes the archive at `archiveFilepath`, then transfers the extracted chart to `this.libraryFolder`.
    */
   private async transfer(archiveFilepath?: string) {
+    // TODO: this fails if the extracted chart has nested folders
     if (this.wasCanceled) { return } // CANCEL POINT
     try {
       

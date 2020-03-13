@@ -17,8 +17,8 @@
   i {
     margin: 0 !important;
   }
+}
 
-  &:last-child:hover {
-    background: rgba(255, 0, 0, .1) !important;
-  }
+.close:hover {
+  background: rgba(255, 0, 0, .15) !important;
 }
