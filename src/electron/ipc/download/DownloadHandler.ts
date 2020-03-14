@@ -1,7 +1,5 @@
 import { IPCEmitHandler } from '../../shared/IPCHandler'
-import { randomBytes as _randomBytes } from 'crypto'
 import { Download } from '../../shared/interfaces/download.interface'
-import { mkdir as _mkdir } from 'fs'
 import { ChartDownload } from './ChartDownload'
 
 class DownloadHandler implements IPCEmitHandler<'download'> {
@@ -11,7 +9,7 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
   downloadQueue: ChartDownload[] = []
   isGoogleDownloading = false // This is a lock controlled by only one ChartDownload at a time
 
-  async handler(data: Download) {
+  handler(data: Download) {
     if (data.action == 'add') {
       this.downloads[data.versionID] = new ChartDownload(data.versionID, data.data)
     }

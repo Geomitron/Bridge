@@ -111,13 +111,9 @@ export class ChartSidebarComponent implements OnInit {
    * Converts <this.selectedVersion.song_length> into a readable duration.
    */
   updateSongLength() {
-    if (this.selectedVersion.song_length == 0) {
-      this.songLength = 'Unknown'
-    }
+    if (this.selectedVersion.song_length == 0) { this.songLength = 'Unknown' }
     let seconds = Math.round(this.selectedVersion.song_length / 1000)
-    if (seconds < 60) {
-      this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}`
-    }
+    if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}` }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
     while (minutes > 59) {
@@ -182,10 +178,10 @@ export class ChartSidebarComponent implements OnInit {
   onDownloadClicked() {
     this.downloadService.addDownload(
       this.selectedVersion.versionID, {
-      avTagName: this.selectedVersion.avTagName,
-      artist: this.songResult.artist,
-      charter: this.selectedVersion.charters, //TODO: get the charter name associated with this particular version
-      links: JSON.parse(this.selectedVersion.downloadLink)
-    })
+        avTagName: this.selectedVersion.avTagName,
+        artist: this.songResult.artist,
+        charter: this.selectedVersion.charters, // TODO: get the charter name associated with this particular version
+        links: JSON.parse(this.selectedVersion.downloadLink)
+      })
   }
 }

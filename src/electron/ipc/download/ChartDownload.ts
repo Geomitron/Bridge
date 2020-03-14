@@ -17,7 +17,7 @@ const mkdir = promisify(_mkdir)
 export class ChartDownload {
 
   // This changes if the user needs to click 'retry' or 'continue'
-  run: () => void | Promise<void> = this.beginDownload
+  run: () => void | Promise<void> = this.beginDownload.bind(this)
   cancel: () => void
 
   isArchive: boolean
@@ -51,7 +51,7 @@ export class ChartDownload {
     this.header = ''
     this.description = 'Waiting for other downloads to finish...'
     this.type = 'good'
-    this.cancel = () => { }
+    this.cancel = () => { /* do nothing */ }
     emitIPCEvent('download-updated', this)
   }
 
@@ -64,7 +64,7 @@ export class ChartDownload {
     try {
       chartPath = await this.createDownloadFolder()
     } catch (e) {
-      this.run = this.beginDownload // Retry action
+      this.run = this.beginDownload.bind(this) // Retry action
       this.error('Access Error', e.message)
       return
     }

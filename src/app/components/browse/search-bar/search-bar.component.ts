@@ -14,7 +14,7 @@ export class SearchBarComponent implements AfterViewInit {
     $('.ui.dropdown').dropdown()
   }
 
-  async onSearch(query: string) {
+  onSearch(query: string) {
     this.searchService.newSearch(query)
   }
 }

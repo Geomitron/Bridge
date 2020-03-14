@@ -89,3 +89,4 @@ class SetSettingsHandler implements IPCEmitHandler<'set-settings'> {
 
 export const getSettingsHandler = new GetSettingsHandler()
 export const setSettingsHandler = new SetSettingsHandler()
+export function getSettings() { return getSettingsHandler.getSettings() }

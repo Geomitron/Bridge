@@ -21,7 +21,7 @@ export class TabPersistStrategy extends RouteReuseStrategy {
     if (!route.routeConfig) return null
     return this.handles[route.routeConfig.path]
   }
-  shouldReuseRoute(future: ActivatedRouteSnapshot, _curr: ActivatedRouteSnapshot) {
+  shouldReuseRoute(future: ActivatedRouteSnapshot) {
     return future.data.shouldReuse || false
   }
 }

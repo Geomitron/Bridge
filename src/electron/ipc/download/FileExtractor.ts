@@ -4,9 +4,8 @@ import { promisify } from 'util'
 import { join, extname } from 'path'
 import * as node7z from 'node-7z'
 import * as zipBin from '7zip-bin'
-import { getSettingsHandler } from '../SettingsHandler.ipc'
+import { getSettings } from '../SettingsHandler.ipc'
 import { extractRar } from './RarExtractor'
-const getSettings = getSettingsHandler.getSettings
 
 const readdir = promisify(fs.readdir)
 const unlink = promisify(fs.unlink)
@@ -21,7 +20,7 @@ type EventCallback = {
   'extractProgress': (percent: number, fileCount: number) => void
   'transfer': (filepath: string) => void
   'complete': (filepath: string) => void
-  'error': (error: DownloadError, retry: () => void) => void
+  'error': (error: DownloadError, retry: () => void | Promise<void>) => void
 }
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
@@ -68,11 +67,9 @@ export class FileExtractor {
         await extractRar(source, this.sourceFolder)
       } catch (err) {
         this.callbacks.error({
-            header: 'Extract Failed.',
-            body: `Unable to extract [${filename}]: ${err}`
-          },
-          () => this.extract(filename, extname(filename) == '.rar')
-        )
+          header: 'Extract Failed.',
+          body: `Unable to extract [${filename}]: ${err}`
+        }, () => this.extract(filename, extname(filename) == '.rar'))
         return
       }
       this.transfer(source)
@@ -82,7 +79,7 @@ export class FileExtractor {
       // Use node-7z to extract the archive
       const stream = node7z.extractFull(source, this.sourceFolder, { $progress: true, $bin: zipBin.path7za })
 
-      stream.on('progress', (progress: { percent: number, fileCount: number }) => {
+      stream.on('progress', (progress: { percent: number; fileCount: number }) => {
         this.callbacks.extractProgress(progress.percent, progress.fileCount)
       })
 
@@ -107,9 +104,10 @@ export class FileExtractor {
    */
   private async transfer(archiveFilepath?: string) {
     // TODO: this fails if the extracted chart has nested folders
+    // TODO: skip over "__MACOSX" folder
     if (this.wasCanceled) { return } // CANCEL POINT
     try {
-      
+
       // Create destiniation folder if it doesn't exist
       const destinationFolder = join(this.libraryFolder, this.destinationFolderName)
       this.callbacks.transfer(destinationFolder)

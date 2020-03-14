@@ -3,8 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as needle from 'needle'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
-import { getSettingsHandler } from '../SettingsHandler.ipc'
-const getSettings = getSettingsHandler.getSettings
+import { getSettings } from '../SettingsHandler.ipc'
 
 type EventCallback = {
   'request': () => void
@@ -16,7 +15,7 @@ type EventCallback = {
 }
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
-export type DownloadError = { header: string, body: string }
+export type DownloadError = { header: string; body: string }
 
 /**
  * Downloads a file from `url` to `destinationFolder` and verifies that its hash matches `expectedHash`.
@@ -36,7 +35,7 @@ export class FileDownloader {
    * @param expectedHash The hash header value that is expected for this file.
    */
   constructor(private url: string, private destinationFolder: string, private expectedHash?: string) { }
-  
+
   /**
    * Calls `callback` when `event` fires.
    */
@@ -53,7 +52,7 @@ export class FileDownloader {
       this.callbacks.error({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }, () => this.beginDownload())
       return
     }
-  
+
     this.requestDownload()
   }
 
@@ -64,17 +63,17 @@ export class FileDownloader {
   private requestDownload(cookieHeader?: string) {
     if (this.wasCanceled) { return } // CANCEL POINT
     this.callbacks.request()
-    let uuid = generateUUID()
+    const uuid = generateUUID()
     const req = needle.get(this.url, {
-      follow_max: 10,
-      open_timeout: 5000,
-      headers: Object.assign({
+      'follow_max': 10,
+      'open_timeout': 5000,
+      'headers': Object.assign({
         'User-Agent': 'PostmanRuntime/7.22.0',
         'Referer': this.url,
         'Accept': '*/*',
         'Postman-Token': uuid
       },
-        (cookieHeader ? { 'Cookie': cookieHeader } : undefined)
+      (cookieHeader ? { 'Cookie': cookieHeader } : undefined)
       )
     })
 
@@ -99,7 +98,7 @@ export class FileDownloader {
         return
       }
 
-      let fileType = headers['content-type']
+      const fileType = headers['content-type']
       if (fileType.startsWith('text/html')) {
         this.handleHTMLResponse(req, headers['set-cookie'])
       } else {
@@ -183,7 +182,7 @@ export class FileDownloader {
     } else {
       // GDrive specific jazz
       const filenameRegex = /filename="(.*?)"/g
-      let results = filenameRegex.exec(headers['content-disposition'])
+      const results = filenameRegex.exec(headers['content-disposition'])
       if (results == null) {
         console.log(`Warning: couldn't find filename in content-disposition header: [${headers['content-disposition']}]`)
         return 'unknownFilename'

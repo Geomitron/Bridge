@@ -10,14 +10,14 @@ import { SearchService } from 'src/app/core/services/search.service'
   styleUrls: ['./result-table.component.scss']
 })
 export class ResultTableComponent implements OnInit {
-  
+
   @Output() rowClicked = new EventEmitter<SongResult>()
   @Output() songChecked = new EventEmitter<SongResult>()
   @Output() songUnchecked = new EventEmitter<SongResult>()
-  
+
   @ViewChild(CheckboxDirective, { static: true }) checkboxColumn: CheckboxDirective
   @ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
-  
+
   results: SongResult[]
 
   constructor(private searchService: SearchService) { }

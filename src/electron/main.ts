@@ -64,7 +64,7 @@ function createBridgeWindow() {
     defaultHeight: 800,
     path: dataPath
   })
-  
+
   // Create the browser window
   mainWindow = createBrowserWindow(windowState)
 

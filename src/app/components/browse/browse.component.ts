@@ -21,8 +21,8 @@ export class BrowseComponent implements AfterViewInit {
     const $tableColumn = $('#table-column')
     // TODO: on new search, scroll to the top
     $tableColumn.on('scroll', () => {
-      let pos = $tableColumn[0].scrollTop + $tableColumn[0].offsetHeight
-      let max = $tableColumn[0].scrollHeight
+      const pos = $tableColumn[0].scrollTop + $tableColumn[0].offsetHeight
+      const max = $tableColumn[0].scrollHeight
       if (pos >= max - 5) {
         this.searchService.updateScroll()
       }

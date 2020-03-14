@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-explicit-any: 0 */ // Using any is required because that type is required in catch statements
 import { red } from 'cli-color'
 import { getRelativeFilepath } from './ElectronUtilFunctions'
 

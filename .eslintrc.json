@@ -23,7 +23,9 @@
     "indent": "off",
     "space-before-function-paren": ["off", "never"],
     "@typescript-eslint/semi": ["error", "never"],
-    "@typescript-eslint/brace-style": ["error"],
+    "@typescript-eslint/brace-style": ["error", "1tbs", {
+      "allowSingleLine": true
+    }],
     "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/space-before-function-paren": ["error", "never"],
     "@typescript-eslint/no-var-requires": ["off"],
@@ -33,6 +35,7 @@
       ]
     }],
     "@typescript-eslint/no-explicit-any": ["error"],
+    "@typescript-eslint/ban-ts-ignore": ["off"],
     "@typescript-eslint/interface-name-prefix": ["off"],
     "@typescript-eslint/member-delimiter-style": ["error", {
       "multiline": {

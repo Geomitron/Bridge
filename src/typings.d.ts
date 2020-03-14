@@ -1,12 +1,13 @@
+/* eslint @typescript-eslint/no-explicit-any: 0 */ // Semantic adds functions to JQuery in a way that can't be type checked
 /* SystemJS module definition */
-declare var nodeModule: NodeModule
+declare let nodeModule: NodeModule
 interface NodeModule {
   id: string
 }
 
 // @ts-ignore
-declare var window: Window
-declare var $: any
+declare let window: Window
+declare let $: any
 interface Window {
   process: any
   require: any

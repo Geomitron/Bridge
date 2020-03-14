@@ -1,5 +1,4 @@
-import { getSettingsHandler } from '../SettingsHandler.ipc'
-const getSettings = getSettingsHandler.getSettings
+import { getSettings } from '../SettingsHandler.ipc'
 
 class GoogleTimer {
 
