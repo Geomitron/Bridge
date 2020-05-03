@@ -6,6 +6,7 @@ import { AlbumArtService } from '../../../core/services/album-art.service'
 import { DownloadService } from '../../../core/services/download.service'
 import { groupBy } from 'src/electron/shared/UtilFunctions'
 import { SearchService } from 'src/app/core/services/search.service'
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
 
 @Component({
   selector: 'app-chart-sidebar',
@@ -22,7 +23,8 @@ export class ChartSidebarComponent implements OnInit {
     private electronService: ElectronService,
     private albumArtService: AlbumArtService,
     private downloadService: DownloadService,
-    private searchService: SearchService
+    private searchService: SearchService,
+    private sanitizer: DomSanitizer
   ) { }
 
   ngOnInit() {
@@ -40,7 +42,8 @@ export class ChartSidebarComponent implements OnInit {
       const albumArt = this.albumArtService.getImage(result.id)
       const results = await this.electronService.invoke('song-details', result.id)
       this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].avTagName.length - v2[0].avTagName.length)
-      this.charts.forEach(chart => chart.sort((v1, v2) => v2.lastModified - v1.lastModified))
+      // This sorting is very inefficient, but there's rarely more than two or three in this list, so it's fine
+      this.charts.forEach(chart => chart.sort((v1, v2) => new Date(v2.lastModified).getTime() - new Date(v1.lastModified).getTime()))
       await this.selectChart(0)
       this.initChartDropdown()
 
@@ -48,13 +51,13 @@ export class ChartSidebarComponent implements OnInit {
     }
   }
 
-  albumArtSrc = ''
+  albumArtSrc: SafeUrl = ''
   /**
    * Updates the sidebar to display the album art.
    */
-  updateAlbumArtSrc(albumArtBuffer?: Buffer) {
-    if (albumArtBuffer) {
-      this.albumArtSrc = 'data:image/jpg;base64,' + albumArtBuffer.toString('base64')
+  updateAlbumArtSrc(albumArtBase64String?: string) {
+    if (albumArtBase64String) {
+      this.albumArtSrc = this.sanitizer.bypassSecurityTrustUrl('data:image/jpg;base64,' + albumArtBase64String)
     } else {
       this.albumArtSrc = ''
     }
@@ -168,7 +171,7 @@ export class ChartSidebarComponent implements OnInit {
    * Converts the <lastModified> value to a user-readable format.
    * @param lastModified The UNIX timestamp for the lastModified date.
    */
-  private getLastModifiedText(lastModified: number) {
+  private getLastModifiedText(lastModified: string) {
     return new Date(lastModified).toLocaleDateString()
   }
 
@@ -181,7 +184,7 @@ export class ChartSidebarComponent implements OnInit {
         avTagName: this.selectedVersion.avTagName,
         artist: this.songResult.artist,
         charter: this.selectedVersion.charters, // TODO: get the charter name associated with this particular version
-        links: JSON.parse(this.selectedVersion.downloadLink)
+        driveData: this.selectedVersion.driveData
       })
   }
 }

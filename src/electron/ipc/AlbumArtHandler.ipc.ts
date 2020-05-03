@@ -1,6 +1,7 @@
 import { IPCInvokeHandler } from '../shared/IPCHandler'
-import Database from '../shared/Database'
 import { AlbumArtResult } from '../shared/interfaces/songDetails.interface'
+import * as needle from 'needle'
+import { serverURL } from '../shared/Paths'
 
 /**
  * Handles the 'album-art' event.
@@ -12,20 +13,19 @@ class AlbumArtHandler implements IPCInvokeHandler<'album-art'> {
    * @returns an `AlbumArtResult` object containing the album art for the song with `songID`.
    */
   async handler(songID: number) {
-    const db = await Database.getInstance()
-
-    return db.sendQuery(this.getAlbumArtQuery(songID), 1) as Promise<AlbumArtResult>
-  }
-
-  /**
-   * @returns a database query that returns the album art for the song with `songID`.
-   */
-  private getAlbumArtQuery(songID: number) {
-    return `
-      SELECT art
-      FROM AlbumArt
-      WHERE songID = ${songID};
-    `
+    return new Promise<AlbumArtResult>((resolve, reject) => {
+      needle.request(
+        'get',
+        serverURL + `/api/data/albumArt`, {
+          songID: songID
+        }, (err, response) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(response.body)
+          }
+        })
+    })
   }
 }
 

@@ -5,7 +5,6 @@ import * as url from 'url'
 
 // IPC Handlers
 import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
-import Database from './shared/Database'
 import { getSettingsHandler } from './ipc/SettingsHandler.ipc'
 import { dataPath } from './shared/Paths'
 
@@ -86,7 +85,6 @@ function createBridgeWindow() {
   }
 
   mainWindow.on('closed', () => {
-    Database.closeConnection()
     mainWindow = null // Dereference mainWindow when the window is closed
   })
 }

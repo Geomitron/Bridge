@@ -105,6 +105,7 @@ export class FileExtractor {
   private async transfer(archiveFilepath?: string) {
     // TODO: this fails if the extracted chart has nested folders
     // TODO: skip over "__MACOSX" folder
+    // TODO: handle other common problems, like chart/audio files not named correctly
     if (this.wasCanceled) { return } // CANCEL POINT
     try {
 

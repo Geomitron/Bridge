@@ -2,7 +2,7 @@
  * The image data for a song's album art.
  */
 export interface AlbumArtResult {
-  art: Buffer
+  base64Art: string
 }
 
 /**
@@ -15,13 +15,12 @@ export interface VersionResult {
   latestVersionID: number
   latestSetlistVersionID: number
   icon: string
-  name: string
+  driveData: DriveChart & { inChartPack: boolean }
   avTagName: string
   charters: string
   charterIDs: string
   tags: string | null
-  downloadLink: string
-  lastModified: number
+  lastModified: string
   song_length: number
   diff_band: number
   diff_guitar: number
@@ -32,5 +31,53 @@ export interface VersionResult {
   diff_guitarghl: number
   diff_bassghl: number
   songDataIncorrect: boolean
-  isUnusualAvTagName: boolean
+  year: string
+  chartMetadata: ChartMetadata
+}
+
+export interface DriveChart {
+  source: DriveSource
+  isArchive: boolean
+  downloadPath: string
+  filesHash: string
+  files: DriveFile[]
+}
+
+export interface DriveSource {
+  isSetlistSource: boolean
+  setlistIcon?: string
+  sourceUserIDs: number[]
+  sourceName: string
+  sourceDriveID: string
+}
+
+export interface DriveFile {
+  id: string
+  originalFilename: string
+  mimeType: string
+  webContentLink: string
+  modifiedTime: string
+  md5Checksum: string
+  size: string
+}
+
+export interface ChartMetadata {
+  hasSections: boolean
+  hasStarPower: boolean
+  hasForced: boolean
+  hasTap: boolean
+  hasOpen: {
+    [instrument: string]: boolean
+  }
+  hasSoloSections: boolean
+  hasLyrics: boolean
+  is120: boolean
+  hasBrokenNotes: boolean
+  noteCounts: {
+    [instrument: string]: {
+      [difficulty: string]: number
+    }
+  }
+  length: number
+  effectiveLength: number
 }

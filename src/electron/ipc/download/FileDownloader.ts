@@ -8,7 +8,6 @@ import { getSettings } from '../SettingsHandler.ipc'
 type EventCallback = {
   'request': () => void
   'warning': (continueAnyway: () => void) => void
-  'download': (filename: string, filesize?: number) => void
   'downloadProgress': (bytesDownloaded: number) => void
   'error': (error: DownloadError, retry: () => void) => void
   'complete': () => void
@@ -34,7 +33,7 @@ export class FileDownloader {
    * @param destinationFolder The path to where this file should be stored.
    * @param expectedHash The hash header value that is expected for this file.
    */
-  constructor(private url: string, private destinationFolder: string, private expectedHash?: string) { }
+  constructor(private url: string, private destinationFolder: string) { }
 
   /**
    * Calls `callback` when `event` fires.
@@ -103,14 +102,7 @@ export class FileDownloader {
         this.handleHTMLResponse(req, headers['set-cookie'])
       } else {
         const fileName = this.getDownloadFileName(headers)
-        this.handleDownloadResponse(req, fileName, headers['content-length'])
-
-        if (this.expectedHash !== undefined && this.getDownloadHash(headers) !== this.expectedHash) {
-          req.pause()
-          this.callbacks.warning(() => {
-            req.resume()
-          })
-        }
+        this.handleDownloadResponse(req, fileName)
       }
     })
   }
@@ -149,10 +141,9 @@ export class FileDownloader {
    * Pipes the data from a download response to `fileName`.
    * @param req The download request.
    * @param fileName The name of the output file.
-   * @param contentLength The number of bytes to be downloaded. If undefined, download progress is indicated by MB, not %.
    */
-  private handleDownloadResponse(req: NodeJS.ReadableStream, fileName: string, contentLength?: number) {
-    this.callbacks.download(fileName, contentLength)
+  private handleDownloadResponse(req: NodeJS.ReadableStream, fileName: string) {
+    this.callbacks.downloadProgress(0)
     let downloadedSize = 0
     const filePath = path.join(this.destinationFolder, fileName)
     req.pipe(fs.createWriteStream(filePath))
@@ -189,20 +180,6 @@ export class FileDownloader {
       } else {
         return sanitizeFilename(results[1])
       }
-    }
-  }
-
-  /**
-   * Extracts the downloaded file's hash from `headers`, depending on the file's host server.
-   * @param headers The response headers for this request.
-   */
-  private getDownloadHash(headers: Headers): string {
-    if (headers['server'] && headers['server'] == 'cloudflare' || this.url.startsWith('https://public.fightthe.pw/')) {
-      // Cloudflare and Chorus specific jazz
-      return String(headers['content-length']) // No actual hash is provided in the header, so this is the next best thing
-    } else {
-      // GDrive specific jazz
-      return headers['x-goog-hash']
     }
   }
 

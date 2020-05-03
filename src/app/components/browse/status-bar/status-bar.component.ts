@@ -81,7 +81,7 @@ export class StatusBarComponent {
             avTagName: downloadVersion.avTagName,
             artist: downloadSong.artist,
             charter: downloadVersion.charters,
-            links: JSON.parse(downloadVersion.downloadLink)
+            driveData: downloadVersion.driveData
           })
       }
     } else {
@@ -99,7 +99,7 @@ export class StatusBarComponent {
           avTagName: version.avTagName,
           artist: downloadSong.artist,
           charter: version.charters,
-          links: JSON.parse(version.downloadLink)
+          driveData: version.driveData
         })
     }
   }

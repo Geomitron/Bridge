@@ -5,11 +5,12 @@ import { FileExtractor } from './FileExtractor'
 import { sanitizeFilename, interpolate } from '../../shared/UtilFunctions'
 import { emitIPCEvent } from '../../main'
 import { promisify } from 'util'
-import { randomBytes as _randomBytes, createHash } from 'crypto'
+import { randomBytes as _randomBytes } from 'crypto'
 import { mkdir as _mkdir } from 'fs'
 import { ProgressType, NewDownload } from 'src/electron/shared/interfaces/download.interface'
 import { downloadHandler } from './DownloadHandler'
 import { googleTimer } from './GoogleTimer'
+import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
 
 const randomBytes = promisify(_randomBytes)
 const mkdir = promisify(_mkdir)
@@ -21,26 +22,20 @@ export class ChartDownload {
   cancel: () => void
 
   isArchive: boolean
-  isGoogle: boolean
   title: string
   header: string
   description: string
   percent = 0
   type: ProgressType
 
-  private fileKeys: string[]
-  private fileValues: string[]
+  private files: DriveFile[]
   allFilesProgress = 0
   individualFileProgressPortion: number
 
   constructor(public versionID: number, private data: NewDownload) {
-    // Only iterate over the keys in data.links that have link values (not hashes)
-    this.fileKeys = Object.keys(data.links).filter(link => data.links[link].includes('.'))
-    this.fileValues = Object.values(data.links).filter(value => value.includes('.'))
-
-    this.isArchive = this.fileKeys.includes('archive')
-    this.isGoogle = !!this.fileValues.find(value => value.toLocaleLowerCase().includes('google'))
-    this.individualFileProgressPortion = 80 / this.fileKeys.length
+    this.files = data.driveData.files
+    this.isArchive = data.driveData.isArchive
+    this.individualFileProgressPortion = 80 / this.files.length
   }
 
   /**
@@ -69,31 +64,27 @@ export class ChartDownload {
       return
     }
 
-    // For each actual download link in <this.data.links>, download the file to <chartPath>
-    for (let i = 0; i < this.fileKeys.length; i++) {
+    // For each download link in <this.files>, download the file to <chartPath>
+    for (let i = 0; i < this.files.length; i++) {
       // INITIALIZE DOWNLOADER
-      const typeHash = createHash('md5').update(this.fileValues[i]).digest('hex')
-      // <this.data.links[typeHash]> stores the expected hash value found in the download header
-      const downloader = new FileDownloader(this.fileValues[i], chartPath, this.data.links[typeHash])
+      const downloader = new FileDownloader(this.files[i].webContentLink, chartPath)
       const downloadComplete = this.addDownloadEventListeners(downloader, i)
 
       // DOWNLOAD THE NEXT FILE
-      if (this.isGoogle) { // If this is a google download...
-        // Wait for google rate limit
-        this.header = `[${this.fileKeys[i]}] (file ${i + 1}/${this.fileKeys.length})`
-        googleTimer.onTimerUpdate((remainingTime, totalTime) => {
-          this.description = `Waiting for Google rate limit... (${remainingTime}s)`
-          this.percent = this.allFilesProgress + interpolate(remainingTime, totalTime, 0, 0, this.individualFileProgressPortion / 2)
-          this.type = 'good'
-          emitIPCEvent('download-updated', this)
-        })
-        this.cancel = () => {
-          googleTimer.removeCallbacks()
-          this.onDownloadStop()
-          downloader.cancelDownload()
-        }
-        await new Promise<void>(resolve => googleTimer.onTimerReady(resolve))
+      // Wait for google rate limit
+      this.header = `[${this.files[i].originalFilename}] (file ${i + 1}/${this.files.length})`
+      googleTimer.onTimerUpdate((remainingTime, totalTime) => {
+        this.description = `Waiting for Google rate limit... (${remainingTime}s)`
+        this.percent = this.allFilesProgress + interpolate(remainingTime, totalTime, 0, 0, this.individualFileProgressPortion / 2)
+        this.type = 'good'
+        emitIPCEvent('download-updated', this)
+      })
+      this.cancel = () => {
+        googleTimer.removeCallbacks()
+        this.onDownloadStop()
+        downloader.cancelDownload()
       }
+      await new Promise<void>(resolve => googleTimer.onTimerReady(resolve))
 
       this.cancel = () => {
         this.onDownloadStop()
@@ -149,10 +140,8 @@ export class ChartDownload {
    * If this was a google download, allows a new google download to start.
    */
   private onDownloadStop() {
-    if (this.isGoogle) {
-      downloadHandler.isGoogleDownloading = false
-      downloadHandler.updateQueue()
-    }
+    downloadHandler.isGoogleDownloading = false
+    downloadHandler.updateQueue()
   }
 
   /**
@@ -177,28 +166,12 @@ export class ChartDownload {
       emitIPCEvent('download-updated', this)
     })
 
-    let filesize = -1
-    downloader.on('download', (filename, _filesize) => {
-      this.header = `[${filename}] (file ${fileIndex + 1}/${this.fileKeys.length})`
-      if (_filesize != undefined) {
-        filesize = _filesize
-        this.description = 'Downloading... (0%)'
-      } else {
-        this.description = 'Downloading... (0 MB)'
-      }
-      this.type = 'good'
-      emitIPCEvent('download-updated', this)
-    })
-
     downloader.on('downloadProgress', (bytesDownloaded) => {
-      if (filesize != -1) {
-        this.description = `Downloading... (${Math.round(1000 * bytesDownloaded / filesize) / 10}%)`
-        fileProgress = interpolate(bytesDownloaded, 0, filesize, this.individualFileProgressPortion / 2, this.individualFileProgressPortion)
-        this.percent = this.allFilesProgress + fileProgress
-      } else {
-        this.description = `Downloading... (${Math.round(bytesDownloaded / 1e+5) / 10} MB)`
-        this.percent = this.allFilesProgress + fileProgress
-      }
+      const size = Number(this.files[fileIndex].size)
+      this.header = `[${this.files[fileIndex].originalFilename}] (file ${fileIndex + 1}/${this.files.length})`
+      this.description = `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`
+      fileProgress = interpolate(bytesDownloaded, 0, size, this.individualFileProgressPortion / 2, this.individualFileProgressPortion)
+      this.percent = this.allFilesProgress + fileProgress
       this.type = 'fastUpdate'
       emitIPCEvent('download-updated', this)
     })

@@ -7,3 +7,6 @@ export const libraryPath = path.join(dataPath, 'library.db')
 export const settingsPath = path.join(dataPath, 'settings.json')
 export const tempPath = path.join(dataPath, 'temp')
 export const themesPath = path.join(dataPath, 'themes')
+
+// URL
+export const serverURL = '64.53.210.87'

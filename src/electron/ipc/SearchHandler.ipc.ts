@@ -1,8 +1,7 @@
 import { IPCInvokeHandler } from '../shared/IPCHandler'
-import Database from '../shared/Database'
 import { SongSearch, SearchType, SongResult } from '../shared/interfaces/search.interface'
-import { escape } from 'mysql'
-
+import * as needle from 'needle'
+import { serverURL } from '../shared/Paths'
 /**
  * Handles the 'song-search' event.
  */
@@ -13,31 +12,31 @@ class SearchHandler implements IPCInvokeHandler<'song-search'> {
    * @returns the top 20 songs that match `search`.
    */
   async handler(search: SongSearch) {
-    const db = await Database.getInstance()
-
-    return db.sendQuery(this.getSearchQuery(search)) as Promise<SongResult[]>
+    return new Promise<SongResult[]>((resolve, reject) => {
+      needle.request(
+        'get',
+        serverURL + `/api/search/${this.getSearchType(search)}`, {
+          query: search.query,
+          limit: search.length,
+          offset: search.offset
+        }, (err, response) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(response.body)
+          }
+        })
+    })
   }
 
   /**
-   * @returns a database query that returns the type of results expected by `search.type`.
+   * @returns the search api type that corresponds with `search.type`.
    */
-  private getSearchQuery(search: SongSearch) {
+  private getSearchType(search: SongSearch) {
     switch (search.type) {
-      case SearchType.Any: return this.getGeneralSearchQuery(search)
+      case SearchType.Any: return 'general'
       default: return '<<<ERROR>>>' // TODO: add more search types
     }
-  }
-
-  /**
-   * @returns a database query that returns the top 20 songs that match `search`.
-   */
-  private getGeneralSearchQuery(search: SongSearch) {
-    return `
-      SELECT id, name, artist, album, genre, year
-      FROM Song
-      WHERE MATCH (name,artist,album,genre) AGAINST (${escape(search.query)}) > 0
-      LIMIT ${search.length} OFFSET ${search.offset};
-    ` // TODO: add parameters for the limit and offset
   }
 }
 

@@ -1,3 +1,5 @@
+import { DriveChart } from './songDetails.interface'
+
 /**
  * Represents a user's request to interact with the download system.
  */
@@ -14,7 +16,7 @@ export interface NewDownload {
   avTagName: string
   artist: string
   charter: string
-  links: { [type: string]: string }
+  driveData: DriveChart
 }
 
 /**

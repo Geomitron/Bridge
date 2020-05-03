@@ -8,13 +8,13 @@ export class AlbumArtService {
 
   constructor(private electronService: ElectronService) { }
 
-  private imageCache: { [songID: number]: Buffer } = {}
+  private imageCache: { [songID: number]: string } = {}
 
-  async getImage(songID: number): Promise<Buffer | null> {
+  async getImage(songID: number): Promise<string | null> {
     if (this.imageCache[songID] == undefined) {
       const albumArtResult = await this.electronService.invoke('album-art', songID)
       if (albumArtResult) {
-        this.imageCache[songID] = albumArtResult.art
+        this.imageCache[songID] = albumArtResult.base64Art
       } else {
         this.imageCache[songID] = null
       }

@@ -32,17 +32,15 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
    */
   updateQueue() {
     this.downloadQueue.sort((cd1: ChartDownload, cd2: ChartDownload) => {
-      const value1 = (cd1.isGoogle ? 100 : 0) + (99 - cd1.allFilesProgress)
-      const value2 = (cd2.isGoogle ? 100 : 0) + (99 - cd2.allFilesProgress)
+      const value1 = 100 + (99 - cd1.allFilesProgress)
+      const value2 = 100 + (99 - cd2.allFilesProgress)
       return value1 - value2 // Sorts in the order to get the most downloads completed early
     })
 
-    while (this.downloadQueue[0] != undefined && !(this.downloadQueue[0].isGoogle && this.isGoogleDownloading)) {
+    while (this.downloadQueue[0] != undefined && !(this.isGoogleDownloading)) {
       const nextDownload = this.downloadQueue.shift()
       nextDownload.run()
-      if (nextDownload.isGoogle) {
-        this.isGoogleDownloading = true
-      }
+      this.isGoogleDownloading = true
     }
   }
 }
