@@ -1,5 +1,6 @@
 {
   "extends": "./tsconfig.json",
+  "module": "esnext",
   "files": [
     "src/main.ts",
     "src/polyfills.ts"
