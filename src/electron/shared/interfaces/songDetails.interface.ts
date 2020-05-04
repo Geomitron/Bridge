@@ -53,7 +53,7 @@ export interface DriveSource {
 
 export interface DriveFile {
   id: string
-  originalFilename: string
+  name: string
   mimeType: string
   webContentLink: string
   modifiedTime: string

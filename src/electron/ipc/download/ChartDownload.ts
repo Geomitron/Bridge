@@ -72,7 +72,7 @@ export class ChartDownload {
 
       // DOWNLOAD THE NEXT FILE
       // Wait for google rate limit
-      this.header = `[${this.files[i].originalFilename}] (file ${i + 1}/${this.files.length})`
+      this.header = `[${this.files[i].name}] (file ${i + 1}/${this.files.length})`
       googleTimer.onTimerUpdate((remainingTime, totalTime) => {
         this.description = `Waiting for Google rate limit... (${remainingTime}s)`
         this.percent = this.allFilesProgress + interpolate(remainingTime, totalTime, 0, 0, this.individualFileProgressPortion / 2)
@@ -168,7 +168,7 @@ export class ChartDownload {
 
     downloader.on('downloadProgress', (bytesDownloaded) => {
       const size = Number(this.files[fileIndex].size)
-      this.header = `[${this.files[fileIndex].originalFilename}] (file ${fileIndex + 1}/${this.files.length})`
+      this.header = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
       this.description = `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`
       fileProgress = interpolate(bytesDownloaded, 0, size, this.individualFileProgressPortion / 2, this.individualFileProgressPortion)
       this.percent = this.allFilesProgress + fileProgress
