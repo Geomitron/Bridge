@@ -1,7 +1,11 @@
 {
   "extends": "./tsconfig.json",
+  "files": [
+    "src/main.ts",
+    "src/polyfills.ts"
+  ],
   "include": [
-    "src/**/*.ts"
+    "src/**/*.d.ts"
   ],
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,

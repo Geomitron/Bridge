@@ -1,8 +1,10 @@
 import { RouteReuseStrategy, ActivatedRouteSnapshot, DetachedRouteHandle } from '@angular/router'
+import { Injectable } from '@angular/core'
 
 /**
  * This makes each route with the 'reuse' data flag persist when not in focus.
  */
+@Injectable()
 export class TabPersistStrategy extends RouteReuseStrategy {
   private handles: { [path: string]: DetachedRouteHandle } = {}
 

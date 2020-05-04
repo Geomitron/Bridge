@@ -2,6 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
+    "module": "esnext",
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
