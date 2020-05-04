@@ -55,10 +55,10 @@
     "@angular/compiler-cli": "~9.1.4",
     "@angular/language-service": "~9.1.4",
     "@types/better-queue": "^3.8.2",
-    "@types/node": "^12.11.1",
     "@types/cli-color": "^2.0.0",
     "@types/electron-window-state": "^2.0.33",
     "@types/needle": "^2.0.4",
+    "@types/node": "^12.11.1",
     "@types/underscore": "^1.9.4",
     "@typescript-eslint/eslint-plugin": "^2.19.2",
     "@typescript-eslint/parser": "^2.19.2",
@@ -70,7 +70,6 @@
     "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
     "ts-node": "~7.0.0",
-    "tslint": "~5.15.0",
     "typescript": "~3.8.3",
     "wait-on": "^4.0.0"
   }
