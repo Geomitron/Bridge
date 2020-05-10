@@ -17,14 +17,14 @@ type EventCallback = {
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
 const transferErrors = {
-  readError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to read file'),
-  deleteError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to delete file'),
-  rimrafError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to delete folder'),
-  mvError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to move folder to library')
+  readError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to read file.'),
+  deleteError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to delete file.'),
+  rimrafError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to delete folder.'),
+  mvError: (err: NodeJS.ErrnoException) => fsError(err, `Failed to move folder to library.${err.code == 'EPERM' ? ' (does the chart already exist?)' : ''}`)
 }
 
 function fsError(err: NodeJS.ErrnoException, description: string) {
-  return { header: `${description} (${err.code})`, body: `${err.name}: ${err.message}` }
+  return { header: description, body: `${err.name}: ${err.message}` }
 }
 
 export class FileTransfer {

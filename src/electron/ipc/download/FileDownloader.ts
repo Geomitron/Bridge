@@ -2,6 +2,7 @@ import { AnyFunction } from '../../shared/UtilFunctions'
 import { createWriteStream } from 'fs'
 import * as needle from 'needle'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
+// TODO: add download throttle library and setting
 import { getSettings } from '../SettingsHandler.ipc'
 import { googleTimer } from './GoogleTimer'
 import { DownloadError } from './ChartDownload'
@@ -37,6 +38,7 @@ export class FileDownloader {
   private callbacks = {} as Callbacks
   private retryCount: number
   private wasCanceled = false
+  private req: NodeJS.ReadableStream
 
   /**
    * @param url The download link.
@@ -55,7 +57,6 @@ export class FileDownloader {
    * Download the file after waiting for the google rate limit.
    */
   beginDownload() {
-    console.log('Begin download...')
     if (getSettings().libraryPath == undefined) {
       this.failDownload(downloadErrors.libraryFolder())
     } else {
@@ -75,7 +76,7 @@ export class FileDownloader {
    */
   private requestDownload(cookieHeader?: string) {
     this.callbacks.requestSent()
-    const req = needle.get(this.url, {
+    this.req = needle.get(this.url, {
       'follow_max': 10,
       'open_timeout': 5000,
       'headers': Object.assign({
@@ -86,7 +87,7 @@ export class FileDownloader {
       )
     })
 
-    req.on('timeout', this.cancelable((type: string) => {
+    this.req.on('timeout', this.cancelable((type: string) => {
       this.retryCount++
       if (this.retryCount <= this.RETRY_MAX) {
         console.log(`TIMEOUT: Retry attempt ${this.retryCount}...`)
@@ -96,20 +97,20 @@ export class FileDownloader {
       }
     }))
 
-    req.on('err', this.cancelable((err: Error) => {
+    this.req.on('err', this.cancelable((err: Error) => {
       this.failDownload(downloadErrors.connectionError(err))
     }))
 
-    req.on('header', this.cancelable((statusCode, headers: Headers) => {
+    this.req.on('header', this.cancelable((statusCode, headers: Headers) => {
       if (statusCode != 200) {
         this.failDownload(downloadErrors.responseError(statusCode))
         return
       }
 
       if (headers['content-type'].startsWith('text/html')) {
-        this.handleHTMLResponse(req, headers['set-cookie'])
+        this.handleHTMLResponse(headers['set-cookie'])
       } else {
-        this.handleDownloadResponse(req)
+        this.handleDownloadResponse()
       }
     }))
   }
@@ -117,14 +118,12 @@ export class FileDownloader {
   /**
    * A Google Drive HTML response to a download request usually means this is the "file too large to scan for viruses" warning.
    * This function sends the request that results from clicking "download anyway", or generates an error if it can't be found.
-   * @param req The download request.
    * @param cookieHeader The "cookie=" header of this request.
    */
-  private handleHTMLResponse(req: NodeJS.ReadableStream, cookieHeader: string) {
-    console.log('HTML Response...')
+  private handleHTMLResponse(cookieHeader: string) {
     let virusScanHTML = ''
-    req.on('data', this.cancelable(data => virusScanHTML += data))
-    req.on('done', this.cancelable((err: Error) => {
+    this.req.on('data', this.cancelable(data => virusScanHTML += data))
+    this.req.on('done', this.cancelable((err: Error) => {
       if (err) {
         this.failDownload(downloadErrors.connectionError(err))
       } else {
@@ -149,21 +148,20 @@ export class FileDownloader {
    * Pipes the data from a download response to `this.fullPath`.
    * @param req The download request.
    */
-  private handleDownloadResponse(req: NodeJS.ReadableStream) {
-    console.log('Download response...')
+  private handleDownloadResponse() {
     this.callbacks.downloadProgress(0)
     let downloadedSize = 0
-    req.pipe(createWriteStream(this.fullPath))
-    req.on('data', this.cancelable((data) => {
+    this.req.pipe(createWriteStream(this.fullPath))
+    this.req.on('data', this.cancelable((data) => {
       downloadedSize += data.length
       this.callbacks.downloadProgress(downloadedSize)
     }))
 
-    req.on('err', this.cancelable((err: Error) => {
+    this.req.on('err', this.cancelable((err: Error) => {
       this.failDownload(downloadErrors.connectionError(err))
     }))
 
-    req.on('end', this.cancelable(() => {
+    this.req.on('end', this.cancelable(() => {
       this.callbacks.complete()
     }))
   }
@@ -181,6 +179,9 @@ export class FileDownloader {
   cancelDownload() {
     this.wasCanceled = true
     googleTimer.cancelTimer() // Prevents timer from trying to activate a download and resetting
+    if (this.req) {
+      // TODO: destroy request
+    }
   }
 
   /**

@@ -10,9 +10,11 @@ import { mkdir as _mkdir } from 'fs'
 import { ProgressType, NewDownload } from 'src/electron/shared/interfaces/download.interface'
 import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
 import { FileTransfer } from './FileTransfer'
+import * as _rimraf from 'rimraf'
 
 const randomBytes = promisify(_randomBytes)
 const mkdir = promisify(_mkdir)
+const rimraf = promisify(_rimraf)
 
 type EventCallback = {
   /** Note: this will not be the last event if `retry()` is called. */
@@ -31,6 +33,8 @@ export class ChartDownload {
   private callbacks = {} as Callbacks
   private files: DriveFile[]
   private percent = 0 // Needs to be stored here because errors won't know the exact percent
+  private chartPath: string
+  private dropFastUpdate = false
 
   private readonly individualFileProgressPortion: number
   private readonly destinationFolderName: string
@@ -69,6 +73,13 @@ export class ChartDownload {
   }
 
   /**
+   * Updates the GUI to indicate that a retry will be attempted.
+   */
+  displayRetrying() {
+    this.updateGUI('', 'Waiting for other downloads to finish to retry...', 'good')
+  }
+
+  /**
    * Cancels the download if it is running.
    */
   cancel() { // Only allow it to be called once
@@ -76,6 +87,7 @@ export class ChartDownload {
       const cancelFn = this.cancelFn
       this.cancelFn = undefined
       cancelFn()
+      rimraf(this.chartPath) // Delete temp folder
     }
   }
 
@@ -83,6 +95,15 @@ export class ChartDownload {
    * Updates the GUI with new information about this chart download.
    */
   private updateGUI(header: string, description: string, type: ProgressType) {
+    if (type == 'fastUpdate') {
+      if (this.dropFastUpdate) {
+        return
+      } else {
+        this.dropFastUpdate = true
+        setTimeout(() => this.dropFastUpdate = false, 30)
+      }
+    }
+
     emitIPCEvent('download-updated', {
       versionID: this.versionID,
       title: `${this.data.avTagName} - ${this.data.artist}`,
@@ -108,9 +129,8 @@ export class ChartDownload {
    */
   async beginDownload() {
     // CREATE DOWNLOAD DIRECTORY
-    let chartPath: string
     try {
-      chartPath = await this.createDownloadFolder()
+      this.chartPath = await this.createDownloadFolder()
     } catch (err) {
       this.retryFn = () => this.beginDownload()
       this.updateGUI('Access Error', err.message, 'error')
@@ -119,7 +139,7 @@ export class ChartDownload {
 
     // DOWNLOAD FILES
     for (let i = 0; i < this.files.length; i++) {
-      const downloader = new FileDownloader(this.files[i].webContentLink, join(chartPath, this.files[i].name))
+      const downloader = new FileDownloader(this.files[i].webContentLink, join(this.chartPath, this.files[i].name))
       this.cancelFn = () => downloader.cancelDownload()
 
       const downloadComplete = this.addDownloadEventListeners(downloader, i)
@@ -129,7 +149,7 @@ export class ChartDownload {
 
     // EXTRACT FILES
     if (this.isArchive) {
-      const extractor = new FileExtractor(chartPath)
+      const extractor = new FileExtractor(this.chartPath)
       this.cancelFn = () => extractor.cancelExtract()
 
       const extractComplete = this.addExtractorEventListeners(extractor)
@@ -138,7 +158,7 @@ export class ChartDownload {
     }
 
     // TRANSFER FILES
-    const transfer = new FileTransfer(chartPath, this.destinationFolderName)
+    const transfer = new FileTransfer(this.chartPath, this.destinationFolderName)
     this.cancelFn = () => transfer.cancelTransfer()
 
     const transferComplete = this.addTransferEventListeners(transfer)

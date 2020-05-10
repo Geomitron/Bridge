@@ -29,10 +29,11 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
     }
   }
 
-  private retryDownload(data: Download) { // TODO: cause this to send a GUI update that says waiting for download to finish...
+  private retryDownload(data: Download) {
     const index = this.retryWaiting.findIndex(download => download.versionID == data.versionID)
     if (index != -1) {
       const retryDownload = this.retryWaiting.splice(index, 1)[0]
+      retryDownload.displayRetrying()
       if (this.currentDownload == undefined) {
         this.currentDownload = retryDownload
         retryDownload.retry()

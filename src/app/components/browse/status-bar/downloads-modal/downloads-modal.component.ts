@@ -1,7 +1,7 @@
 import { Component, ChangeDetectorRef } from '@angular/core'
 import { DownloadProgress } from '../../../../../electron/shared/interfaces/download.interface'
 import { DownloadService } from '../../../../core/services/download.service'
-import { ElectronService } from 'src/app/core/services/electron.service'
+import { ElectronService } from '../../../../core/services/electron.service'
 
 @Component({
   selector: 'app-downloads-modal',
@@ -13,6 +13,10 @@ export class DownloadsModalComponent {
   downloads: DownloadProgress[] = []
 
   constructor(private electronService: ElectronService, private downloadService: DownloadService, ref: ChangeDetectorRef) {
+    electronService.receiveIPC('queue-updated', (order) => {
+      this.downloads.sort((a, b) => order.indexOf(a.versionID) - order.indexOf(b.versionID))
+    })
+
     downloadService.onDownloadUpdated(download => {
       const index = this.downloads.findIndex(thisDownload => thisDownload.versionID == download.versionID)
       if (index == -1) {

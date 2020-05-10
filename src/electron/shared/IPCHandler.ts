@@ -76,6 +76,7 @@ export type IPCEmitEvents = {
   'download': Download
   'download-updated': DownloadProgress
   'set-settings': Settings
+  'queue-updated': number[]
 }
 
 /**

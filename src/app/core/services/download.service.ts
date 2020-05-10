@@ -1,7 +1,6 @@
 import { Injectable, EventEmitter } from '@angular/core'
 import { ElectronService } from './electron.service'
 import { NewDownload, DownloadProgress } from '../../../electron/shared/interfaces/download.interface'
-import * as _ from 'underscore'
 
 @Injectable({
   providedIn: 'root'
@@ -46,14 +45,7 @@ export class DownloadService {
   }
 
   onDownloadUpdated(callback: (download: DownloadProgress) => void) {
-    const debouncedCallback = _.throttle(callback, 30, { trailing: false })
-    this.downloadUpdatedEmitter.subscribe((download: DownloadProgress) => {
-      if (download.type == 'fastUpdate') { // 'good' updates can happen so frequently that the UI doesn't update correctly
-        debouncedCallback(download)
-      } else {
-        callback(download)
-      }
-    })
+    this.downloadUpdatedEmitter.subscribe(callback)
   }
 
   cancelDownload(versionID: number) {

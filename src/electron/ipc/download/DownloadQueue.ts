@@ -1,5 +1,6 @@
 import Comparators from 'comparators'
 import { ChartDownload } from './ChartDownload'
+import { emitIPCEvent } from '../../main'
 
 export class DownloadQueue {
 
@@ -15,7 +16,7 @@ export class DownloadQueue {
   }
 
   pop() {
-    return this.downloadQueue.pop()
+    return this.downloadQueue.shift()
   }
 
   get(versionID: number) {
@@ -27,6 +28,7 @@ export class DownloadQueue {
     if (index != -1) {
       this.downloadQueue[index].cancel()
       this.downloadQueue.splice(index, 1)
+      emitIPCEvent('queue-updated', this.downloadQueue.map(download => download.versionID))
     }
   }
 
@@ -39,5 +41,6 @@ export class DownloadQueue {
     }
 
     this.downloadQueue.sort(comparator)
+    emitIPCEvent('queue-updated', this.downloadQueue.map(download => download.versionID))
   }
 }
