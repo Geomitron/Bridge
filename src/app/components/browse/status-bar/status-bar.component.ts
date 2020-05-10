@@ -29,9 +29,11 @@ export class StatusBarComponent {
     ref: ChangeDetectorRef
   ) {
     downloadService.onDownloadUpdated(() => {
-      this.downloading = downloadService.downloadCount > 0
-      this.percent = downloadService.totalPercent
-      ref.detectChanges()
+      setTimeout(() => { // Make sure this is the last callback executed to get the accurate downloadCount
+        this.downloading = downloadService.downloadCount > 0
+        this.percent = downloadService.totalPercent
+        ref.detectChanges()
+      }, 0)
     })
 
     searchService.onSearchChanged(() => {

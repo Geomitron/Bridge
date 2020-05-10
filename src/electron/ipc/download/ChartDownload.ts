@@ -119,7 +119,7 @@ export class ChartDownload {
 
     // DOWNLOAD FILES
     for (let i = 0; i < this.files.length; i++) {
-      const downloader = new FileDownloader(this.files[i].webContentLink, chartPath)
+      const downloader = new FileDownloader(this.files[i].webContentLink, join(chartPath, this.files[i].name))
       this.cancelFn = () => downloader.cancelDownload()
 
       const downloadComplete = this.addDownloadEventListeners(downloader, i)

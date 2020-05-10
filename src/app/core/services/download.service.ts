@@ -46,7 +46,7 @@ export class DownloadService {
   }
 
   onDownloadUpdated(callback: (download: DownloadProgress) => void) {
-    const debouncedCallback = _.throttle(callback, 30)
+    const debouncedCallback = _.throttle(callback, 30, { trailing: false })
     this.downloadUpdatedEmitter.subscribe((download: DownloadProgress) => {
       if (download.type == 'fastUpdate') { // 'good' updates can happen so frequently that the UI doesn't update correctly
         debouncedCallback(download)

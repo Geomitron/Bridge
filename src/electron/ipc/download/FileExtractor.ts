@@ -112,7 +112,7 @@ export class FileExtractor {
     const stream = node7z.extractFull(fullPath, this.sourceFolder, { $progress: true, $bin: zipBin.path7za })
 
     stream.on('progress', this.cancelable((progress: { percent: number; fileCount: number }) => {
-      this.callbacks.extractProgress(progress.percent, progress.fileCount)
+      this.callbacks.extractProgress(progress.percent, isNaN(progress.fileCount) ? 0 : progress.fileCount)
     }))
 
     let extractErrorOccured = false
