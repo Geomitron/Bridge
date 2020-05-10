@@ -22,8 +22,6 @@
     #tableRow
     *ngFor="let result of results"
     (click)="onRowClicked(result)"
-    (songChecked)="onSongChecked($event)"
-    (songUnchecked)="onSongUnchecked($event)"
     [result]="result"></tr>
   </tbody>
 </table>

@@ -5,8 +5,6 @@
       <app-result-table
         #resultTable
         (rowClicked)="chartSidebar.onRowClicked($event)"
-        (songChecked)="statusBar.onSongChecked($event)"
-        (songUnchecked)="statusBar.onSongUnchecked($event)"
       ></app-result-table>
     </div>
     <div id="sidebar-column" class="column four wide">
@@ -14,4 +12,4 @@
     </div>
   </div>
 </div>
-<app-status-bar #statusBar (deselectSongs)="resultTable.onSongsDeselected($event)"></app-status-bar>
+<app-status-bar #statusBar></app-status-bar>

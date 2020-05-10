@@ -1,10 +1,10 @@
-import { Component, ChangeDetectorRef, Output, EventEmitter } from '@angular/core'
-import { SongResult } from 'src/electron/shared/interfaces/search.interface'
+import { Component, ChangeDetectorRef } from '@angular/core'
 import { DownloadService } from 'src/app/core/services/download.service'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { groupBy } from 'src/electron/shared/UtilFunctions'
 import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
 import { SearchService } from 'src/app/core/services/search.service'
+import { SelectionService } from 'src/app/core/services/selection.service'
 
 @Component({
   selector: 'app-status-bar',
@@ -13,12 +13,9 @@ import { SearchService } from 'src/app/core/services/search.service'
 })
 export class StatusBarComponent {
 
-  @Output() deselectSongs = new EventEmitter<SongResult['id'][]>()
-
   resultCount = 0
   downloading = false
   percent = 0
-  selectedResults: SongResult[] = []
   batchResults: VersionResult[]
   chartGroups: VersionResult[][]
 
@@ -26,6 +23,7 @@ export class StatusBarComponent {
     private electronService: ElectronService,
     private downloadService: DownloadService,
     private searchService: SearchService,
+    private selectionService: SelectionService,
     ref: ChangeDetectorRef
   ) {
     downloadService.onDownloadUpdated(() => {
@@ -39,28 +37,18 @@ export class StatusBarComponent {
     searchService.onSearchChanged(() => {
       this.resultCount = searchService.resultCount
     })
-
-    searchService.onNewSearch(() => {
-      this.selectedResults = []
-    })
   }
 
   get allResultsVisible() {
     return this.searchService.allResultsVisible
   }
 
+  get selectedResults() {
+    return this.selectionService.getSelectedResults()
+  }
+
   showDownloads() {
     $('#downloadsModal').modal('show')
-  }
-
-  onSongChecked(result: SongResult) {
-    if (this.selectedResults.findIndex(oldResult => oldResult.id == result.id) == -1) {
-      this.selectedResults.push(result)
-    }
-  }
-
-  onSongUnchecked(result: SongResult) {
-    this.selectedResults = this.selectedResults.filter(oldResult => oldResult.id != result.id)
   }
 
   async downloadSelected() {
@@ -107,6 +95,8 @@ export class StatusBarComponent {
   }
 
   deselectSongsWithMultipleCharts() {
-    this.deselectSongs.emit(this.chartGroups.map(group => group[0].songID))
+    for (const chartGroup of this.chartGroups) {
+      this.selectionService.deselectSong(chartGroup[0].songID)
+    }
   }
 }

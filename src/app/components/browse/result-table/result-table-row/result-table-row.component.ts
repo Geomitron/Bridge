@@ -1,5 +1,6 @@
-import { Component, AfterViewInit, Input, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core'
+import { Component, AfterViewInit, Input, ViewChild, ElementRef } from '@angular/core'
 import { SongResult } from '../../../../../electron/shared/interfaces/search.interface'
+import { SelectionService } from 'src/app/core/services/selection.service'
 
 @Component({
   selector: 'tr[app-result-table-row]',
@@ -8,35 +9,31 @@ import { SongResult } from '../../../../../electron/shared/interfaces/search.int
 })
 export class ResultTableRowComponent implements AfterViewInit {
   @Input() result: SongResult
-  @Output() songChecked = new EventEmitter<SongResult>()
-  @Output() songUnchecked = new EventEmitter<SongResult>()
 
   @ViewChild('checkbox', { static: true }) checkbox: ElementRef
 
-  constructor() { }
+  constructor(private selectionService: SelectionService) { }
 
   get songID() {
     return this.result.id
   }
 
   ngAfterViewInit() {
-    $(this.checkbox.nativeElement).checkbox({
-      onChecked: () => {
-        this.songChecked.emit(this.result)
-      },
-      onUnchecked: () => {
-        this.songUnchecked.emit(this.result)
+    this.selectionService.onSelectionChanged(this.songID, (isChecked) => {
+      if (isChecked) {
+        $(this.checkbox.nativeElement).checkbox('check')
+      } else {
+        $(this.checkbox.nativeElement).checkbox('uncheck')
       }
     })
-  }
 
-  check(isChecked: boolean) {
-    if (isChecked) {
-      $(this.checkbox.nativeElement).checkbox('check')
-      this.songChecked.emit(this.result)
-    } else {
-      $(this.checkbox.nativeElement).checkbox('uncheck')
-      this.songUnchecked.emit(this.result)
-    }
+    $(this.checkbox.nativeElement).checkbox({
+      onChecked: () => {
+        this.selectionService.selectSong(this.songID)
+      },
+      onUnchecked: () => {
+        this.selectionService.deselectSong(this.songID)
+      }
+    })
   }
 }

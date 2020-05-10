@@ -32,7 +32,7 @@ export class DownloadQueue {
     }
   }
 
-  private sort() { // TODO: make this order be reflected in the GUI (along with currentDownload)
+  private sort() {
     let comparator = Comparators.comparing('allFilesProgress', { reversed: true })
 
     const prioritizeArchives = true

@@ -3,6 +3,7 @@ import { SongResult } from '../../../../electron/shared/interfaces/search.interf
 import { ResultTableRowComponent } from './result-table-row/result-table-row.component'
 import { CheckboxDirective } from 'src/app/core/directives/checkbox.directive'
 import { SearchService } from 'src/app/core/services/search.service'
+import { SelectionService } from 'src/app/core/services/selection.service'
 
 @Component({
   selector: 'app-result-table',
@@ -12,27 +13,21 @@ import { SearchService } from 'src/app/core/services/search.service'
 export class ResultTableComponent implements OnInit {
 
   @Output() rowClicked = new EventEmitter<SongResult>()
-  @Output() songChecked = new EventEmitter<SongResult>()
-  @Output() songUnchecked = new EventEmitter<SongResult>()
 
   @ViewChild(CheckboxDirective, { static: true }) checkboxColumn: CheckboxDirective
   @ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
   results: SongResult[]
 
-  constructor(private searchService: SearchService) { }
+  constructor(private searchService: SearchService, private selectionService: SelectionService) { }
 
   ngOnInit() {
-    this.searchService.onNewSearch(() => {
-      this.checkboxColumn.check(false)
-      this.checkAll(false)
+    this.selectionService.onSelectAllChanged((selected) => {
+      this.checkboxColumn.check(selected)
     })
 
     this.searchService.onSearchChanged(results => {
       this.results = results
-      if (this.checkboxColumn.isChecked) {
-        this.checkAll(true)
-      }
     })
   }
 
@@ -40,19 +35,14 @@ export class ResultTableComponent implements OnInit {
     this.rowClicked.emit(result)
   }
 
-  onSongChecked(result: SongResult) {
-    this.songChecked.emit(result)
-  }
-
-  onSongUnchecked(result: SongResult) {
-    this.songUnchecked.emit(result)
-  }
-
+  /**
+   * Called when the user checks the `checkboxColumn`.
+   */
   checkAll(isChecked: boolean) {
-    this.tableRows.forEach(row => row.check(isChecked))
-  }
-
-  onSongsDeselected(songs: SongResult['id'][]) {
-    this.tableRows.forEach(row => row.check(!songs.includes(row.songID)))
+    if (isChecked) {
+      this.selectionService.selectAll()
+    } else {
+      this.selectionService.deselectAll()
+    }
   }
 }

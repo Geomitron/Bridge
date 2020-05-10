@@ -22,14 +22,23 @@ export class SearchService {
     this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
     this.awaitingResults = false
 
-    this.newResultsEmitter.emit(this.results)
     this.resultsChangedEmitter.emit(this.results)
+    this.newResultsEmitter.emit(this.results)
   }
 
+  /**
+   * Event emitted when new search results are returned
+   * or when more results are added to an existing search.
+   * (emitted before `onNewSearch`)
+   */
   onSearchChanged(callback: (results: SongResult[]) => void) {
     this.resultsChangedEmitter.subscribe(callback)
   }
 
+  /**
+   * Event emitted when a new search query is typed in.
+   * (emitted after `onSearchChanged`)
+   */
   onNewSearch(callback: (results: SongResult[]) => void) {
     this.newResultsEmitter.subscribe(callback)
   }
