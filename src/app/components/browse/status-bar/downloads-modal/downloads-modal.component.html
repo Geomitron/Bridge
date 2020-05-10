@@ -12,13 +12,6 @@
         <i class="redo icon"></i>
         Retry
       </button>
-      <button
-        *ngIf="download.type == 'warning'"
-        class="ui right floated labeled icon button"
-        (click)="continueDownload(download.versionID)">
-        <i class="exclamation triangle icon"></i>
-        Download Anyway
-      </button>
       <div class="header">{{download.header}}</div>
       <div *ngIf="download.type != 'done'" class="description">{{download.description}}</div>
       <div *ngIf="download.type == 'done'" class="description">

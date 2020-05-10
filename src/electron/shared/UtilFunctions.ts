@@ -1,23 +1,7 @@
 const sanitize = require('sanitize-filename')
 
-/**
- * @returns a random UUID
- */
-export function generateUUID() { // Public Domain/MIT
-  let d = new Date().getTime() // Timestamp
-  let d2 = Date.now() // Time in microseconds since page-load or 0 if unsupported
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    let r = Math.random() * 16 // Random number between 0 and 16
-    if (d > 0) { // Use timestamp until depleted
-      r = (d + r) % 16 | 0
-      d = Math.floor(d / 16)
-    } else { // Use microseconds since page-load if supported
-      r = (d2 + r) % 16 | 0
-      d2 = Math.floor(d2 / 16)
-    }
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
-  })
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFunction = (...args: any) => any
 
 /**
  * @returns `filename`, but with any invalid filename characters replaced with similar valid characters.
@@ -37,10 +21,10 @@ export function sanitizeFilename(filename: string): string {
 }
 
 /**
- * Converts `val` from the range (`fromA`, `fromB`) to the range (`toA`, `toB`).
+ * Converts `val` from the range (`fromStart`, `fromEnd`) to the range (`toStart`, `toEnd`).
  */
-export function interpolate(val: number, fromA: number, fromB: number, toA: number, toB: number) {
-  return ((val - fromA) / (fromB - fromA)) * (toB - toA) + toA
+export function interpolate(val: number, fromStart: number, fromEnd: number, toStart: number, toEnd: number) {
+  return ((val - fromStart) / (fromEnd - fromStart)) * (toEnd - toStart) + toStart
 }
 
 /**

@@ -67,8 +67,4 @@ export class DownloadService {
   retryDownload(versionID: number) {
     this.electronService.sendIPC('download', { action: 'retry', versionID })
   }
-
-  continueDownload(versionID: number) {
-    this.electronService.sendIPC('download', { action: 'continue', versionID })
-  }
 }

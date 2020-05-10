@@ -1,46 +1,78 @@
 import { IPCEmitHandler } from '../../shared/IPCHandler'
 import { Download } from '../../shared/interfaces/download.interface'
 import { ChartDownload } from './ChartDownload'
+import { DownloadQueue } from './DownloadQueue'
 
 class DownloadHandler implements IPCEmitHandler<'download'> {
   event: 'download' = 'download'
 
-  downloads: { [versionID: number]: ChartDownload } = {}
-  downloadQueue: ChartDownload[] = []
-  isGoogleDownloading = false // This is a lock controlled by only one ChartDownload at a time
+  downloadQueue: DownloadQueue = new DownloadQueue()
+  currentDownload: ChartDownload = undefined
+  retryWaiting: ChartDownload[] = []
 
-  handler(data: Download) {
-    if (data.action == 'add') {
-      this.downloads[data.versionID] = new ChartDownload(data.versionID, data.data)
-    }
-
-    const download = this.downloads[data.versionID]
-
-    if (data.action == 'cancel') {
-      download.cancel() // Might change isGoogleDownloading and call updateQueue()
-      this.downloadQueue = this.downloadQueue.filter(download => download.versionID != data.versionID)
-      this.downloads[data.versionID] = undefined
-    } else {
-      download.setInQueue()
-      this.downloadQueue.push(download) // Add, retry, or continue will re-add the download to the queue
-      this.updateQueue()
+  handler(data: Download) { // TODO: make sure UI can't add the same versionID more than once
+    switch (data.action) {
+      case 'add': this.addDownload(data); break
+      case 'retry': this.retryDownload(data); break
+      case 'cancel': this.cancelDownload(data); break
     }
   }
 
-  /**
-   * Called when at least one download in the queue can potentially be started.
-   */
-  updateQueue() {
-    this.downloadQueue.sort((cd1: ChartDownload, cd2: ChartDownload) => {
-      const value1 = 100 + (99 - cd1.allFilesProgress)
-      const value2 = 100 + (99 - cd2.allFilesProgress)
-      return value1 - value2 // Sorts in the order to get the most downloads completed early
+  private addDownload(data: Download) {
+    const newDownload = new ChartDownload(data.versionID, data.data)
+    this.addDownloadEventListeners(newDownload)
+    if (this.currentDownload == undefined) {
+      this.currentDownload = newDownload
+      newDownload.beginDownload()
+    } else {
+      this.downloadQueue.push(newDownload)
+    }
+  }
+
+  private retryDownload(data: Download) {
+    const index = this.retryWaiting.findIndex(download => download.versionID == data.versionID)
+    if (index != -1) {
+      const retryDownload = this.retryWaiting.splice(index, 1)[0]
+      if (this.currentDownload == undefined) {
+        this.currentDownload = retryDownload
+        retryDownload.retry()
+      } else {
+        this.downloadQueue.push(retryDownload)
+      }
+    }
+  }
+
+  private cancelDownload(data: Download) {
+    if (this.currentDownload.versionID == data.versionID) {
+      this.currentDownload.cancel()
+      this.currentDownload = undefined
+      this.startNextDownload()
+    } else {
+      this.downloadQueue.remove(data.versionID)
+    }
+  }
+
+  private addDownloadEventListeners(download: ChartDownload) {
+    download.on('complete', () => {
+      this.currentDownload = undefined
+      this.startNextDownload()
     })
 
-    while (this.downloadQueue[0] != undefined && !(this.isGoogleDownloading)) {
-      const nextDownload = this.downloadQueue.shift()
-      nextDownload.run()
-      this.isGoogleDownloading = true
+    download.on('error', () => {
+      this.retryWaiting.push(this.currentDownload)
+      this.currentDownload = undefined
+      this.startNextDownload()
+    })
+  }
+
+  private startNextDownload() {
+    if (!this.downloadQueue.isEmpty()) {
+      this.currentDownload = this.downloadQueue.pop()
+      if (this.currentDownload.hasFailed) {
+        this.currentDownload.retry()
+      } else {
+        this.currentDownload.beginDownload()
+      }
     }
   }
 }

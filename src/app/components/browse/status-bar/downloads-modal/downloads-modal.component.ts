@@ -38,11 +38,6 @@ export class DownloadsModalComponent {
     this.downloadService.retryDownload(versionID)
   }
 
-  continueDownload(versionID: number) {
-    // TODO: test this
-    this.downloadService.continueDownload(versionID)
-  }
-
   getBackgroundColor(download: DownloadProgress) {
     switch (download.type) {
       case 'good': return 'unset'

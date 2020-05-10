@@ -1,163 +1,161 @@
-import { DownloadError } from './FileDownloader'
-import * as fs from 'fs'
+import { readdir, unlink, mkdir as _mkdir } from 'fs'
 import { promisify } from 'util'
 import { join, extname } from 'path'
+import { AnyFunction } from 'src/electron/shared/UtilFunctions'
 import * as node7z from 'node-7z'
 import * as zipBin from '7zip-bin'
-import { getSettings } from '../SettingsHandler.ipc'
-import { extractRar } from './RarExtractor'
+import * as unrarjs from 'node-unrar-js' // TODO find better rar library that has async extraction
+import { FailReason } from 'node-unrar-js/dist/js/extractor'
+import { DownloadError } from './ChartDownload'
 
-const readdir = promisify(fs.readdir)
-const unlink = promisify(fs.unlink)
-const lstat = promisify(fs.lstat)
-const copyFile = promisify(fs.copyFile)
-const rmdir = promisify(fs.rmdir)
-const access = promisify(fs.access)
-const mkdir = promisify(fs.mkdir)
+const mkdir = promisify(_mkdir)
 
 type EventCallback = {
-  'extract': (filename: string) => void
+  'start': (filename: string) => void
   'extractProgress': (percent: number, fileCount: number) => void
-  'transfer': (filepath: string) => void
-  'complete': (filepath: string) => void
-  'error': (error: DownloadError, retry: () => void | Promise<void>) => void
+  'error': (err: DownloadError, retry: () => void | Promise<void>) => void
+  'complete': () => void
 }
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
+
+const extractErrors = {
+  readError: (err: NodeJS.ErrnoException) => { return { header: `Failed to read file (${err.code})`, body: `${err.name}: ${err.message}` } },
+  emptyError: () => { return { header: 'Failed to extract archive', body: 'File archive was downloaded but could not be found' } },
+  rarmkdirError: (err: NodeJS.ErrnoException, sourceFile: string) => {
+    return { header: `Extracting archive failed. (${err.code})`, body: `${err.name}: ${err.message} (${sourceFile})`}
+  },
+  rarextractError: (result: { reason: FailReason; msg: string }, sourceFile: string) => {
+    return { header: `Extracting archive failed: ${result.reason}`, body: `${result.msg} (${sourceFile})`}
+  }
+}
 
 export class FileExtractor {
 
   private callbacks = {} as Callbacks
-  private libraryFolder: string
   private wasCanceled = false
-  constructor(private sourceFolder: string, private isArchive: boolean, private destinationFolderName: string) { }
+  constructor(private sourceFolder: string) { }
 
   /**
-   * Calls `callback` when `event` fires.
+   * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
    */
   on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
     this.callbacks[event] = callback
   }
 
   /**
-   * Starts the chart extraction process.
+   * Extract the chart from `this.sourceFolder`. (assumes there is exactly one archive file in that folder)
    */
-  async beginExtract() {
-    this.libraryFolder = getSettings().libraryPath
-    const files = await readdir(this.sourceFolder)
-    if (this.isArchive) {
-      this.extract(files[0], extname(files[0]) == '.rar')
-    } else {
-      this.transfer()
-    }
-  }
-
-  /**
-   * Extracts the file at `filename` to `this.sourceFolder`.
-   */
-  private async extract(filename: string, useRarExtractor: boolean) {
-    await new Promise<void>(resolve => setTimeout(() => resolve(), 100)) // Wait for filesystem to process downloaded file...
-    if (this.wasCanceled) { return } // CANCEL POINT
-    this.callbacks.extract(filename)
-    const source = join(this.sourceFolder, filename)
-
-    if (useRarExtractor) {
-
-      // Use node-unrar-js to extract the archive
-      try {
-        await extractRar(source, this.sourceFolder)
-      } catch (err) {
-        this.callbacks.error({
-          header: 'Extract Failed.',
-          body: `Unable to extract [${filename}]: ${err}`
-        }, () => this.extract(filename, extname(filename) == '.rar'))
-        return
-      }
-      this.transfer(source)
-
-    } else {
-
-      // Use node-7z to extract the archive
-      const stream = node7z.extractFull(source, this.sourceFolder, { $progress: true, $bin: zipBin.path7za })
-
-      stream.on('progress', (progress: { percent: number; fileCount: number }) => {
-        this.callbacks.extractProgress(progress.percent, progress.fileCount)
-      })
-
-      let extractErrorOccured = false
-      stream.on('error', () => {
-        extractErrorOccured = true
-        console.log(`Failed to extract [${filename}], retrying with .rar extractor...`)
-        this.extract(filename, true)
-      })
-
-      stream.on('end', () => {
-        if (!extractErrorOccured) {
-          this.transfer(source)
+  beginExtract() {
+    setTimeout(this.cancelable(() => {
+      readdir(this.sourceFolder, (err, files) => {
+        if (err) {
+          this.callbacks.error(extractErrors.readError(err), () => this.beginExtract())
+        } else if (files.length == 0) {
+          this.callbacks.error(extractErrors.emptyError(), () => this.beginExtract())
+        } else {
+          this.callbacks.start(files[0])
+          this.extract(join(this.sourceFolder, files[0]), extname(files[0]) == '.rar')
         }
       })
+    }), 100) // Wait for filesystem to process downloaded file
+  }
 
+  /**
+   * Extracts the file at `fullPath` to `this.sourceFolder`.
+   */
+  private async extract(fullPath: string, useRarExtractor: boolean) {
+    if (useRarExtractor) {
+      await this.extractRar(fullPath) // Use node-unrar-js to extract the archive
+    } else {
+      this.extract7z(fullPath) // Use node-7z to extract the archive
     }
   }
 
   /**
-   * Deletes the archive at `archiveFilepath`, then transfers the extracted chart to `this.libraryFolder`.
+   * Extracts a .rar archive found at `fullPath` and puts the extracted results in `this.sourceFolder`.
+   * @throws an `ExtractError` if this fails.
    */
-  private async transfer(archiveFilepath?: string) {
-    // TODO: this fails if the extracted chart has nested folders
-    // TODO: skip over "__MACOSX" folder
-    // TODO: handle other common problems, like chart/audio files not named correctly
-    if (this.wasCanceled) { return } // CANCEL POINT
-    try {
+  private async extractRar(fullPath: string) {
+    const extractor = unrarjs.createExtractorFromFile(fullPath, this.sourceFolder)
 
-      // Create destiniation folder if it doesn't exist
-      const destinationFolder = join(this.libraryFolder, this.destinationFolderName)
-      this.callbacks.transfer(destinationFolder)
-      try {
-        await access(destinationFolder, fs.constants.F_OK)
-      } catch (e) {
-        await mkdir(destinationFolder)
-      }
+    const fileList = extractor.getFileList()
 
-      // Delete archive
-      if (archiveFilepath != undefined) {
-        try {
-          await unlink(archiveFilepath)
-        } catch (e) {
-          if (e.code != 'ENOENT') {
-            throw new Error(`Could not delete the archive file at [${archiveFilepath}]`)
+    if (fileList[0].state != 'FAIL') {
+
+      // Create directories for nested archives (because unrarjs didn't feel like handling that automatically)
+      const headers = fileList[1].fileHeaders
+      for (const header of headers) {
+        if (header.flags.directory) {
+          try {
+            await mkdir(join(this.sourceFolder, header.name), { recursive: true })
+          } catch (err) {
+            this.callbacks.error(extractErrors.rarmkdirError(err, fullPath), () => this.extract(fullPath, extname(fullPath) == '.rar'))
+            return
           }
         }
       }
+    }
 
-      // Check if it extracted to a folder instead of a list of files
-      let sourceFolder = this.sourceFolder
-      let files = await readdir(sourceFolder)
-      const isFolderArchive = (files.length < 2 && !(await lstat(join(sourceFolder, files[0]))).isFile())
-      if (isFolderArchive) {
-        sourceFolder = join(sourceFolder, files[0])
-        files = await readdir(sourceFolder)
-      }
+    const extractResult = extractor.extractAll()
 
-      if (this.wasCanceled) { return } // CANCEL POINT
-
-      // Copy the files from the temporary directory to the destination
-      for (const file of files) {
-        await copyFile(join(sourceFolder, file), join(destinationFolder, file))
-        await unlink(join(sourceFolder, file))
-      }
-
-      // Delete the temporary folders
-      await rmdir(sourceFolder)
-      if (isFolderArchive) {
-        await rmdir(join(sourceFolder, '..'))
-      }
-      this.callbacks.complete(destinationFolder)
-    } catch (e) {
-      this.callbacks.error({ header: 'Transfer Failed', body: `Unable to transfer downloaded files to the library folder: ${e.name}` }, () => this.transfer(archiveFilepath))
+    if (extractResult[0].state == 'FAIL') {
+      this.callbacks.error(extractErrors.rarextractError(extractResult[0], fullPath), () => this.extract(fullPath, extname(fullPath) == '.rar'))
+    } else {
+      this.deleteArchive(fullPath)
     }
   }
 
+  /**
+   * Extracts a .zip or .7z archive found at `fullPath` and puts the extracted results in `this.sourceFolder`.
+   */
+  private extract7z(fullPath: string) {
+    const stream = node7z.extractFull(fullPath, this.sourceFolder, { $progress: true, $bin: zipBin.path7za })
+
+    stream.on('progress', this.cancelable((progress: { percent: number; fileCount: number }) => {
+      this.callbacks.extractProgress(progress.percent, progress.fileCount)
+    }))
+
+    let extractErrorOccured = false
+    stream.on('error', this.cancelable(() => {
+      extractErrorOccured = true
+      console.log(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
+      this.extract(fullPath, true)
+    }))
+
+    stream.on('end', this.cancelable(() => {
+      if (!extractErrorOccured) {
+        this.deleteArchive(fullPath)
+      }
+    }))
+  }
+
+  /**
+   * Tries to delete the archive at `fullPath`.
+   */
+  private deleteArchive(fullPath: string) {
+    unlink(fullPath, this.cancelable((err) => {
+      if (err && err.code != 'ENOENT') {
+        console.log(`Warning: failed to delete archive at [${fullPath}]`)
+      }
+
+      this.callbacks.complete()
+    }))
+  }
+
+  /**
+   * Stop the process of extracting the file. (no more events will be fired after this is called)
+   */
   cancelExtract() {
     this.wasCanceled = true
+  }
+
+  /**
+   * Wraps a function that is able to be prevented if `this.cancelExtract()` was called.
+   */
+  private cancelable<F extends AnyFunction>(fn: F) {
+    return (...args: Parameters<F>): ReturnType<F> => {
+      if (this.wasCanceled) { return }
+      return fn(...Array.from(args))
+    }
   }
 }

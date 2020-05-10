@@ -4,7 +4,7 @@ import { DriveChart } from './songDetails.interface'
  * Represents a user's request to interact with the download system.
  */
 export interface Download {
-  action: 'add' | 'retry' | 'continue' | 'cancel'
+  action: 'add' | 'retry' | 'cancel'
   versionID: number
   data?: NewDownload // Should be defined if action == 'add'
 }

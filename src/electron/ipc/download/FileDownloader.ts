@@ -1,25 +1,35 @@
-import { generateUUID, sanitizeFilename } from '../../shared/UtilFunctions'
-import * as fs from 'fs'
-import * as path from 'path'
+import { AnyFunction } from '../../shared/UtilFunctions'
+import { createWriteStream } from 'fs'
 import * as needle from 'needle'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
 import { getSettings } from '../SettingsHandler.ipc'
+import { googleTimer } from './GoogleTimer'
+import { DownloadError } from './ChartDownload'
 
 type EventCallback = {
-  'request': () => void
-  'warning': (continueAnyway: () => void) => void
+  'waitProgress': (remainingSeconds: number, totalSeconds: number) => void
+  /** Note: this event can be called multiple times if the connection times out or a large file is downloaded */
+  'requestSent': () => void
   'downloadProgress': (bytesDownloaded: number) => void
-  'error': (error: DownloadError, retry: () => void) => void
+  /** Note: after calling retry, the event lifecycle restarts */
+  'error': (err: DownloadError, retry: () => void) => void
   'complete': () => void
 }
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
-export type DownloadError = { header: string; body: string }
+const downloadErrors = {
+  libraryFolder: () => { return { header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' } },
+  timeout: (type: string) => { return { header: 'Timeout', body: `The download server could not be reached. (type=${type})` } },
+  connectionError: (err: Error) => { return { header: 'Connection Error', body: `${err.name}: ${err.message}` } },
+  responseError: (statusCode: number) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
+  htmlError: () => { return { header: 'Invalid response', body: 'Download server returned HTML instead of a file.' } }
+}
 
 /**
- * Downloads a file from `url` to `destinationFolder` and verifies that its hash matches `expectedHash`.
+ * Downloads a file from `url` to `fullPath`.
  * Will handle google drive virus scan warnings. Provides event listeners for download progress.
  * On error, provides the ability to retry.
+ * Will only send download requests once every `getSettings().rateLimitDelay` seconds.
  */
 export class FileDownloader {
   private readonly RETRY_MAX = 2
@@ -30,29 +40,33 @@ export class FileDownloader {
 
   /**
    * @param url The download link.
-   * @param destinationFolder The path to where this file should be stored.
-   * @param expectedHash The hash header value that is expected for this file.
+   * @param fullPath The full path to where this file should be stored (including the filename).
    */
-  constructor(private url: string, private destinationFolder: string) { }
+  constructor(private url: string, private fullPath: string) { }
 
   /**
-   * Calls `callback` when `event` fires.
+   * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
    */
   on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
     this.callbacks[event] = callback
   }
 
   /**
-   * Download the file.
+   * Download the file after waiting for the google rate limit.
    */
   beginDownload() {
-    // Check that the library folder has been specified
+    console.log('Begin download...')
     if (getSettings().libraryPath == undefined) {
-      this.callbacks.error({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }, () => this.beginDownload())
-      return
-    }
+      this.failDownload(downloadErrors.libraryFolder())
+    } else {
+      googleTimer.on('waitProgress', this.cancelable((remainingSeconds, totalSeconds) => {
+        this.callbacks.waitProgress(remainingSeconds, totalSeconds)
+      }))
 
-    this.requestDownload()
+      googleTimer.on('complete', this.cancelable(() => {
+        this.requestDownload()
+      }))
+    }
   }
 
   /**
@@ -60,64 +74,60 @@ export class FileDownloader {
    * @param cookieHeader the "cookie=" header to include this request.
    */
   private requestDownload(cookieHeader?: string) {
-    if (this.wasCanceled) { return } // CANCEL POINT
-    this.callbacks.request()
-    const uuid = generateUUID()
+    this.callbacks.requestSent()
     const req = needle.get(this.url, {
       'follow_max': 10,
       'open_timeout': 5000,
       'headers': Object.assign({
-        'User-Agent': 'PostmanRuntime/7.22.0',
         'Referer': this.url,
-        'Accept': '*/*',
-        'Postman-Token': uuid
+        'Accept': '*/*'
       },
       (cookieHeader ? { 'Cookie': cookieHeader } : undefined)
       )
     })
 
-    req.on('timeout', (type: string) => {
+    req.on('timeout', this.cancelable((type: string) => {
       this.retryCount++
       if (this.retryCount <= this.RETRY_MAX) {
         console.log(`TIMEOUT: Retry attempt ${this.retryCount}...`)
         this.requestDownload(cookieHeader)
       } else {
-        this.callbacks.error({ header: 'Timeout', body: `The download server could not be reached. (type=${type})` }, () => this.beginDownload())
+        this.failDownload(downloadErrors.timeout(type))
       }
-    })
+    }))
 
-    req.on('err', (err: Error) => {
-      this.callbacks.error({ header: 'Connection Error', body: `${err.name}: ${err.message}` }, () => this.beginDownload())
-    })
+    req.on('err', this.cancelable((err: Error) => {
+      this.failDownload(downloadErrors.connectionError(err))
+    }))
 
-    req.on('header', (statusCode, headers: Headers) => {
-      if (this.wasCanceled) { return } // CANCEL POINT
+    req.on('header', this.cancelable((statusCode, headers: Headers) => {
       if (statusCode != 200) {
-        this.callbacks.error({ header: 'Connection failed', body: `Server returned status code: ${statusCode}` }, () => this.beginDownload())
+        this.failDownload(downloadErrors.responseError(statusCode))
         return
       }
 
-      const fileType = headers['content-type']
-      if (fileType.startsWith('text/html')) {
+      if (headers['content-type'].startsWith('text/html')) {
         this.handleHTMLResponse(req, headers['set-cookie'])
       } else {
-        const fileName = this.getDownloadFileName(headers)
-        this.handleDownloadResponse(req, fileName)
+        this.handleDownloadResponse(req)
       }
-    })
+    }))
   }
 
   /**
    * A Google Drive HTML response to a download request usually means this is the "file too large to scan for viruses" warning.
-   * This function sends the request that results from clicking "download anyway", or throws an error if it can't be found.
+   * This function sends the request that results from clicking "download anyway", or generates an error if it can't be found.
    * @param req The download request.
    * @param cookieHeader The "cookie=" header of this request.
    */
   private handleHTMLResponse(req: NodeJS.ReadableStream, cookieHeader: string) {
+    console.log('HTML Response...')
     let virusScanHTML = ''
-    req.on('data', data => virusScanHTML += data)
-    req.on('done', (err: Error) => {
-      if (!err) {
+    req.on('data', this.cancelable(data => virusScanHTML += data))
+    req.on('done', this.cancelable((err: Error) => {
+      if (err) {
+        this.failDownload(downloadErrors.connectionError(err))
+      } else {
         try {
           const confirmTokenRegex = /confirm=([0-9A-Za-z\-_]+)&/g
           const confirmTokenResults = confirmTokenRegex.exec(virusScanHTML)
@@ -129,61 +139,57 @@ export class FileDownloader {
           const newHeader = `download_warning_${warningCode}=${confirmToken}; NID=${NID}`
           this.requestDownload(newHeader)
         } catch(e) {
-          this.callbacks.error({ header: 'Invalid response', body: 'Download server returned HTML instead of a file.' }, () => this.beginDownload())
+          this.failDownload(downloadErrors.htmlError())
         }
-      } else {
-        this.callbacks.error({ header: 'Connection Failed', body: `Connection failed while downloading HTML: ${err.name}` }, () => this.beginDownload())
       }
-    })
+    }))
   }
 
   /**
-   * Pipes the data from a download response to `fileName`.
+   * Pipes the data from a download response to `this.fullPath`.
    * @param req The download request.
-   * @param fileName The name of the output file.
    */
-  private handleDownloadResponse(req: NodeJS.ReadableStream, fileName: string) {
+  private handleDownloadResponse(req: NodeJS.ReadableStream) {
+    console.log('Download response...')
     this.callbacks.downloadProgress(0)
     let downloadedSize = 0
-    const filePath = path.join(this.destinationFolder, fileName)
-    req.pipe(fs.createWriteStream(filePath))
-    req.on('data', (data) => {
+    req.pipe(createWriteStream(this.fullPath))
+    req.on('data', this.cancelable((data) => {
       downloadedSize += data.length
       this.callbacks.downloadProgress(downloadedSize)
-    })
+    }))
 
-    req.on('err', (err: Error) => {
-      this.callbacks.error({ header: 'Connection Failed', body: `Connection failed while downloading file: ${err.name}` }, () => this.beginDownload())
-    })
+    req.on('err', this.cancelable((err: Error) => {
+      this.failDownload(downloadErrors.connectionError(err))
+    }))
 
-    req.on('end', () => {
-      if (this.wasCanceled) { return } // CANCEL POINT
+    req.on('end', this.cancelable(() => {
       this.callbacks.complete()
-    })
+    }))
   }
 
   /**
-   * Extracts the downloaded file's filename from `headers` or `this.url`, depending on the file's host server.
-   * @param headers The response headers for this request.
+   * Display an error message and provide a function to retry the download.
    */
-  private getDownloadFileName(headers: Headers) {
-    if (headers['server'] && headers['server'] == 'cloudflare' || this.url.startsWith('https://public.fightthe.pw/')) {
-      // Cloudflare and Chorus specific jazz
-      return sanitizeFilename(decodeURIComponent(path.basename(this.url)))
-    } else {
-      // GDrive specific jazz
-      const filenameRegex = /filename="(.*?)"/g
-      const results = filenameRegex.exec(headers['content-disposition'])
-      if (results == null) {
-        console.log(`Warning: couldn't find filename in content-disposition header: [${headers['content-disposition']}]`)
-        return 'unknownFilename'
-      } else {
-        return sanitizeFilename(results[1])
-      }
-    }
+  private failDownload(error: DownloadError) {
+    this.callbacks.error(error, this.cancelable(() => this.beginDownload()))
   }
 
+  /**
+   * Stop the process of downloading the file. (no more events will be fired after this is called)
+   */
   cancelDownload() {
     this.wasCanceled = true
+    googleTimer.cancelTimer() // Prevents timer from trying to activate a download and resetting
+  }
+
+  /**
+   * Wraps a function that is able to be prevented if `this.cancelDownload()` was called.
+   */
+  private cancelable<F extends AnyFunction>(fn: F) {
+    return (...args: Parameters<F>): ReturnType<F> => {
+      if (this.wasCanceled) { return }
+      return fn(...Array.from(args))
+    }
   }
 }
