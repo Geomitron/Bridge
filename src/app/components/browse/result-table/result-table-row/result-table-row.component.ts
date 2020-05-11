@@ -1,6 +1,6 @@
 import { Component, AfterViewInit, Input, ViewChild, ElementRef } from '@angular/core'
 import { SongResult } from '../../../../../electron/shared/interfaces/search.interface'
-import { SelectionService } from 'src/app/core/services/selection.service'
+import { SelectionService } from '../../../../core/services/selection.service'
 
 @Component({
   selector: 'tr[app-result-table-row]',

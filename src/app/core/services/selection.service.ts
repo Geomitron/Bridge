@@ -1,5 +1,5 @@
 import { Injectable, EventEmitter } from '@angular/core'
-import { SongResult } from 'src/electron/shared/interfaces/search.interface'
+import { SongResult } from '../../../electron/shared/interfaces/search.interface'
 import { SearchService } from './search.service'
 
 // Note: this class prevents event cycles by only emitting events if the checkbox changes

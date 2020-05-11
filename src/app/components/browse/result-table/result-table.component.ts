@@ -1,9 +1,9 @@
 import { Component, Output, EventEmitter, ViewChildren, QueryList, ViewChild, OnInit } from '@angular/core'
 import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
 import { ResultTableRowComponent } from './result-table-row/result-table-row.component'
-import { CheckboxDirective } from 'src/app/core/directives/checkbox.directive'
-import { SearchService } from 'src/app/core/services/search.service'
-import { SelectionService } from 'src/app/core/services/selection.service'
+import { CheckboxDirective } from '../../../core/directives/checkbox.directive'
+import { SearchService } from '../../../core/services/search.service'
+import { SelectionService } from '../../../core/services/selection.service'
 
 @Component({
   selector: 'app-result-table',

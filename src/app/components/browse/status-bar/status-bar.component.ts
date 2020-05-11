@@ -1,10 +1,10 @@
 import { Component, ChangeDetectorRef } from '@angular/core'
-import { DownloadService } from 'src/app/core/services/download.service'
-import { ElectronService } from 'src/app/core/services/electron.service'
-import { groupBy } from 'src/electron/shared/UtilFunctions'
-import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
-import { SearchService } from 'src/app/core/services/search.service'
-import { SelectionService } from 'src/app/core/services/selection.service'
+import { DownloadService } from '../../../core/services/download.service'
+import { ElectronService } from '../../../core/services/electron.service'
+import { groupBy } from '../../../../electron/shared/UtilFunctions'
+import { VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
+import { SearchService } from '../../../core/services/search.service'
+import { SelectionService } from '../../../core/services/selection.service'
 
 @Component({
   selector: 'app-status-bar',

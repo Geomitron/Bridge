@@ -109,17 +109,19 @@ export class FileExtractor {
    * Extracts a .zip or .7z archive found at `fullPath` and puts the extracted results in `this.sourceFolder`.
    */
   private extract7z(fullPath: string) {
-    const stream = node7z.extractFull(fullPath, this.sourceFolder, { $progress: true, $bin: zipBin.path7za })
+    const zipBinPath = zipBin.path7za.replace('app.asar', 'app.asar.unpacked') // I love electron-builder packaging :)
+    const stream = node7z.extractFull(fullPath, this.sourceFolder, { $progress: true, $bin: zipBinPath })
 
     stream.on('progress', this.cancelable((progress: { percent: number; fileCount: number }) => {
       this.callbacks.extractProgress(progress.percent, isNaN(progress.fileCount) ? 0 : progress.fileCount)
     }))
 
     let extractErrorOccured = false
-    stream.on('error', this.cancelable(() => {
+    stream.on('error', this.cancelable((err) => {
       extractErrorOccured = true
-      console.log(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
-      this.extract(fullPath, true)
+      this.callbacks.error({ header: '7zip Error', body: err }, () => this.extract(fullPath, extname(fullPath) == '.rar'))
+      // console.log(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
+      // this.extract(fullPath, true)
     }))
 
     stream.on('end', this.cancelable(() => {
