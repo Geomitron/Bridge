@@ -30,6 +30,7 @@ export class ChartSidebarComponent implements OnInit {
   ngOnInit() {
     this.searchService.onNewSearch(() => {
       this.selectVersion(undefined)
+      this.songResult = undefined
     })
   }
 
@@ -132,12 +133,19 @@ export class ChartSidebarComponent implements OnInit {
    * Chooses the text to display on the download button.
    */
   updateDownloadButtonText() {
-    if (this.getSelectedChartVersions().length <= 1) {
-      this.downloadButtonText = 'Download'
-    } else if (this.selectedVersion.versionID == this.selectedVersion.latestVersionID) {
-      this.downloadButtonText = 'Download Latest'
+    this.downloadButtonText = 'Download'
+    if (this.selectedVersion.driveData.inChartPack) {
+      this.downloadButtonText += ' Chart Pack'
     } else {
-      this.downloadButtonText = `Download (${this.getLastModifiedText(this.selectedVersion.lastModified)})`
+      this.downloadButtonText += (this.selectedVersion.driveData.isArchive ? ' Archive' : ' Files')
+    }
+
+    if (this.getSelectedChartVersions().length > 1) {
+      if (this.selectedVersion.versionID == this.selectedVersion.latestVersionID) {
+        this.downloadButtonText += ' (Latest)'
+      } else {
+        this.downloadButtonText += ` (${this.getLastModifiedText(this.selectedVersion.lastModified)})`
+      }
     }
   }
 
@@ -149,8 +157,8 @@ export class ChartSidebarComponent implements OnInit {
     const versions = this.getSelectedChartVersions()
     const values = versions.map(version => ({
       value: version.versionID,
-      text: this.getLastModifiedText(version.lastModified),
-      name: this.getLastModifiedText(version.lastModified)
+      text: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
+      name: 'Uploaded ' + this.getLastModifiedText(version.lastModified)
     }))
 
     $versionDropdown.dropdown('setup menu', { values })
@@ -172,7 +180,11 @@ export class ChartSidebarComponent implements OnInit {
    * @param lastModified The UNIX timestamp for the lastModified date.
    */
   private getLastModifiedText(lastModified: string) {
-    return new Date(lastModified).toLocaleDateString()
+    const date = new Date(lastModified)
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const year = date.getFullYear().toString().substr(-2)
+    return `${month}/${day}/${year}`
   }
 
   /**
@@ -183,7 +195,7 @@ export class ChartSidebarComponent implements OnInit {
       this.selectedVersion.versionID, {
         avTagName: this.selectedVersion.avTagName,
         artist: this.songResult.artist,
-        charter: this.selectedVersion.charters, // TODO: get the charter name associated with this particular version
+        charter: this.selectedVersion.charters,
         driveData: this.selectedVersion.driveData
       })
   }

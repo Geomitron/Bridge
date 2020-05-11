@@ -117,11 +117,10 @@ export class FileExtractor {
     }))
 
     let extractErrorOccured = false
-    stream.on('error', this.cancelable((err) => {
+    stream.on('error', this.cancelable(() => {
       extractErrorOccured = true
-      this.callbacks.error({ header: '7zip Error', body: err }, () => this.extract(fullPath, extname(fullPath) == '.rar'))
-      // console.log(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
-      // this.extract(fullPath, true)
+      console.log(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
+      this.extract(fullPath, true)
     }))
 
     stream.on('end', this.cancelable(() => {
