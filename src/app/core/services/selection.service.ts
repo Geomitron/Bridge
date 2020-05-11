@@ -4,6 +4,11 @@ import { SearchService } from './search.service'
 
 // Note: this class prevents event cycles by only emitting events if the checkbox changes
 
+interface SelectionEvent {
+  songID: number
+  selected: boolean
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -12,7 +17,7 @@ export class SelectionService {
   private searchResults: SongResult[] = []
 
   private selectAllChangedEmitter = new EventEmitter<boolean>()
-  private selectionChangedEmitters: { [songID: number]: EventEmitter<boolean> } = {}
+  private selectionChangedEmitter = new EventEmitter<SelectionEvent>()
 
   private allSelected = false
   private selections: { [songID: number]: boolean | undefined } = {}
@@ -20,8 +25,6 @@ export class SelectionService {
   constructor(searchService: SearchService) {
     searchService.onSearchChanged((results) => {
       this.searchResults = results
-      this.removeOldListeners(results.map(result => result.id))
-
       if (this.allSelected) {
         this.selectAll() // Select newly added rows if allSelected
       }
@@ -29,19 +32,8 @@ export class SelectionService {
 
     searchService.onNewSearch((results) => {
       this.searchResults = results
-      this.removeOldListeners(results.map(result => result.id))
-
       this.deselectAll()
     })
-  }
-
-  private removeOldListeners(songIDs: number[]) {
-    for (const oldSongID in this.selectionChangedEmitters) {
-      if (!songIDs.find(newSongID => newSongID == Number(oldSongID))) {
-        delete this.selectionChangedEmitters[oldSongID]
-        delete this.selections[oldSongID]
-      }
-    }
   }
 
   getSelectedResults() {
@@ -57,8 +49,11 @@ export class SelectionService {
    * (note: only one emitter can be registered per `songID`)
    */
   onSelectionChanged(songID: number, callback: (selection: boolean) => void) {
-    this.selectionChangedEmitters[songID] = new EventEmitter()
-    this.selectionChangedEmitters[songID].subscribe(callback)
+    this.selectionChangedEmitter.subscribe((selection: SelectionEvent) => {
+      if (selection.songID == songID) {
+        callback(selection.selected)
+      }
+    })
   }
 
 
@@ -83,14 +78,14 @@ export class SelectionService {
   deselectSong(songID: number) {
     if (this.selections[songID]) {
       this.selections[songID] = false
-      this.selectionChangedEmitters[songID].emit(false)
+      this.selectionChangedEmitter.emit({ songID, selected: false })
     }
   }
 
   selectSong(songID: number) {
-    if (!this.selections[songID] && this.selectionChangedEmitters[songID] != undefined) {
+    if (!this.selections[songID]) {
       this.selections[songID] = true
-      this.selectionChangedEmitters[songID].emit(true)
+      this.selectionChangedEmitter.emit({ songID, selected: true })
     }
   }
 }
