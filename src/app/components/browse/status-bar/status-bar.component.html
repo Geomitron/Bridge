@@ -1,7 +1,9 @@
 <div class="ui bottom borderless menu">
   <div *ngIf="resultCount > 0" class="item">{{resultCount}}{{allResultsVisible ? '' : '+'}} Result{{resultCount == 1 ? '' : 's'}}</div>
   <div class="item">
-    <button *ngIf="selectedResults.length > 0" (click)="downloadSelected()" class="ui positive button">Download Selected</button>
+    <button *ngIf="selectedResults.length > 1" (click)="downloadSelected()" class="ui positive button">
+      Download {{selectedResults.length}} Results
+    </button>
   </div>
   <a *ngIf="downloading" class="item right" (click)="showDownloads()">
     <div #progressBar appProgressBar [percent]="percent" class="ui progress">
