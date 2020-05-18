@@ -16,7 +16,7 @@ export interface NewDownload {
   avTagName: string
   artist: string
   charter: string
-  driveData: DriveChart
+  driveData: DriveChart & { inChartPack: boolean }
 }
 
 /**

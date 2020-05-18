@@ -1,5 +1,5 @@
 import { FileDownloader } from './FileDownloader'
-import { join } from 'path'
+import { join, parse } from 'path'
 import { FileExtractor } from './FileExtractor'
 import { sanitizeFilename, interpolate } from '../../shared/UtilFunctions'
 import { emitIPCEvent } from '../../main'
@@ -46,7 +46,11 @@ export class ChartDownload {
     this.updateGUI('', 'Waiting for other downloads to finish...', 'good')
     this.files = data.driveData.files
     this.individualFileProgressPortion = 80 / this.files.length
-    this.destinationFolderName = sanitizeFilename(`${this.data.artist} - ${this.data.avTagName} (${this.data.charter})`)
+    if (data.driveData.inChartPack) {
+      this.destinationFolderName = sanitizeFilename(parse(data.driveData.files[0].name).name)
+    } else {
+      this.destinationFolderName = sanitizeFilename(`${this.data.artist} - ${this.data.avTagName} (${this.data.charter})`)
+    }
   }
 
   /**
