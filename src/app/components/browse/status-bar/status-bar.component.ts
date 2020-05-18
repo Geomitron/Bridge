@@ -64,7 +64,8 @@ export class StatusBarComponent {
 
     if (this.chartGroups.length == 0) {
       for (const versions of versionGroups) {
-        const downloadVersion = versions.find(version => version.versionID == version.latestVersionID)
+        this.searchService.sortChart(versions)
+        const downloadVersion = versions[0]
         const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
         this.downloadService.addDownload(
           downloadVersion.versionID, {
@@ -81,16 +82,19 @@ export class StatusBarComponent {
   }
 
   downloadAllCharts() {
-    for (const version of this.batchResults) {
-      if (version.versionID != version.latestVersionID) { continue }
-      const downloadSong = this.selectedResults.find(song => song.id == version.songID)
+    const chartGroups = groupBy(this.batchResults, 'chartID')
+    for (const chart of chartGroups) {
+      this.searchService.sortChart(chart)
+      const downloadVersion = chart[0]
+      const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
       this.downloadService.addDownload(
-        version.versionID, {
-          avTagName: version.avTagName,
+        downloadVersion.versionID, {
+          avTagName: downloadVersion.avTagName,
           artist: downloadSong.artist,
-          charter: version.charters,
-          driveData: version.driveData
-        })
+          charter: downloadVersion.charters,
+          driveData: downloadVersion.driveData
+        }
+      )
     }
   }
 

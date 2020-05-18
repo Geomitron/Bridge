@@ -1,6 +1,7 @@
 import { Injectable, EventEmitter } from '@angular/core'
 import { ElectronService } from './electron.service'
 import { SearchType, SongResult, SongSearch } from 'src/electron/shared/interfaces/search.interface'
+import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
 
 @Injectable({
   providedIn: 'root'
@@ -71,5 +72,26 @@ export class SearchService {
 
   get allResultsVisible() {
     return this._allResultsVisible
+  }
+
+  /**
+   * Orders `versionResults` by lastModified date, but prefer the
+   * non-pack version if it's only a few days older.
+   */
+  sortChart(versionResults: VersionResult[]) {
+    const dates: { [versionID: number]: number } = {}
+    versionResults.forEach(version => dates[version.versionID] = new Date(version.lastModified).getTime())
+    versionResults.sort((v1, v2) => {
+      const diff = dates[v1.versionID] - dates[v2.versionID]
+      if (Math.abs(diff) < 6.048e+8 && v1.driveData.inChartPack != v2.driveData.inChartPack) {
+        if (v1.driveData.inChartPack) {
+          return 1 // prioritize v2
+        } else {
+          return -1 // prioritize v1
+        }
+      } else {
+        return diff
+      }
+    })
   }
 }

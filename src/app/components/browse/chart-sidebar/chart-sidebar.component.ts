@@ -43,12 +43,24 @@ export class ChartSidebarComponent implements OnInit {
       const albumArt = this.albumArtService.getImage(result.id)
       const results = await this.electronService.invoke('song-details', result.id)
       this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].avTagName.length - v2[0].avTagName.length)
-      // This sorting is very inefficient, but there's rarely more than two or three in this list, so it's fine
-      this.charts.forEach(chart => chart.sort((v1, v2) => new Date(v2.lastModified).getTime() - new Date(v1.lastModified).getTime()))
+      this.sortCharts()
       await this.selectChart(0)
       this.initChartDropdown()
 
       this.updateAlbumArtSrc(await albumArt)
+    }
+  }
+
+  /**
+   * Sorts `this.charts` and its subarrays in the correct order.
+   * The chart dropdown should display in a random order, but verified charters are prioritized.
+   * The version dropdown should be ordered by lastModified date.
+   * (but prefer the non-pack version if it's only a few days older)
+   */
+  private sortCharts() {
+    for (const chart of this.charts) {
+      // TODO: sort by verified charter
+      this.searchService.sortChart(chart)
     }
   }
 
