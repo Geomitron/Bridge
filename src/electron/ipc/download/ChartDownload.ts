@@ -1,19 +1,15 @@
 import { FileDownloader } from './FileDownloader'
-import { tempPath } from '../../shared/Paths'
 import { join } from 'path'
 import { FileExtractor } from './FileExtractor'
 import { sanitizeFilename, interpolate } from '../../shared/UtilFunctions'
 import { emitIPCEvent } from '../../main'
 import { promisify } from 'util'
-import { randomBytes as _randomBytes } from 'crypto'
-import { mkdir as _mkdir } from 'fs'
 import { ProgressType, NewDownload } from 'src/electron/shared/interfaces/download.interface'
 import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
 import { FileTransfer } from './FileTransfer'
 import * as _rimraf from 'rimraf'
+import { FilesystemChecker } from './FilesystemChecker'
 
-const randomBytes = promisify(_randomBytes)
-const mkdir = promisify(_mkdir)
 const rimraf = promisify(_rimraf)
 
 type EventCallback = {
@@ -33,7 +29,7 @@ export class ChartDownload {
   private callbacks = {} as Callbacks
   private files: DriveFile[]
   private percent = 0 // Needs to be stored here because errors won't know the exact percent
-  private chartPath: string
+  private tempPath: string
   private dropFastUpdate = false
 
   private readonly individualFileProgressPortion: number
@@ -88,7 +84,7 @@ export class ChartDownload {
       this.cancelFn = undefined
       cancelFn()
       try {
-        rimraf(this.chartPath) // Delete temp folder
+        rimraf(this.tempPath) // Delete temp folder
       } catch (e) { /** Do nothing */ }
     }
   }
@@ -130,18 +126,18 @@ export class ChartDownload {
    * Starts the download process.
    */
   async beginDownload() {
-    // CREATE DOWNLOAD DIRECTORY
-    try {
-      this.chartPath = await this.createDownloadFolder()
-    } catch (err) {
-      this.retryFn = () => this.beginDownload()
-      this.updateGUI('Access Error', err.message, 'error')
-      return
-    }
+    // CHECK FILESYSTEM ACCESS
+    const checker = new FilesystemChecker(this.destinationFolderName)
+    this.cancelFn = () => checker.cancelCheck()
+
+    const checkerComplete = this.addFilesystemCheckerEventListeners(checker)
+    checker.beginCheck()
+    await checkerComplete
 
     // DOWNLOAD FILES
     for (let i = 0; i < this.files.length; i++) {
-      const downloader = new FileDownloader(this.files[i].webContentLink, join(this.chartPath, this.files[i].name))
+      if (this.files[i].name == 'ch.dat') { continue }
+      const downloader = new FileDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
       this.cancelFn = () => downloader.cancelDownload()
 
       const downloadComplete = this.addDownloadEventListeners(downloader, i)
@@ -151,7 +147,7 @@ export class ChartDownload {
 
     // EXTRACT FILES
     if (this.isArchive) {
-      const extractor = new FileExtractor(this.chartPath)
+      const extractor = new FileExtractor(this.tempPath)
       this.cancelFn = () => extractor.cancelExtract()
 
       const extractComplete = this.addExtractorEventListeners(extractor)
@@ -160,7 +156,7 @@ export class ChartDownload {
     }
 
     // TRANSFER FILES
-    const transfer = new FileTransfer(this.chartPath, this.destinationFolderName)
+    const transfer = new FileTransfer(this.tempPath, this.destinationFolderName)
     this.cancelFn = () => transfer.cancelTransfer()
 
     const transferComplete = this.addTransferEventListeners(transfer)
@@ -171,26 +167,22 @@ export class ChartDownload {
   }
 
   /**
-   * Attempts to create a unique folder in Bridge's data paths.
-   * @returns the new folder's path.
-   * @throws an error if this fails.
+   * Defines what happens in reponse to `FilesystemChecker` events.
+   * @returns a `Promise` that resolves when the filesystem has been checked.
    */
-  private async createDownloadFolder() {
-    let retryCount = 0
-    let chartPath = ''
+  private addFilesystemCheckerEventListeners(checker: FilesystemChecker) {
+    checker.on('start', () => {
+      this.updateGUI('Checking filesystem...', '', 'good')
+    })
 
-    while (retryCount < 5) {
-      chartPath = join(tempPath, `chart_${(await randomBytes(5)).toString('hex')}`)
-      try {
-        await mkdir(chartPath)
-        return chartPath
-      } catch (e) {
-        console.log(`Error creating folder [${chartPath}], retrying with a different folder...`)
-        retryCount++
-      }
-    }
+    checker.on('error', this.handleError.bind(this))
 
-    throw new Error(`Bridge was unable to create a directory at [${chartPath}]`)
+    return new Promise<void>(resolve => {
+      checker.on('complete', (tempPath) => {
+        this.tempPath = tempPath
+        resolve()
+      })
+    })
   }
 
   /**

@@ -36,7 +36,7 @@ export class FileExtractor {
   constructor(private sourceFolder: string) { }
 
   /**
-   * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
+   * Calls `callback` when `event` fires. (no events will be fired after `this.cancelExtract()` is called)
    */
   on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
     this.callbacks[event] = callback

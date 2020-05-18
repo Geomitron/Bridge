@@ -3,7 +3,6 @@ import { createWriteStream } from 'fs'
 import * as needle from 'needle'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
 // TODO: add download throttle library and setting
-import { getSettings } from '../SettingsHandler.ipc'
 import { googleTimer } from './GoogleTimer'
 import { DownloadError } from './ChartDownload'
 
@@ -19,7 +18,6 @@ type EventCallback = {
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
 const downloadErrors = {
-  libraryFolder: () => { return { header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' } },
   timeout: (type: string) => { return { header: 'Timeout', body: `The download server could not be reached. (type=${type})` } },
   connectionError: (err: Error) => { return { header: 'Connection Error', body: `${err.name}: ${err.message}` } },
   responseError: (statusCode: number) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
@@ -57,17 +55,13 @@ export class FileDownloader {
    * Download the file after waiting for the google rate limit.
    */
   beginDownload() {
-    if (getSettings().libraryPath == undefined) {
-      this.failDownload(downloadErrors.libraryFolder())
-    } else {
-      googleTimer.on('waitProgress', this.cancelable((remainingSeconds, totalSeconds) => {
-        this.callbacks.waitProgress(remainingSeconds, totalSeconds)
-      }))
+    googleTimer.on('waitProgress', this.cancelable((remainingSeconds, totalSeconds) => {
+      this.callbacks.waitProgress(remainingSeconds, totalSeconds)
+    }))
 
-      googleTimer.on('complete', this.cancelable(() => {
-        this.requestDownload()
-      }))
-    }
+    googleTimer.on('complete', this.cancelable(() => {
+      this.requestDownload()
+    }))
   }
 
   /**
