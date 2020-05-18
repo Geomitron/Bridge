@@ -31,8 +31,4 @@ export interface DownloadProgress {
   type: ProgressType
 }
 
-export type ProgressType = 'good' | 'warning' | 'error' | 'cancel' | 'done' | 'fastUpdate'
-// export function downloadSorter(p1: DownloadProgress, p2: DownloadProgress) {
-//   return 0
-//   // return p1 - p2 // negative if p1 < p2
-// }
+export type ProgressType = 'good' | 'error' | 'cancel' | 'done' | 'fastUpdate'

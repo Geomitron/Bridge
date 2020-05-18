@@ -15,7 +15,7 @@ export class DownloadQueue {
     this.sort()
   }
 
-  pop() {
+  shift() {
     return this.downloadQueue.shift()
   }
 

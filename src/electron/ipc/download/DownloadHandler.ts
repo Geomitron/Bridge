@@ -68,7 +68,7 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
 
   private startNextDownload() {
     if (!this.downloadQueue.isEmpty()) {
-      this.currentDownload = this.downloadQueue.pop()
+      this.currentDownload = this.downloadQueue.shift()
       if (this.currentDownload.hasFailed) {
         this.currentDownload.retry()
       } else {

@@ -46,7 +46,6 @@ export class DownloadsModalComponent {
     switch (download.type) {
       case 'good': return 'unset'
       case 'done': return 'unset'
-      case 'warning': return 'yellow'
       case 'error': return 'indianred'
     }
   }
