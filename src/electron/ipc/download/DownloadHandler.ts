@@ -19,6 +19,11 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
   }
 
   private addDownload(data: Download) {
+    const filesHash = data.data.driveData.filesHash
+    if (this.currentDownload?.hash == filesHash || this.downloadQueue.isDownloadingLink(filesHash)) {
+      return
+    }
+
     const newDownload = new ChartDownload(data.versionID, data.data)
     this.addDownloadEventListeners(newDownload)
     if (this.currentDownload == undefined) {

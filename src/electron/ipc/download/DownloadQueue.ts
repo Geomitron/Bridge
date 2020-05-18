@@ -6,6 +6,10 @@ export class DownloadQueue {
 
   downloadQueue: ChartDownload[] = []
 
+  isDownloadingLink(filesHash: string) {
+    return this.downloadQueue.some(download => download.hash == filesHash)
+  }
+
   isEmpty() {
     return this.downloadQueue.length == 0
   }

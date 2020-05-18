@@ -41,6 +41,7 @@ export class ChartDownload {
   /** If this chart download needs to be retried */
   get hasFailed() { return this._hasFailed }
   get isArchive() { return this.data.driveData.isArchive }
+  get hash() { return this.data.driveData.filesHash }
 
   constructor(public versionID: number, private data: NewDownload) {
     this.updateGUI('', 'Waiting for other downloads to finish...', 'good')
