@@ -78,6 +78,8 @@ export interface ChartMetadata {
       [difficulty: string]: number
     }
   }
+  /** number of seconds */
   length: number
+  /** number of seconds */
   effectiveLength: number
 }

@@ -112,11 +112,10 @@ export class ChartSidebarComponent implements OnInit {
 
   songLength: string
   /**
-   * Converts <this.selectedVersion.song_length> into a readable duration.
+   * Converts `this.selectedVersion.chartMetadata.length` into a readable duration.
    */
   updateSongLength() {
-    if (this.selectedVersion.song_length == 0) { this.songLength = 'Unknown' }
-    let seconds = Math.round(this.selectedVersion.song_length / 1000)
+    let seconds = this.selectedVersion.chartMetadata.length
     if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}` }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
