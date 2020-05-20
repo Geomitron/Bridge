@@ -25,6 +25,7 @@
     "compression": "maximum",
     "target": [
       "AppImage"
-    ]
+    ],
+    "category": "utility"
   }
 }
