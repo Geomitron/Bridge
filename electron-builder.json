@@ -6,19 +6,20 @@
   "files": [
     "dist/**/*"
   ],
+  "publish": {
+    "provider": "github",
+    "private": true,
+    "releaseType": "release"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": true,
+    "shortcutName": "Bridge"
+  },
   "win": {
     "icon": "dist/assets/images/system/icons/win/icon.ico",
-    "compression": "store",
-    "target": [
-      "portable"
-    ]
-  },
-  "mac": {
-    "icon": "dist/assets/images/system/icons/mac/icon.icns",
-    "compression": "maximum",
-    "target": [
-      "dmg"
-    ]
+    "compression": "store"
   },
   "linux": {
     "compression": "maximum",

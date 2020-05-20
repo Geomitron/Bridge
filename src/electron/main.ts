@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import * as windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
+require('dotenv').config()
 require('electron-unhandled')({ showDialog: true })
 
 // IPC Handlers

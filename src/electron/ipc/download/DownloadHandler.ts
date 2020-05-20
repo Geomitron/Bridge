@@ -10,7 +10,7 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
   currentDownload: ChartDownload = undefined
   retryWaiting: ChartDownload[] = []
 
-  handler(data: Download) { // TODO: make sure UI can't add the same versionID more than once
+  handler(data: Download) {
     switch (data.action) {
       case 'add': this.addDownload(data); break
       case 'retry': this.retryDownload(data); break

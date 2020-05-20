@@ -1,7 +1,7 @@
 {
   "name": "bridge",
   "version": "0.0.0",
-  "description": "A handy CloneHero library management tool with built in chart searching and downloading.",
+  "description": "A handy Clone Hero library management tool with built in chart searching and downloading.",
   "homepage": "https://github.com/Geomitron/Bridge",
   "license": "GPL-3.0",
   "author": {
@@ -20,9 +20,9 @@
     "lint": "ng lint",
     "clean": "rimraf dist release",
     "build:windows": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --windows",
-    "build:mac": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --mac",
     "build:linux": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --linux",
-    "serve:angular": "ng serve"
+    "serve:angular": "ng serve",
+    "release": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build"
   },
   "dependencies": {
     "7zip-bin": "^5.0.3",
@@ -36,7 +36,9 @@
     "@angular/router": "~9.1.4",
     "cli-color": "^2.0.0",
     "comparators": "^3.0.2",
+    "dotenv": "^8.2.0",
     "electron-unhandled": "^3.0.2",
+    "electron-updater": "^4.3.1",
     "electron-window-state": "^5.0.3",
     "fomantic-ui": "^2.8.3",
     "jquery": "^3.4.1",

@@ -1,5 +1,22 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core'
 import { ElectronService } from '../../core/services/electron.service'
+// import { autoUpdater, UpdateInfo } from 'electron-updater'
+// autoUpdater.autoDownload = false
+// autoUpdater.on('error', (err) => {})
+// autoUpdater.on('checking-for-update', () => {})
+// autoUpdater.on('update-available', (info: UpdateInfo) => {})
+// autoUpdater.on('update-not-available', () => {})
+// autoUpdater.on('download-progress', (progress) => {
+//   console.log(progress.bytesPerSecond, progress.percent, progress.transferred, progress.total)
+// })
+// autoUpdater.on('update-downloaded', (info: UpdateInfo) => {})
+// autoUpdater.currentVersion // TODO: display this in the corner or on the about page?
+// autoUpdater.logger = null
+// autoUpdater.checkForUpdates()
+// autoUpdater.downloadUpdate()
+// autoUpdater.quitAndInstall(false) // By default; autoUpdater installs a downloaded update on the next program restart
+// TODO: check for updates on initialization; show a button indicating a new version can be downloaded
+
 
 @Component({
   selector: 'app-toolbar',
