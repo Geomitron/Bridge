@@ -95,7 +95,7 @@ function createBridgeWindow() {
  * Initialize a BrowserWindow object with initial parameters
  */
 function createBrowserWindow(windowState: windowStateKeeper.State) {
-  return new BrowserWindow({
+  let options: Electron.BrowserWindowConstructorOptions = {
     x: windowState.x,
     y: windowState.y,
     width: windowState.width,
@@ -109,7 +109,13 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
     },
     simpleFullscreen: true,
     fullscreenable: false
-  })
+  }
+
+  if (process.platform == 'linux' && !isDevBuild) {
+    options = Object.assign(options, { icon: path.join(__dirname, '..', 'assets', 'images', 'system', 'icons', 'png', '48x48.png' ) })
+  }
+
+  return new BrowserWindow(options)
 }
 
 /**
