@@ -1,13 +1,15 @@
 import { SongSearch, SongResult } from './interfaces/search.interface'
 import { VersionResult, AlbumArtResult } from './interfaces/songDetails.interface'
-import { searchHandler } from '../ipc/SearchHandler.ipc'
-import { songDetailsHandler } from '../ipc/SongDetailsHandler.ipc'
-import { albumArtHandler } from '../ipc/AlbumArtHandler.ipc'
+import { searchHandler } from '../ipc/browse/SearchHandler.ipc'
+import { songDetailsHandler } from '../ipc/browse/SongDetailsHandler.ipc'
+import { albumArtHandler } from '../ipc/browse/AlbumArtHandler.ipc'
 import { Download, DownloadProgress } from './interfaces/download.interface'
 import { downloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
-import { batchSongDetailsHandler } from '../ipc/BatchSongDetailsHandler.ipc'
+import { batchSongDetailsHandler } from '../ipc/browse/BatchSongDetailsHandler.ipc'
 import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.ipc'
+import { UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler } from '../ipc/UpdateHandler.ipc'
+import { UpdateInfo } from 'electron-updater'
 
 /**
  * To add a new IPC listener:
@@ -23,7 +25,8 @@ export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[
     searchHandler,
     songDetailsHandler,
     batchSongDetailsHandler,
-    albumArtHandler
+    albumArtHandler,
+    getCurrentVersionHandler
   ]
 }
 
@@ -51,6 +54,10 @@ export type IPCInvokeEvents = {
     input: number[]
     output: VersionResult[]
   }
+  'get-current-version': {
+    input: undefined
+    output: string
+  }
 }
 
 /**
@@ -65,7 +72,9 @@ export interface IPCInvokeHandler<E extends keyof IPCInvokeEvents> {
 export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[] {
   return [
     downloadHandler,
-    setSettingsHandler
+    setSettingsHandler,
+    downloadUpdateHandler,
+    quitAndInstallHandler
   ]
 }
 
@@ -77,6 +86,13 @@ export type IPCEmitEvents = {
   'download-updated': DownloadProgress
   'set-settings': Settings
   'queue-updated': number[]
+
+  'update-error': Error
+  'update-available': UpdateInfo
+  'update-progress': UpdateProgress
+  'update-downloaded': undefined
+  'download-update': undefined
+  'quit-and-install': undefined
 }
 
 /**
