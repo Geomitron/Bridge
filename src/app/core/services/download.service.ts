@@ -33,7 +33,6 @@ export class DownloadService {
         const thisDownloadIndex = this.downloads.findIndex(download => download.versionID == result.versionID)
         if (thisDownloadIndex == -1) {
           this.downloads.push(result)
-          // TODO: this.downloads.sort(downloadSorter)
         } else {
           this.downloads[thisDownloadIndex] = result
         }
