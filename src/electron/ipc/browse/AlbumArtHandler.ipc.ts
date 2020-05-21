@@ -1,7 +1,7 @@
-import { IPCInvokeHandler } from '../shared/IPCHandler'
-import { AlbumArtResult } from '../shared/interfaces/songDetails.interface'
+import { IPCInvokeHandler } from '../../shared/IPCHandler'
+import { AlbumArtResult } from '../../shared/interfaces/songDetails.interface'
 import * as needle from 'needle'
-import { serverURL } from '../shared/Paths'
+import { serverURL } from '../../shared/Paths'
 
 /**
  * Handles the 'album-art' event.

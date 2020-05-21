@@ -1,6 +1,6 @@
-import { IPCInvokeHandler } from '../shared/IPCHandler'
-import { VersionResult } from '../shared/interfaces/songDetails.interface'
-import { serverURL } from '../shared/Paths'
+import { IPCInvokeHandler } from '../../shared/IPCHandler'
+import { VersionResult } from '../../shared/interfaces/songDetails.interface'
+import { serverURL } from '../../shared/Paths'
 import * as needle from 'needle'
 
 /**

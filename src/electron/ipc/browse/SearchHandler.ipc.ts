@@ -1,7 +1,7 @@
-import { IPCInvokeHandler } from '../shared/IPCHandler'
-import { SongSearch, SearchType, SongResult } from '../shared/interfaces/search.interface'
+import { IPCInvokeHandler } from '../../shared/IPCHandler'
+import { SongSearch, SearchType, SongResult } from '../../shared/interfaces/search.interface'
 import * as needle from 'needle'
-import { serverURL } from '../shared/Paths'
+import { serverURL } from '../../shared/Paths'
 /**
  * Handles the 'song-search' event.
  */
