@@ -23,7 +23,6 @@ class UpdateChecker {
 
   private registerUpdaterListeners() {
     autoUpdater.on('error', (err: Error) => {
-      console.log('token:', process.env.GH_TOKEN)
       console.log('error callback', err)
       emitIPCEvent('update-error', err)
     })
