@@ -9,6 +9,8 @@ export interface UpdateProgress {
   total: number
 }
 
+let updateAvailable = false
+
 /**
  * Checks for updates when the program is launched.
  */
@@ -18,6 +20,9 @@ class UpdateChecker {
     autoUpdater.autoDownload = false
     autoUpdater.logger = null
     this.registerUpdaterListeners()
+  }
+
+  checkForUpdates() {
     autoUpdater.checkForUpdates()
   }
 
@@ -28,13 +33,30 @@ class UpdateChecker {
     })
 
     autoUpdater.on('update-available', (info: UpdateInfo) => {
+      updateAvailable = true
       console.log('update available callback', info)
       emitIPCEvent('update-available', info)
     })
   }
 }
 
-new UpdateChecker()
+export const updateChecker = new UpdateChecker()
+
+/**
+ * Handles the 'get-update-available' event.
+ */
+class GetUpdateAvailableHandler implements IPCInvokeHandler<'get-update-available'> {
+  event: 'get-update-available' = 'get-update-available'
+
+  /**
+   * @returns `true` if an update is available.
+   */
+  handler() {
+    return updateAvailable
+  }
+}
+
+export const getUpdateAvailableHandler = new GetUpdateAvailableHandler()
 
 /**
  * Handles the 'get-current-version' event.
