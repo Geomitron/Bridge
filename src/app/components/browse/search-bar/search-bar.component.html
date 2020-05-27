@@ -1,9 +1,10 @@
 <div class="ui bottom attached borderless menu">
   <div class="item">
     <!-- TODO: add advanced search -->
-    <div class="ui icon input" [class.loading]="searchService.isLoading()">
+    <div class="ui icon input" [class.loading]="isLoading()">
       <input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)">
-      <i class="search icon"></i>
+      <i id="searchIcon" class="link icon" [ngClass]="isError ? 'red exclamation triangle' : 'search'"
+        data-content="Failed to connect to the Bridge database" data-position="bottom right"></i>
     </div>
   </div>
   <!-- <div #typeDropdown class="ui item dropdown">

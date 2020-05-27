@@ -28,13 +28,11 @@ class UpdateChecker {
 
   private registerUpdaterListeners() {
     autoUpdater.on('error', (err: Error) => {
-      console.log('error callback', err)
       emitIPCEvent('update-error', err)
     })
 
     autoUpdater.on('update-available', (info: UpdateInfo) => {
       updateAvailable = true
-      console.log('update available callback', info)
       emitIPCEvent('update-available', info)
     })
   }
@@ -68,8 +66,7 @@ class GetCurrentVersionHandler implements IPCInvokeHandler<'get-current-version'
    * @returns the current version of Bridge.
    */
   handler() {
-    console.log('Printing version:', autoUpdater.currentVersion.raw)
-    return autoUpdater.currentVersion.raw // TODO: display this on the about page
+    return autoUpdater.currentVersion.raw
   }
 }
 

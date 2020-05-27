@@ -21,7 +21,12 @@ export class SearchService {
     if (this.awaitingResults) { return }
     this.awaitingResults = true
     this.currentQuery = { query, type: SearchType.Any, offset: 0, length: 50 + 1 } // TODO: make length a setting
-    this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
+    try {
+      this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
+    } catch (err) {
+      this.results = []
+      this.resultsChangedEmitter.error(undefined)
+    }
     this.awaitingResults = false
 
     this.resultsChangedEmitter.emit(this.results)
@@ -47,6 +52,14 @@ export class SearchService {
    */
   onNewSearch(callback: (results: SongResult[]) => void) {
     this.newResultsEmitter.subscribe(callback)
+  }
+
+  /**
+   * Event emitted when a search fails.
+   * (emitted before `onSearchChanged`)
+   */
+  onSearchError(callback: () => void) {
+    this.resultsChangedEmitter.subscribe(() => { /** Do nothing */ }, callback)
   }
 
   get resultCount() {
