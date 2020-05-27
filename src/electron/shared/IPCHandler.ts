@@ -8,7 +8,7 @@ import { downloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
 import { batchSongDetailsHandler } from '../ipc/browse/BatchSongDetailsHandler.ipc'
 import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.ipc'
-import { UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler } from '../ipc/UpdateHandler.ipc'
+import { UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler, getUpdateAvailableHandler } from '../ipc/UpdateHandler.ipc'
 import { UpdateInfo } from 'electron-updater'
 
 /**
@@ -26,7 +26,8 @@ export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[
     songDetailsHandler,
     batchSongDetailsHandler,
     albumArtHandler,
-    getCurrentVersionHandler
+    getCurrentVersionHandler,
+    getUpdateAvailableHandler
   ]
 }
 
@@ -57,6 +58,10 @@ export type IPCInvokeEvents = {
   'get-current-version': {
     input: undefined
     output: string
+  }
+  'get-update-available': {
+    input: undefined
+    output: boolean
   }
 }
 

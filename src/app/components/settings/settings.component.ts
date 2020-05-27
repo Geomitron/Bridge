@@ -8,23 +8,30 @@ import { SettingsService } from 'src/app/core/services/settings.service'
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
-  @ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
+  // @ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 
   cacheSize = 'Calculating...'
+  updateAvailable = false
+  updateVersion: string = null
 
   constructor(public settingsService: SettingsService, private electronService: ElectronService) { }
 
   async ngOnInit() {
     const cacheSize = await this.settingsService.getCacheSize()
     this.cacheSize = Math.round(cacheSize / 1000000) + ' MB'
+    this.electronService.receiveIPC('update-available', (result) => {
+      this.updateVersion = result.version
+      this.updateAvailable = true
+    })
+    this.updateAvailable = await this.electronService.invoke('get-update-available', undefined)
   }
 
   ngAfterViewInit() {
-    $(this.themeDropdown.nativeElement).dropdown({
-      onChange: (_value: string, text: string) => {
-        this.settingsService.theme = text
-      }
-    })
+    // $(this.themeDropdown.nativeElement).dropdown({
+    //   onChange: (_value: string, text: string) => {
+    //     this.settingsService.theme = text
+    //   }
+    // })
   }
 
   async clearCache() {
@@ -53,6 +60,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
   changeRateLimit(event: Event) {
     const inputElement = event.srcElement as HTMLInputElement
     this.settingsService.rateLimitDelay = Number(inputElement.value)
+  }
+
+  downloadUpdate() {
+    this.electronService.sendIPC('download-update', undefined)
+    this.electronService.receiveIPC('update-progress', (result) => console.log(result.percent))
+    this.electronService.receiveIPC('update-downloaded', (result) => {
+      console.log(result)
+      setTimeout(() => {
+        console.log('quit and install...')
+        this.electronService.sendIPC('quit-and-install', undefined)
+      }, 30000)
+    })
   }
 
   toggleDevTools() {

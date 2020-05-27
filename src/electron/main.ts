@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
+import { updateChecker } from './ipc/UpdateHandler.ipc'
 import * as windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
@@ -17,7 +18,12 @@ restrictToSingleInstance()
 handleOSXWindowClosed()
 app.on('ready', () => {
   // Load settings from file before the window is created
-  getSettingsHandler.initSettings().then(createBridgeWindow)
+  getSettingsHandler.initSettings().then(() => {
+    createBridgeWindow()
+    if (!isDevBuild) {
+      updateChecker.checkForUpdates()
+    }
+  })
 })
 
 /**

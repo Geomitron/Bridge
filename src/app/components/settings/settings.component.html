@@ -36,7 +36,7 @@
   (this will be possible in a future update to Bridge)
 </div>
 
-<h3 class="ui header">Theme</h3>
+<!-- <h3 class="ui header">Theme</h3>
 <div #themeDropdown class="ui selection dropdown mr">
   <input type="hidden" name="sort" [value]="settingsService.theme">
   <i class="dropdown icon"></i>
@@ -44,9 +44,15 @@
   <div class="menu">
     <div class="item" [attr.data-value]="i" *ngFor="let theme of settingsService.builtinThemes; let i = index">{{theme}}</div>
   </div>
-</div>
+</div> -->
 
 <div class="bottom">
+  <div class="ui buttons">
+    <button *ngIf="updateAvailable" class="ui labeled icon positive button" (click)="downloadUpdate()">
+      <i class="left cloud download alternate icon"></i>Update available</button>
+    <button id="versionNumberButton" class="ui basic disabled button">v0.0.0</button>
+  </div>
+  
   <button class="ui basic icon button" data-tooltip="Toggle developer tools" data-position="top right"
     (click)="toggleDevTools()">
     <i class="cog icon"></i>

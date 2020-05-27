@@ -13,7 +13,7 @@ export class ToolbarComponent implements OnInit {
 
   constructor(private electronService: ElectronService, private ref: ChangeDetectorRef) { }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.isMaximized = this.electronService.currentWindow.isMaximized()
     this.electronService.currentWindow.on('unmaximize', () => {
       this.isMaximized = false
@@ -27,6 +27,7 @@ export class ToolbarComponent implements OnInit {
     this.electronService.receiveIPC('update-available', () => {
       this.updateAvailable = true
     })
+    this.updateAvailable = await this.electronService.invoke('get-update-available', undefined)
   }
 
   minimize() {
