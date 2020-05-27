@@ -8,7 +8,7 @@ import { SearchService } from 'src/app/core/services/search.service'
 })
 export class SearchBarComponent implements AfterViewInit {
 
-  constructor(private searchService: SearchService) { }
+  constructor(public searchService: SearchService) { }
 
   ngAfterViewInit() {
     $('.ui.dropdown').dropdown()

@@ -18,13 +18,18 @@ export class SearchService {
   constructor(private electronService: ElectronService) { }
 
   async newSearch(query: string) {
+    if (this.awaitingResults) { return }
     this.awaitingResults = true
-    this.currentQuery = { query, type: SearchType.Any, offset: 0, length: 20 + 1 } // TODO: make length a setting
+    this.currentQuery = { query, type: SearchType.Any, offset: 0, length: 50 + 1 } // TODO: make length a setting
     this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
     this.awaitingResults = false
 
     this.resultsChangedEmitter.emit(this.results)
     this.newResultsEmitter.emit(this.results)
+  }
+
+  isLoading() {
+    return this.awaitingResults
   }
 
   /**
