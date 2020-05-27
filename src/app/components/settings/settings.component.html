@@ -49,8 +49,8 @@
 <div class="bottom">
   <div class="ui buttons">
     <button *ngIf="updateAvailable" class="ui labeled icon positive button" (click)="downloadUpdate()">
-      <i class="left cloud download alternate icon"></i>Update available</button>
-    <button id="versionNumberButton" class="ui basic disabled button">v0.0.0</button>
+      <i class="left alternate icon" [ngClass]="(updateDownloaded ? 'sync' : 'cloud download')"></i>{{downloadUpdateText}}</button>
+    <button id="versionNumberButton" class="ui basic disabled button">{{currentVersion}}</button>
   </div>
   
   <button class="ui basic icon button" data-tooltip="Toggle developer tools" data-position="top right"
