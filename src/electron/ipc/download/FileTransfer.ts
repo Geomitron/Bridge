@@ -82,8 +82,6 @@ export class FileTransfer {
         }
       } else {
         // TODO: handle other common problems, like chart/audio files not named correctly
-        // TODO: this could have been a chart pack; have option to only keep selected chart?
-        // (think about a user trying to download a set of charts in a pack)
       }
     }
   }

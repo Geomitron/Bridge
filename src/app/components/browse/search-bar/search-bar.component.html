@@ -1,15 +1,15 @@
 <div class="ui bottom attached borderless menu">
   <div class="item">
     <!-- TODO: add advanced search -->
-    <div class="ui icon input">
+    <div class="ui icon input" [class.loading]="searchService.isLoading()">
       <input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)">
       <i class="search icon"></i>
     </div>
   </div>
-  <div #typeDropdown class="ui item dropdown">
+  <!-- <div #typeDropdown class="ui item dropdown">
     Type <i class="dropdown icon"></i>
     <div class="menu">
-      <!-- TODO: revise what items are displayed -->
+      TODO: revise what items are displayed
       <a class="item">Any</a>
       <a class="item">Name</a>
       <a class="item">Artist</a>
@@ -18,7 +18,7 @@
       <a class="item">Year</a>
       <a class="item">Charter</a>
     </div>
-  </div>
+  </div> -->
   <!-- TODO <div class="item right">
     <button class="ui positive disabled button">Bulk Download</button>
   </div> -->
