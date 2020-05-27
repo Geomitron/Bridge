@@ -2,7 +2,6 @@ import { AnyFunction } from '../../shared/UtilFunctions'
 import { createWriteStream } from 'fs'
 import * as needle from 'needle'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
-// TODO: add download throttle library and setting
 import { googleTimer } from './GoogleTimer'
 import { DownloadError } from './ChartDownload'
 

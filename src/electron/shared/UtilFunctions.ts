@@ -1,23 +1,30 @@
+import * as randomBytes from 'randombytes'
 const sanitize = require('sanitize-filename')
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any) => any
 
 /**
- * @returns `filename`, but with any invalid filename characters replaced with similar valid characters.
+ * @returns `filename` with all invalid filename characters replaced.
  */
 export function sanitizeFilename(filename: string): string {
-  const newName = sanitize(filename, {
+  const newFilename = sanitize(filename, {
     replacement: ((invalidChar: string) => {
       switch (invalidChar) {
-        case '/': return '-'
-        case '\\': return '-'
+        case '<': return '❮'
+        case '>': return '❯'
+        case ':': return '꞉'
         case '"': return "'"
-        default: return '_' // TODO: add more cases for replacing invalid characters
+        case '/': return '／'
+        case '\\': return '⧵'
+        case '|': return '⏐'
+        case '?': return '？'
+        case '*': return '⁎'
+        default: return '_'
       }
     })
   })
-  return newName
+  return (newFilename == '' ? randomBytes(5).toString('hex') : newFilename)
 }
 
 /**

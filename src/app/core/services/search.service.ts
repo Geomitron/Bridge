@@ -11,7 +11,7 @@ export class SearchService {
   private resultsChangedEmitter = new EventEmitter<SongResult[]>() // For when any results change
   private newResultsEmitter = new EventEmitter<SongResult[]>()     // For when a new search happens
   private results: SongResult[] = []
-  private awaitingResults = false // TODO: add loading icon below table when this is true
+  private awaitingResults = false
   private currentQuery: SongSearch
   private _allResultsVisible = true
 
