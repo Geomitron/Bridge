@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core'
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { SettingsService } from 'src/app/core/services/settings.service'
 
@@ -12,18 +12,29 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
   cacheSize = 'Calculating...'
   updateAvailable = false
-  updateVersion: string = null
+  downloadUpdateText = 'Update available'
+  updateDownloading = false
+  updateDownloaded = false
+  currentVersion = ''
 
-  constructor(public settingsService: SettingsService, private electronService: ElectronService) { }
+  constructor(public settingsService: SettingsService, private electronService: ElectronService, private ref: ChangeDetectorRef) { }
 
   async ngOnInit() {
     const cacheSize = await this.settingsService.getCacheSize()
     this.cacheSize = Math.round(cacheSize / 1000000) + ' MB'
     this.electronService.receiveIPC('update-available', (result) => {
-      this.updateVersion = result.version
       this.updateAvailable = true
+      this.downloadUpdateText = `Update available (${result.version})`
+      this.ref.detectChanges()
     })
-    this.updateAvailable = await this.electronService.invoke('get-update-available', undefined)
+    this.electronService.invoke('get-current-version', undefined).then(version => {
+      this.currentVersion = `v${version}`
+      this.ref.detectChanges()
+    })
+    this.electronService.invoke('get-update-available', undefined).then(isAvailable => {
+      this.updateAvailable = isAvailable
+      this.ref.detectChanges()
+    })
   }
 
   ngAfterViewInit() {
@@ -63,15 +74,22 @@ export class SettingsComponent implements OnInit, AfterViewInit {
   }
 
   downloadUpdate() {
-    this.electronService.sendIPC('download-update', undefined)
-    this.electronService.receiveIPC('update-progress', (result) => console.log(result.percent))
-    this.electronService.receiveIPC('update-downloaded', (result) => {
-      console.log(result)
-      setTimeout(() => {
-        console.log('quit and install...')
-        this.electronService.sendIPC('quit-and-install', undefined)
-      }, 30000)
-    })
+    if (this.updateDownloaded) {
+      this.electronService.sendIPC('quit-and-install', undefined)
+    } else if (!this.updateDownloading) {
+      this.updateDownloading = true
+      this.electronService.sendIPC('download-update', undefined)
+      this.downloadUpdateText = 'Downloading... (0%)'
+      this.electronService.receiveIPC('update-progress', (result) => {
+        this.downloadUpdateText = `Downloading... (${result.percent.toFixed(0)}%)`
+        this.ref.detectChanges()
+      })
+      this.electronService.receiveIPC('update-downloaded', () => {
+        this.downloadUpdateText = 'Quit and install update'
+        this.updateDownloaded = true
+        this.ref.detectChanges()
+      })
+    }
   }
 
   toggleDevTools() {

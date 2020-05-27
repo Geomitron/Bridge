@@ -26,8 +26,10 @@ export class ToolbarComponent implements OnInit {
 
     this.electronService.receiveIPC('update-available', () => {
       this.updateAvailable = true
+      this.ref.detectChanges()
     })
     this.updateAvailable = await this.electronService.invoke('get-update-available', undefined)
+    this.ref.detectChanges()
   }
 
   minimize() {
