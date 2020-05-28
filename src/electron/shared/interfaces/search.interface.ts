@@ -20,6 +20,7 @@ export enum SearchType {
  */
 export interface SongResult {
   id: number
+  versionCount: number
   name: string
   artist: string
   album: string

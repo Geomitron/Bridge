@@ -3,7 +3,7 @@
     <input type="checkbox">
   </div>
 </td>
-<td>{{result.name}}</td>
+<td><span id="versionCount" *ngIf="result.versionCount > 1">{{result.versionCount}}</span>{{result.name}}</td>
 <td>{{result.artist}}</td>
 <td>{{result.album}}</td>
 <td>{{result.genre}}</td>
