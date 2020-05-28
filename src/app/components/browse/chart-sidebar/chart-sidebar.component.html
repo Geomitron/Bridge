@@ -2,16 +2,11 @@
   <div class="ui placeholder" [ngClass]="{'placeholder': albumArtSrc == ''}">
     <img class="ui square image" [src]="albumArtSrc">
   </div>
-  <div *ngIf="charts.length > 1" id="chartDropdown" class="ui fluid selection dropdown">
+  <div *ngIf="charts.length > 1" id="chartDropdown" class="ui fluid right labeled icon dropdown button">
     <input type="hidden" name="Chart">
-    <i class="dropdown icon"></i>
-    <div class="default text">Chart</div>
-    <div class="menu">
-      <div class="item" data-value="1">
-        <h4 class="ui header">Chart1</h4>
-        <div>row2</div>
-      </div>
-      <div class="item" data-value="0">Chart 2</div>
+    <i id="chartDropdownIcon" class="dropdown icon"></i>
+    <div class="default text"></div>
+    <div id="chartDropdownMenu" class="menu">
     </div>
   </div>
   <div id="textPanel" class="content">
