@@ -100,7 +100,7 @@ export class SearchService {
     const dates: { [versionID: number]: number } = {}
     versionResults.forEach(version => dates[version.versionID] = new Date(version.lastModified).getTime())
     versionResults.sort((v1, v2) => {
-      const diff = dates[v1.versionID] - dates[v2.versionID]
+      const diff = dates[v2.versionID] - dates[v1.versionID]
       if (Math.abs(diff) < 6.048e+8 && v1.driveData.inChartPack != v2.driveData.inChartPack) {
         if (v1.driveData.inChartPack) {
           return 1 // prioritize v2
