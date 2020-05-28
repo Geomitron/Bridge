@@ -22,6 +22,7 @@
     #tableRow
     *ngFor="let result of results"
     (click)="onRowClicked(result)"
+    [class.active]="activeRowID == result.id"
     [result]="result"></tr>
   </tbody>
 </table>
