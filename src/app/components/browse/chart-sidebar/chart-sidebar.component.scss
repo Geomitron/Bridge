@@ -14,3 +14,14 @@
 #versionDropdown {
   max-width: min-content;
 }
+
+::ng-deep #chartDropdownMenu > div.item {
+  white-space: normal;
+  word-break: break-word;
+}
+
+#chartDropdownIcon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
