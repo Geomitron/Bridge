@@ -18,6 +18,7 @@ export class ResultTableComponent implements OnInit {
   @ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
   results: SongResult[]
+  activeRowID: number = null
 
   constructor(private searchService: SearchService, private selectionService: SelectionService) { }
 
@@ -27,11 +28,13 @@ export class ResultTableComponent implements OnInit {
     })
 
     this.searchService.onSearchChanged(results => {
+      this.activeRowID = null
       this.results = results
     })
   }
 
   onRowClicked(result: SongResult) {
+    this.activeRowID = result.id
     this.rowClicked.emit(result)
   }
 
