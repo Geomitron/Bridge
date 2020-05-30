@@ -9,7 +9,7 @@ class SearchHandler implements IPCInvokeHandler<'song-search'> {
   event: 'song-search' = 'song-search'
 
   /**
-   * @returns the top 20 songs that match `search`.
+   * @returns the top 50 songs that match `search`.
    */
   async handler(search: SongSearch) {
     return new Promise<SongResult[]>((resolve, reject) => {

@@ -69,7 +69,7 @@ export class SearchService {
   async updateScroll() {
     if (!this.awaitingResults && !this._allResultsVisible) {
       this.awaitingResults = true
-      this.currentQuery.offset += 20
+      this.currentQuery.offset += 50
       this.results.push(...this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery)))
       this.awaitingResults = false
 
@@ -78,8 +78,8 @@ export class SearchService {
   }
 
   trimLastChart(results: SongResult[]) {
-    if (results.length > 20) {
-      results.splice(20, 1)
+    if (results.length > 50) {
+      results.splice(50, 1)
       this._allResultsVisible = false
     } else {
       this._allResultsVisible = true
