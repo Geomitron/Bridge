@@ -1,6 +1,6 @@
 {
   "name": "bridge",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Clone Hero library management tool with built in chart searching and downloading.",
   "homepage": "https://github.com/Geomitron/Bridge",
   "license": "GPL-3.0",
