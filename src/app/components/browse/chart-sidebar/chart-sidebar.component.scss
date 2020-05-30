@@ -9,10 +9,15 @@
 
 #textPanel {
   flex-grow: 1;
+  overflow-y: auto;
 }
 
 #versionDropdown {
   max-width: min-content;
+}
+
+#chartDropdown {
+  min-height: min-content;
 }
 
 ::ng-deep #chartDropdownMenu > div.item {
@@ -20,8 +25,12 @@
   word-break: break-word;
 }
 
-#chartDropdownIcon {
+#chartDropdownIcon, #versionDropdown {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+#downloadButton {
+  width: min-content;
 }

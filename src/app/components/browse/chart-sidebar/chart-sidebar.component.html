@@ -19,8 +19,8 @@
     </div>
 
   </div>
-  <div class="ui positive buttons">
-    <div class="ui button" (click)="onDownloadClicked()">{{downloadButtonText}}</div>
+  <div id="downloadButtons" class="ui positive buttons">
+    <div id="downloadButton" class="ui button" (click)="onDownloadClicked()">{{downloadButtonText}}</div>
     <div *ngIf="getSelectedChartVersions().length > 1" id="versionDropdown" class="ui floating dropdown icon button">
       <i class="dropdown icon"></i>
     </div>
