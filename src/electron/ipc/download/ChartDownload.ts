@@ -88,9 +88,7 @@ export class ChartDownload {
       const cancelFn = this.cancelFn
       this.cancelFn = undefined
       cancelFn()
-      try {
-        rimraf(this.tempPath) // Delete temp folder
-      } catch (e) { /** Do nothing */ }
+      rimraf(this.tempPath).catch(() => { /** Do nothing */ }) // Delete temp folder
     }
   }
 
