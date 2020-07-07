@@ -6,7 +6,7 @@
     </button>
   </div>
   <a *ngIf="downloading" class="item right" (click)="showDownloads()">
-    <div #progressBar appProgressBar [percent]="percent" class="ui progress">
+    <div #progressBar appProgressBar [percent]="percent" class="ui progress" [style.background-color]="error ? 'indianred' : undefined">
       <div class="bar">
         <div class="progress"></div>
       </div>

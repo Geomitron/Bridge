@@ -26,6 +26,10 @@ export class DownloadService {
     return total / this.downloads.length
   }
 
+  get anyErrorsExist() {
+    return this.downloads.find(download => download.type == 'error') ? true : false
+  }
+
   addDownload(versionID: number, newDownload: NewDownload) {
     if (!this.downloads.find(download => download.versionID == versionID)) { // Don't download something twice
       this.electronService.receiveIPC('download-updated', result => {
