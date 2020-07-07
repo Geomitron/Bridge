@@ -15,6 +15,7 @@ export class StatusBarComponent {
 
   resultCount = 0
   downloading = false
+  error = false
   percent = 0
   batchResults: VersionResult[]
   chartGroups: VersionResult[][]
@@ -30,6 +31,7 @@ export class StatusBarComponent {
       setTimeout(() => { // Make sure this is the last callback executed to get the accurate downloadCount
         this.downloading = downloadService.downloadCount > 0
         this.percent = downloadService.totalPercent
+        this.error = downloadService.anyErrorsExist
         ref.detectChanges()
       }, 0)
     })
