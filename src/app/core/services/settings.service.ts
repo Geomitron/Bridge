@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { ElectronService } from './electron.service'
-import { Settings } from 'src/electron/shared/Settings'
+import { Settings, defaultSettings } from 'src/electron/shared/Settings'
 
 @Injectable({
   providedIn: 'root'
@@ -54,7 +54,7 @@ export class SettingsService {
 
   // Individual getters/setters
   get libraryDirectory() {
-    return this.settings == undefined ? '' : this.settings.libraryPath
+    return this.settings == undefined ? defaultSettings.libraryPath : this.settings.libraryPath
   }
   set libraryDirectory(newValue: string) {
     this.settings.libraryPath = newValue
@@ -62,7 +62,7 @@ export class SettingsService {
   }
 
   get theme() {
-    return this.settings == undefined ? '' : this.settings.theme
+    return this.settings == undefined ? defaultSettings.theme : this.settings.theme
   }
   set theme(newValue: string) {
     this.settings.theme = newValue
@@ -71,7 +71,7 @@ export class SettingsService {
   }
 
   get rateLimitDelay() {
-    return this.settings == undefined ? NaN : this.settings.rateLimitDelay
+    return this.settings == undefined ? defaultSettings.rateLimitDelay : this.settings.rateLimitDelay
   }
   set rateLimitDelay(delay: number) {
     this.settings.rateLimitDelay = delay
