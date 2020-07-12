@@ -128,7 +128,7 @@ export class ChartSidebarComponent implements OnInit {
    */
   updateSongLength() {
     let seconds = this.selectedVersion.chartMetadata.length
-    if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}` }
+    if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}`; return }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
     while (minutes > 59) {
