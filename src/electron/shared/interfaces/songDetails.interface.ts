@@ -33,6 +33,8 @@ export interface VersionResult {
   songDataIncorrect: boolean
   year: string
   chartMetadata: ChartMetadata
+  isRemoved: boolean
+  album: string
 }
 
 export interface DriveChart {
