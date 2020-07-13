@@ -12,6 +12,7 @@
   <div id="textPanel" class="content">
     <span class="header">{{selectedVersion.avTagName}}</span>
     <div class="description">
+      <div *ngIf="songResult.album == null"><b>Album:</b> {{selectedVersion.album}}</div>
       <div><b>{{charterPlural}}</b> {{selectedVersion.charters}}</div>
       <div *ngIf="selectedVersion.tags"><b>Tags:</b> {{selectedVersion.tags}}</div>
       <div><b>Audio Length:</b> {{songLength}}</div>
