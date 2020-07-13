@@ -15,7 +15,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
 })
 export class ChartSidebarComponent implements OnInit {
 
-  private songResult: SongResult
+  songResult: SongResult
   selectedVersion: VersionResult
   charts: VersionResult[][]
 
