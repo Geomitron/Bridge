@@ -44,7 +44,7 @@ export class ChartSidebarComponent implements OnInit {
       const results = await this.electronService.invoke('song-details', result.id)
       this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].avTagName.length - v2[0].avTagName.length)
       this.sortCharts()
-      await this.selectChart(0)
+      await this.selectChart(this.charts[0][0].chartID)
       this.initChartDropdown()
 
       this.updateAlbumArtSrc(await albumArt)
