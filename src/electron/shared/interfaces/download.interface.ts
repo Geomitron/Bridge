@@ -13,7 +13,7 @@ export interface Download {
  * Contains the data required to start downloading a single chart.
  */
 export interface NewDownload {
-  avTagName: string
+  chartName: string
   artist: string
   charter: string
   driveData: DriveChart & { inChartPack: boolean }

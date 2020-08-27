@@ -50,7 +50,7 @@ export class ChartDownload {
     if (data.driveData.inChartPack) {
       this.destinationFolderName = sanitizeFilename(parse(data.driveData.files[0].name).name)
     } else {
-      this.destinationFolderName = sanitizeFilename(`${this.data.artist} - ${this.data.avTagName} (${this.data.charter})`)
+      this.destinationFolderName = sanitizeFilename(`${this.data.artist} - ${this.data.chartName} (${this.data.charter})`)
     }
   }
 
@@ -107,7 +107,7 @@ export class ChartDownload {
 
     emitIPCEvent('download-updated', {
       versionID: this.versionID,
-      title: `${this.data.avTagName} - ${this.data.artist}`,
+      title: `${this.data.chartName} - ${this.data.artist}`,
       header: header,
       description: description,
       percent: this.percent,

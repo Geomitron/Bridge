@@ -14,27 +14,30 @@ export interface VersionResult {
   songID: number
   latestVersionID: number
   latestSetlistVersionID: number
-  icon: string
+  name: string
+  chartName: string
+  artist: string
+  album: string
+  genre: string
+  year: string
+  songDataIncorrect: boolean
   driveData: DriveChart & { inChartPack: boolean }
-  avTagName: string
+  md5: string
+  lastModified: string
+  icon: string
   charters: string
   charterIDs: string
   tags: string | null
-  lastModified: string
-  song_length: number
+  songLength: number
   diff_band: number
   diff_guitar: number
-  diff_rhythm: number
   diff_bass: number
+  diff_rhythm: number
   diff_drums: number
   diff_keys: number
   diff_guitarghl: number
   diff_bassghl: number
-  songDataIncorrect: boolean
-  year: string
-  chartMetadata: ChartMetadata
-  isRemoved: boolean
-  album: string
+  chartData: ChartData
 }
 
 export interface DriveChart {
@@ -42,15 +45,19 @@ export interface DriveChart {
   isArchive: boolean
   downloadPath: string
   filesHash: string
+  folderName: string
+  folderID: string
   files: DriveFile[]
 }
 
 export interface DriveSource {
   isSetlistSource: boolean
+  isDriveFileSource?: boolean
   setlistIcon?: string
   sourceUserIDs: number[]
   sourceName: string
   sourceDriveID: string
+  proxyLink?: string
 }
 
 export interface DriveFile {
@@ -63,7 +70,7 @@ export interface DriveFile {
   size: string
 }
 
-export interface ChartMetadata {
+export interface ChartData {
   hasSections: boolean
   hasStarPower: boolean
   hasForced: boolean

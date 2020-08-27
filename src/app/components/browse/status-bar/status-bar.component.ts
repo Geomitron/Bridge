@@ -71,7 +71,7 @@ export class StatusBarComponent {
         const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
         this.downloadService.addDownload(
           downloadVersion.versionID, {
-            avTagName: downloadVersion.avTagName,
+            chartName: downloadVersion.chartName,
             artist: downloadSong.artist,
             charter: downloadVersion.charters,
             driveData: downloadVersion.driveData
@@ -91,7 +91,7 @@ export class StatusBarComponent {
       const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
       this.downloadService.addDownload(
         downloadVersion.versionID, {
-          avTagName: downloadVersion.avTagName,
+          chartName: downloadVersion.chartName,
           artist: downloadSong.artist,
           charter: downloadVersion.charters,
           driveData: downloadVersion.driveData
