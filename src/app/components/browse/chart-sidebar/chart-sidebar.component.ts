@@ -42,7 +42,7 @@ export class ChartSidebarComponent implements OnInit {
       this.songResult = result
       const albumArt = this.albumArtService.getImage(result.id)
       const results = await this.electronService.invoke('song-details', result.id)
-      this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].avTagName.length - v2[0].avTagName.length)
+      this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].chartName.length - v2[0].chartName.length)
       this.sortCharts()
       await this.selectChart(this.charts[0][0].chartID)
       this.initChartDropdown()
@@ -84,8 +84,8 @@ export class ChartSidebarComponent implements OnInit {
       const version = chart[0]
       return {
         value: version.chartID,
-        text: version.avTagName,
-        name: `${version.avTagName} <b>[${version.charters}]</b>`
+        text: version.chartName,
+        name: `${version.chartName} <b>[${version.charters}]</b>`
       }
     })
     const $chartDropdown = $('#chartDropdown')
@@ -127,7 +127,7 @@ export class ChartSidebarComponent implements OnInit {
    * Converts `this.selectedVersion.chartMetadata.length` into a readable duration.
    */
   updateSongLength() {
-    let seconds = this.selectedVersion.chartMetadata.length
+    let seconds = this.selectedVersion.songLength
     if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}`; return }
     let minutes = Math.floor(seconds / 60)
     let hours = 0
@@ -204,7 +204,7 @@ export class ChartSidebarComponent implements OnInit {
   onDownloadClicked() {
     this.downloadService.addDownload(
       this.selectedVersion.versionID, {
-        avTagName: this.selectedVersion.avTagName,
+        chartName: this.selectedVersion.chartName,
         artist: this.songResult.artist,
         charter: this.selectedVersion.charters,
         driveData: this.selectedVersion.driveData
