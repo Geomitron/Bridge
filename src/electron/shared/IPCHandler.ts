@@ -8,6 +8,7 @@ import { downloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
 import { batchSongDetailsHandler } from '../ipc/browse/BatchSongDetailsHandler.ipc'
 import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.ipc'
+import { googleLoginHandler, getAuthStatusHandler, googleLogoutHandler } from '../ipc/google/GoogleLoginHandler.ipc'
 import { UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler, getUpdateAvailableHandler } from '../ipc/UpdateHandler.ipc'
 import { UpdateInfo } from 'electron-updater'
 
@@ -27,7 +28,10 @@ export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[
     batchSongDetailsHandler,
     albumArtHandler,
     getCurrentVersionHandler,
-    getUpdateAvailableHandler
+    getUpdateAvailableHandler,
+    googleLoginHandler,
+    googleLogoutHandler,
+    getAuthStatusHandler
   ]
 }
 
@@ -60,6 +64,18 @@ export type IPCInvokeEvents = {
     output: string
   }
   'get-update-available': {
+    input: undefined
+    output: boolean
+  }
+  'google-login': {
+    input: undefined
+    output: boolean
+  }
+  'google-logout': {
+    input: undefined
+    output: undefined
+  }
+  'get-auth-status': {
     input: undefined
     output: boolean
   }

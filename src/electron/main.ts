@@ -10,7 +10,7 @@ import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './share
 import { getSettingsHandler } from './ipc/SettingsHandler.ipc'
 import { dataPath } from './shared/Paths'
 
-let mainWindow: BrowserWindow
+export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
 const isDevBuild = args.some(val => val == '--dev')
 

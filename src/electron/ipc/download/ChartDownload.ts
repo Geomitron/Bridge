@@ -1,4 +1,4 @@
-import { FileDownloader } from './FileDownloader'
+import { FileDownloader, getDownloader } from './FileDownloader'
 import { join, parse } from 'path'
 import { FileExtractor } from './FileExtractor'
 import { sanitizeFilename, interpolate } from '../../shared/UtilFunctions'
@@ -140,7 +140,10 @@ export class ChartDownload {
     // DOWNLOAD FILES
     for (let i = 0; i < this.files.length; i++) {
       if (this.files[i].name == 'ch.dat') { continue }
-      const downloader = new FileDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
+      let wasCanceled = false
+      this.cancelFn = () => { wasCanceled = true }
+      const downloader = await getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
+      if (wasCanceled) { return }
       this.cancelFn = () => downloader.cancelDownload()
 
       const downloadComplete = this.addDownloadEventListeners(downloader, i)
@@ -194,23 +197,25 @@ export class ChartDownload {
    */
   private addDownloadEventListeners(downloader: FileDownloader, fileIndex: number) {
     let downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
+    let downloadStartPoint = 0 // How far into the individual file progress portion the download progress starts
     let fileProgress = 0
 
     downloader.on('waitProgress', (remainingSeconds: number, totalSeconds: number) => {
+      downloadStartPoint = this.individualFileProgressPortion / 2
       this.percent = this._allFilesProgress + interpolate(remainingSeconds, totalSeconds, 0, 0, this.individualFileProgressPortion / 2)
       this.updateGUI(downloadHeader, `Waiting for Google rate limit... (${remainingSeconds}s)`, 'good')
     })
 
     downloader.on('requestSent', () => {
-      fileProgress = this.individualFileProgressPortion / 2
+      fileProgress = downloadStartPoint
       this.percent = this._allFilesProgress + fileProgress
       this.updateGUI(downloadHeader, 'Sending request...', 'good')
     })
 
-    downloader.on('downloadProgress', (bytesDownloaded) => {
+    downloader.on('downloadProgress', (bytesDownloaded: number) => {
       downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
       const size = Number(this.files[fileIndex].size)
-      fileProgress = interpolate(bytesDownloaded, 0, size, this.individualFileProgressPortion / 2, this.individualFileProgressPortion)
+      fileProgress = interpolate(bytesDownloaded, 0, size, downloadStartPoint, this.individualFileProgressPortion)
       this.percent = this._allFilesProgress + fileProgress
       this.updateGUI(downloadHeader, `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`, 'fastUpdate')
     })
