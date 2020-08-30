@@ -61,7 +61,7 @@ export class GoogleAuth {
       authServer.on('listening', () => {
         const authUrl = oAuth2Client.generateAuthUrl({
           access_type: 'offline',
-          scope: ['profile', 'email', 'https://www.googleapis.com/auth/drive.readonly'],
+          scope: ['https://www.googleapis.com/auth/drive.readonly'],
           redirect_uri: REDIRECT_URI
         })
 
@@ -76,8 +76,7 @@ export class GoogleAuth {
           center: true,
           thickFrame: true,
           useContentSize: true,
-          width: 400,
-          
+          width: 400
         })
         popupWindow.loadURL(authUrl, { userAgent: 'Chrome' })
         popupWindow.on('ready-to-show', () => popupWindow.show())
