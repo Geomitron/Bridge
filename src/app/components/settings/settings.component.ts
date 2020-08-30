@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core'
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { SettingsService } from 'src/app/core/services/settings.service'
 
@@ -12,6 +12,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
   cacheSize = 'Calculating...'
   updateAvailable = false
+  loginAvailable = true
+  loginClicked = false
   downloadUpdateText = 'Update available'
   updateDownloading = false
   updateDownloaded = false
@@ -33,6 +35,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
     })
     this.electronService.invoke('get-update-available', undefined).then(isAvailable => {
       this.updateAvailable = isAvailable
+      this.ref.detectChanges()
+    })
+    this.electronService.invoke('get-auth-status', undefined).then(isAuthenticated => {
+      this.loginAvailable = !isAuthenticated
       this.ref.detectChanges()
     })
   }
@@ -62,6 +68,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
     if (result.canceled == false) {
       this.settingsService.libraryDirectory = result.filePaths[0]
     }
+  }
+
+  async googleLogin() {
+    if (this.loginClicked) { return }
+    this.loginClicked = true
+    const isAuthenticated = await this.electronService.invoke('google-login', undefined)
+    this.loginAvailable = !isAuthenticated
+    this.loginClicked = false
+  }
+
+  async googleLogout() {
+    this.loginAvailable = true
+    await this.electronService.invoke('google-logout', undefined)
   }
 
   openLibraryDirectory() {
