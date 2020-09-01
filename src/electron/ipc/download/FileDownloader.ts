@@ -115,7 +115,7 @@ class APIFileDownloader {
           if (this.wasCanceled) { return }
           this.startDownloadStream()
         } else {
-          console.log(err)
+          console.log(JSON.stringify(err))
           this.failDownload(downloadErrors.responseError(err ? (err.code ?? 'unknown') : 'unknown'))
         }
       }

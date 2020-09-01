@@ -1,12 +1,18 @@
 import { Component, OnInit } from '@angular/core'
 import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
 import { ElectronService } from '../../../core/services/electron.service'
-import { VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
+import { VersionResult, getInstrumentIcon, Instrument, ChartedDifficulty } from '../../../../electron/shared/interfaces/songDetails.interface'
 import { AlbumArtService } from '../../../core/services/album-art.service'
 import { DownloadService } from '../../../core/services/download.service'
 import { groupBy } from 'src/electron/shared/UtilFunctions'
 import { SearchService } from 'src/app/core/services/search.service'
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
+
+interface Difficulty {
+  instrument: string
+  diffNumber: string
+  chartedDifficulties: string
+}
 
 @Component({
   selector: 'app-chart-sidebar',
@@ -110,6 +116,7 @@ export class ChartSidebarComponent implements OnInit {
     if (this.selectedVersion != undefined) {
       this.updateCharterPlural()
       this.updateSongLength()
+      this.updateDifficultiesList()
       this.updateDownloadButtonText()
     }
   }
@@ -118,7 +125,7 @@ export class ChartSidebarComponent implements OnInit {
   /**
    * Chooses to display 'Charter:' or 'Charters:'.
    */
-  updateCharterPlural() {
+  private updateCharterPlural() {
     this.charterPlural = this.selectedVersion.charterIDs.split('&').length == 1 ? 'Charter:' : 'Charters:'
   }
 
@@ -126,7 +133,7 @@ export class ChartSidebarComponent implements OnInit {
   /**
    * Converts `this.selectedVersion.chartMetadata.length` into a readable duration.
    */
-  updateSongLength() {
+  private updateSongLength() {
     let seconds = this.selectedVersion.songLength
     if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}`; return }
     let minutes = Math.floor(seconds / 60)
@@ -139,11 +146,50 @@ export class ChartSidebarComponent implements OnInit {
     this.songLength = `${hours == 0 ? '' : hours + ':'}${minutes == 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
   }
 
+  difficultiesList: Difficulty[]
+  /**
+   * Updates `dfficultiesList` with the difficulty information for the selected version.
+   */
+  private updateDifficultiesList() {
+    const instruments = Object.keys(this.selectedVersion.chartData.noteCounts) as Instrument[]
+    this.difficultiesList = []
+    for (const instrument of instruments) {
+      this.difficultiesList.push({
+        instrument: getInstrumentIcon(instrument),
+        diffNumber: this.getDiffNumber(instrument),
+        chartedDifficulties: this.getChartedDifficultiesText(instrument)
+      })
+    }
+  }
+
+  /**
+   * @returns a string describing the difficulty number in the selected version.
+   */
+  private getDiffNumber(instrument: Instrument) {
+    const diffNumber: number = this.selectedVersion[`diff_${instrument}`]
+    return diffNumber == -1 || diffNumber == undefined ? 'Unknown' : String(diffNumber)
+  }
+
+  /**
+   * @returns a string describing the list of charted difficulties in the selected version.
+   */
+  private getChartedDifficultiesText(instrument: Instrument) {
+    const difficulties = Object.keys(this.selectedVersion.chartData.noteCounts[instrument]) as ChartedDifficulty[]
+    if (difficulties.length == 4) { return 'Full Difficulty' }
+    const difficultyNames = []
+    if (difficulties.includes('x')) { difficultyNames.push('Expert') }
+    if (difficulties.includes('h')) { difficultyNames.push('Hard') }
+    if (difficulties.includes('m')) { difficultyNames.push('Medium') }
+    if (difficulties.includes('e')) { difficultyNames.push('Easy') }
+
+    return difficultyNames.join(', ')
+  }
+
   downloadButtonText: string
   /**
    * Chooses the text to display on the download button.
    */
-  updateDownloadButtonText() {
+  private updateDownloadButtonText() {
     this.downloadButtonText = 'Download'
     if (this.selectedVersion.driveData.inChartPack) {
       this.downloadButtonText += ' Chart Pack'
@@ -196,6 +242,29 @@ export class ChartSidebarComponent implements OnInit {
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
     const year = date.getFullYear().toString().substr(-2)
     return `${month}/${day}/${year}`
+  }
+
+  /**
+   * Opens the proxy link or source folder in the default browser.
+   */
+  onSourceLinkClicked() {
+    const source = this.selectedVersion.driveData.source
+    this.electronService.sendIPC('open-url', source.proxyLink ?? `https://drive.google.com/drive/folders/${source.sourceDriveID}`)
+  }
+
+  /**
+   * @returns `true` if the source folder button should be shown.
+   */
+  shownFolderButton() {
+    const driveData = this.selectedVersion.driveData
+    return driveData.source.proxyLink || driveData.source.sourceDriveID != driveData.folderID
+  }
+
+  /**
+   * Opens the chart folder in the default browser.
+   */
+  onFolderButtonClicked() {
+    this.electronService.sendIPC('open-url', `https://drive.google.com/drive/folders/${this.selectedVersion.driveData.folderID}`)
   }
 
   /**
