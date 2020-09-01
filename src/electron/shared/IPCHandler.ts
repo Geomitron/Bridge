@@ -11,6 +11,7 @@ import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.i
 import { googleLoginHandler, getAuthStatusHandler, googleLogoutHandler } from '../ipc/google/GoogleLoginHandler.ipc'
 import { UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler, getUpdateAvailableHandler } from '../ipc/UpdateHandler.ipc'
 import { UpdateInfo } from 'electron-updater'
+import { openURLHandler } from '../ipc/OpenURLHandler.ipc'
 
 /**
  * To add a new IPC listener:
@@ -95,7 +96,8 @@ export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[] {
     downloadHandler,
     setSettingsHandler,
     downloadUpdateHandler,
-    quitAndInstallHandler
+    quitAndInstallHandler,
+    openURLHandler
   ]
 }
 
@@ -114,6 +116,7 @@ export type IPCEmitEvents = {
   'update-downloaded': undefined
   'download-update': undefined
   'quit-and-install': undefined
+  'open-url': string
 }
 
 /**

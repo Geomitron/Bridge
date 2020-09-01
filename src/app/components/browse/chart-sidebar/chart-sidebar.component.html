@@ -16,7 +16,22 @@
       <div><b>{{charterPlural}}</b> {{selectedVersion.charters}}</div>
       <div *ngIf="selectedVersion.tags"><b>Tags:</b> {{selectedVersion.tags}}</div>
       <div><b>Audio Length:</b> {{songLength}}</div>
-      <!-- TODO: add difficulty icons -->
+      <div class="ui divider"></div>
+      <div class="ui horizontal list">
+        <div *ngFor="let difficulty of difficultiesList" class="item">
+          <img class="ui avatar image" src="/assets/images/instruments/{{difficulty.instrument}}">
+          <div class="content">
+            <div class="header">Diff: {{difficulty.diffNumber}}</div>
+            {{difficulty.chartedDifficulties}}
+          </div>
+        </div>
+      </div>
+      <div id="sourceLinks">
+        <a id="sourceLink" (click)="onSourceLinkClicked()">{{selectedVersion.driveData.source.sourceName}}</a>
+        <button *ngIf="shownFolderButton()" id="folderButton" class="mini ui icon button" (click)="onFolderButtonClicked()">
+          <i class="folder open outline icon"></i>
+        </button>
+      </div>
     </div>
 
   </div>
