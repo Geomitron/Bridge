@@ -20,6 +20,13 @@
     "icon": "dist/assets/images/system/icons/win/icon.ico",
     "compression": "store"
   },
+  "mac": {
+    "category": "public.app-category.utilities",
+    "target": [
+      "dmg"
+    ],
+    "icon": "dist/assets/images/system/icons/mac/icon.icns"
+  },
   "linux": {
     "compression": "maximum",
     "target": [
