@@ -21,7 +21,7 @@ class SearchHandler implements IPCInvokeHandler<'song-search'> {
           offset: search.offset
         }, (err, response) => {
           if (err) {
-            reject(err)
+            reject(err.message)
           } else {
             resolve(response.body)
           }

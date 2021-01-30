@@ -10,6 +10,7 @@ export class SearchService {
 
   private resultsChangedEmitter = new EventEmitter<SongResult[]>() // For when any results change
   private newResultsEmitter = new EventEmitter<SongResult[]>()     // For when a new search happens
+  private errorStateEmitter = new EventEmitter<boolean>()          // To indicate the search's error state
   private results: SongResult[] = []
   private awaitingResults = false
   private currentQuery: SongSearch
@@ -23,9 +24,11 @@ export class SearchService {
     this.currentQuery = { query, type: SearchType.Any, offset: 0, length: 50 + 1 } // TODO: make length a setting
     try {
       this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
+      this.errorStateEmitter.emit(false)
     } catch (err) {
       this.results = []
-      this.resultsChangedEmitter.error(undefined)
+      console.log(err.message)
+      this.errorStateEmitter.emit(true)
     }
     this.awaitingResults = false
 
@@ -55,11 +58,11 @@ export class SearchService {
   }
 
   /**
-   * Event emitted when a search fails.
+   * Event emitted when the error state of the search changes.
    * (emitted before `onSearchChanged`)
    */
-  onSearchError(callback: () => void) {
-    this.resultsChangedEmitter.subscribe(() => { /** Do nothing */ }, callback)
+  onSearchErrorStateUpdate(callback: (isError: boolean) => void) {
+    this.errorStateEmitter.subscribe(callback)
   }
 
   get resultCount() {
