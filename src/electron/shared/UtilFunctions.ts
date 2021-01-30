@@ -35,12 +35,12 @@ export function interpolate(val: number, fromStart: number, fromEnd: number, toS
 }
 
 /**
- * @returns `objectList` split into multiple arrays, where each array contains the objects with matching `key` values.
+ * @returns `objectList` split into multiple groups, where each group contains objects where every one of its values in `keys` matches.
  */
-export function groupBy<T>(objectList: T[], key: keyof T) {
+export function groupBy<T>(objectList: T[], ...keys: (keyof T)[]) {
   const results: T[][] = []
   for (const object of objectList) {
-    const matchingGroup = results.find(result => result[0][key] == object[key])
+    const matchingGroup = results.find(result => keys.every(key => result[0][key] == object[key]))
     if (matchingGroup != undefined) {
       matchingGroup.push(object)
     } else {

@@ -84,8 +84,8 @@ export class StatusBarComponent {
   }
 
   downloadAllCharts() {
-    const chartGroups = groupBy(this.batchResults, 'chartID')
-    for (const chart of chartGroups) {
+    const songChartGroups = groupBy(this.batchResults, 'songID', 'chartID')
+    for (const chart of songChartGroups) {
       this.searchService.sortChart(chart)
       const downloadVersion = chart[0]
       const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
