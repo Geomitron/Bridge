@@ -17,8 +17,8 @@ export class SearchBarComponent implements AfterViewInit {
     $('#searchIcon').popup({
       onShow: () => this.isError // Only show the popup if there is an error
     })
-    this.searchService.onSearchError(() => {
-      this.isError = true
+    this.searchService.onSearchErrorStateUpdate((isError) => {
+      this.isError = isError
     })
   }
 
