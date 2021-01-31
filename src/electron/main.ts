@@ -110,7 +110,8 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
     webPreferences: {
       nodeIntegration: true,
       allowRunningInsecureContent: (isDevBuild) ? true : false,
-      textAreasAreResizable: false
+      textAreasAreResizable: false,
+      enableRemoteModule: true
     },
     simpleFullscreen: true,
     fullscreenable: false

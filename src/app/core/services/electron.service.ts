@@ -56,11 +56,11 @@ export class ElectronService {
   }
 
   quit() {
-    this.electron.remote.app.quit()
+    this.electron.remote.app.exit()
   }
 
   openFolder(filepath: string) {
-    this.electron.shell.openItem(filepath)
+    this.electron.shell.openPath(filepath)
   }
 
   showFolder(filepath: string) {
