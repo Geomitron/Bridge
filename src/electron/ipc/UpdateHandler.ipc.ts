@@ -14,7 +14,15 @@ let updateAvailable = false
 /**
  * Checks for updates when the program is launched.
  */
-class UpdateChecker {
+class UpdateChecker implements IPCEmitHandler<'retry-update'> {
+  event: 'retry-update' = 'retry-update'
+
+  /**
+   * Check for an update.
+   */
+  handler() {
+    this.checkForUpdates()
+  }
 
   constructor() {
     autoUpdater.autoDownload = false
@@ -23,17 +31,26 @@ class UpdateChecker {
   }
 
   checkForUpdates() {
-    autoUpdater.checkForUpdates()
+    autoUpdater.checkForUpdates().catch(reason => {
+      updateAvailable = null
+      emitIPCEvent('update-error', reason)
+    })
   }
 
   private registerUpdaterListeners() {
     autoUpdater.on('error', (err: Error) => {
+      updateAvailable = null
       emitIPCEvent('update-error', err)
     })
 
     autoUpdater.on('update-available', (info: UpdateInfo) => {
       updateAvailable = true
       emitIPCEvent('update-available', info)
+    })
+
+    autoUpdater.on('update-not-available', (info: UpdateInfo) => {
+      updateAvailable = false
+      emitIPCEvent('update-available', null)
     })
   }
 }
