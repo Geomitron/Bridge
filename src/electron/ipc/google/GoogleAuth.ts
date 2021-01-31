@@ -5,8 +5,10 @@ import { mainWindow } from '../../main'
 import { join } from 'path'
 import { readFile, writeFile } from 'jsonfile'
 import { google } from 'googleapis'
+import * as needle from 'needle'
 import { authServer } from './AuthServer'
 import { BrowserWindow } from 'electron'
+import { serverURL } from '../../shared/Paths'
 import * as fs from 'fs'
 import { promisify } from 'util'
 
@@ -24,23 +26,42 @@ export class GoogleAuth {
    * @returns `true` if the user is authenticated, and `false` otherwise.
    */
   async attemptToAuthenticate() {
-    if (this.hasTriedTokenFile) {
-      return this.hasAuthenticated
-    }
 
-    const token = await this.getStoredToken()
-    if (token != null) {
-      // Token has been restored from a previous session
-      const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
-      oAuth2Client.setCredentials(token)
-      google.options({ auth: oAuth2Client })
-      this.hasAuthenticated = true
-      return true
-    } else {
-      // Token doesn't exist; user has not authenticated
-      this.hasAuthenticated = false
-      return false
-    }
+    // TODO remove this workaround when Google's API stops being dumb
+    return new Promise<boolean>(resolve => {
+      needle.request(
+        'get',
+        serverURL + `/api/data/temp`, null, (err, response) => {
+          if (err) {
+            resolve(false)
+          } else {
+            if (!response.body.includes || (response.body as string)?.includes('<!DOCTYPE html>')) {
+              resolve(false)
+            } else {
+              google.options({ auth: response.body })
+              resolve(true)
+            }
+          }
+        })
+    })
+
+    // if (this.hasTriedTokenFile) {
+    //   return this.hasAuthenticated
+    // }
+
+    // const token = await this.getStoredToken()
+    // if (token != null) {
+    //   // Token has been restored from a previous session
+    //   const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
+    //   oAuth2Client.setCredentials(token)
+    //   google.options({ auth: oAuth2Client })
+    //   this.hasAuthenticated = true
+    //   return true
+    // } else {
+    //   // Token doesn't exist; user has not authenticated
+    //   this.hasAuthenticated = false
+    //   return false
+    // }
   }
 
   async generateAuthToken() {
