@@ -9,7 +9,7 @@ import { Settings } from './Settings'
 import { batchSongDetailsHandler } from '../ipc/browse/BatchSongDetailsHandler.ipc'
 import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.ipc'
 import { googleLoginHandler, getAuthStatusHandler, googleLogoutHandler } from '../ipc/google/GoogleLoginHandler.ipc'
-import { UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler, getUpdateAvailableHandler } from '../ipc/UpdateHandler.ipc'
+import { updateChecker, UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler, getUpdateAvailableHandler } from '../ipc/UpdateHandler.ipc'
 import { UpdateInfo } from 'electron-updater'
 import { openURLHandler } from '../ipc/OpenURLHandler.ipc'
 
@@ -96,6 +96,7 @@ export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[] {
     downloadHandler,
     setSettingsHandler,
     downloadUpdateHandler,
+    updateChecker,
     quitAndInstallHandler,
     openURLHandler
   ]
@@ -115,6 +116,7 @@ export type IPCEmitEvents = {
   'update-progress': UpdateProgress
   'update-downloaded': undefined
   'download-update': undefined
+  'retry-update': undefined
   'quit-and-install': undefined
   'open-url': string
 }

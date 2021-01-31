@@ -15,8 +15,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
   loginAvailable = true
   loginClicked = false
   downloadUpdateText = 'Update available'
+  retryUpdateText = 'Failed to check for update'
   updateDownloading = false
   updateDownloaded = false
+  updateRetrying = false
   currentVersion = ''
 
   constructor(public settingsService: SettingsService, private electronService: ElectronService, private ref: ChangeDetectorRef) { }
@@ -25,8 +27,17 @@ export class SettingsComponent implements OnInit, AfterViewInit {
     const cacheSize = await this.settingsService.getCacheSize()
     this.cacheSize = Math.round(cacheSize / 1000000) + ' MB'
     this.electronService.receiveIPC('update-available', (result) => {
-      this.updateAvailable = true
-      this.downloadUpdateText = `Update available (${result.version})`
+      this.updateAvailable = result != null
+      this.updateRetrying = false
+      if (this.updateAvailable) {
+        this.downloadUpdateText = `Update available (${result.version})`
+      }
+      this.ref.detectChanges()
+    })
+    this.electronService.receiveIPC('update-error', () => {
+      this.updateAvailable = null
+      this.updateRetrying = false
+      this.retryUpdateText = 'Failed to check for update'
       this.ref.detectChanges()
     })
     this.electronService.invoke('get-current-version', undefined).then(version => {
@@ -108,6 +119,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
         this.updateDownloaded = true
         this.ref.detectChanges()
       })
+    }
+  }
+
+  retryUpdate() {
+    if (this.updateRetrying == false) {
+      this.updateRetrying = true
+      this.retryUpdateText = 'Retrying...'
+      this.ref.detectChanges()
+      this.electronService.sendIPC('retry-update', undefined)
     }
   }
 
