@@ -3,7 +3,7 @@
     <!-- TODO: add advanced search -->
     <div class="ui icon input" [class.loading]="isLoading()">
       <input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)">
-      <i id="searchIcon" class="link icon" [ngClass]="isError ? 'red exclamation triangle' : 'search'"
+      <i #searchIcon id="searchIcon" class="link icon" [ngClass]="isError ? 'red exclamation triangle' : 'search'"
         data-content="Failed to connect to the Bridge database" data-position="bottom right"></i>
     </div>
   </div>
