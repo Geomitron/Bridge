@@ -30,7 +30,7 @@ class GoogleLogoutHandler implements IPCInvokeHandler<'google-logout'> {
    */
   async handler() {
     return new Promise<undefined>(resolve => {
-      googleAuth.deleteStoredToken().then(() => resolve())
+      googleAuth.deleteStoredToken().then(() => resolve(undefined))
     })
   }
 }
