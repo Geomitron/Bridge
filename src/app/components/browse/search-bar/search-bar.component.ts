@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core'
+import { Component, AfterViewInit, ViewChild, ElementRef } from '@angular/core'
 import { SearchService } from 'src/app/core/services/search.service'
 
 @Component({
@@ -8,13 +8,15 @@ import { SearchService } from 'src/app/core/services/search.service'
 })
 export class SearchBarComponent implements AfterViewInit {
 
+  @ViewChild('searchIcon', { static: true }) searchIcon: ElementRef
+
   isError = false
 
   constructor(public searchService: SearchService) { }
 
   ngAfterViewInit() {
     $('.ui.dropdown').dropdown()
-    $('#searchIcon').popup({
+    $(this.searchIcon.nativeElement).popup({
       onShow: () => this.isError // Only show the popup if there is an error
     })
     this.searchService.onSearchErrorStateUpdate((isError) => {
