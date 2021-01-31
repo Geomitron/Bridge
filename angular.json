@@ -70,10 +70,13 @@
                 }
               ],
               "baseHref": "./",
-              "optimization": true,
+              "optimization": {
+                "styles": {
+                  "minify": false
+                }
+              },
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "watch": false,
