@@ -30,7 +30,7 @@ export type FileDownloader = APIFileDownloader | SlowFileDownloader
 const downloadErrors = {
   timeout: (type: string) => { return { header: 'Timeout', body: `The download server could not be reached. (type=${type})` } },
   connectionError: (err: Error) => { return { header: 'Connection Error', body: `${err.name}: ${err.message}` } },
-  responseError: (statusCode: number) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
+  responseError: (statusCode: string) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
   htmlError: () => { return { header: 'Invalid response', body: 'Download server returned HTML instead of a file.' } },
   linkError: (url: string) => { return { header: 'Invalid link', body: `The download link is not formatted correctly: ${url}` } }
 }
@@ -116,7 +116,11 @@ class APIFileDownloader {
           this.startDownloadStream()
         } else {
           console.log(JSON.stringify(err))
-          this.failDownload(downloadErrors.responseError(err ? (err.code ?? 'unknown') : 'unknown'))
+          if (err?.code && err?.response?.statusText) {
+            this.failDownload(downloadErrors.responseError(`${err.code} (${err.response.statusText})`))
+          } else {
+            this.failDownload(downloadErrors.responseError(err?.code ?? 'unknown'))
+          }
         }
       }
     }))
