@@ -28,40 +28,44 @@ export class GoogleAuth {
   async attemptToAuthenticate() {
 
     // TODO remove this workaround when Google's API stops being dumb
-    return new Promise<boolean>(resolve => {
-      needle.request(
-        'get',
-        serverURL + `/api/data/temp`, null, (err, response) => {
-          if (err) {
-            resolve(false)
-          } else {
-            if (!response.body.includes || (response.body as string)?.includes('<!DOCTYPE html>')) {
-              resolve(false)
-            } else {
-              google.options({ auth: response.body })
-              resolve(true)
-            }
-          }
-        })
-    })
-
-    // if (this.hasTriedTokenFile) {
-    //   return this.hasAuthenticated
-    // }
-
-    // const token = await this.getStoredToken()
-    // if (token != null) {
-    //   // Token has been restored from a previous session
-    //   const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
-    //   oAuth2Client.setCredentials(token)
-    //   google.options({ auth: oAuth2Client })
-    //   this.hasAuthenticated = true
+    // if (this.hasAuthenticated) {
     //   return true
-    // } else {
-    //   // Token doesn't exist; user has not authenticated
-    //   this.hasAuthenticated = false
-    //   return false
     // }
+    // return new Promise<boolean>(resolve => {
+    //   needle.request(
+    //     'get',
+    //     serverURL + `/api/data/temp`, null, (err, response) => {
+    //       if (err) {
+    //         resolve(false)
+    //       } else {
+    //         if (!response.body.includes || (response.body as string)?.includes('<!DOCTYPE html>')) {
+    //           resolve(false)
+    //         } else {
+    //           google.options({ auth: response.body })
+    //           this.hasAuthenticated = true
+    //           resolve(true)
+    //         }
+    //       }
+    //     })
+    // })
+
+    if (this.hasTriedTokenFile) {
+      return this.hasAuthenticated
+    }
+
+    const token = await this.getStoredToken()
+    if (token != null) {
+      // Token has been restored from a previous session
+      const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
+      oAuth2Client.setCredentials(token)
+      google.options({ auth: oAuth2Client })
+      this.hasAuthenticated = true
+      return true
+    } else {
+      // Token doesn't exist; user has not authenticated
+      this.hasAuthenticated = false
+      return false
+    }
   }
 
   async generateAuthToken() {
