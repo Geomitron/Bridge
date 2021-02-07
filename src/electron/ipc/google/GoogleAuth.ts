@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/camelcase */
-import { dataPath, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from '../../shared/Paths'
+import { dataPath, REDIRECT_URI } from '../../shared/Paths'
 import { mainWindow } from '../../main'
 import { join } from 'path'
 import { readFile, writeFile } from 'jsonfile'
 import { google } from 'googleapis'
+import { Credentials } from 'googleapis/node_modules/google-auth-library/build/src/auth/credentials'
+import { OAuth2Client } from 'googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client'
 import * as needle from 'needle'
 import { authServer } from './AuthServer'
 import { BrowserWindow } from 'electron'
@@ -18,8 +20,10 @@ const TOKEN_PATH = join(dataPath, 'token.json')
 
 export class GoogleAuth {
 
-  private hasTriedTokenFile = false
   private hasAuthenticated = false
+
+  private oAuth2Client: OAuth2Client = null
+  private token: Credentials = null
 
   /**
    * Attempts to authenticate the googleapis library using the token stored at `TOKEN_PATH`.
@@ -27,65 +31,50 @@ export class GoogleAuth {
    */
   async attemptToAuthenticate() {
 
-    // TODO remove this workaround when Google's API stops being dumb
-    // if (this.hasAuthenticated) {
-    //   return true
-    // }
-    // return new Promise<boolean>(resolve => {
-    //   needle.request(
-    //     'get',
-    //     serverURL + `/api/data/temp`, null, (err, response) => {
-    //       if (err) {
-    //         resolve(false)
-    //       } else {
-    //         if (!response.body.includes || (response.body as string)?.includes('<!DOCTYPE html>')) {
-    //           resolve(false)
-    //         } else {
-    //           google.options({ auth: response.body })
-    //           this.hasAuthenticated = true
-    //           resolve(true)
-    //         }
-    //       }
-    //     })
-    // })
-
-    if (this.hasTriedTokenFile) {
-      return this.hasAuthenticated
+    if (this.hasAuthenticated) {
+      return true
     }
 
-    const token = await this.getStoredToken()
-    if (token != null) {
-      // Token has been restored from a previous session
-      const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
-      oAuth2Client.setCredentials(token)
-      google.options({ auth: oAuth2Client })
-      this.hasAuthenticated = true
-      return true
-    } else {
-      // Token doesn't exist; user has not authenticated
-      this.hasAuthenticated = false
+    // Get client info from server
+    if (!await this.getOAuth2Client()) {
       return false
     }
+
+    // Get stored token
+    if (!await this.getStoredToken()) {
+      return false
+    }
+
+    // Token has been restored from a previous session
+    this.authenticateWithToken()
+    return true
   }
 
+  /**
+   * Uses OAuth2 to generate a token that can be used to authenticate download requests.
+   * Involves displaying a popup window to the user.
+   * @returns true if the auth token was generated, and false otherwise.
+   */
   async generateAuthToken() {
 
-    if (await this.getStoredToken() != null) { return true }
+    if (this.hasAuthenticated) {
+      return true
+    }
 
-    if (this.hasTriedTokenFile == false) {
-      // Token exists but couldn't be read
-      console.log('Auth token exists but could not be loaded. Check file permissions.')
+    // Get client info from server
+    if (!await this.getOAuth2Client()) {
       return false
     }
 
-    const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
     let popupWindow: BrowserWindow
-    let gotAuthCode = false
 
     return new Promise<boolean>(resolve => {
       authServer.on('listening', () => {
-        const authUrl = oAuth2Client.generateAuthUrl({
+        const authUrl = this.oAuth2Client.generateAuthUrl({
           access_type: 'offline',
+          // This scope is too broad, but is the only one that will actually download files for some dumb reason.
+          // If you want this fixed, please upvote/star my issue on the Google bug tracker so they will fix it faster:
+          // https://issuetracker.google.com/issues/168687448
           scope: ['https://www.googleapis.com/auth/drive.readonly'],
           redirect_uri: REDIRECT_URI
         })
@@ -105,16 +94,15 @@ export class GoogleAuth {
         })
         popupWindow.loadURL(authUrl, { userAgent: 'Chrome' })
         popupWindow.on('ready-to-show', () => popupWindow.show())
-        popupWindow.on('closed', () => resolve(gotAuthCode))
+        popupWindow.on('closed', () => resolve(this.hasAuthenticated))
       })
 
       authServer.on('authCode', async (authCode) => {
-        const { tokens } = await oAuth2Client.getToken(authCode)
-        oAuth2Client.setCredentials(tokens)
-        google.options({ auth: oAuth2Client })
-        await writeFile(TOKEN_PATH, tokens)
-        this.hasTriedTokenFile = false
-        gotAuthCode = true
+        this.token = (await this.oAuth2Client.getToken(authCode)).tokens
+        writeFile(TOKEN_PATH, this.token).catch(err => console.log('Got token, but failed to write it to TOKEN_PATH:', err))
+
+        this.authenticateWithToken()
+
         popupWindow.close()
       })
 
@@ -122,29 +110,71 @@ export class GoogleAuth {
     })
   }
 
+  /**
+   * Use this.token as the credentials for this.oAuth2Client, and make the google library use this authentication.
+   * Assumes these have already been defined correctly.
+   */
+  private authenticateWithToken() {
+    this.oAuth2Client.setCredentials(this.token)
+    google.options({ auth: this.oAuth2Client })
+    this.hasAuthenticated = true
+  }
 
   /**
-   * @returns the previously stored auth token, or `null` if it doesn't exist or can't be accessed.
+   * Attempts to get Bridge's client info from the server.
+   * @returns true if this.clientID and this.clientSecret have been set, and false if that failed.
    */
-  private async getStoredToken() {
-    this.hasTriedTokenFile = true
-    try {
-      return await readFile(TOKEN_PATH)
-    } catch (err) {
-      if (err && err.code && err.code != 'ENOENT') {
-        // Failed to access the file; next attempt should try again
-        this.hasTriedTokenFile = false
-      }
-
-      return null
+  private async getOAuth2Client() {
+    if (this.oAuth2Client != null) {
+      return true
+    } else {
+      return new Promise<boolean>(resolve => {
+        needle.request(
+          'get',
+          serverURL + `/api/data/client`, null, (err, response) => {
+            if (err) {
+              console.log('Could not authenticate because client info could not be retrieved from the server.')
+              resolve(false)
+            } else {
+              this.oAuth2Client = new google.auth.OAuth2(response.body.CLIENT_ID, response.body.CLIENT_SECRET, REDIRECT_URI)
+              resolve(true)
+            }
+          })
+      })
     }
   }
 
   /**
-   * removes the previously stored auth token.
+   * Attempts to retrieve a previously stored auth token at `TOKEN_PATH`.
+   * Note: will not try again if this.token === undefined.
+   * @returns true if this.token has been set, and false if that failed or the token didn't exist.
+   */
+  private async getStoredToken() {
+    if (this.token === undefined) {
+      return false // undefined means no token file was found
+    } else if (this.token !== null) {
+      return true
+    } else {
+      try {
+        this.token = await readFile(TOKEN_PATH)
+        return true
+      } catch (err) {
+        if (err?.code && err?.code != 'ENOENT') {
+          this.token = null // File exists but could not be accessed; next attempt should try again
+        } else {
+          this.token = undefined
+        }
+
+        return false
+      }
+    }
+  }
+
+  /**
+   * Removes a previously stored auth token from `TOKEN_PATH`.
    */
   async deleteStoredToken() {
-    this.hasTriedTokenFile = false
+    this.token = undefined
     this.hasAuthenticated = false
     try {
       await unlink(TOKEN_PATH)
