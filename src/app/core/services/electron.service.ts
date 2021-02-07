@@ -18,6 +18,7 @@ export class ElectronService {
   constructor() {
     if (this.isElectron) {
       this.electron = window.require('electron')
+      this.receiveIPC('log', results => results.forEach(result => console.log(result)))
     }
   }
 

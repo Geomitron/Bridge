@@ -1,4 +1,5 @@
 import { AnyFunction } from '../../shared/UtilFunctions'
+import { devLog } from '../../shared/ElectronUtilFunctions'
 import { createWriteStream } from 'fs'
 import * as needle from 'needle'
 import { Readable } from 'stream'
@@ -111,11 +112,11 @@ class APIFileDownloader {
       } catch (err) {
         this.retryCount++
         if (this.retryCount <= RETRY_MAX) {
-          console.log(`Failed to get file: Retry attempt ${this.retryCount}...`)
+          devLog(`Failed to get file: Retry attempt ${this.retryCount}...`)
           if (this.wasCanceled) { return }
           this.startDownloadStream()
         } else {
-          console.log(JSON.stringify(err))
+          devLog(err)
           if (err?.code && err?.response?.statusText) {
             this.failDownload(downloadErrors.responseError(`${err.code} (${err.response.statusText})`))
           } else {
@@ -241,7 +242,7 @@ class SlowFileDownloader {
     this.req.on('timeout', this.cancelable((type: string) => {
       this.retryCount++
       if (this.retryCount <= RETRY_MAX) {
-        console.log(`TIMEOUT: Retry attempt ${this.retryCount}...`)
+        devLog(`TIMEOUT: Retry attempt ${this.retryCount}...`)
         this.requestDownload(cookieHeader)
       } else {
         this.failDownload(downloadErrors.timeout(type))

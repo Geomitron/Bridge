@@ -1,6 +1,8 @@
 import * as randomBytes from 'randombytes'
 const sanitize = require('sanitize-filename')
 
+// WARNING: do not import anything related to Electron; the code will not compile correctly.
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any) => any
 
