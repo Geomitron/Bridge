@@ -1,7 +1,8 @@
 import { readdir, unlink, mkdir as _mkdir } from 'fs'
 import { promisify } from 'util'
 import { join, extname } from 'path'
-import { AnyFunction } from 'src/electron/shared/UtilFunctions'
+import { AnyFunction } from '../../shared/UtilFunctions'
+import { devLog } from '../../shared/ElectronUtilFunctions'
 import * as node7z from 'node-7z'
 import * as zipBin from '7zip-bin'
 import * as unrarjs from 'node-unrar-js' // TODO find better rar library that has async extraction
@@ -119,7 +120,7 @@ export class FileExtractor {
     let extractErrorOccured = false
     stream.on('error', this.cancelable(() => {
       extractErrorOccured = true
-      console.log(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
+      devLog(`Failed to extract [${fullPath}]; retrying with .rar extractor...`)
       this.extract(fullPath, true)
     }))
 
@@ -136,7 +137,7 @@ export class FileExtractor {
   private deleteArchive(fullPath: string) {
     unlink(fullPath, this.cancelable((err) => {
       if (err && err.code != 'ENOENT') {
-        console.log(`Warning: failed to delete archive at [${fullPath}]`)
+        devLog(`Warning: failed to delete archive at [${fullPath}]`)
       }
 
       this.callbacks.complete()

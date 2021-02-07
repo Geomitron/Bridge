@@ -1,6 +1,7 @@
 import { DownloadError } from './ChartDownload'
 import { tempPath } from '../../shared/Paths'
-import { AnyFunction } from 'src/electron/shared/UtilFunctions'
+import { AnyFunction } from '../../shared/UtilFunctions'
+import { devLog } from '../../shared/ElectronUtilFunctions'
 import { randomBytes as _randomBytes } from 'crypto'
 import { mkdir, access, constants } from 'fs'
 import { join } from 'path'
@@ -90,7 +91,7 @@ export class FilesystemChecker {
     mkdir(tempChartPath, this.cancelable((err) => {
       if (err) {
         if (retryCount < 5) {
-          console.log(`Error creating folder [${tempChartPath}], retrying with a different folder...`)
+          devLog(`Error creating folder [${tempChartPath}], retrying with a different folder...`)
           this.createDownloadFolder(retryCount + 1)
         } else {
           this.callbacks.error(filesystemErrors.mkdirError(err), () => this.createDownloadFolder())

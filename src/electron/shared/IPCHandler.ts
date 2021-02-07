@@ -106,6 +106,8 @@ export function getIPCEmitHandlers(): IPCEmitHandler<keyof IPCEmitEvents>[] {
  * The list of possible async IPC events that don't return values, mapped to their input types.
  */
 export type IPCEmitEvents = {
+  'log': any[]
+
   'download': Download
   'download-updated': DownloadProgress
   'set-settings': Settings
