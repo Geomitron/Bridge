@@ -35,7 +35,9 @@ export class DownloadService {
       this.electronService.receiveIPC('download-updated', result => {
         // Update <this.downloads> with result
         const thisDownloadIndex = this.downloads.findIndex(download => download.versionID == result.versionID)
-        if (thisDownloadIndex == -1) {
+        if (result.type == 'cancel') {
+          this.downloads = this.downloads.filter(download => download.versionID != versionID)
+        } else if (thisDownloadIndex == -1) {
           this.downloads.push(result)
         } else {
           this.downloads[thisDownloadIndex] = result
@@ -53,10 +55,13 @@ export class DownloadService {
 
   cancelDownload(versionID: number) {
     const removedDownload = this.downloads.find(download => download.versionID == versionID)
-    this.downloads = this.downloads.filter(download => download.versionID != versionID)
-    removedDownload.type = 'cancel'
-    this.downloadUpdatedEmitter.emit(removedDownload)
-    this.electronService.sendIPC('download', { action: 'cancel', versionID })
+    if (['error', 'done'].includes(removedDownload.type)) {
+      this.downloads = this.downloads.filter(download => download.versionID != versionID)
+      removedDownload.type = 'cancel'
+      this.downloadUpdatedEmitter.emit(removedDownload)
+    } else {
+      this.electronService.sendIPC('download', { action: 'cancel', versionID })
+    }
   }
 
   retryDownload(versionID: number) {
