@@ -31,6 +31,7 @@ export class ChartDownload {
   private percent = 0 // Needs to be stored here because errors won't know the exact percent
   private tempPath: string
   private dropFastUpdate = false
+  private wasCanceled = false
 
   private readonly individualFileProgressPortion: number
   private readonly destinationFolderName: string
@@ -90,12 +91,15 @@ export class ChartDownload {
       cancelFn()
       rimraf(this.tempPath).catch(() => { /** Do nothing */ }) // Delete temp folder
     }
+    this.updateGUI('', '', 'cancel')
+    this.wasCanceled = true
   }
 
   /**
    * Updates the GUI with new information about this chart download.
    */
   private updateGUI(header: string, description: string, type: ProgressType) {
+    if (this.wasCanceled) { return }
     if (type == 'fastUpdate') {
       if (this.dropFastUpdate) {
         return

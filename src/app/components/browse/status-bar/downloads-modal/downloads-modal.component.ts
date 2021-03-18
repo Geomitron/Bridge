@@ -19,10 +19,10 @@ export class DownloadsModalComponent {
 
     downloadService.onDownloadUpdated(download => {
       const index = this.downloads.findIndex(thisDownload => thisDownload.versionID == download.versionID)
-      if (index == -1) {
+      if (download.type == 'cancel') {
+        this.downloads = this.downloads.filter(thisDownload => thisDownload.versionID != download.versionID)
+      } else if (index == -1) {
         this.downloads.push(download)
-      } else if (download.type == 'cancel') {
-        this.downloads.splice(index, 1)
       } else {
         this.downloads[index] = download
       }
