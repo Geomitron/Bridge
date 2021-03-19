@@ -2,7 +2,7 @@
   <img src="./src/assets/images/bridge-animation.gif"/>
 </p>
 <h3 align="center">A Clone Hero library management tool with built in chart searching and downloading.</h3>
-<img align="center" src="./src/assets/images/example.png"/>
+<img align="center" style="border: 2px solid #E0E0E0" src="./src/assets/images/example.png"/>
 <p align="center">
   <a href="https://discord.gg/cqaUXGm">Discord</a> | 
   <a href="https://trello.com/b/lz8MvNhF/bridge">Trello</a>
