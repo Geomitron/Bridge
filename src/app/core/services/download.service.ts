@@ -55,7 +55,7 @@ export class DownloadService {
 
   cancelDownload(versionID: number) {
     const removedDownload = this.downloads.find(download => download.versionID == versionID)
-    if (removedDownload.type == 'done') {
+    if (['error', 'done'].includes(removedDownload.type)) {
       this.downloads = this.downloads.filter(download => download.versionID != versionID)
       removedDownload.type = 'cancel'
       this.downloadUpdatedEmitter.emit(removedDownload)
