@@ -1,26 +1,235 @@
-<div class="ui bottom attached borderless menu">
+<div id="searchMenu" class="ui bottom attached borderless menu">
   <div class="item">
-    <!-- TODO: add advanced search -->
     <div class="ui icon input" [class.loading]="isLoading()">
       <input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)">
       <i #searchIcon id="searchIcon" class="link icon" [ngClass]="isError ? 'red exclamation triangle' : 'search'"
         data-content="Failed to connect to the Bridge database" data-position="bottom right"></i>
     </div>
   </div>
-  <!-- <div #typeDropdown class="ui item dropdown">
-    Type <i class="dropdown icon"></i>
-    <div class="menu">
-      TODO: revise what items are displayed
-      <a class="item">Any</a>
-      <a class="item">Name</a>
-      <a class="item">Artist</a>
-      <a class="item">Album</a>
-      <a class="item">Genre</a>
-      <a class="item">Year</a>
-      <a class="item">Charter</a>
+
+  <div id="quantityDropdownItem" [class.hidden]="!showAdvanced" class="item">
+    <div class="ui compact selection dropdown">
+      <input name="quantityMatch" type="hidden" value="all">
+      <i class="dropdown icon"></i>
+      <div class="text"><b>all</b> words match</div>
+      <div class="menu">
+        <div class="item" data-value="all"><b>all</b> words match</div>
+        <div class="item" data-value="any"><b>any</b> words match</div>
+      </div>
     </div>
-  </div> -->
-  <!-- TODO <div class="item right">
-    <button class="ui positive disabled button">Bulk Download</button>
-  </div> -->
+  </div>
+
+  <div id="similarityDropdownItem" [class.hidden]="!showAdvanced" class="item">
+    <div class="ui compact selection dropdown">
+      <input name="similarityMatch" type="hidden" value="similar">
+      <i class="dropdown icon"></i>
+      <div class="text"><b>similar</b> words match</div>
+      <div class="menu">
+        <div class="item" data-value="similar"><b>similar</b> words match</div>
+        <div class="item" data-value="exact"><b>exact</b> words match</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="item right">
+    <button class="mini ui right labeled icon button" (click)="onAdvancedSearchClick()">
+      Advanced Search
+      <i class="angle double icon" [ngClass]="showAdvanced ? 'up' : 'down'"></i>
+    </button>
+  </div>
+</div>
+
+<div id="advancedSearchForm" [class.collapsed]="!showAdvanced" class="ui horizontal segments">
+  <div class="ui secondary segment">
+    <h4 class="ui header">Search for:</h4>
+    <div class="grouped fields">
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="name">
+          <label>Name</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="artist">
+          <label>Artist</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="album">
+          <label>Album</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="genre">
+          <label>Genre</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="year">
+          <label>Year</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="charter">
+          <label>Charter</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="tag">
+          <label>Tag</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ui secondary segment">
+    <h4 class="ui header">Must include:</h4>
+    <div class="grouped fields">
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="sections">
+          <label>Sections</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="starpower">
+          <label>Star Power</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="forcing">
+          <label>Forcing</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="taps">
+          <label>Taps</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="lyrics">
+          <label>Lyrics</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="videobackground">
+          <label>Video Background</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="stems">
+          <label>Audio Stems</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="solosections">
+          <label>Solo Sections</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="opennotes">
+          <label>Open Notes</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ui secondary segment">
+    <h4 class="ui header">Instruments:</h4>
+    <div class="grouped fields">
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="guitar">
+          <label>Guitar</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="bass">
+          <label>Bass</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="rhythm">
+          <label>Rhythm</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="keys">
+          <label>Keys</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="drums">
+          <label>Drums</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="guitarghl">
+          <label>GHL Guitar</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="bassghl">
+          <label>GHL Bass</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="vocals">
+          <label>Vocals</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ui secondary segment">
+    <h4 class="ui header">Charted difficulties:</h4>
+    <div class="grouped fields">
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="expert">
+          <label>Expert</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="hard">
+          <label>Hard</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="medium">
+          <label>Medium</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" name="easy">
+          <label>Easy</label>
+        </div>
+      </div>
+      <h4 class="ui header">Difficulty range:</h4>
+      <div class="field">
+        <div class="ui labeled ticked range slider" id="diffSlider"></div>
+      </div>
+    </div>
+  </div>
 </div>

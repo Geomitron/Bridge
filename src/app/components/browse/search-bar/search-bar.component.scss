@@ -1,3 +1,49 @@
+#searchMenu {
+  flex-wrap: wrap;
+  margin-bottom: 0em;
+}
+
+#searchMenu>.item {
+  padding: .3em .4em;
+  min-height: inherit;
+}
+
+#searchMenu>.item:first-child {
+  box-sizing: content-box;
+}
+
 #searchIcon {
   cursor: default;
+}
+
+#advancedSearchForm {
+  margin: 0em;
+  border-width: 0px;
+  overflow: hidden;
+  transition: max-height 350ms cubic-bezier(0.45, 0, 0.55, 1);
+  max-height: 243.913px; /* This is its preferred height. Transition needs a static target number to work. */
+}
+
+.collapsed {
+  max-height: 0px !important;
+}
+
+#quantityDropdownItem, #similarityDropdownItem {
+  opacity: 1;
+  visibility: visible;
+  max-width: 100vw;
+  max-height: 100vh;
+  transition: visibility 0s, opacity 350ms cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  max-width: 0px !important;
+  max-height: 0px !important;
+  transition:
+    opacity 350ms cubic-bezier(0.45, 0, 0.55, 1),
+    visibility 0s linear 350ms,
+    max-width 0s linear 350ms,
+    max-height 0s linear 350ms !important;
 }
