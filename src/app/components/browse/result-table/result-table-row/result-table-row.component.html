@@ -1,5 +1,5 @@
 <td>
-  <div #checkbox class="ui checkbox">
+  <div #checkbox class="ui checkbox" (click)="$event.stopPropagation()">
     <input type="checkbox">
   </div>
 </td>
