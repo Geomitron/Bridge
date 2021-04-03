@@ -1,6 +1,6 @@
 import { Injectable, EventEmitter } from '@angular/core'
 import { ElectronService } from './electron.service'
-import { SearchType, SongResult, SongSearch } from 'src/electron/shared/interfaces/search.interface'
+import { SongResult, SongSearch } from 'src/electron/shared/interfaces/search.interface'
 import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
 
 @Injectable({
@@ -18,10 +18,10 @@ export class SearchService {
 
   constructor(private electronService: ElectronService) { }
 
-  async newSearch(query: string) {
+  async newSearch(query: SongSearch) {
     if (this.awaitingResults) { return }
     this.awaitingResults = true
-    this.currentQuery = { query, type: SearchType.Any, offset: 0, length: 50 + 1 } // TODO: make length a setting
+    this.currentQuery = query
     try {
       this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
       this.errorStateEmitter.emit(false)

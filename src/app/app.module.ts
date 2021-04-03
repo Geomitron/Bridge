@@ -14,6 +14,7 @@ import { DownloadsModalComponent } from './components/browse/status-bar/download
 import { ProgressBarDirective } from './core/directives/progress-bar.directive'
 import { CheckboxDirective } from './core/directives/checkbox.directive'
 import { SettingsComponent } from './components/settings/settings.component'
+import { FormsModule } from '@angular/forms'
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { SettingsComponent } from './components/settings/settings.component'
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    FormsModule
   ],
   bootstrap: [AppComponent]
 })
