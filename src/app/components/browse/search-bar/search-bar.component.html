@@ -42,7 +42,7 @@
 <div id="advancedSearchForm" [class.collapsed]="!showAdvanced" class="ui horizontal segments">
   <div class="ui secondary segment">
     <div class="grouped fields">
-      <h4 class="ui header">Search for:</h4>
+      <h5 class="ui dividing header">Search for</h5>
       <div class="field">
         <div class="ui checkbox">
           <input type="checkbox" name="name" [(ngModel)]="searchSettings.fields.name">
@@ -89,7 +89,7 @@
   </div>
   <div class="ui secondary segment">
     <div class="grouped fields">
-      <h4 class="ui header">Must include:</h4>
+      <h5 class="ui dividing header">Must include</h5>
       <div class="field">
         <div class="ui checkbox">
           <input type="checkbox" name="sections" [(ngModel)]="searchSettings.tags.sections">
@@ -148,7 +148,7 @@
   </div>
   <div class="ui secondary segment">
     <div class="grouped fields">
-      <h4 class="ui header">Instruments:</h4>
+      <h5 class="ui dividing header">Instruments</h5>
       <div class="field">
         <div class="ui checkbox">
           <input type="checkbox" name="guitar" [(ngModel)]="searchSettings.instruments.guitar">
@@ -200,7 +200,7 @@
     </div>
   </div>
   <div class="ui secondary segment">
-    <h4 class="ui header">Charted difficulties:</h4>
+    <h5 class="ui dividing header">Charted difficulties</h5>
     <div class="grouped fields">
       <div class="field">
         <div class="ui checkbox">
@@ -226,7 +226,7 @@
           <label>Easy</label>
         </div>
       </div>
-      <h4 class="ui header">Difficulty range:</h4>
+      <h5 class="ui dividing header">Difficulty range</h5>
       <div class="field">
         <div #diffSlider class="ui labeled ticked range slider" id="diffSlider"></div>
       </div>
