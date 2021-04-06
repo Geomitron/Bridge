@@ -17,6 +17,7 @@ export class SearchBarComponent implements AfterViewInit {
   isError = false
   showAdvanced = false
   searchSettings = getDefaultSearch()
+  private sliderInitialized = false
 
   constructor(public searchService: SearchService) { }
 
@@ -37,17 +38,6 @@ export class SearchBarComponent implements AfterViewInit {
         this.searchSettings.similarity = value as 'similar' | 'exact'
       }
     })
-    $(this.diffSlider.nativeElement).slider({
-      min: 0,
-      max: 6,
-      start: 0,
-      end: 6,
-      step: 1,
-      onChange: (_length: number, min: number, max: number) => {
-        this.searchSettings.minDiff = min
-        this.searchSettings.maxDiff = max
-      }
-    })
   }
 
   onSearch(query: string) {
@@ -59,6 +49,23 @@ export class SearchBarComponent implements AfterViewInit {
 
   onAdvancedSearchClick() {
     this.showAdvanced = !this.showAdvanced
+
+    if (!this.sliderInitialized) {
+      setTimeout(() => { // Initialization requires this element to not be collapsed
+        $(this.diffSlider.nativeElement).slider({
+          min: 0,
+          max: 6,
+          start: 0,
+          end: 6,
+          step: 1,
+          onChange: (_length: number, min: number, max: number) => {
+            this.searchSettings.minDiff = min
+            this.searchSettings.maxDiff = max
+          }
+        })
+      }, 50)
+      this.sliderInitialized = true
+    }
   }
 
   isLoading() {
