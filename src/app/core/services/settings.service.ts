@@ -39,7 +39,7 @@ export class SettingsService {
     const link = document.createElement('link')
     link.type = 'text/css'
     link.rel = 'stylesheet'
-    link.href = `/assets/themes/${theme}.css`
+    link.href = `./assets/themes/${theme}.css`
     this.currentThemeLink = document.head.appendChild(link)
   }
 

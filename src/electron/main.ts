@@ -114,7 +114,8 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
       enableRemoteModule: true
     },
     simpleFullscreen: true,
-    fullscreenable: false
+    fullscreenable: false,
+    backgroundColor: '#121212'
   }
 
   if (process.platform == 'linux' && !isDevBuild) {

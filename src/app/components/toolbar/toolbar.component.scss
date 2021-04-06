@@ -1,9 +1,12 @@
 .menu {
   -webkit-app-region: drag;
   z-index: 9000 !important;
+  border: 0px;
+  border-radius: 0px;
 
   .item,
   .item * {
+    border-radius: 0px;
     -webkit-app-region: no-drag;
     cursor: default !important;
   }

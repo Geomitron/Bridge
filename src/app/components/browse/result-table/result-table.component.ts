@@ -4,6 +4,7 @@ import { ResultTableRowComponent } from './result-table-row/result-table-row.com
 import { CheckboxDirective } from '../../../core/directives/checkbox.directive'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
+import { SettingsService } from 'src/app/core/services/settings.service'
 
 @Component({
   selector: 'app-result-table',
@@ -20,7 +21,11 @@ export class ResultTableComponent implements OnInit {
   results: SongResult[]
   activeRowID: number = null
 
-  constructor(private searchService: SearchService, private selectionService: SelectionService) { }
+  constructor(
+    private searchService: SearchService,
+    private selectionService: SelectionService,
+    public settingsService: SettingsService
+  ) { }
 
   ngOnInit() {
     this.selectionService.onSelectAllChanged((selected) => {

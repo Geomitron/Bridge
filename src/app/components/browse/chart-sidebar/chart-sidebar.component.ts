@@ -7,6 +7,7 @@ import { DownloadService } from '../../../core/services/download.service'
 import { groupBy } from 'src/electron/shared/UtilFunctions'
 import { SearchService } from 'src/app/core/services/search.service'
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
+import { SettingsService } from 'src/app/core/services/settings.service'
 
 interface Difficulty {
   instrument: string
@@ -30,7 +31,8 @@ export class ChartSidebarComponent implements OnInit {
     private albumArtService: AlbumArtService,
     private downloadService: DownloadService,
     private searchService: SearchService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    public settingsService: SettingsService
   ) { }
 
   ngOnInit() {
@@ -78,7 +80,7 @@ export class ChartSidebarComponent implements OnInit {
     if (albumArtBase64String) {
       this.albumArtSrc = this.sanitizer.bypassSecurityTrustUrl('data:image/jpg;base64,' + albumArtBase64String)
     } else {
-      this.albumArtSrc = ''
+      this.albumArtSrc = null
     }
   }
 

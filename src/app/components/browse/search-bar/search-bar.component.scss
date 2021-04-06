@@ -1,6 +1,7 @@
 #searchMenu {
   flex-wrap: wrap;
   margin-bottom: 0em;
+  border-radius: 0px;
 }
 
 #searchMenu>.item {
@@ -14,6 +15,7 @@
 
 #searchIcon {
   cursor: default;
+  box-sizing: border-box;
 }
 
 #advancedSearchForm {

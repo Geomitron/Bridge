@@ -5,6 +5,11 @@
 .ui.card {
   display: flex;
   flex-direction: column;
+  border-radius: 0px;
+}
+
+.ui.placeholder {
+  border-radius: 0px !important;
 }
 
 #textPanel {
@@ -18,6 +23,7 @@
 
 #chartDropdown {
   min-height: min-content;
+  margin: 0px;
 }
 
 ::ng-deep #chartDropdownMenu > div.item {
@@ -50,4 +56,9 @@
 
 #downloadButton {
   width: min-content;
+  margin: 0px 1px 1px 1px;
+}
+
+#versionDropdown {
+  margin: 0px 1px 1px -3px;
 }

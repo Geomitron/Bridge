@@ -13,8 +13,8 @@
       <i class="dropdown icon"></i>
       <div class="text"><b>all</b> words match</div>
       <div class="menu">
-        <div class="item" data-value="all"><b>all</b> words match</div>
-        <div class="item" data-value="any"><b>any</b> words match</div>
+        <div id="dropdownItem" class="active selected item" data-value="all"><b>all</b> words match</div>
+        <div id="dropdownItem" class="item" data-value="any"><b>any</b> words match</div>
       </div>
     </div>
   </div>
@@ -25,8 +25,8 @@
       <i class="dropdown icon"></i>
       <div class="text"><b>similar</b> words match</div>
       <div class="menu">
-        <div class="item" data-value="similar"><b>similar</b> words match</div>
-        <div class="item" data-value="exact"><b>exact</b> words match</div>
+        <div id="dropdownItem" class="active selected item" data-value="similar"><b>similar</b> words match</div>
+        <div id="dropdownItem" class="item" data-value="exact"><b>exact</b> words match</div>
       </div>
     </div>
   </div>
@@ -228,7 +228,7 @@
       </div>
       <h5 class="ui dividing header">Difficulty range</h5>
       <div class="field">
-        <div #diffSlider class="ui labeled ticked range slider" id="diffSlider"></div>
+        <div #diffSlider class="ui labeled ticked inverted range slider" id="diffSlider"></div>
       </div>
     </div>
   </div>

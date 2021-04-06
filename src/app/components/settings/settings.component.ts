@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core'
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { SettingsService } from 'src/app/core/services/settings.service'
 
@@ -8,7 +8,7 @@ import { SettingsService } from 'src/app/core/services/settings.service'
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
-  // @ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
+  @ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 
   cacheSize = 'Calculating...'
   updateAvailable = false
@@ -55,11 +55,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // $(this.themeDropdown.nativeElement).dropdown({
-    //   onChange: (_value: string, text: string) => {
-    //     this.settingsService.theme = text
-    //   }
-    // })
+    $(this.themeDropdown.nativeElement).dropdown({
+      onChange: (_value: string, text: string) => {
+        this.settingsService.theme = text
+      }
+    })
   }
 
   async clearCache() {

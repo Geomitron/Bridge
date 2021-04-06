@@ -1,96 +1,317 @@
-body {
-  background-color: #222222;
+:root {
+  --dp0: 100%;
+  --dp1: 5%;
+  --dp2: 7%;
+  --dp3: 8%;
+  --dp4: 9%;
+  --dp6: 11%;
+  --dp8: 12%;
+  --dp12: 14%;
+  --dp16: 15%;
+  --dp24: 16%;
+
+  --dp-hovered: 4%;
+  --dp-focused: 12%;
+
+  --dk-00dp: rgba(18, 18, 18, var(--dp0));
+  --dk-01dp: rgba(255, 255, 255, var(--dp1));
+  --dk-02dp: rgba(255, 255, 255, var(--dp2));
+  --dk-03dp: rgba(255, 255, 255, var(--dp3));
+  --dk-04dp: rgba(255, 255, 255, var(--dp4));
+  --dk-06dp: rgba(255, 255, 255, var(--dp6));
+  --dk-08dp: rgba(255, 255, 255, var(--dp8));
+  --dk-12dp: rgba(255, 255, 255, var(--dp12));
+  --dk-16dp: rgba(255, 255, 255, var(--dp16));
+  --dk-24dp: rgba(255, 255, 255, var(--dp24));
+
+  --dk-01dp-hovered: rgba(255, 255, 255, calc(var(--dp1) + var(--dp-hovered)));
+  --dk-02dp-hovered: rgba(255, 255, 255, calc(var(--dp2) + var(--dp-hovered)));
+  --dk-03dp-hovered: rgba(255, 255, 255, calc(var(--dp3) + var(--dp-hovered)));
+  --dk-04dp-hovered: rgba(255, 255, 255, calc(var(--dp4) + var(--dp-hovered)));
+  --dk-06dp-hovered: rgba(255, 255, 255, calc(var(--dp6) + var(--dp-hovered)));
+  --dk-08dp-hovered: rgba(255, 255, 255, calc(var(--dp8) + var(--dp-hovered)));
+  --dk-12dp-hovered: rgba(255, 255, 255, calc(var(--dp12) + var(--dp-hovered)));
+  --dk-16dp-hovered: rgba(255, 255, 255, calc(var(--dp16) + var(--dp-hovered)));
+  --dk-24dp-hovered: rgba(255, 255, 255, calc(var(--dp24) + var(--dp-hovered)));
+
+  --dk-01dp-focused: rgba(255, 255, 255, calc(var(--dp1) + var(--dp-focused)));
+  --dk-02dp-focused: rgba(255, 255, 255, calc(var(--dp2) + var(--dp-focused)));
+  --dk-03dp-focused: rgba(255, 255, 255, calc(var(--dp3) + var(--dp-focused)));
+  --dk-04dp-focused: rgba(255, 255, 255, calc(var(--dp4) + var(--dp-focused)));
+  --dk-06dp-focused: rgba(255, 255, 255, calc(var(--dp6) + var(--dp-focused)));
+  --dk-08dp-focused: rgba(255, 255, 255, calc(var(--dp8) + var(--dp-focused)));
+  --dk-12dp-focused: rgba(255, 255, 255, calc(var(--dp12) + var(--dp-focused)));
+  --dk-16dp-focused: rgba(255, 255, 255, calc(var(--dp16) + var(--dp-focused)));
+  --dk-24dp-focused: rgba(255, 255, 255, calc(var(--dp24) + var(--dp-focused)));
+
+  /* Solid background is required for overlapping elements like dropdown menus */
+  --dk-24dp-solid: rgba(41, 41, 41, var(--dp0));
+  --dk-24dp-solid-hovered: rgba(51, 51, 51, var(--dp0));
+  --dk-24dp-solid-focused: rgba(71, 71, 71, var(--dp0));
+  --dk-32dp-solid: rgba(78, 78, 78, var(--dp0));
+  --dk-32dp-solid-hovered: rgba(88, 88, 88, var(--dp0));
+  --dk-32dp-solid-focused: rgba(109, 109, 109, var(--dp0));
+
+  --dk-high: #ffffffde;
+  --dk-med: #ffffff99;
+  --dk-low: #ffffff61;
+
+
+  --dk-disabled-text: #ffffff61;
+  --dk-disabled-outline: #ffffff1f;
+
+  --dk-error: #cf6679;
+  --dk-error-hovered: #65323b;
+
+  --dk-primary: rgba(22, 171, 57, var(--dp0));
+  --dk-primary-hovered: rgba(22, 171, 57, var(--dp-focused));
+
+  --dk-yellow: rgba(251, 189, 8, var(--dp0));
+  --dk-yellow-hovered: rgba(251, 189, 8, var(--dp-focused));
 }
 
 /* Text Color */
-.ui.menu .item,
+.item,
+#dropdownItem,
 .ui.header,
-.ui.form .field>label,
-.ui.input input,
 .ui.button,
+.header,
+.icon,
+label,
+input,
 div {
-  color: #CCCCCC !important;
+  color: var(--dk-high) !important;
 }
 
-/* Toolbar */
-
-.ui.menu, .menu>.item.traffic-light {
-  background-color: #303030 !important;
+.ui.input input,
+.ui.label {
+  background-color: var(--dk-24dp) !important;
+}
+.ui.input input:focus {
+  border-color: var(--dk-24dp) !important;
 }
 
-.ui.menu .active.item:hover {
-  background-color: #222222;
+
+/* Background */
+body,
+html,
+.modal,
+#sidebarCard {
+  background-color: var(--dk-00dp) !important;
+}
+.ui.menu {
+  background-color: var(--dk-08dp) !important;
 }
 
-.ui.menu .active.item {
-  background-color: #222222 !important;
+/* #region Buttons */
+
+.ui.button {
+  background-color: var(--dk-12dp) !important;
+}
+.ui.button:hover {
+  background-color: var(--dk-12dp-hovered) !important;
+}
+.ui.button.disabled {
+  color: var(--dk-disabled-text) !important;
+  background-color: var(--dk-disabled-outline) !important;
+}
+.ui.positive.button,
+#downloadButton,
+#versionDropdown {
+  background-color: transparent !important;
+  color: var(--dk-primary) !important;
+  box-shadow: 0 0 0 2px var(--dk-primary) inset !important;
+}
+.ui.positive.button:hover,
+#downloadButton:hover,
+#versionDropdown:hover {
+  background-color: var(--dk-primary-hovered) !important;
 }
 
-.ui.menu .item:hover {
-  background: rgba(0, 0, 0, .1) !important;
+/* #endregion */
+
+/* #region Dropdown */
+
+.ui.dropdown,
+.ui.dropdown .menu,
+.ui.dropdown .menu .item {
+  background-color: var(--dk-24dp-solid) !important;
 }
 
-.ui.menu .close:hover {
-  background: rgba(255, 0, 0, .15) !important;
-}
-
-/* Settings Page */
-.ui.input input {
-  background-color: #555555 !important;
-}
-
-.ui.label, .ui.basic.label {
-  background-color: #555555;
-}
-
-.ui.button,
-.ui.basic.button {
-  background-color: #444444;
-}
-
-.ui.positive.button {
-  background-color: transparent;
-  color: #16ab39 !important;
-  box-shadow: 0 0 0 2px #16ab39 inset !important;
-}
-
-.ui.positive.button:hover {
-  color: #222222 !important;
-}
-
-.ui.button:hover,
-.ui.basic.button:hover,
-.ui.basic.button:active,
-.ui.basic.button:focus {
-  background-color: #666666;
-}
-
-.ui.selection, .menu>.item {
-  background-color: #555555 !important;
-}
-
-.ui.selection.dropdown:focus,
-.ui.selection.dropdown:hover,
-.ui.selection.active.dropdown,
-.ui.selection.dropdown .menu,
-.ui.selection.active.dropdown .menu,
-.ui.selection.active.dropdown .menu:active,
-.ui.selection.dropdown .menu>.item,
-input:active,
+.ui.dropdown:focus,
+.ui.dropdown.active,
+.ui.dropdown .menu,
+.ui.dropdown .menu .item,
 .ui[class*="right labeled"].input>input:focus {
-  border-color: #7E8388 !important;
+  border-color: var(--dk-24dp-solid-focused) !important;
 }
+
+.ui.dropdown .menu .item:hover {
+  background-color: var(--dk-24dp-solid-hovered) !important;
+}
+
+.ui.dropdown .menu .item.active {
+  background-color: var(--dk-24dp-solid-focused) !important;
+}
+
+/* #endregion */
+
+/* #region Toolbar */
+.ui.top.menu .item {
+  background-color: var(--dk-12dp) !important;
+}
+.ui.top.menu .item:hover {
+  background-color: var(--dk-12dp-hovered) !important;
+}
+#bottomMenu .item:hover {
+  background-color: var(--dk-12dp-hovered) !important;
+}
+.ui.top.menu .item.active {
+  background-color: var(--dk-12dp-focused) !important;
+}
+.ui.top.menu .item.traffic-light {
+  background-color: transparent !important;
+}
+.ui.top.menu .item.traffic-light:hover {
+  background-color: var(--dk-08dp-hovered) !important;
+}
+.ui.top.menu .item.traffic-light.close:hover {
+  background-color: var(--dk-error-hovered) !important;
+}
+/* #endregion */
+
+/* #region Settings */
 
 input[type=number]::-webkit-inner-spin-button {
-  background-color: #FF0000;
+  -webkit-appearance: none;
 }
 
 .ui.warning.message {
-  background-color: #333333;
-  box-shadow: 0 0 0 1px #7E8388 inset,
-  0 0 0 0 transparent;
+  background-color: var(--dk-24dp);
+  box-shadow: 0 0 0 1px var(--dk-24dp-focused) inset,
+    0 0 0 0 transparent;
 }
 
-.ui.selection.dropdown .menu>.item.selected {
-  background-color: #222222 !important;
+.ui.yellow.button {
+  background-color: transparent !important;
+  color: var(--dk-yellow) !important;
+  box-shadow: 0 0 0 2px var(--dk-yellow) inset !important;
 }
+
+.ui.yellow.button:hover {
+  background-color: var(--dk-yellow-hovered) !important;
+}
+
+/* #endregion */
+
+/* #region Advanced Search */
+
+.ui.menu {
+  border-color: var(--dk-08dp) !important;
+}
+
+/* I'm aware these selectors are really dumb; it's only because SemanticUI decided to style dropdowns with !important */
+#quantityDropdownItem .ui.dropdown,
+#quantityDropdownItem .ui.dropdown .menu,
+#quantityDropdownItem .ui.dropdown .menu .item,
+#similarityDropdownItem .ui.dropdown,
+#similarityDropdownItem .ui.dropdown .menu,
+#similarityDropdownItem .ui.dropdown .menu .item {
+  background-color: var(--dk-32dp-solid) !important;
+}
+
+#quantityDropdownItem .ui.dropdown:focus,
+#quantityDropdownItem .ui.dropdown.active,
+#quantityDropdownItem .ui.dropdown .menu,
+#quantityDropdownItem .ui.dropdown .menu .item,
+#similarityDropdownItem .ui.dropdown:focus,
+#similarityDropdownItem .ui.dropdown.active,
+#similarityDropdownItem .ui.dropdown .menu,
+#similarityDropdownItem .ui.dropdown .menu .item {
+  border-color: var(--dk-32dp-solid-focused) !important;
+}
+
+#quantityDropdownItem .ui.dropdown .menu .item:hover,
+#similarityDropdownItem .ui.dropdown .menu .item:hover {
+  background-color: var(--dk-32dp-solid-hovered) !important;
+}
+
+#quantityDropdownItem .ui.dropdown .menu .item.active,
+#similarityDropdownItem .ui.dropdown .menu .item.active {
+  background-color: var(--dk-32dp-solid-focused) !important;
+}
+
+.ui.secondary.segment {
+  background-color: var(--dk-01dp) !important;
+}
+.ui.dividing.header {
+  border-color: var(--dk-16dp) !important;
+}
+
+/* #endregion */
+
+/* #region Search Results */
+
+#textPanel {
+  background-color: var(--dk-00dp) !important;
+}
+
+#sidebar-column {
+  box-shadow: -1px 0 0 0 var(--dk-08dp) !important;
+}
+
+#chartCount {
+  background-color: transparent !important;
+  box-shadow: 0 0 0 1px var(--dk-med) inset !important;
+}
+.ui.table tr.active {
+  background-color: var(--dk-24dp-focused) !important;
+}
+.ui.table tr.active #chartCount {
+  box-shadow: 0 0 0 1px var(--dk-00dp) inset !important;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--dk-08dp) !important;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--dk-24dp) !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--dk-24dp-hovered) !important;
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--dk-24dp-focused) !important;
+}
+
+/* #endregion */
+
+/* #region Modals */
+
+.ui.modal>.header {
+  background-color: var(--dk-04dp) !important;
+  border-bottom: 1px solid var(--dk-08dp) !important;
+}
+
+.ui.modal .content {
+  background-color: var(--dk-04dp) !important;
+}
+
+.ui.segments:not(.horizontal)>.segment {
+  background-color: var(--dk-04dp) !important;
+  border-top: 1px solid var(--dk-12dp) !important;
+}
+.ui.segments:not(.horizontal)>.segment:first-child {
+  border-top: none !important;
+}
+
+.ui.modal>.actions {
+  background-color: var(--dk-04dp) !important;
+}
+
+.ui.cards>.card {
+  box-shadow: 0 1px 3px 0 var(--dk-08dp),
+  0 0 0 1px var(--dk-08dp) !important;
+}
+
+/* #endregion */

@@ -1,6 +1,6 @@
-<div *ngIf="selectedVersion" class="ui fluid card">
-  <div class="ui placeholder" [ngClass]="{'placeholder': albumArtSrc == ''}">
-    <img class="ui square image" [src]="albumArtSrc">
+<div id="sidebarCard" *ngIf="selectedVersion" class="ui fluid card">
+  <div class="ui placeholder" [ngClass]="{'placeholder': albumArtSrc == '', 'inverted': settingsService.theme == 'Dark'}">
+    <img *ngIf="albumArtSrc != null" class="ui square image" [src]="albumArtSrc">
   </div>
   <div *ngIf="charts.length > 1" id="chartDropdown" class="ui fluid right labeled scrolling icon dropdown button">
     <input type="hidden" name="Chart">
