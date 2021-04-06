@@ -19,8 +19,8 @@
 - ✅ Cancel and retry downloads.
 - ✅ Google Authentication to avoid rate limited downloads.
 - ✅ In-app update checking and downloading.
-- ⚠️ Theme support.
-- ❌ Advanced song search.
+- ✅ Dark mode.
+- ✅ Advanced song search.
 - ❌ Scan and fix certain metadata problems in your chart library.
 - ❌ Easily download the most up-to-date versions of charts in your library.
 
