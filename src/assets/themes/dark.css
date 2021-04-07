@@ -298,7 +298,7 @@ input[type=number]::-webkit-inner-spin-button {
 }
 
 .ui.segments:not(.horizontal)>.segment {
-  background-color: var(--dk-04dp) !important;
+  background-color: var(--dk-04dp); /* not important; the code changes this color */
   border-top: 1px solid var(--dk-12dp) !important;
 }
 .ui.segments:not(.horizontal)>.segment:first-child {

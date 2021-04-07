@@ -1,11 +1,26 @@
-.card {
+#downloadTitle,
+#downloadText {
+  display: flex;
+  margin-bottom: 0.3rem;
+}
+
+#downloadText {
+  flex-wrap: wrap;
+}
+
+#downloadProgressDiv {
+  display: flex;
+}
+
+#downloadProgressBar {
   flex-grow: 1;
-}
-
-.ui.progress {
   margin: 0;
+  .bar {
+    transform: translateY(-50%);
+    top: 50%;
+  }
 }
 
-i.close.icon {
+i.close.icon, a {
   cursor: pointer;
 }

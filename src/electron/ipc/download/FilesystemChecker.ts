@@ -21,7 +21,7 @@ const filesystemErrors = {
   libraryFolder: () => { return { header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' } },
   libraryAccess: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to access library folder.'),
   destinationFolderExists: (destinationPath: string) => {
-    return { header: 'This chart already exists in your library folder.', body: destinationPath }
+    return { header: 'This chart already exists in your library folder.', body: destinationPath, isLink: true }
   },
   mkdirError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to create temporary folder.')
 }

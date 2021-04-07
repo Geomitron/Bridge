@@ -29,6 +29,7 @@ export interface DownloadProgress {
   description: string
   percent: number
   type: ProgressType
+  isLink: boolean
 }
 
 export type ProgressType = 'good' | 'error' | 'cancel' | 'done' | 'fastUpdate'

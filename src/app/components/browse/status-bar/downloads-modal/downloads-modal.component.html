@@ -1,27 +1,30 @@
-<div class="ui cards">
-  <div *ngFor="let download of downloads; trackBy:trackByVersionID" class="card" [style.background-color]="getBackgroundColor(download)">
-    <div class="content">
-      <i class="inside right floated close icon" (click)="cancelDownload(download.versionID)"></i>
-      <div class="header">{{download.title}}</div>
-    </div>
-    <div class="content">
-      <button
-        *ngIf="download.type == 'error'"
-        class="ui right floated labeled icon button"
-        (click)="retryDownload(download.versionID)">
-        <i class="redo icon"></i>
-        Retry
-      </button>
-      <div class="header">{{download.header}}</div>
-      <div *ngIf="download.type != 'done'" class="description">{{download.description}}</div>
-      <div *ngIf="download.type == 'done'" class="description">
+<div *ngIf="downloads.length > 0" class="ui segments">
+  <div *ngFor="let download of downloads; trackBy:trackByVersionID" class="ui segment" [style.background-color]="getBackgroundColor(download)">
+
+    <h3 id="downloadTitle">
+      <span style="flex-grow: 1;">{{download.title}}</span>
+      <i class="inside right close icon" (click)="cancelDownload(download.versionID)"></i>
+    </h3>
+
+    <div id="downloadText">
+      <span style="flex-grow: 1;">{{download.header}}</span>
+      <span *ngIf="!download.isLink" class="description">{{download.description}}</span>
+      <span *ngIf="download.isLink" class="description">
         <a (click)="openFolder(download.description)">{{download.description}}</a>
-      </div>
-      <div appProgressBar [percent]="download.percent" class="ui progress">
+      </span>
+    </div>
+
+    <div id="downloadProgressDiv">
+      <div id="downloadProgressBar" appProgressBar [percent]="download.percent" class="ui small progress">
         <div class="bar">
           <div class="progress"></div>
         </div>
       </div>
+      <button *ngIf="download.type == 'error'" class="ui right attached labeled compact icon button"
+        (click)="retryDownload(download.versionID)">
+        <i class="redo icon"></i>
+        Retry
+      </button>
     </div>
   </div>
 </div>

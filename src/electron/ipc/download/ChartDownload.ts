@@ -19,7 +19,7 @@ type EventCallback = {
 }
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
-export type DownloadError = { header: string; body: string }
+export type DownloadError = { header: string; body: string; isLink?: boolean }
 
 export class ChartDownload {
 
@@ -98,7 +98,7 @@ export class ChartDownload {
   /**
    * Updates the GUI with new information about this chart download.
    */
-  private updateGUI(header: string, description: string, type: ProgressType) {
+  private updateGUI(header: string, description: string, type: ProgressType, isLink = false) {
     if (this.wasCanceled) { return }
     if (type == 'fastUpdate') {
       if (this.dropFastUpdate) {
@@ -115,7 +115,8 @@ export class ChartDownload {
       header: header,
       description: description,
       percent: this.percent,
-      type: type
+      type: type,
+      isLink
     })
   }
 
@@ -125,7 +126,7 @@ export class ChartDownload {
   private handleError(err: DownloadError, retry: () => void) {
     this._hasFailed = true
     this.retryFn = retry
-    this.updateGUI(err.header, err.body, 'error')
+    this.updateGUI(err.header, err.body, 'error', err.isLink == true)
     this.callbacks.error()
   }
 
@@ -270,7 +271,7 @@ export class ChartDownload {
 
     transfer.on('start', (_destinationFolder) => {
       destinationFolder = _destinationFolder
-      this.updateGUI('Moving files to library folder...', destinationFolder, 'good')
+      this.updateGUI('Moving files to library folder...', destinationFolder, 'good', true)
     })
 
     transfer.on('error', this.handleError.bind(this))
@@ -278,7 +279,7 @@ export class ChartDownload {
     return new Promise<void>(resolve => {
       transfer.on('complete', () => {
         this.percent = 100
-        this.updateGUI('Download complete.', destinationFolder, 'done')
+        this.updateGUI('Download complete.', destinationFolder, 'done', true)
         resolve()
       })
     })
