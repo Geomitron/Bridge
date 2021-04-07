@@ -108,7 +108,8 @@ html,
 .ui.button {
   background-color: var(--dk-12dp) !important;
 }
-.ui.button:hover {
+.ui.button:hover:not(.dropdown),
+.ui.button.dropdown:hover:not(.active) {
   background-color: var(--dk-12dp-hovered) !important;
 }
 .ui.button.disabled {
@@ -124,7 +125,7 @@ html,
 }
 .ui.positive.button:hover,
 #downloadButton:hover,
-#versionDropdown:hover {
+#versionDropdown:hover:not(.active) {
   background-color: var(--dk-primary-hovered) !important;
 }
 
