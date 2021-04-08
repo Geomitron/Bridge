@@ -17,7 +17,7 @@ export class SelectionService {
   private searchResults: SongResult[] = []
 
   private selectAllChangedEmitter = new EventEmitter<boolean>()
-  private selectionChangedEmitter = new EventEmitter<SelectionEvent>()
+  private selectionChangedCallbacks: { [songID: number]: (selection: boolean) => void } = {}
 
   private allSelected = false
   private selections: { [songID: number]: boolean | undefined } = {}
@@ -32,7 +32,9 @@ export class SelectionService {
 
     searchService.onNewSearch((results) => {
       this.searchResults = results
-      this.deselectAll()
+      this.selectionChangedCallbacks = {}
+      this.selections = {}
+      this.selectAllChangedEmitter.emit(false)
     })
   }
 
@@ -49,11 +51,7 @@ export class SelectionService {
    * (note: only one emitter can be registered per `songID`)
    */
   onSelectionChanged(songID: number, callback: (selection: boolean) => void) {
-    this.selectionChangedEmitter.subscribe((selection: SelectionEvent) => {
-      if (selection.songID == songID) {
-        callback(selection.selected)
-      }
-    })
+    this.selectionChangedCallbacks[songID] = callback
   }
 
 
@@ -78,14 +76,14 @@ export class SelectionService {
   deselectSong(songID: number) {
     if (this.selections[songID]) {
       this.selections[songID] = false
-      this.selectionChangedEmitter.emit({ songID, selected: false })
+      this.selectionChangedCallbacks[songID](false)
     }
   }
 
   selectSong(songID: number) {
     if (!this.selections[songID]) {
       this.selections[songID] = true
-      this.selectionChangedEmitter.emit({ songID, selected: true })
+      this.selectionChangedCallbacks[songID](true)
     }
   }
 }

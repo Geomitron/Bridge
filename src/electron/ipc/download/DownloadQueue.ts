@@ -4,7 +4,7 @@ import { emitIPCEvent } from '../../main'
 
 export class DownloadQueue {
 
-  downloadQueue: ChartDownload[] = []
+  private downloadQueue: ChartDownload[] = []
 
   isDownloadingLink(filesHash: string) {
     return this.downloadQueue.some(download => download.hash == filesHash)

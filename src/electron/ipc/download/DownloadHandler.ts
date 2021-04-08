@@ -19,7 +19,7 @@ class DownloadHandler implements IPCEmitHandler<'download'> {
   }
 
   private addDownload(data: Download) {
-    const filesHash = data.data.driveData.filesHash
+    const filesHash = data.data.driveData.filesHash // Note: using versionID would cause chart packs to download multiple times
     if (this.currentDownload?.hash == filesHash || this.downloadQueue.isDownloadingLink(filesHash)) {
       return
     }
