@@ -111,7 +111,8 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
       nodeIntegration: true,
       allowRunningInsecureContent: (isDevBuild) ? true : false,
       textAreasAreResizable: false,
-      enableRemoteModule: true
+      enableRemoteModule: true,
+      contextIsolation: false
     },
     simpleFullscreen: true,
     fullscreenable: false,
