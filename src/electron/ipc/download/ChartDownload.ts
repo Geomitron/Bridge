@@ -30,7 +30,6 @@ export class ChartDownload {
   private files: DriveFile[]
   private percent = 0 // Needs to be stored here because errors won't know the exact percent
   private tempPath: string
-  private dropFastUpdate = false
   private wasCanceled = false
 
   private readonly individualFileProgressPortion: number
@@ -100,14 +99,6 @@ export class ChartDownload {
    */
   private updateGUI(header: string, description: string, type: ProgressType, isLink = false) {
     if (this.wasCanceled) { return }
-    if (type == 'fastUpdate') {
-      if (this.dropFastUpdate) {
-        return
-      } else {
-        this.dropFastUpdate = true
-        setTimeout(() => this.dropFastUpdate = false, 30)
-      }
-    }
 
     emitIPCEvent('download-updated', {
       versionID: this.versionID,
@@ -222,7 +213,7 @@ export class ChartDownload {
       const size = Number(this.files[fileIndex].size)
       fileProgress = interpolate(bytesDownloaded, 0, size, downloadStartPoint, this.individualFileProgressPortion)
       this.percent = this._allFilesProgress + fileProgress
-      this.updateGUI(downloadHeader, `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`, 'fastUpdate')
+      this.updateGUI(downloadHeader, `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`, 'good')
     })
 
     downloader.on('error', this.handleError.bind(this))
@@ -249,7 +240,7 @@ export class ChartDownload {
 
     extractor.on('extractProgress', (percent, filecount) => {
       this.percent = interpolate(percent, 0, 100, 80, 95)
-      this.updateGUI(`[${archive}] (${filecount} file${filecount == 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'fastUpdate')
+      this.updateGUI(`[${archive}] (${filecount} file${filecount == 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'good')
     })
 
     extractor.on('error', this.handleError.bind(this))

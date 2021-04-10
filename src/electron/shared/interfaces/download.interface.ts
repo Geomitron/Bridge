@@ -32,4 +32,4 @@ export interface DownloadProgress {
   isLink: boolean
 }
 
-export type ProgressType = 'good' | 'error' | 'cancel' | 'done' | 'fastUpdate'
+export type ProgressType = 'good' | 'error' | 'cancel' | 'done'

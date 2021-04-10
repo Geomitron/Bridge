@@ -134,22 +134,33 @@ class APIFileDownloader {
   private handleDownloadResponse() {
     this.callbacks.downloadProgress(0)
     let downloadedSize = 0
+    const writeStream = createWriteStream(this.fullPath)
+
     try {
-      this.downloadStream.pipe(createWriteStream(this.fullPath))
+      this.downloadStream.pipe(writeStream)
     } catch (err) {
       this.failDownload(downloadErrors.connectionError(err))
     }
 
     this.downloadStream.on('data', this.cancelable((chunk: Buffer) => {
       downloadedSize += chunk.length
-      this.callbacks.downloadProgress(downloadedSize)
     }))
 
+    const progressUpdater = setInterval(() => {
+      this.callbacks.downloadProgress(downloadedSize)
+    }, 100)
+
     this.downloadStream.on('error', this.cancelable((err: Error) => {
+      clearInterval(progressUpdater)
       this.failDownload(downloadErrors.connectionError(err))
     }))
 
     this.downloadStream.on('end', this.cancelable(() => {
+      clearInterval(progressUpdater)
+      writeStream.end()
+      this.downloadStream.destroy()
+      this.downloadStream = null
+
       this.callbacks.complete()
     }))
   }
