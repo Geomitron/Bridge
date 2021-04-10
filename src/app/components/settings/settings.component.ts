@@ -24,8 +24,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
   constructor(public settingsService: SettingsService, private electronService: ElectronService, private ref: ChangeDetectorRef) { }
 
   async ngOnInit() {
-    const cacheSize = await this.settingsService.getCacheSize()
-    this.cacheSize = Math.round(cacheSize / 1000000) + ' MB'
     this.electronService.receiveIPC('update-available', (result) => {
       this.updateAvailable = result != null
       this.updateRetrying = false
@@ -52,6 +50,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
       this.loginAvailable = !isAuthenticated
       this.ref.detectChanges()
     })
+
+    const cacheSize = await this.settingsService.getCacheSize()
+    this.cacheSize = Math.round(cacheSize / 1000000) + ' MB'
   }
 
   ngAfterViewInit() {

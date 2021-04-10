@@ -8,6 +8,7 @@ import { downloadHandler } from '../ipc/download/DownloadHandler'
 import { Settings } from './Settings'
 import { batchSongDetailsHandler } from '../ipc/browse/BatchSongDetailsHandler.ipc'
 import { getSettingsHandler, setSettingsHandler } from '../ipc/SettingsHandler.ipc'
+import { clearCacheHandler } from '../ipc/CacheHandler.ipc'
 import { googleLoginHandler, getAuthStatusHandler, googleLogoutHandler } from '../ipc/google/GoogleLoginHandler.ipc'
 import { updateChecker, UpdateProgress, getCurrentVersionHandler, downloadUpdateHandler, quitAndInstallHandler, getUpdateAvailableHandler } from '../ipc/UpdateHandler.ipc'
 import { UpdateInfo } from 'electron-updater'
@@ -24,6 +25,7 @@ import { openURLHandler } from '../ipc/OpenURLHandler.ipc'
 export function getIPCInvokeHandlers(): IPCInvokeHandler<keyof IPCInvokeEvents>[] {
   return [
     getSettingsHandler,
+    clearCacheHandler,
     searchHandler,
     songDetailsHandler,
     batchSongDetailsHandler,
@@ -43,6 +45,10 @@ export type IPCInvokeEvents = {
   'get-settings': {
     input: undefined
     output: Settings
+  }
+  'clear-cache': {
+    input: undefined
+    output: void
   }
   'song-search': {
     input: SongSearch

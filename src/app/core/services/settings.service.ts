@@ -49,7 +49,8 @@ export class SettingsService {
 
   async clearCache() {
     this.saveSettings()
-    return this.electronService.defaultSession.clearCache()
+    await this.electronService.defaultSession.clearCache()
+    await this.electronService.invoke('clear-cache', undefined)
   }
 
   // Individual getters/setters
