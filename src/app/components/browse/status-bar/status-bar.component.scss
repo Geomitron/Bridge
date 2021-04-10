@@ -7,3 +7,17 @@
   border-radius: 0px;
   border-width: 1px 0px 0px 0px;
 }
+
+#downloadsModal {
+  .header {
+    display: flex;
+
+    span {
+      flex-grow: 1;
+    }
+
+    .ui.positive.button {
+      margin-right: 30px;
+    }
+  }
+}

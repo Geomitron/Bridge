@@ -29,7 +29,10 @@ export interface DownloadProgress {
   description: string
   percent: number
   type: ProgressType
+  /** If `description` contains a filepath that can be clicked */
   isLink: boolean
+  /** If the download should not appear in the total download progress */
+  stale?: boolean
 }
 
 export type ProgressType = 'good' | 'error' | 'cancel' | 'done'

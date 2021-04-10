@@ -30,12 +30,20 @@ export class DownloadService {
     return this.downloads.length
   }
 
-  get totalPercent() {
+  get completedCount() {
+    return this.downloads.filter(download => download.type == 'done').length
+  }
+
+  get totalDownloadingPercent() {
     let total = 0
+    let count = 0
     for (const download of this.downloads) {
-      total += download.percent
+      if (!download.stale) {
+        total += download.percent
+        count++
+      }
     }
-    return total / this.downloads.length
+    return total / count
   }
 
   get anyErrorsExist() {
@@ -44,6 +52,9 @@ export class DownloadService {
 
   addDownload(versionID: number, newDownload: NewDownload) {
     if (!this.downloads.find(download => download.versionID == versionID)) { // Don't download something twice
+      if (this.downloads.every(download => download.type == 'done')) { // Reset overall progress bar if it finished
+        this.downloads.forEach(download => download.stale = true)
+      }
       this.electronService.sendIPC('download', { action: 'add', versionID, data: newDownload })
     }
   }
@@ -60,6 +71,14 @@ export class DownloadService {
       this.downloadUpdatedEmitter.emit(removedDownload)
     } else {
       this.electronService.sendIPC('download', { action: 'cancel', versionID })
+    }
+  }
+
+  cancelCompleted() {
+    for (const download of this.downloads) {
+      if (download.type == 'done') {
+        this.cancelDownload(download.versionID)
+      }
     }
   }
 

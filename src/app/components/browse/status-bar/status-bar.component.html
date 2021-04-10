@@ -31,7 +31,10 @@
 
   <div id="downloadsModal" class="ui modal">
     <i class="inside close icon"></i>
-    <div class="header">Downloads</div>
+    <div class="header">
+      <span>Downloads</span>
+      <div *ngIf="multipleCompleted" class="ui positive compact button" (click)="clearCompleted()">Clear completed</div>
+    </div>
     <div class="scrolling content">
       <app-downloads-modal></app-downloads-modal>
     </div>

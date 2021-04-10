@@ -14,6 +14,7 @@ import { SelectionService } from '../../../core/services/selection.service'
 export class StatusBarComponent {
 
   resultCount = 0
+  multipleCompleted = false
   downloading = false
   error = false
   percent = 0
@@ -30,7 +31,8 @@ export class StatusBarComponent {
     downloadService.onDownloadUpdated(() => {
       setTimeout(() => { // Make sure this is the last callback executed to get the accurate downloadCount
         this.downloading = downloadService.downloadCount > 0
-        this.percent = downloadService.totalPercent
+        this.multipleCompleted = downloadService.completedCount > 1
+        this.percent = downloadService.totalDownloadingPercent
         this.error = downloadService.anyErrorsExist
         ref.detectChanges()
       }, 0)
@@ -104,5 +106,9 @@ export class StatusBarComponent {
     for (const chartGroup of this.chartGroups) {
       this.selectionService.deselectSong(chartGroup[0].songID)
     }
+  }
+
+  clearCompleted() {
+    this.downloadService.cancelCompleted()
   }
 }
