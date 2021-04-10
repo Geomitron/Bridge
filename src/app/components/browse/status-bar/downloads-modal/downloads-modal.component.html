@@ -16,7 +16,7 @@
 
     <div id="downloadProgressDiv">
       <div id="downloadProgressBar" appProgressBar [percent]="download.percent" class="ui small progress">
-        <div class="bar">
+        <div class="bar" [style.height]="download.type == 'error' ? '-webkit-fill-available' : undefined">
           <div class="progress"></div>
         </div>
       </div>
