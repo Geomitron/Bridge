@@ -52,6 +52,7 @@ class GetSettingsHandler implements IPCInvokeHandler<'get-settings'> {
       // Read/create settings
       if (await exists(settingsPath)) {
         settings = JSON.parse(await readFile(settingsPath, 'utf8'))
+        settings = Object.assign(JSON.parse(JSON.stringify(defaultSettings)), settings)
       } else {
         await SetSettingsHandler.saveSettings(defaultSettings)
         settings = defaultSettings

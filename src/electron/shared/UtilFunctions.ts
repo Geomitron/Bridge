@@ -30,6 +30,13 @@ export function sanitizeFilename(filename: string): string {
 }
 
 /**
+ * @returns `text` converted to lower case.
+ */
+export function lower(text: string) {
+  return text.toLowerCase()
+}
+
+/**
  * Converts `val` from the range (`fromStart`, `fromEnd`) to the range (`toStart`, `toEnd`).
  */
 export function interpolate(val: number, fromStart: number, fromEnd: number, toStart: number, toEnd: number) {

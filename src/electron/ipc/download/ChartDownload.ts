@@ -9,6 +9,8 @@ import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
 import { FileTransfer } from './FileTransfer'
 import * as _rimraf from 'rimraf'
 import { FilesystemChecker } from './FilesystemChecker'
+import { getSettings } from '../SettingsHandler.ipc'
+import { hasVideoExtension } from '../../shared/ElectronUtilFunctions'
 
 const rimraf = promisify(_rimraf)
 
@@ -45,7 +47,7 @@ export class ChartDownload {
 
   constructor(public versionID: number, private data: NewDownload) {
     this.updateGUI('', 'Waiting for other downloads to finish...', 'good')
-    this.files = data.driveData.files
+    this.files = this.filterDownloadFiles(data.driveData.files)
     this.individualFileProgressPortion = 80 / this.files.length
     if (data.driveData.inChartPack) {
       this.destinationFolderName = sanitizeFilename(parse(data.driveData.files[0].name).name)
@@ -59,6 +61,12 @@ export class ChartDownload {
    */
   on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
     this.callbacks[event] = callback
+  }
+
+  filterDownloadFiles(files: DriveFile[]) {
+    return files.filter(file => {
+      return (file.name != 'ch.dat') && (getSettings().downloadVideos || !hasVideoExtension(file.name))
+    })
   }
 
   /**
@@ -135,7 +143,6 @@ export class ChartDownload {
 
     // DOWNLOAD FILES
     for (let i = 0; i < this.files.length; i++) {
-      if (this.files[i].name == 'ch.dat') { continue }
       let wasCanceled = false
       this.cancelFn = () => { wasCanceled = true }
       const downloader = await getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))

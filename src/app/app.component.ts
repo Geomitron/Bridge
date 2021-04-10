@@ -8,5 +8,10 @@ import { SettingsService } from './core/services/settings.service'
 })
 export class AppComponent {
 
-  constructor(private settingsService: SettingsService) { }
+  settingsLoaded = false
+
+  constructor(private settingsService: SettingsService) {
+    // Ensure settings are loaded before rendering the application
+    settingsService.loadSettings().then(() => this.settingsLoaded = true)
+  }
 }

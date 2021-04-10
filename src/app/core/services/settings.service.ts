@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { ElectronService } from './electron.service'
-import { Settings, defaultSettings } from 'src/electron/shared/Settings'
+import { Settings } from 'src/electron/shared/Settings'
 
 @Injectable({
   providedIn: 'root'
@@ -11,25 +11,17 @@ export class SettingsService {
   private settings: Settings
   private currentThemeLink: HTMLLinkElement
 
-  constructor(private electronService: ElectronService) {
-    this.getSettings().then(() => {
-      if (this.settings.theme != this.builtinThemes[0]) {
-        this.changeTheme(this.settings.theme)
-      }
-    })
-  }
+  constructor(private electronService: ElectronService) { }
 
-  async getSettings() {
-    if (this.settings == undefined) {
-      this.settings = await this.electronService.invoke('get-settings', undefined)
+  async loadSettings() {
+    this.settings = await this.electronService.invoke('get-settings', undefined)
+    if (this.settings.theme != this.builtinThemes[0]) {
+      this.changeTheme(this.settings.theme)
     }
-    return this.settings
   }
 
   saveSettings() {
-    if (this.settings != undefined) {
-      this.electronService.sendIPC('set-settings', this.settings)
-    }
+    this.electronService.sendIPC('set-settings', this.settings)
   }
 
   changeTheme(theme: string) {
@@ -55,15 +47,23 @@ export class SettingsService {
 
   // Individual getters/setters
   get libraryDirectory() {
-    return this.settings == undefined ? defaultSettings.libraryPath : this.settings.libraryPath
+    return this.settings.libraryPath
   }
   set libraryDirectory(newValue: string) {
     this.settings.libraryPath = newValue
     this.saveSettings()
   }
 
+  get downloadVideos() {
+    return this.settings.downloadVideos
+  }
+  set downloadVideos(isChecked) {
+    this.settings.downloadVideos = isChecked
+    this.saveSettings()
+  }
+
   get theme() {
-    return this.settings == undefined ? defaultSettings.theme : this.settings.theme
+    return this.settings.theme
   }
   set theme(newValue: string) {
     this.settings.theme = newValue
@@ -72,7 +72,7 @@ export class SettingsService {
   }
 
   get rateLimitDelay() {
-    return this.settings == undefined ? defaultSettings.rateLimitDelay : this.settings.rateLimitDelay
+    return this.settings.rateLimitDelay
   }
   set rateLimitDelay(delay: number) {
     this.settings.rateLimitDelay = delay

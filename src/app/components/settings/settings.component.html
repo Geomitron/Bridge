@@ -19,6 +19,12 @@
 
 <h3 class="ui header">Downloads</h3>
 <div class="ui form">
+  <div class="field">
+    <div appCheckbox #videoCheckbox class="ui checkbox" (checked)="downloadVideos($event)">
+      <input type="checkbox">
+      <label>Download video backgrounds</label>
+    </div>
+  </div>
   <div *ngIf="loginAvailable" class="field">
     <label>Google rate limit delay</label>
     <div id="rateLimitInput" class="ui right labeled input">
@@ -28,7 +34,6 @@
       </div>
     </div>
   </div>
-  <!-- TODO: Uncomment this when switching to the OAuth2 Login system -->
   <div *ngIf="loginAvailable" class="field">
     <div class="ui button" data-tooltip="Removes rate limit delay" data-position="right center" (click)="googleLogin()">
       <i class="google icon"></i>Sign in with Google

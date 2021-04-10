@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core'
+import { CheckboxDirective } from 'src/app/core/directives/checkbox.directive'
 import { ElectronService } from 'src/app/core/services/electron.service'
 import { SettingsService } from 'src/app/core/services/settings.service'
 
@@ -9,6 +10,7 @@ import { SettingsService } from 'src/app/core/services/settings.service'
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
   @ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
+  @ViewChild(CheckboxDirective, { static: true }) videoCheckbox: CheckboxDirective
 
   cacheSize = 'Calculating...'
   updateAvailable = false
@@ -21,7 +23,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
   updateRetrying = false
   currentVersion = ''
 
-  constructor(public settingsService: SettingsService, private electronService: ElectronService, private ref: ChangeDetectorRef) { }
+  constructor(
+    public settingsService: SettingsService,
+    private electronService: ElectronService,
+    private ref: ChangeDetectorRef
+  ) { }
 
   async ngOnInit() {
     this.electronService.receiveIPC('update-available', (result) => {
@@ -61,12 +67,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
         this.settingsService.theme = text
       }
     })
+
+    this.videoCheckbox.check(this.settingsService.downloadVideos)
   }
 
   async clearCache() {
     this.cacheSize = 'Please wait...'
     await this.settingsService.clearCache()
     this.cacheSize = 'Cleared!'
+  }
+
+  async downloadVideos(isChecked: boolean) {
+    this.settingsService.downloadVideos = isChecked
   }
 
   async getLibraryDirectory() {
