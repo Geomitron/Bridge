@@ -1,6 +1,6 @@
 import { AnyFunction } from '../../shared/UtilFunctions'
 import { devLog } from '../../shared/ElectronUtilFunctions'
-import { createWriteStream } from 'fs'
+import { createWriteStream, writeFile as _writeFile } from 'fs'
 import * as needle from 'needle'
 import { Readable } from 'stream'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
@@ -9,12 +9,16 @@ import { DownloadError } from './ChartDownload'
 import { googleAuth } from '../google/GoogleAuth'
 import { google } from 'googleapis'
 import Bottleneck from 'bottleneck'
+import { promisify } from 'util'
+import { join } from 'path'
+import { tempPath } from '../../shared/Paths'
 const drive = google.drive('v3')
 const limiter = new Bottleneck({
   minTime: 200 // Wait 200 ms between API requests
 })
 
 const RETRY_MAX = 2
+const writeFile = promisify(_writeFile)
 
 type EventCallback = {
   'waitProgress': (remainingSeconds: number, totalSeconds: number) => void
@@ -32,7 +36,7 @@ const downloadErrors = {
   timeout: (type: string) => { return { header: 'Timeout', body: `The download server could not be reached. (type=${type})` } },
   connectionError: (err: Error) => { return { header: 'Connection Error', body: `${err.name}: ${err.message}` } },
   responseError: (statusCode: string) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
-  htmlError: () => { return { header: 'Invalid response', body: 'Download server returned HTML instead of a file.' } },
+  htmlError: (path: string) => { return { header: 'Download server returned HTML instead of a file.', body: path, isLink: true } },
   linkError: (url: string) => { return { header: 'Invalid link', body: `The download link is not formatted correctly: ${url}` } }
 }
 
@@ -301,7 +305,9 @@ class SlowFileDownloader {
           const newHeader = `download_warning_${warningCode}=${confirmToken}; NID=${NID}`
           this.requestDownload(newHeader)
         } catch(e) {
-          this.failDownload(downloadErrors.htmlError())
+          this.saveHTMLError(virusScanHTML).then((path) => {
+            this.failDownload(downloadErrors.htmlError(path))
+          })
         }
       }
     }))
@@ -327,6 +333,12 @@ class SlowFileDownloader {
     this.req.on('end', this.cancelable(() => {
       this.callbacks.complete()
     }))
+  }
+
+  private async saveHTMLError(text: string) {
+    const errorPath = join(tempPath, 'HTMLError.html')
+    await writeFile(errorPath, text)
+    return errorPath
   }
 
   /**
