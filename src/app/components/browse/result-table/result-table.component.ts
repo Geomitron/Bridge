@@ -5,6 +5,7 @@ import { CheckboxDirective } from '../../../core/directives/checkbox.directive'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
 import { SettingsService } from 'src/app/core/services/settings.service'
+import Comparators from 'comparators'
 
 @Component({
   selector: 'app-result-table',
@@ -20,6 +21,8 @@ export class ResultTableComponent implements OnInit {
 
   results: SongResult[]
   activeRowID: number = null
+  sortDirection: 'ascending' | 'descending' = 'descending'
+  sortColumn: 'name' | 'artist' | 'album' | 'genre' | null = null
 
   constructor(
     private searchService: SearchService,
@@ -35,12 +38,35 @@ export class ResultTableComponent implements OnInit {
     this.searchService.onSearchChanged(results => {
       this.activeRowID = null
       this.results = results
+      this.updateSort()
+    })
+
+    this.searchService.onNewSearch(() => {
+      this.sortColumn = null
     })
   }
 
   onRowClicked(result: SongResult) {
     this.activeRowID = result.id
     this.rowClicked.emit(result)
+  }
+
+  onColClicked(column: 'name' | 'artist' | 'album' | 'genre') {
+    if (this.sortColumn != column) {
+      this.sortColumn = column
+      this.sortDirection = 'descending'
+    } else if (this.sortDirection == 'descending') {
+      this.sortDirection = 'ascending'
+    } else {
+      this.sortDirection = 'descending'
+    }
+    this.updateSort()
+  }
+
+  private updateSort() {
+    if (this.sortColumn != null) {
+      this.results.sort(Comparators.comparing(this.sortColumn, { reversed: this.sortDirection == 'ascending' }))
+    }
   }
 
   /**

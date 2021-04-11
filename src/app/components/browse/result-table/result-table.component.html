@@ -1,6 +1,5 @@
-<table id="resultTable" class="ui stackable selectable single fixed line striped compact small table" [class.inverted]="settingsService.theme == 'Dark'">
+<table id="resultTable" class="ui stackable selectable single sortable fixed line striped compact small table" [class.inverted]="settingsService.theme == 'Dark'">
   <!-- TODO: maybe have some of these tags customizable? E.g. small/large/compact/padded -->
-  <!-- TODO: maybe add the sortable class? -->
   <!-- TODO: learn semantic themes in order to change the $mobileBreakpoint global variable (better search table adjustment) -->
   <thead>
     <!-- NOTE: it would be nice to make this header sticky, but Fomantic-UI doesn't currently support that -->
@@ -10,10 +9,10 @@
           <input type="checkbox">
         </div>
       </th>
-      <th class="four wide">Name</th>
-      <th class="four wide">Artist</th>
-      <th class="four wide">Album</th>
-      <th class="four wide">Genre</th>
+      <th class="four wide" [class.sorted]="sortColumn == 'name'" [ngClass]="sortDirection" (click)="onColClicked('name')">Name</th>
+      <th class="four wide" [class.sorted]="sortColumn == 'artist'" [ngClass]="sortDirection" (click)="onColClicked('artist')">Artist</th>
+      <th class="four wide" [class.sorted]="sortColumn == 'album'" [ngClass]="sortDirection" (click)="onColClicked('album')">Album</th>
+      <th class="four wide" [class.sorted]="sortColumn == 'genre'" [ngClass]="sortDirection" (click)="onColClicked('genre')">Genre</th>
     </tr>
   </thead>
   <tbody>

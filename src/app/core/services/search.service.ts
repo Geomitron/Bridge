@@ -32,8 +32,8 @@ export class SearchService {
     }
     this.awaitingResults = false
 
-    this.resultsChangedEmitter.emit(this.results)
     this.newResultsEmitter.emit(this.results)
+    this.resultsChangedEmitter.emit(this.results)
   }
 
   isLoading() {
@@ -43,7 +43,7 @@ export class SearchService {
   /**
    * Event emitted when new search results are returned
    * or when more results are added to an existing search.
-   * (emitted before `onNewSearch`)
+   * (emitted after `onNewSearch`)
    */
   onSearchChanged(callback: (results: SongResult[]) => void) {
     this.resultsChangedEmitter.subscribe(callback)
@@ -51,7 +51,7 @@ export class SearchService {
 
   /**
    * Event emitted when a new search query is typed in.
-   * (emitted after `onSearchChanged`)
+   * (emitted before `onSearchChanged`)
    */
   onNewSearch(callback: (results: SongResult[]) => void) {
     this.newResultsEmitter.subscribe(callback)
