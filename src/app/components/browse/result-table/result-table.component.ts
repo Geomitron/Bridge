@@ -19,7 +19,7 @@ export class ResultTableComponent implements OnInit {
   @ViewChild(CheckboxDirective, { static: true }) checkboxColumn: CheckboxDirective
   @ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
-  results: SongResult[]
+  results: SongResult[] = []
   activeRowID: number = null
   sortDirection: 'ascending' | 'descending' = 'descending'
   sortColumn: 'name' | 'artist' | 'album' | 'genre' | null = null
@@ -52,6 +52,7 @@ export class ResultTableComponent implements OnInit {
   }
 
   onColClicked(column: 'name' | 'artist' | 'album' | 'genre') {
+    if (this.results.length == 0) { return }
     if (this.sortColumn != column) {
       this.sortColumn = column
       this.sortDirection = 'descending'
