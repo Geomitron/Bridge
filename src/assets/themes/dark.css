@@ -164,7 +164,7 @@ html,
 .ui.top.menu .item:hover {
   background-color: var(--dk-12dp-hovered) !important;
 }
-#bottomMenu .item:hover {
+#bottomMenu a:hover {
   background-color: var(--dk-12dp-hovered) !important;
 }
 .ui.top.menu .item.active {
