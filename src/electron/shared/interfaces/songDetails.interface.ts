@@ -93,18 +93,9 @@ export interface ChartData {
   effectiveLength: number
 }
 
-export type Instrument = 'guitar' | 'bass' | 'rhythm' | 'keys' | 'drums' | 'guitarghl' | 'bassghl' | 'vocals'
+export type Instrument = 'guitar' | 'bass' | 'rhythm' | 'keys' | 'drums' | 'guitarghl' | 'bassghl' | 'vocals' | 'undefined'
 export type ChartedDifficulty = 'x' | 'h' | 'm' | 'e'
 
 export function getInstrumentIcon(instrument: Instrument) {
-  switch(instrument) {
-    case 'guitar': return 'guitar.png'
-    case 'bass': return 'bass.png'
-    case 'rhythm': return 'guitar.png' // TODO: get unique icon
-    case 'keys': return 'keys.png'
-    case 'drums': return 'drums.svg'
-    case 'guitarghl': return 'guitarghl.png'
-    case 'bassghl': return 'bassghl.png'
-    case 'vocals': return 'guitar.png' // TODO: get unique icon
-  }
+  return `${instrument}.png`
 }

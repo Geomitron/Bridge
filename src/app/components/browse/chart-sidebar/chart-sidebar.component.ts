@@ -156,11 +156,13 @@ export class ChartSidebarComponent implements OnInit {
     const instruments = Object.keys(this.selectedVersion.chartData.noteCounts) as Instrument[]
     this.difficultiesList = []
     for (const instrument of instruments) {
-      this.difficultiesList.push({
-        instrument: getInstrumentIcon(instrument),
-        diffNumber: this.getDiffNumber(instrument),
-        chartedDifficulties: this.getChartedDifficultiesText(instrument)
-      })
+      if (instrument != 'undefined') {
+        this.difficultiesList.push({
+          instrument: getInstrumentIcon(instrument),
+          diffNumber: this.getDiffNumber(instrument),
+          chartedDifficulties: this.getChartedDifficultiesText(instrument)
+        })
+      }
     }
   }
 
