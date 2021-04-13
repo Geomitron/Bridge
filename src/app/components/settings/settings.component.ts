@@ -38,10 +38,11 @@ export class SettingsComponent implements OnInit, AfterViewInit {
       }
       this.ref.detectChanges()
     })
-    this.electronService.receiveIPC('update-error', () => {
+    this.electronService.receiveIPC('update-error', (err: Error) => {
+      console.log(err)
       this.updateAvailable = null
       this.updateRetrying = false
-      this.retryUpdateText = 'Failed to check for update'
+      this.retryUpdateText = `Failed to check for update: ${err.message}`
       this.ref.detectChanges()
     })
     this.electronService.invoke('get-current-version', undefined).then(version => {
