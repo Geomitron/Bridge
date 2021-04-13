@@ -23,8 +23,7 @@
   "mac": {
     "category": "public.app-category.utilities",
     "target": [
-      "dmg",
-      "zip"
+      "dmg"
     ],
     "icon": "dist/assets/images/system/icons/mac/icon.icns"
   },
