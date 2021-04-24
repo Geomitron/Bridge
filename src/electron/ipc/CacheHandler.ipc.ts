@@ -5,6 +5,7 @@ import { Dirent, readdir as _readdir } from 'fs'
 import { promisify } from 'util'
 import { join } from 'path'
 import { devLog } from '../shared/ElectronUtilFunctions'
+import { serializeError } from 'serialize-error'
 
 const readdir = promisify(_readdir)
 const rimraf = promisify(_rimraf)
@@ -32,7 +33,7 @@ class ClearCacheHandler implements IPCInvokeHandler<'clear-cache'> {
         devLog(`Deleting ${file.isFile() ? 'file' : 'folder'}: ${join(tempPath, file.name)}`)
         await rimraf(join(tempPath, file.name))
       } catch (err) {
-        devLog(`Failed to delete ${file.isFile() ? 'file' : 'folder'}: `, err)
+        devLog(`Failed to delete ${file.isFile() ? 'file' : 'folder'}: `, serializeError(err))
         return
       }
     }

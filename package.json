@@ -53,6 +53,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "~6.5.5",
     "sanitize-filename": "^1.6.3",
+    "serialize-error": "^7.0.1",
     "tslib": "^2.0.0",
     "underscore": "^1.9.2",
     "zone.js": "~0.10.2"
@@ -71,6 +72,7 @@
     "@types/node": "^14.14.37",
     "@types/randombytes": "^2.0.0",
     "@types/rimraf": "^3.0.0",
+    "@types/serialize-error": "^4.0.1",
     "@types/underscore": "^1.9.4",
     "@typescript-eslint/eslint-plugin": "^2.19.2",
     "@typescript-eslint/parser": "^2.19.2",

@@ -14,6 +14,7 @@ import { serverURL } from '../../shared/Paths'
 import * as fs from 'fs'
 import { promisify } from 'util'
 import { devLog } from '../../shared/ElectronUtilFunctions'
+import { serializeError } from 'serialize-error'
 
 const unlink = promisify(fs.unlink)
 
@@ -100,7 +101,7 @@ export class GoogleAuth {
 
       authServer.on('authCode', async (authCode) => {
         this.token = (await this.oAuth2Client.getToken(authCode)).tokens
-        writeFile(TOKEN_PATH, this.token).catch(err => devLog('Got token, but failed to write it to TOKEN_PATH:', err))
+        writeFile(TOKEN_PATH, this.token).catch(err => devLog('Got token, but failed to write it to TOKEN_PATH:', serializeError(err)))
 
         this.authenticateWithToken()
 
@@ -134,7 +135,7 @@ export class GoogleAuth {
           'get',
           serverURL + `/api/data/client`, null, (err, response) => {
             if (err) {
-              devLog('Could not authenticate because client info could not be retrieved from the server:', err)
+              devLog('Could not authenticate because client info could not be retrieved from the server:', serializeError(err))
               resolve(false)
             } else {
               this.oAuth2Client = new google.auth.OAuth2(response.body.CLIENT_ID, response.body.CLIENT_SECRET, REDIRECT_URI)
@@ -180,7 +181,7 @@ export class GoogleAuth {
     try {
       await unlink(TOKEN_PATH)
     } catch (err) {
-      devLog('Failed to delete token:', err)
+      devLog('Failed to delete token:', serializeError(err))
       return
     }
   }

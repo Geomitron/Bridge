@@ -12,6 +12,7 @@ import Bottleneck from 'bottleneck'
 import { promisify } from 'util'
 import { join } from 'path'
 import { tempPath } from '../../shared/Paths'
+import { serializeError } from 'serialize-error'
 const drive = google.drive('v3')
 const limiter = new Bottleneck({
   minTime: 200 // Wait 200 ms between API requests
@@ -120,7 +121,7 @@ class APIFileDownloader {
           if (this.wasCanceled) { return }
           this.startDownloadStream()
         } else {
-          devLog(err)
+          devLog(serializeError(err))
           if (err?.code && err?.response?.statusText) {
             this.failDownload(downloadErrors.responseError(`${err.code} (${err.response.statusText})`))
           } else {
