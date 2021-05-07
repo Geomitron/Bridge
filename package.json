@@ -55,7 +55,7 @@
     "sanitize-filename": "^1.6.3",
     "serialize-error": "^7.0.1",
     "tslib": "^2.0.0",
-    "underscore": "^1.9.2",
+    "underscore": "^1.12.1",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {
