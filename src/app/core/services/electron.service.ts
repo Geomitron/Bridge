@@ -5,6 +5,8 @@ import { Injectable } from '@angular/core'
 import * as electron from 'electron'
 import { IPCInvokeEvents, IPCEmitEvents } from '../../../electron/shared/IPCHandler'
 
+const { app, getCurrentWindow, dialog, session } = window.require('@electron/remote')
+
 @Injectable({
   providedIn: 'root'
 })
@@ -23,7 +25,7 @@ export class ElectronService {
   }
 
   get currentWindow() {
-    return this.electron.remote.getCurrentWindow()
+    return getCurrentWindow()
   }
 
   /**
@@ -57,7 +59,7 @@ export class ElectronService {
   }
 
   quit() {
-    this.electron.remote.app.exit()
+    app.exit()
   }
 
   openFolder(filepath: string) {
@@ -69,10 +71,10 @@ export class ElectronService {
   }
 
   showOpenDialog(options: Electron.OpenDialogOptions) {
-    return this.electron.remote.dialog.showOpenDialog(this.currentWindow, options)
+    return dialog.showOpenDialog(this.currentWindow, options)
   }
 
   get defaultSession() {
-    return this.electron.remote.session.defaultSession
+    return session.defaultSession
   }
 }
