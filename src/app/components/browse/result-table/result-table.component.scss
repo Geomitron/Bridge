@@ -17,4 +17,9 @@
   thead>tr:first-child>th:last-child {
     border-radius: 0px;
   }
+  th {
+    position: sticky;
+    top: 0;
+    z-index:1;
+  }
 }

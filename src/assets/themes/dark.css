@@ -102,6 +102,9 @@ html,
 .ui.menu {
   background-color: var(--dk-08dp) !important;
 }
+.ui #resultTable th {
+  background: rgb(61,61,61) !important;
+}
 
 /* #region Buttons */
 
