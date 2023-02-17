@@ -50,7 +50,6 @@
     "needle": "^2.6.0",
     "node-7z": "^2.0.5",
     "node-unrar-js": "^0.8.1",
-    "path-browserify": "^1.0.1",
     "randombytes": "^2.1.0",
     "rimraf": "^3.0.2",
     "rxjs": "~6.5.5",

@@ -18,8 +18,5 @@
       "dom"
     ],
     "module": "commonjs",
-  },
-  "paths": {
-    "path": ["./node_modules/path-browserify"]
-  },
+  }
 }

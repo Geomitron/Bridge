@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core'
 import * as electron from 'electron'
 import { IPCInvokeEvents, IPCEmitEvents } from '../../../electron/shared/IPCHandler'
 
-import { app, getCurrentWindow, dialog, session } from '@electron/remote'
+const { app, getCurrentWindow, dialog, session } = window.require('@electron/remote')
 
 @Injectable({
   providedIn: 'root'

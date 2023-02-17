@@ -4,7 +4,7 @@ import * as windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
 require('electron-unhandled')({ showDialog: true })
-require('@electron/remote/main').initialize()
+
 
 // IPC Handlers
 import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
@@ -14,7 +14,10 @@ import { dataPath } from './shared/Paths'
 export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
 const isDevBuild = args.some(val => val == '--dev')
+const remote = require('@electron/remote/main')
 
+
+remote.initialize()
 restrictToSingleInstance()
 handleOSXWindowClosed()
 app.on('ready', () => {
@@ -97,7 +100,7 @@ function createBridgeWindow() {
   })
 
   // enable the remote webcontents
-  require("@electron/remote/main").enable(mainWindow.webContents)
+  remote.enable(mainWindow.webContents)
 }
 
 /**
