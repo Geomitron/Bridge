@@ -43,6 +43,7 @@
     "electron-updater": "^4.3.1",
     "electron-window-state": "^5.0.3",
     "fomantic-ui": "^2.8.3",
+    "google-auth-library": "^8.7.0",
     "googleapis": "^59.0.0",
     "jquery": "^3.5.1",
     "jsonfile": "^6.0.1",
