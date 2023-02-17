@@ -4,6 +4,7 @@ import * as windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
 require('electron-unhandled')({ showDialog: true })
+require('@electron/remote/main').initialize()
 
 // IPC Handlers
 import { getIPCInvokeHandlers, getIPCEmitHandlers, IPCEmitEvents } from './shared/IPCHandler'
@@ -94,6 +95,9 @@ function createBridgeWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null // Dereference mainWindow when the window is closed
   })
+
+  // enable the remote webcontents
+  require("@electron/remote/main").enable(mainWindow.webContents)
 }
 
 /**
@@ -111,7 +115,6 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
       nodeIntegration: true,
       allowRunningInsecureContent: (isDevBuild) ? true : false,
       textAreasAreResizable: false,
-      enableRemoteModule: true,
       contextIsolation: false
     },
     simpleFullscreen: true,
