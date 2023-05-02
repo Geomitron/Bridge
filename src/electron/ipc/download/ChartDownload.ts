@@ -145,7 +145,7 @@ export class ChartDownload {
     for (let i = 0; i < this.files.length; i++) {
       let wasCanceled = false
       this.cancelFn = () => { wasCanceled = true }
-      const downloader = await getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
+      const downloader = getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
       if (wasCanceled) { return }
       this.cancelFn = () => downloader.cancelDownload()
 

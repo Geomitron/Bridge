@@ -25,25 +25,6 @@
       <label>Download video backgrounds</label>
     </div>
   </div>
-  <div *ngIf="loginAvailable" class="field">
-    <label>Google rate limit delay</label>
-    <div id="rateLimitInput" class="ui right labeled input">
-      <input type="number" [value]="settingsService.rateLimitDelay" (input)="changeRateLimit($event)">
-      <div class="ui basic label">
-        sec
-      </div>
-    </div>
-  </div>
-  <div *ngIf="loginAvailable" class="field">
-    <div class="ui button" data-tooltip="Removes rate limit delay" data-position="right center" (click)="googleLogin()">
-      <i class="google icon"></i>Sign in with Google
-    </div>
-  </div>
-  <div *ngIf="!loginAvailable" class="field">
-    <div class="ui button" (click)="googleLogout()">
-      <i class="google icon"></i>Sign out
-    </div>
-  </div>
 </div>
 <div *ngIf="settingsService.rateLimitDelay < 30" class="ui warning message">
   <i class="exclamation circle icon"></i>

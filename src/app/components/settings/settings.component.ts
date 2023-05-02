@@ -14,7 +14,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
   cacheSize = 'Calculating...'
   updateAvailable = false
-  loginAvailable = true
   loginClicked = false
   downloadUpdateText = 'Update available'
   retryUpdateText = 'Failed to check for update'
@@ -53,10 +52,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
       this.updateAvailable = isAvailable
       this.ref.detectChanges()
     })
-    this.electronService.invoke('get-auth-status', undefined).then(isAuthenticated => {
-      this.loginAvailable = !isAuthenticated
-      this.ref.detectChanges()
-    })
 
     const cacheSize = await this.settingsService.getCacheSize()
     this.cacheSize = Math.round(cacheSize / 1000000) + ' MB'
@@ -93,19 +88,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
     if (result.canceled == false) {
       this.settingsService.libraryDirectory = result.filePaths[0]
     }
-  }
-
-  async googleLogin() {
-    if (this.loginClicked) { return }
-    this.loginClicked = true
-    const isAuthenticated = await this.electronService.invoke('google-login', undefined)
-    this.loginAvailable = !isAuthenticated
-    this.loginClicked = false
-  }
-
-  async googleLogout() {
-    this.loginAvailable = true
-    await this.electronService.invoke('google-logout', undefined)
   }
 
   openLibraryDirectory() {

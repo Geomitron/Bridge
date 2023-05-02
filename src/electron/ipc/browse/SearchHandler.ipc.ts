@@ -1,6 +1,5 @@
 import { IPCInvokeHandler } from '../../shared/IPCHandler'
-import { SongSearch, SongResult } from '../../shared/interfaces/search.interface'
-import * as needle from 'needle'
+import { SongResult, SongSearch } from '../../shared/interfaces/search.interface'
 import { serverURL } from '../../shared/Paths'
 
 /**
@@ -12,23 +11,16 @@ class SearchHandler implements IPCInvokeHandler<'song-search'> {
   /**
    * @returns the top 50 songs that match `search`.
    */
-  async handler(search: SongSearch) {
-    return new Promise<SongResult[]>((resolve, reject) => {
-      needle.request(
-        'get',
-        serverURL + `/api/search`, search, (err, response) => {
-          if (err) {
-            reject(err.message)
-          } else {
-            if (response.body.errors) {
-              console.log(response.body)
-              resolve([])
-            } else {
-              resolve(response.body)
-            }
-          }
-        })
+  async handler(search: SongSearch): Promise<SongResult[]> {
+    const response = await fetch(`https://${serverURL}/api/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(search)
     })
+
+    return await response.json()
   }
 }
 

@@ -6,7 +6,6 @@ import { Readable } from 'stream'
 // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
 import { googleTimer } from './GoogleTimer'
 import { DownloadError } from './ChartDownload'
-import { googleAuth } from '../google/GoogleAuth'
 import { google } from 'googleapis'
 import Bottleneck from 'bottleneck'
 import { promisify } from 'util'
@@ -49,12 +48,8 @@ const downloadErrors = {
  * @param url The download link.
  * @param fullPath The full path to where this file should be stored (including the filename).
  */
-export async function getDownloader(url: string, fullPath: string): Promise<FileDownloader> {
-  if (await googleAuth.attemptToAuthenticate()) {
-    return new APIFileDownloader(url, fullPath)
-  } else {
-    return new SlowFileDownloader(url, fullPath)
-  }
+export function getDownloader(url: string, fullPath: string): FileDownloader {
+  return new SlowFileDownloader(url, fullPath)
 }
 
 /**
