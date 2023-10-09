@@ -54,6 +54,6 @@ $ npm install && npm start
 
 ### Socials
 
-To inquire about the project and make suggestions, please join the [Discord](https://discord.gg/cqaUXGm)
+To discuss the project and make suggestions, please join the [Discord](https://discord.gg/cqaUXGm)
 
-To see which features in currently in the works, please take a look at the [Trello](https://trello.com/b/lz8MvNhF/bridge)
+To see which features are currently in the works, please take a look at the [Trello](https://trello.com/b/lz8MvNhF/bridge)
