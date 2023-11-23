@@ -3,16 +3,13 @@ import { join, parse } from 'path'
 import { FileExtractor } from './FileExtractor'
 import { sanitizeFilename, interpolate } from '../../shared/UtilFunctions'
 import { emitIPCEvent } from '../../main'
-import { promisify } from 'util'
 import { ProgressType, NewDownload } from 'src/electron/shared/interfaces/download.interface'
 import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
 import { FileTransfer } from './FileTransfer'
-import * as _rimraf from 'rimraf'
+import { rimraf } from 'rimraf'
 import { FilesystemChecker } from './FilesystemChecker'
 import { getSettings } from '../SettingsHandler.ipc'
 import { hasVideoExtension } from '../../shared/ElectronUtilFunctions'
-
-const rimraf = promisify(_rimraf)
 
 type EventCallback = {
   /** Note: this will not be the last event if `retry()` is called. */

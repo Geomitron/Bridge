@@ -3,11 +3,10 @@ import { promisify } from 'util'
 import { getSettings } from '../SettingsHandler.ipc'
 import * as mv from 'mv'
 import { join } from 'path'
-import * as _rimraf from 'rimraf'
+import { rimraf } from 'rimraf'
 import { DownloadError } from './ChartDownload'
 
 const readdir = promisify(_readdir)
-const rimraf = promisify(_rimraf)
 
 type EventCallback = {
   'start': (destinationFolder: string) => void
