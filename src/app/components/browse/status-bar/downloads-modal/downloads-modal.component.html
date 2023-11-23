@@ -1,30 +1,28 @@
 <div *ngIf="downloads.length > 0" class="ui segments">
-  <div *ngFor="let download of downloads; trackBy:trackByVersionID" class="ui segment" [style.background-color]="getBackgroundColor(download)">
+	<div *ngFor="let download of downloads; trackBy: trackByVersionID" class="ui segment" [style.background-color]="getBackgroundColor(download)">
+		<h3 id="downloadTitle">
+			<span style="flex-grow: 1">{{ download.title }}</span>
+			<i class="inside right close icon" (click)="cancelDownload(download.versionID)"></i>
+		</h3>
 
-    <h3 id="downloadTitle">
-      <span style="flex-grow: 1;">{{download.title}}</span>
-      <i class="inside right close icon" (click)="cancelDownload(download.versionID)"></i>
-    </h3>
+		<div id="downloadText">
+			<span style="flex-grow: 1">{{ download.header }}</span>
+			<span *ngIf="!download.isLink" class="description">{{ download.description }}</span>
+			<span *ngIf="download.isLink" class="description">
+				<a (click)="openFolder(download.description)">{{ download.description }}</a>
+			</span>
+		</div>
 
-    <div id="downloadText">
-      <span style="flex-grow: 1;">{{download.header}}</span>
-      <span *ngIf="!download.isLink" class="description">{{download.description}}</span>
-      <span *ngIf="download.isLink" class="description">
-        <a (click)="openFolder(download.description)">{{download.description}}</a>
-      </span>
-    </div>
-
-    <div id="downloadProgressDiv">
-      <div id="downloadProgressBar" appProgressBar [percent]="download.percent" class="ui small progress">
-        <div class="bar" [style.height]="download.type == 'error' ? '-webkit-fill-available' : undefined">
-          <div class="progress"></div>
-        </div>
-      </div>
-      <button *ngIf="download.type == 'error'" class="ui right attached labeled compact icon button"
-        (click)="retryDownload(download.versionID)">
-        <i class="redo icon"></i>
-        Retry
-      </button>
-    </div>
-  </div>
+		<div id="downloadProgressDiv">
+			<div id="downloadProgressBar" appProgressBar [percent]="download.percent" class="ui small progress">
+				<div class="bar" [style.height]="download.type === 'error' ? '-webkit-fill-available' : undefined">
+					<div class="progress"></div>
+				</div>
+			</div>
+			<button *ngIf="download.type === 'error'" class="ui right attached labeled compact icon button" (click)="retryDownload(download.versionID)">
+				<i class="redo icon"></i>
+				Retry
+			</button>
+		</div>
+	</div>
 </div>

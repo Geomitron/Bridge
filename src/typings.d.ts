@@ -2,14 +2,13 @@
 /* SystemJS module definition */
 declare let nodeModule: NodeModule
 interface NodeModule {
-  id: string
+	id: string
 }
 
-// @ts-ignore
 // declare let window: Window
 declare let $: any
 interface Window {
-  process: any
-  require: any
-  jQuery: any
+	process: any
+	require: any
+	jQuery: any
 }

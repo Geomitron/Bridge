@@ -1,42 +1,44 @@
 <div id="bottomMenu" class="ui bottom borderless menu">
-  <div *ngIf="resultCount > 0" class="item">{{resultCount}}{{allResultsVisible ? '' : '+'}} Result{{resultCount == 1 ? '' : 's'}}</div>
-  <div class="item">
-    <button *ngIf="selectedResults.length > 1" (click)="downloadSelected()" class="ui positive button">
-      Download {{selectedResults.length}} Results
-    </button>
-  </div>
-  <a *ngIf="downloading" class="item right" (click)="showDownloads()">
-    <div #progressBar appProgressBar [percent]="percent" class="ui progress" [style.background-color]="error ? 'indianred' : undefined">
-      <div class="bar">
-        <div class="progress"></div>
-      </div>
-    </div>
-  </a>
+	<div *ngIf="resultCount > 0" class="item">{{ resultCount }}{{ allResultsVisible ? '' : '+' }} Result{{ resultCount === 1 ? '' : 's' }}</div>
+	<div class="item">
+		<button *ngIf="selectedResults.length > 1" (click)="downloadSelected()" class="ui positive button">
+			Download {{ selectedResults.length }} Results
+		</button>
+	</div>
+	<a *ngIf="downloading" class="item right" (click)="showDownloads()">
+		<div #progressBar appProgressBar [percent]="percent" class="ui progress" [style.background-color]="error ? 'indianred' : undefined">
+			<div class="bar">
+				<div class="progress"></div>
+			</div>
+		</div>
+	</a>
 
-  <div id="selectedModal" class="ui modal">
-    <div class="header">Some selected songs have more than one chart!</div>
-    <div class="scrolling content">
-      <div class="ui segments">
-        <div class="ui segment" *ngFor="let chartGroup of chartGroups">
-          <p *ngFor="let chart of chartGroup">{{chart.chartName}} <b>[{{chart.charters}}]</b></p>
-        </div>
-      </div>
-    </div>
-    <div class="actions">
-      <div class="ui approve button" (click)="downloadAllCharts()">Download all charts for each song</div>
-      <div class="ui cancel button" (click)="deselectSongsWithMultipleCharts()">Deselect these songs</div>
-      <div class="ui cancel button">Cancel</div>
-    </div>
-  </div>
+	<div id="selectedModal" class="ui modal">
+		<div class="header">Some selected songs have more than one chart!</div>
+		<div class="scrolling content">
+			<div class="ui segments">
+				<div class="ui segment" *ngFor="let chartGroup of chartGroups">
+					<p *ngFor="let chart of chartGroup">
+						{{ chart.chartName }} <b>[{{ chart.charters }}]</b>
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="actions">
+			<div class="ui approve button" (click)="downloadAllCharts()">Download all charts for each song</div>
+			<div class="ui cancel button" (click)="deselectSongsWithMultipleCharts()">Deselect these songs</div>
+			<div class="ui cancel button">Cancel</div>
+		</div>
+	</div>
 
-  <div id="downloadsModal" class="ui modal">
-    <i class="inside close icon"></i>
-    <div class="header">
-      <span>Downloads</span>
-      <div *ngIf="multipleCompleted" class="ui positive compact button" (click)="clearCompleted()">Clear completed</div>
-    </div>
-    <div class="scrolling content">
-      <app-downloads-modal></app-downloads-modal>
-    </div>
-  </div>
+	<div id="downloadsModal" class="ui modal">
+		<i class="inside close icon"></i>
+		<div class="header">
+			<span>Downloads</span>
+			<div *ngIf="multipleCompleted" class="ui positive compact button" (click)="clearCompleted()">Clear completed</div>
+		</div>
+		<div class="scrolling content">
+			<app-downloads-modal></app-downloads-modal>
+		</div>
+	</div>
 </div>

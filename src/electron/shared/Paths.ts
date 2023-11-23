@@ -1,5 +1,5 @@
-import { join } from 'path'
 import { app } from 'electron'
+import { join } from 'path'
 
 // Data paths
 export const dataPath = join(app.getPath('userData'), 'bridge_data')

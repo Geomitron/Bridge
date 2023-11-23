@@ -1,9 +1,12 @@
 <td>
-  <div #checkbox class="ui checkbox" (click)="$event.stopPropagation()">
-    <input type="checkbox">
-  </div>
+	<div #checkbox class="ui checkbox" (click)="$event.stopPropagation()">
+		<input type="checkbox" />
+	</div>
 </td>
-<td><span id="chartCount" *ngIf="result.chartCount > 1">{{result.chartCount}}</span>{{result.name}}</td>
-<td>{{result.artist}}</td>
-<td>{{result.album || 'Various'}}</td>
-<td>{{result.genre || 'Various'}}</td>
+<td>
+	<span id="chartCount" *ngIf="result.chartCount > 1">{{ result.chartCount }}</span
+	>{{ result.name }}
+</td>
+<td>{{ result.artist }}</td>
+<td>{{ result.album || 'Various' }}</td>
+<td>{{ result.genre || 'Various' }}</td>

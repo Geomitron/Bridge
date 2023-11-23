@@ -55,6 +55,10 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.0.3",
     "@angular-eslint/builder": "17.1.0",
+    "@angular-eslint/eslint-plugin": "^17.1.0",
+    "@angular-eslint/eslint-plugin-template": "^17.1.0",
+    "@angular-eslint/schematics": "^17.1.0",
+    "@angular-eslint/template-parser": "^17.1.0",
     "@angular/cli": "^17.0.3",
     "@angular/compiler-cli": "^17.0.4",
     "@angular/language-service": "^17.0.4",
@@ -65,10 +69,22 @@
     "@types/randombytes": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
+    "concurrently": "^8.2.2",
     "electron": "^27.1.2",
     "electron-builder": "^23.6.0",
     "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jsdoc": "^46.9.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
+    "eslint-plugin-prettier": "^5.0.1",
     "nodemon": "^3.0.1",
+    "postcss": "^8.4.31",
+    "prettier": "^3.1.0",
+    "prettier-eslint": "^16.1.2",
+    "source-map-support": "^0.5.21",
+    "tailwindcss": "^3.3.5",
+    "tsx": "^4.4.0",
     "typescript": "^5.2.2"
   }
 }

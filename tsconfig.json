@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": "./",
     "noImplicitAny": true,
-    "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "declaration": false,
     "downlevelIteration": true,
@@ -19,5 +18,8 @@
     ],
     "module": "commonjs",
     "useDefineForClassFields": false
+  },
+	"angularCompilerOptions": {
+    "strictTemplates": true
   }
 }

@@ -1,235 +1,240 @@
 <div id="searchMenu" class="ui bottom attached borderless menu">
-  <div class="item">
-    <div class="ui icon input" [class.loading]="isLoading()">
-      <input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)">
-      <i #searchIcon id="searchIcon" class="link icon" [ngClass]="isError ? 'red exclamation triangle' : 'search'"
-        data-content="Failed to connect to the Bridge database" data-position="bottom right"></i>
-    </div>
-  </div>
+	<div class="item">
+		<div class="ui icon input" [class.loading]="isLoading()">
+			<input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)" />
+			<i
+				#searchIcon
+				id="searchIcon"
+				class="link icon"
+				[ngClass]="isError ? 'red exclamation triangle' : 'search'"
+				data-content="Failed to connect to the Bridge database"
+				data-position="bottom right"></i>
+		</div>
+	</div>
 
-  <div id="quantityDropdownItem" [class.hidden]="!showAdvanced" class="item">
-    <div #quantityDropdown class="ui compact selection dropdown">
-      <input name="quantityMatch" type="hidden">
-      <i class="dropdown icon"></i>
-      <div class="text"><b>all</b> words match</div>
-      <div class="menu">
-        <div id="dropdownItem" class="active selected item" data-value="all"><b>all</b> words match</div>
-        <div id="dropdownItem" class="item" data-value="any"><b>any</b> words match</div>
-      </div>
-    </div>
-  </div>
+	<div id="quantityDropdownItem" [class.hidden]="!showAdvanced" class="item">
+		<div #quantityDropdown class="ui compact selection dropdown">
+			<input name="quantityMatch" type="hidden" />
+			<i class="dropdown icon"></i>
+			<div class="text"><b>all</b> words match</div>
+			<div class="menu">
+				<div id="dropdownItem" class="active selected item" data-value="all"><b>all</b> words match</div>
+				<div id="dropdownItem" class="item" data-value="any"><b>any</b> words match</div>
+			</div>
+		</div>
+	</div>
 
-  <div id="similarityDropdownItem" [class.hidden]="!showAdvanced" class="item">
-    <div #similarityDropdown class="ui compact selection dropdown">
-      <input name="similarityMatch" type="hidden" value="similar">
-      <i class="dropdown icon"></i>
-      <div class="text"><b>similar</b> words match</div>
-      <div class="menu">
-        <div id="dropdownItem" class="active selected item" data-value="similar"><b>similar</b> words match</div>
-        <div id="dropdownItem" class="item" data-value="exact"><b>exact</b> words match</div>
-      </div>
-    </div>
-  </div>
+	<div id="similarityDropdownItem" [class.hidden]="!showAdvanced" class="item">
+		<div #similarityDropdown class="ui compact selection dropdown">
+			<input name="similarityMatch" type="hidden" value="similar" />
+			<i class="dropdown icon"></i>
+			<div class="text"><b>similar</b> words match</div>
+			<div class="menu">
+				<div id="dropdownItem" class="active selected item" data-value="similar"><b>similar</b> words match</div>
+				<div id="dropdownItem" class="item" data-value="exact"><b>exact</b> words match</div>
+			</div>
+		</div>
+	</div>
 
-  <div class="item right">
-    <button class="mini ui right labeled icon button" (click)="onAdvancedSearchClick()">
-      Advanced Search
-      <i class="angle double icon" [ngClass]="showAdvanced ? 'up' : 'down'"></i>
-    </button>
-  </div>
+	<div class="item right">
+		<button class="mini ui right labeled icon button" (click)="onAdvancedSearchClick()">
+			Advanced Search
+			<i class="angle double icon" [ngClass]="showAdvanced ? 'up' : 'down'"></i>
+		</button>
+	</div>
 </div>
 
 <div id="advancedSearchForm" [class.collapsed]="!showAdvanced" class="ui horizontal segments">
-  <div class="ui secondary segment">
-    <div class="grouped fields">
-      <h5 class="ui dividing header">Search for</h5>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="name" [(ngModel)]="searchSettings.fields.name">
-          <label>Name</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="artist" [(ngModel)]="searchSettings.fields.artist">
-          <label>Artist</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="album" [(ngModel)]="searchSettings.fields.album">
-          <label>Album</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="genre" [(ngModel)]="searchSettings.fields.genre">
-          <label>Genre</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="year" [(ngModel)]="searchSettings.fields.year">
-          <label>Year</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="charter" [(ngModel)]="searchSettings.fields.charter">
-          <label>Charter</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="tag" [(ngModel)]="searchSettings.fields.tag">
-          <label>Tag</label>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="ui secondary segment">
-    <div class="grouped fields">
-      <h5 class="ui dividing header">Must include</h5>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="sections" [(ngModel)]="searchSettings.tags.sections">
-          <label>Sections</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="starpower" [(ngModel)]="searchSettings.tags['star power']">
-          <label>Star Power</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="forcing" [(ngModel)]="searchSettings.tags.forcing">
-          <label>Forcing</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="taps" [(ngModel)]="searchSettings.tags.taps">
-          <label>Taps</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="lyrics" [(ngModel)]="searchSettings.tags.lyrics">
-          <label>Lyrics</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="videobackground" [(ngModel)]="searchSettings.tags.video">
-          <label>Video Background</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="stems" [(ngModel)]="searchSettings.tags.stems">
-          <label>Audio Stems</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="solosections" [(ngModel)]="searchSettings.tags['solo sections']">
-          <label>Solo Sections</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="opennotes" [(ngModel)]="searchSettings.tags['open notes']">
-          <label>Open Notes</label>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="ui secondary segment">
-    <div class="grouped fields">
-      <h5 class="ui dividing header">Instruments</h5>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="guitar" [(ngModel)]="searchSettings.instruments.guitar">
-          <label>Guitar</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="bass" [(ngModel)]="searchSettings.instruments.bass">
-          <label>Bass</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="rhythm" [(ngModel)]="searchSettings.instruments.rhythm">
-          <label>Rhythm</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="keys" [(ngModel)]="searchSettings.instruments.keys">
-          <label>Keys</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="drums" [(ngModel)]="searchSettings.instruments.drums">
-          <label>Drums</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="guitarghl" [(ngModel)]="searchSettings.instruments.guitarghl">
-          <label>GHL Guitar</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="bassghl" [(ngModel)]="searchSettings.instruments.bassghl">
-          <label>GHL Bass</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="vocals" [(ngModel)]="searchSettings.instruments.vocals">
-          <label>Vocals</label>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="ui secondary segment">
-    <h5 class="ui dividing header">Charted difficulties</h5>
-    <div class="grouped fields">
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="expert" [(ngModel)]="searchSettings.difficulties.expert">
-          <label>Expert</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="hard" [(ngModel)]="searchSettings.difficulties.hard">
-          <label>Hard</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="medium" [(ngModel)]="searchSettings.difficulties.medium">
-          <label>Medium</label>
-        </div>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" name="easy" [(ngModel)]="searchSettings.difficulties.easy">
-          <label>Easy</label>
-        </div>
-      </div>
-      <h5 class="ui dividing header">Difficulty range</h5>
-      <div class="field">
-        <div #diffSlider class="ui labeled ticked inverted range slider" id="diffSlider"></div>
-      </div>
-    </div>
-  </div>
+	<div class="ui secondary segment">
+		<div class="grouped fields">
+			<h5 class="ui dividing header">Search for</h5>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="name" [(ngModel)]="searchSettings.fields.name" />
+					<label>Name</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="artist" [(ngModel)]="searchSettings.fields.artist" />
+					<label>Artist</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="album" [(ngModel)]="searchSettings.fields.album" />
+					<label>Album</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="genre" [(ngModel)]="searchSettings.fields.genre" />
+					<label>Genre</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="year" [(ngModel)]="searchSettings.fields.year" />
+					<label>Year</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="charter" [(ngModel)]="searchSettings.fields.charter" />
+					<label>Charter</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="tag" [(ngModel)]="searchSettings.fields.tag" />
+					<label>Tag</label>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="ui secondary segment">
+		<div class="grouped fields">
+			<h5 class="ui dividing header">Must include</h5>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="sections" [(ngModel)]="searchSettings.tags.sections" />
+					<label>Sections</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="starpower" [(ngModel)]="searchSettings.tags['star power']" />
+					<label>Star Power</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="forcing" [(ngModel)]="searchSettings.tags.forcing" />
+					<label>Forcing</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="taps" [(ngModel)]="searchSettings.tags.taps" />
+					<label>Taps</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="lyrics" [(ngModel)]="searchSettings.tags.lyrics" />
+					<label>Lyrics</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="videobackground" [(ngModel)]="searchSettings.tags.video" />
+					<label>Video Background</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="stems" [(ngModel)]="searchSettings.tags.stems" />
+					<label>Audio Stems</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="solosections" [(ngModel)]="searchSettings.tags['solo sections']" />
+					<label>Solo Sections</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="opennotes" [(ngModel)]="searchSettings.tags['open notes']" />
+					<label>Open Notes</label>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="ui secondary segment">
+		<div class="grouped fields">
+			<h5 class="ui dividing header">Instruments</h5>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="guitar" [(ngModel)]="searchSettings.instruments.guitar" />
+					<label>Guitar</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="bass" [(ngModel)]="searchSettings.instruments.bass" />
+					<label>Bass</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="rhythm" [(ngModel)]="searchSettings.instruments.rhythm" />
+					<label>Rhythm</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="keys" [(ngModel)]="searchSettings.instruments.keys" />
+					<label>Keys</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="drums" [(ngModel)]="searchSettings.instruments.drums" />
+					<label>Drums</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="guitarghl" [(ngModel)]="searchSettings.instruments.guitarghl" />
+					<label>GHL Guitar</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="bassghl" [(ngModel)]="searchSettings.instruments.bassghl" />
+					<label>GHL Bass</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="vocals" [(ngModel)]="searchSettings.instruments.vocals" />
+					<label>Vocals</label>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="ui secondary segment">
+		<h5 class="ui dividing header">Charted difficulties</h5>
+		<div class="grouped fields">
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="expert" [(ngModel)]="searchSettings.difficulties.expert" />
+					<label>Expert</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="hard" [(ngModel)]="searchSettings.difficulties.hard" />
+					<label>Hard</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="medium" [(ngModel)]="searchSettings.difficulties.medium" />
+					<label>Medium</label>
+				</div>
+			</div>
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="easy" [(ngModel)]="searchSettings.difficulties.easy" />
+					<label>Easy</label>
+				</div>
+			</div>
+			<h5 class="ui dividing header">Difficulty range</h5>
+			<div class="field">
+				<div #diffSlider class="ui labeled ticked inverted range slider" id="diffSlider"></div>
+			</div>
+		</div>
+	</div>
 </div>
