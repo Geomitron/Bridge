@@ -26,6 +26,7 @@
     "release": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build"
   },
   "dependencies": {
+    "7zip-bin": "^5.0.3",
     "@angular/animations": "^15.2.10",
     "@angular/common": "^15.2.10",
     "@angular/compiler": "^15.2.10",
@@ -35,7 +36,6 @@
     "@angular/platform-browser-dynamic": "^15.2.10",
     "@angular/router": "^15.2.10",
     "@electron/remote": "^2.0.9",
-    "7zip-bin": "^5.0.3",
     "bottleneck": "^2.19.5",
     "cli-color": "^2.0.0",
     "comparators": "^3.0.2",
@@ -85,7 +85,7 @@
     "nodemon": "^2.0.2",
     "npm-run-all": "^4.1.5",
     "ts-node": "~7.0.0",
-    "typescript": "^4.8.4",
+    "typescript": "^5.3.2",
     "wait-on": "^4.0.0"
   }
 }
