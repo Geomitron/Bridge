@@ -1,0 +1,11 @@
+{
+	"recommendations": [
+		"dbaeumer.vscode-eslint",
+		"mike-co.import-sorter",
+		"sibiraj-s.vscode-scss-formatter",
+		"hbenl.vscode-mocha-test-adapter",
+		"angular.ng-template",
+		"bradlc.vscode-tailwindcss",
+		"csstools.postcss"
+	]
+}

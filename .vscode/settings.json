@@ -1,0 +1,84 @@
+{
+	"files.eol": "\r\n",
+	"typescript.tsdk": "./node_modules/typescript/lib",
+	"files.encoding": "utf8",
+	"editor.rulers": [
+		140
+	],
+	"editor.tabCompletion": "on",
+	"editor.detectIndentation": false,
+	"editor.insertSpaces": false,
+	"editor.tabSize": 2,
+	"files.trimTrailingWhitespace": true,
+	"editor.trimAutoWhitespace": true,
+	"files.insertFinalNewline": true,
+	"typescript.preferences.quoteStyle": "single",
+	"files.exclude": {
+		"**/.git": true
+	},
+	"[markdown]": {
+		"editor.wordWrap": "on",
+		"editor.trimAutoWhitespace": false,
+		"files.trimTrailingWhitespace": false
+	},
+	"[html]": {
+		"editor.defaultFormatter": "vscode.html-language-features",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": true
+		}
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "vscode.typescript-language-features",
+		"editor.codeActionsOnSave": [ "source.fixAll.eslint" ],
+		"editor.formatOnSave": true
+	},
+	"[css]": {
+		"editor.defaultFormatter": "sibiraj-s.vscode-scss-formatter",
+		"editor.formatOnSave": true
+	},
+	"[github-actions-workflow]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2,
+		"editor.autoIndent": "keep",
+		"diffEditor.ignoreTrimWhitespace": false,
+		"editor.quickSuggestions": {
+			"other": true,
+			"comments": false,
+			"strings": true
+		}
+	},
+	"importSorter.importStringConfiguration.maximumNumberOfImportExpressionsPerLine.type": "newLineEachExpressionAfterCountLimitExceptIfOnlyOne",
+	"importSorter.generalConfiguration.sortImportsInDirectory": false,
+	"importSorter.generalConfiguration.sortOnBeforeSave": true,
+	"importSorter.generalConfiguration.exclude": ["sandbox"],
+	"importSorter.importStringConfiguration.tabType": "tab",
+	"importSorter.importStringConfiguration.trailingComma": "multiLine",
+	"importSorter.importStringConfiguration.hasSemicolon": false,
+	"importSorter.sortConfiguration.removeUnusedImports": true,
+	"importSorter.importStringConfiguration.maximumNumberOfImportExpressionsPerLine.count": 250,
+	"importSorter.sortConfiguration.customOrderingRules.defaultOrderLevel": 30,
+	"importSorter.sortConfiguration.customOrderingRules.rules": [
+		{
+			"type": "importMember",
+			"regex": "^$",
+			"orderLevel": 10,
+			"disableSort": true
+		},
+		{
+			"regex": "^[@]",
+			"orderLevel": 20
+		},
+		{
+			"regex": "^[.]|src\\/",
+			"orderLevel": 40
+		}
+	],
+	"eslint.options": {
+		"extensions": [".ts", ".html"]
+	},
+	"files.associations": { "*.scss": "postcss" },
+	"eslint.validate": [
+		"typescript",
+		"html"
+	]
+}
