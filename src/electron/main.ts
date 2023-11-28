@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import * as windowStateKeeper from 'electron-window-state'
+import windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
 
@@ -9,12 +9,13 @@ import { updateChecker } from './ipc/UpdateHandler.ipc'
 import { getIPCEmitHandlers, getIPCInvokeHandlers, IPCEmitEvents } from './shared/IPCHandler'
 import { dataPath } from './shared/Paths'
 
-require('electron-unhandled')({ showDialog: true })
+import unhandled = require('electron-unhandled')
+unhandled({ showDialog: true })
 
 export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
 const isDevBuild = args.some(val => val == '--dev')
-const remote = require('@electron/remote/main')
+import remote = require('@electron/remote/main')
 
 
 remote.initialize()
@@ -66,7 +67,7 @@ function handleOSXWindowClosed() {
 /**
  * Launches and initializes Bridge's main window.
  */
-function createBridgeWindow() {
+async function createBridgeWindow() {
 
 	// Load window size and maximized/restored state from previous session
 	const windowState = windowStateKeeper({
@@ -89,7 +90,7 @@ function createBridgeWindow() {
 	getIPCEmitHandlers().map(handler => ipcMain.on(handler.event, (_event, ...args) => handler.handler(args[0])))
 
 	// Load angular app
-	mainWindow.loadURL(getLoadUrl())
+	await loadWindow()
 
 	if (isDevBuild) {
 		mainWindow.webContents.openDevTools()
@@ -115,10 +116,9 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 		frame: false,
 		title: 'Bridge',
 		webPreferences: {
-			nodeIntegration: true,
+			// preload:
 			allowRunningInsecureContent: (isDevBuild) ? true : false,
 			textAreasAreResizable: false,
-			contextIsolation: false,
 		},
 		simpleFullscreen: true,
 		fullscreenable: false,
@@ -130,6 +130,15 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 	}
 
 	return new BrowserWindow(options)
+}
+
+async function loadWindow(retries = 0) {
+	if (retries > 10) { throw new Error('Angular frontend did not load') }
+	try {
+		await mainWindow.loadURL(getLoadUrl())
+	} catch (err) {
+		await loadWindow(retries + 1)
+	}
 }
 
 /**

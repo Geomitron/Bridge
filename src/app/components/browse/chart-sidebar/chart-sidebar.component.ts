@@ -173,7 +173,7 @@ export class ChartSidebarComponent implements OnInit {
 	 * @returns a string describing the difficulty number in the selected version.
 	 */
 	private getDiffNumber(instrument: Instrument) {
-		const diffNumber: number = this.selectedVersion[`diff_${instrument}`]
+		const diffNumber: number = (this.selectedVersion as any)[`diff_${instrument}`]
 		return diffNumber == -1 || diffNumber == undefined ? 'Unknown' : String(diffNumber)
 	}
 

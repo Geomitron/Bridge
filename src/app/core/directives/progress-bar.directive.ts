@@ -1,11 +1,14 @@
 import { Directive, ElementRef, Input } from '@angular/core'
 
-import * as _ from 'underscore'
+import * as _ from 'lodash'
 
 @Directive({
 	selector: '[appProgressBar]',
 })
 export class ProgressBarDirective {
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private _$progressBar: any
 
 	progress: (percent: number) => void
 
@@ -23,5 +26,4 @@ export class ProgressBarDirective {
 		}
 		return this._$progressBar
 	}
-	private _$progressBar: any
 }

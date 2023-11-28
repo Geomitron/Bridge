@@ -7,9 +7,9 @@ import { ElectronService } from './electron.service'
 })
 export class AlbumArtService {
 
-	constructor(private electronService: ElectronService) { }
-
 	private imageCache: { [songID: number]: string } = {}
+
+	constructor(private electronService: ElectronService) { }
 
 	async getImage(songID: number): Promise<string | null> {
 		if (this.imageCache[songID] == undefined) {

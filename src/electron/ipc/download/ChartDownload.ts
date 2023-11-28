@@ -1,14 +1,13 @@
-import { join, parse } from 'path'
+import { parse } from 'path'
 import { rimraf } from 'rimraf'
 
 import { NewDownload, ProgressType } from 'src/electron/shared/interfaces/download.interface'
 import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
 import { emitIPCEvent } from '../../main'
 import { hasVideoExtension } from '../../shared/ElectronUtilFunctions'
-import { interpolate, sanitizeFilename } from '../../shared/UtilFunctions'
+import { sanitizeFilename } from '../../shared/UtilFunctions'
 import { getSettings } from '../SettingsHandler.ipc'
-import { FileDownloader, getDownloader } from './FileDownloader'
-import { FileExtractor } from './FileExtractor'
+// import { FileDownloader, getDownloader } from './FileDownloader'
 import { FilesystemChecker } from './FilesystemChecker'
 import { FileTransfer } from './FileTransfer'
 
@@ -143,23 +142,23 @@ export class ChartDownload {
 		for (let i = 0; i < this.files.length; i++) {
 			let wasCanceled = false
 			this.cancelFn = () => { wasCanceled = true }
-			const downloader = getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
+			// const downloader = getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
 			if (wasCanceled) { return }
-			this.cancelFn = () => downloader.cancelDownload()
+			// this.cancelFn = () => downloader.cancelDownload()
 
-			const downloadComplete = this.addDownloadEventListeners(downloader, i)
-			downloader.beginDownload()
-			await downloadComplete
+			// const downloadComplete = this.addDownloadEventListeners(downloader, i)
+			// downloader.beginDownload()
+			// await downloadComplete
 		}
 
 		// EXTRACT FILES
 		if (this.isArchive) {
-			const extractor = new FileExtractor(this.tempPath)
-			this.cancelFn = () => extractor.cancelExtract()
+			// const extractor = new FileExtractor(this.tempPath)
+			// this.cancelFn = () => extractor.cancelExtract()
 
-			const extractComplete = this.addExtractorEventListeners(extractor)
-			extractor.beginExtract()
-			await extractComplete
+			// const extractComplete = this.addExtractorEventListeners(extractor)
+			// extractor.beginExtract()
+			// await extractComplete
 		}
 
 		// TRANSFER FILES
@@ -196,68 +195,68 @@ export class ChartDownload {
 	 * Defines what happens in response to `FileDownloader` events.
 	 * @returns a `Promise` that resolves when the download finishes.
 	 */
-	private addDownloadEventListeners(downloader: FileDownloader, fileIndex: number) {
-		let downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
-		let downloadStartPoint = 0 // How far into the individual file progress portion the download progress starts
-		let fileProgress = 0
+	// private addDownloadEventListeners(downloader: FileDownloader, fileIndex: number) {
+	// 	let downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
+	// 	let downloadStartPoint = 0 // How far into the individual file progress portion the download progress starts
+	// 	let fileProgress = 0
 
-		downloader.on('waitProgress', (remainingSeconds: number, totalSeconds: number) => {
-			downloadStartPoint = this.individualFileProgressPortion / 2
-			this.percent =
-				this._allFilesProgress + interpolate(remainingSeconds, totalSeconds, 0, 0, this.individualFileProgressPortion / 2)
-			this.updateGUI(downloadHeader, `Waiting for Google rate limit... (${remainingSeconds}s)`, 'good')
-		})
+	// 	downloader.on('waitProgress', (remainingSeconds: number, totalSeconds: number) => {
+	// 		downloadStartPoint = this.individualFileProgressPortion / 2
+	// 		this.percent =
+	// 			this._allFilesProgress + interpolate(remainingSeconds, totalSeconds, 0, 0, this.individualFileProgressPortion / 2)
+	// 		this.updateGUI(downloadHeader, `Waiting for Google rate limit... (${remainingSeconds}s)`, 'good')
+	// 	})
 
-		downloader.on('requestSent', () => {
-			fileProgress = downloadStartPoint
-			this.percent = this._allFilesProgress + fileProgress
-			this.updateGUI(downloadHeader, 'Sending request...', 'good')
-		})
+	// 	downloader.on('requestSent', () => {
+	// 		fileProgress = downloadStartPoint
+	// 		this.percent = this._allFilesProgress + fileProgress
+	// 		this.updateGUI(downloadHeader, 'Sending request...', 'good')
+	// 	})
 
-		downloader.on('downloadProgress', (bytesDownloaded: number) => {
-			downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
-			const size = Number(this.files[fileIndex].size)
-			fileProgress = interpolate(bytesDownloaded, 0, size, downloadStartPoint, this.individualFileProgressPortion)
-			this.percent = this._allFilesProgress + fileProgress
-			this.updateGUI(downloadHeader, `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`, 'good')
-		})
+	// 	downloader.on('downloadProgress', (bytesDownloaded: number) => {
+	// 		downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
+	// 		const size = Number(this.files[fileIndex].size)
+	// 		fileProgress = interpolate(bytesDownloaded, 0, size, downloadStartPoint, this.individualFileProgressPortion)
+	// 		this.percent = this._allFilesProgress + fileProgress
+	// 		this.updateGUI(downloadHeader, `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`, 'good')
+	// 	})
 
-		downloader.on('error', this.handleError.bind(this))
+	// 	downloader.on('error', this.handleError.bind(this))
 
-		return new Promise<void>(resolve => {
-			downloader.on('complete', () => {
-				this._allFilesProgress += this.individualFileProgressPortion
-				resolve()
-			})
-		})
-	}
+	// 	return new Promise<void>(resolve => {
+	// 		downloader.on('complete', () => {
+	// 			this._allFilesProgress += this.individualFileProgressPortion
+	// 			resolve()
+	// 		})
+	// 	})
+	// }
 
 	/**
 	 * Defines what happens in response to `FileExtractor` events.
 	 * @returns a `Promise` that resolves when the extraction finishes.
 	 */
-	private addExtractorEventListeners(extractor: FileExtractor) {
-		let archive = ''
+	// private addExtractorEventListeners(extractor: FileExtractor) {
+	// 	let archive = ''
 
-		extractor.on('start', filename => {
-			archive = filename
-			this.updateGUI(`[${archive}]`, 'Extracting...', 'good')
-		})
+	// 	extractor.on('start', filename => {
+	// 		archive = filename
+	// 		this.updateGUI(`[${archive}]`, 'Extracting...', 'good')
+	// 	})
 
-		extractor.on('extractProgress', (percent, filecount) => {
-			this.percent = interpolate(percent, 0, 100, 80, 95)
-			this.updateGUI(`[${archive}] (${filecount} file${filecount == 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'good')
-		})
+	// 	extractor.on('extractProgress', (percent, filecount) => {
+	// 		this.percent = interpolate(percent, 0, 100, 80, 95)
+	// 		this.updateGUI(`[${archive}] (${filecount} file${filecount == 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'good')
+	// 	})
 
-		extractor.on('error', this.handleError.bind(this))
+	// 	extractor.on('error', this.handleError.bind(this))
 
-		return new Promise<void>(resolve => {
-			extractor.on('complete', () => {
-				this.percent = 95
-				resolve()
-			})
-		})
-	}
+	// 	return new Promise<void>(resolve => {
+	// 		extractor.on('complete', () => {
+	// 			this.percent = 95
+	// 			resolve()
+	// 		})
+	// 	})
+	// }
 
 	/**
 	 * Defines what happens in response to `FileTransfer` events.

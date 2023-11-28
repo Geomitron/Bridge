@@ -23,6 +23,6 @@ export function hasVideoExtension(name: string) {
  * Log a message in the main BrowserWindow's console.
  * Note: Error objects can't be serialized by this; use inspect(err) before passing it here.
  */
-export function devLog(...messages: any[]) {
+export function devLog(...messages: unknown[]) {
 	emitIPCEvent('log', messages)
 }

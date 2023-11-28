@@ -5,11 +5,6 @@ import { SearchService } from './search.service'
 
 // Note: this class prevents event cycles by only emitting events if the checkbox changes
 
-interface SelectionEvent {
-	songID: number
-	selected: boolean
-}
-
 @Injectable({
 	providedIn: 'root',
 })

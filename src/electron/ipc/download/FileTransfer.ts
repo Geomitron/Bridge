@@ -1,5 +1,5 @@
 import { Dirent, readdir as _readdir } from 'fs'
-import * as mv from 'mv'
+import mv from 'mv'
 import { join } from 'path'
 import { rimraf } from 'rimraf'
 import { promisify } from 'util'
@@ -20,7 +20,10 @@ const transferErrors = {
 	readError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to read file.'),
 	deleteError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to delete file.'),
 	rimrafError: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to delete folder.'),
-	mvError: (err: NodeJS.ErrnoException) => fsError(err, `Failed to move folder to library.${err.code == 'EPERM' ? ' (does the chart already exist?)' : ''}`),
+	mvError: (err: NodeJS.ErrnoException) => fsError(
+		err,
+		`Failed to move folder to library.${err.code == 'EPERM' ? ' (does the chart already exist?)' : ''}`,
+	),
 }
 
 function fsError(err: NodeJS.ErrnoException, description: string) {

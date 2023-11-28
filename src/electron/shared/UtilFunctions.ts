@@ -1,6 +1,5 @@
-import * as randomBytes from 'randombytes'
-
-const sanitize = require('sanitize-filename')
+import randomBytes from 'randombytes'
+import sanitize from 'sanitize-filename'
 
 // WARNING: do not import anything related to Electron; the code will not compile correctly.
 

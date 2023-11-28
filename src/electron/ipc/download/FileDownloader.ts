@@ -1,368 +1,368 @@
-import Bottleneck from 'bottleneck'
-import { createWriteStream, writeFile as _writeFile } from 'fs'
-import { google } from 'googleapis'
-import * as needle from 'needle'
-import { join } from 'path'
-import { Readable } from 'stream'
-import { inspect, promisify } from 'util'
+// import Bottleneck from 'bottleneck'
+// import { createWriteStream, writeFile as _writeFile } from 'fs'
+// import { google } from 'googleapis'
+// import * as needle from 'needle'
+// import { join } from 'path'
+// import { Readable } from 'stream'
+// import { inspect, promisify } from 'util'
 
-import { devLog } from '../../shared/ElectronUtilFunctions'
-import { tempPath } from '../../shared/Paths'
-import { AnyFunction } from '../../shared/UtilFunctions'
-import { DownloadError } from './ChartDownload'
-// TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
-import { googleTimer } from './GoogleTimer'
+// import { devLog } from '../../shared/ElectronUtilFunctions'
+// import { tempPath } from '../../shared/Paths'
+// import { AnyFunction } from '../../shared/UtilFunctions'
+// import { DownloadError } from './ChartDownload'
+// // TODO: replace needle with got (for cancel() method) (if before-headers event is possible?)
+// import { googleTimer } from './GoogleTimer'
 
-const drive = google.drive('v3')
-const limiter = new Bottleneck({
-	minTime: 200, // Wait 200 ms between API requests
-})
+// const drive = google.drive('v3')
+// const limiter = new Bottleneck({
+// 	minTime: 200, // Wait 200 ms between API requests
+// })
 
-const RETRY_MAX = 2
-const writeFile = promisify(_writeFile)
+// const RETRY_MAX = 2
+// const writeFile = promisify(_writeFile)
 
-interface EventCallback {
-	'waitProgress': (remainingSeconds: number, totalSeconds: number) => void
-	/** Note: this event can be called multiple times if the connection times out or a large file is downloaded */
-	'requestSent': () => void
-	'downloadProgress': (bytesDownloaded: number) => void
-	/** Note: after calling retry, the event lifecycle restarts */
-	'error': (err: DownloadError, retry: () => void) => void
-	'complete': () => void
-}
-type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
-export type FileDownloader = APIFileDownloader | SlowFileDownloader
+// interface EventCallback {
+// 	'waitProgress': (remainingSeconds: number, totalSeconds: number) => void
+// 	/** Note: this event can be called multiple times if the connection times out or a large file is downloaded */
+// 	'requestSent': () => void
+// 	'downloadProgress': (bytesDownloaded: number) => void
+// 	/** Note: after calling retry, the event lifecycle restarts */
+// 	'error': (err: DownloadError, retry: () => void) => void
+// 	'complete': () => void
+// }
+// type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
+// export type FileDownloader = APIFileDownloader | SlowFileDownloader
 
-const downloadErrors = {
-	timeout: (type: string) => { return { header: 'Timeout', body: `The download server could not be reached. (type=${type})` } },
-	connectionError: (err: Error) => { return { header: 'Connection Error', body: `${err.name}: ${err.message}` } },
-	responseError: (statusCode: string) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
-	htmlError: (path: string) => { return { header: 'Download server returned HTML instead of a file.', body: path, isLink: true } },
-	linkError: (url: string) => { return { header: 'Invalid link', body: `The download link is not formatted correctly: ${url}` } },
-}
+// const downloadErrors = {
+// 	timeout: (type: string) => { return { header: 'Timeout', body: `The download server could not be reached. (type=${type})` } },
+// 	connectionError: (err: Error) => { return { header: 'Connection Error', body: `${err.name}: ${err.message}` } },
+// 	responseError: (statusCode: string) => { return { header: 'Connection failed', body: `Server returned status code: ${statusCode}` } },
+// 	htmlError: (path: string) => { return { header: 'Download server returned HTML instead of a file.', body: path, isLink: true } },
+// 	linkError: (url: string) => { return { header: 'Invalid link', body: `The download link is not formatted correctly: ${url}` } },
+// }
 
-/**
- * Downloads a file from `url` to `fullPath`.
- * Will handle google drive virus scan warnings. Provides event listeners for download progress.
- * On error, provides the ability to retry.
- * Will only send download requests once every `getSettings().rateLimitDelay` seconds if a Google account has not been authenticated.
- * @param url The download link.
- * @param fullPath The full path to where this file should be stored (including the filename).
- */
-export function getDownloader(url: string, fullPath: string): FileDownloader {
-	return new SlowFileDownloader(url, fullPath)
-}
+// /**
+//  * Downloads a file from `url` to `fullPath`.
+//  * Will handle google drive virus scan warnings. Provides event listeners for download progress.
+//  * On error, provides the ability to retry.
+//  * Will only send download requests once every `getSettings().rateLimitDelay` seconds.
+//  */
+// class SlowFileDownloader {
 
-/**
- * Downloads a file from `url` to `fullPath`.
- * On error, provides the ability to retry.
- */
-class APIFileDownloader {
-	private readonly URL_REGEX = /uc\?id=([^&]*)&export=download/u
+// 	private callbacks = {} as Callbacks
+// 	private retryCount: number
+// 	private wasCanceled = false
+// 	private req: NodeJS.ReadableStream
 
-	private callbacks = {} as Callbacks
-	private retryCount: number
-	private wasCanceled = false
-	private fileID: string
-	private downloadStream: Readable
+// 	/**
+// 	 * @param url The download link.
+// 	 * @param fullPath The full path to where this file should be stored (including the filename).
+// 	 */
+// 	constructor(private url: string, private fullPath: string) { }
 
-	/**
-	 * @param url The download link.
-	 * @param fullPath The full path to where this file should be stored (including the filename).
-	 */
-	constructor(private url: string, private fullPath: string) {
-		// url looks like: "https://drive.google.com/uc?id=1TlxtOZlVgRgX7-1tyW0d5QzXVfL-MC3Q&export=download"
-		this.fileID = this.URL_REGEX.exec(url)[1]
-	}
+// 	/**
+// 	 * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
+// 	 */
+// 	on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
+// 		this.callbacks[event] = callback
+// 	}
 
-	/**
-	 * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
-	 */
-	on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
-		this.callbacks[event] = callback
-	}
+// 	/**
+// 	 * Download the file after waiting for the google rate limit.
+// 	 */
+// 	beginDownload() {
+// 		googleTimer.on('waitProgress', this.cancelable((remainingSeconds, totalSeconds) => {
+// 			this.callbacks.waitProgress(remainingSeconds, totalSeconds)
+// 		}))
 
-	/**
-	 * Download the file after waiting for the google rate limit.
-	 */
-	beginDownload() {
-		if (this.fileID == undefined) {
-			this.failDownload(downloadErrors.linkError(this.url))
-		}
+// 		googleTimer.on('complete', this.cancelable(() => {
+// 			this.requestDownload()
+// 		}))
+// 	}
 
-		this.startDownloadStream()
-	}
+// 	/**
+// 	 * Sends a request to download the file at `this.url`.
+// 	 * @param cookieHeader the "cookie=" header to include this request.
+// 	 */
+// 	private requestDownload(cookieHeader?: string) {
+// 		this.callbacks.requestSent()
+// 		this.req = needle.get(this.url, {
+// 			'follow_max': 10,
+// 			'open_timeout': 5000,
+// 			'headers': Object.assign({
+// 				'Referer': this.url,
+// 				'Accept': '*/*',
+// 			},
+// 				(cookieHeader ? { 'Cookie': cookieHeader } : undefined)
+// 			),
+// 		})
 
-	/**
-	 * Uses the Google Drive API to start a download stream for the file with `this.fileID`.
-	 */
-	private startDownloadStream() {
-		limiter.schedule(this.cancelable(async () => {
-			this.callbacks.requestSent()
-			try {
-				this.downloadStream = (await drive.files.get({
-					fileId: this.fileID,
-					alt: 'media',
-				}, {
-					responseType: 'stream',
-				})).data
+// 		this.req.on('timeout', this.cancelable((type: string) => {
+// 			this.retryCount++
+// 			if (this.retryCount <= RETRY_MAX) {
+// 				devLog(`TIMEOUT: Retry attempt ${this.retryCount}...`)
+// 				this.requestDownload(cookieHeader)
+// 			} else {
+// 				this.failDownload(downloadErrors.timeout(type))
+// 			}
+// 		}))
 
-				if (this.wasCanceled) { return }
+// 		this.req.on('err', this.cancelable((err: Error) => {
+// 			this.failDownload(downloadErrors.connectionError(err))
+// 		}))
 
-				this.handleDownloadResponse()
-			} catch (err) {
-				this.retryCount++
-				if (this.retryCount <= RETRY_MAX) {
-					devLog(`Failed to get file: Retry attempt ${this.retryCount}...`)
-					if (this.wasCanceled) { return }
-					this.startDownloadStream()
-				} else {
-					devLog(inspect(err))
-					if (err?.code && err?.response?.statusText) {
-						this.failDownload(downloadErrors.responseError(`${err.code} (${err.response.statusText})`))
-					} else {
-						this.failDownload(downloadErrors.responseError(err?.code ?? 'unknown'))
-					}
-				}
-			}
-		}))
-	}
+// 		this.req.on('header', this.cancelable((statusCode, headers: Headers) => {
+// 			if (statusCode != 200) {
+// 				this.failDownload(downloadErrors.responseError(statusCode))
+// 				return
+// 			}
 
-	/**
-	 * Pipes the data from a download response to `this.fullPath`.
-	 * @param req The download request.
-	 */
-	private handleDownloadResponse() {
-		this.callbacks.downloadProgress(0)
-		let downloadedSize = 0
-		const writeStream = createWriteStream(this.fullPath)
+// 			if (headers['content-type'].startsWith('text/html')) {
+// 				this.handleHTMLResponse(headers['set-cookie'])
+// 			} else {
+// 				this.handleDownloadResponse()
+// 			}
+// 		}))
+// 	}
 
-		try {
-			this.downloadStream.pipe(writeStream)
-		} catch (err) {
-			this.failDownload(downloadErrors.connectionError(err))
-		}
+// 	/**
+// 	 * A Google Drive HTML response to a download request usually means this is the "file too large to scan for viruses" warning.
+// 	 * This function sends the request that results from clicking "download anyway", or generates an error if it can't be found.
+// 	 * @param cookieHeader The "cookie=" header of this request.
+// 	 */
+// 	private handleHTMLResponse(cookieHeader: string) {
+// 		let virusScanHTML = ''
+// 		this.req.on('data', this.cancelable(data => virusScanHTML += data))
+// 		this.req.on('done', this.cancelable((err: Error) => {
+// 			if (err) {
+// 				this.failDownload(downloadErrors.connectionError(err))
+// 			} else {
+// 				try {
+// 					const confirmTokenRegex = /confirm=([0-9A-Za-z\-_]+)&/g
+// 					const confirmTokenResults = confirmTokenRegex.exec(virusScanHTML)
+// 					const confirmToken = confirmTokenResults[1]
+// 					const downloadID = this.url.substr(this.url.indexOf('id=') + 'id='.length)
+// 					this.url = `https://drive.google.com/uc?confirm=${confirmToken}&id=${downloadID}`
+// 					const warningCode = /download_warning_([^=]*)=/.exec(cookieHeader)[1]
+// 					const NID = /NID=([^;]*);/.exec(cookieHeader)[1].replace('=', '%')
+// 					const newHeader = `download_warning_${warningCode}=${confirmToken}; NID=${NID}`
+// 					this.requestDownload(newHeader)
+// 				} catch (e) {
+// 					this.saveHTMLError(virusScanHTML).then(path => {
+// 						this.failDownload(downloadErrors.htmlError(path))
+// 					})
+// 				}
+// 			}
+// 		}))
+// 	}
 
-		this.downloadStream.on('data', this.cancelable((chunk: Buffer) => {
-			downloadedSize += chunk.length
-		}))
+// 	/**
+// 	 * Pipes the data from a download response to `this.fullPath`.
+// 	 * @param req The download request.
+// 	 */
+// 	private handleDownloadResponse() {
+// 		this.callbacks.downloadProgress(0)
+// 		let downloadedSize = 0
+// 		this.req.pipe(createWriteStream(this.fullPath))
+// 		this.req.on('data', this.cancelable(data => {
+// 			downloadedSize += data.length
+// 			this.callbacks.downloadProgress(downloadedSize)
+// 		}))
 
-		const progressUpdater = setInterval(() => {
-			this.callbacks.downloadProgress(downloadedSize)
-		}, 100)
+// 		this.req.on('err', this.cancelable((err: Error) => {
+// 			this.failDownload(downloadErrors.connectionError(err))
+// 		}))
 
-		this.downloadStream.on('error', this.cancelable((err: Error) => {
-			clearInterval(progressUpdater)
-			this.failDownload(downloadErrors.connectionError(err))
-		}))
+// 		this.req.on('end', this.cancelable(() => {
+// 			this.callbacks.complete()
+// 		}))
+// 	}
 
-		this.downloadStream.on('end', this.cancelable(() => {
-			clearInterval(progressUpdater)
-			writeStream.end()
-			this.downloadStream.destroy()
-			this.downloadStream = null
+// 	private async saveHTMLError(text: string) {
+// 		const errorPath = join(tempPath, 'HTMLError.html')
+// 		await writeFile(errorPath, text)
+// 		return errorPath
+// 	}
 
-			this.callbacks.complete()
-		}))
-	}
+// 	/**
+// 	 * Display an error message and provide a function to retry the download.
+// 	 */
+// 	private failDownload(error: DownloadError) {
+// 		this.callbacks.error(error, this.cancelable(() => this.beginDownload()))
+// 	}
 
-	/**
-	 * Display an error message and provide a function to retry the download.
-	 */
-	private failDownload(error: DownloadError) {
-		this.callbacks.error(error, this.cancelable(() => this.beginDownload()))
-	}
+// 	/**
+// 	 * Stop the process of downloading the file. (no more events will be fired after this is called)
+// 	 */
+// 	cancelDownload() {
+// 		this.wasCanceled = true
+// 		googleTimer.cancelTimer() // Prevents timer from trying to activate a download and resetting
+// 		if (this.req) {
+// 			// TODO: destroy request
+// 		}
+// 	}
 
-	/**
-	 * Stop the process of downloading the file. (no more events will be fired after this is called)
-	 */
-	cancelDownload() {
-		this.wasCanceled = true
-		googleTimer.cancelTimer() // Prevents timer from trying to activate a download and resetting
-		if (this.downloadStream) {
-			this.downloadStream.destroy()
-		}
-	}
+// 	/**
+// 	 * Wraps a function that is able to be prevented if `this.cancelDownload()` was called.
+// 	 */
+// 	private cancelable<F extends AnyFunction>(fn: F) {
+// 		return (...args: Parameters<F>): ReturnType<F> => {
+// 			if (this.wasCanceled) { return }
+// 			return fn(...Array.from(args))
+// 		}
+// 	}
+// }
 
-	/**
-	 * Wraps a function that is able to be prevented if `this.cancelDownload()` was called.
-	 */
-	private cancelable<F extends AnyFunction>(fn: F) {
-		return (...args: Parameters<F>): ReturnType<F> => {
-			if (this.wasCanceled) { return }
-			return fn(...Array.from(args))
-		}
-	}
-}
+// /**
+//  * Downloads a file from `url` to `fullPath`.
+//  * On error, provides the ability to retry.
+//  */
+// class APIFileDownloader {
+// 	private readonly URL_REGEX = /uc\?id=([^&]*)&export=download/u
 
-/**
- * Downloads a file from `url` to `fullPath`.
- * Will handle google drive virus scan warnings. Provides event listeners for download progress.
- * On error, provides the ability to retry.
- * Will only send download requests once every `getSettings().rateLimitDelay` seconds.
- */
-class SlowFileDownloader {
+// 	private callbacks = {} as Callbacks
+// 	private retryCount: number
+// 	private wasCanceled = false
+// 	private fileID: string
+// 	private downloadStream: Readable
 
-	private callbacks = {} as Callbacks
-	private retryCount: number
-	private wasCanceled = false
-	private req: NodeJS.ReadableStream
+// 	/**
+// 	 * @param url The download link.
+// 	 * @param fullPath The full path to where this file should be stored (including the filename).
+// 	 */
+// 	constructor(private url: string, private fullPath: string) {
+// 		// url looks like: "https://drive.google.com/uc?id=1TlxtOZlVgRgX7-1tyW0d5QzXVfL-MC3Q&export=download"
+// 		this.fileID = this.URL_REGEX.exec(url)[1]
+// 	}
 
-	/**
-	 * @param url The download link.
-	 * @param fullPath The full path to where this file should be stored (including the filename).
-	 */
-	constructor(private url: string, private fullPath: string) { }
+// 	/**
+// 	 * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
+// 	 */
+// 	on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
+// 		this.callbacks[event] = callback
+// 	}
 
-	/**
-	 * Calls `callback` when `event` fires. (no events will be fired after `this.cancelDownload()` is called)
-	 */
-	on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
-		this.callbacks[event] = callback
-	}
+// 	/**
+// 	 * Download the file after waiting for the google rate limit.
+// 	 */
+// 	beginDownload() {
+// 		if (this.fileID == undefined) {
+// 			this.failDownload(downloadErrors.linkError(this.url))
+// 		}
 
-	/**
-	 * Download the file after waiting for the google rate limit.
-	 */
-	beginDownload() {
-		googleTimer.on('waitProgress', this.cancelable((remainingSeconds, totalSeconds) => {
-			this.callbacks.waitProgress(remainingSeconds, totalSeconds)
-		}))
+// 		this.startDownloadStream()
+// 	}
 
-		googleTimer.on('complete', this.cancelable(() => {
-			this.requestDownload()
-		}))
-	}
+// 	/**
+// 	 * Uses the Google Drive API to start a download stream for the file with `this.fileID`.
+// 	 */
+// 	private startDownloadStream() {
+// 		limiter.schedule(this.cancelable(async () => {
+// 			this.callbacks.requestSent()
+// 			try {
+// 				this.downloadStream = (await drive.files.get({
+// 					fileId: this.fileID,
+// 					alt: 'media',
+// 				}, {
+// 					responseType: 'stream',
+// 				})).data
 
-	/**
-	 * Sends a request to download the file at `this.url`.
-	 * @param cookieHeader the "cookie=" header to include this request.
-	 */
-	private requestDownload(cookieHeader?: string) {
-		this.callbacks.requestSent()
-		this.req = needle.get(this.url, {
-			'follow_max': 10,
-			'open_timeout': 5000,
-			'headers': Object.assign({
-				'Referer': this.url,
-				'Accept': '*/*',
-			},
-				(cookieHeader ? { 'Cookie': cookieHeader } : undefined)
-			),
-		})
+// 				if (this.wasCanceled) { return }
 
-		this.req.on('timeout', this.cancelable((type: string) => {
-			this.retryCount++
-			if (this.retryCount <= RETRY_MAX) {
-				devLog(`TIMEOUT: Retry attempt ${this.retryCount}...`)
-				this.requestDownload(cookieHeader)
-			} else {
-				this.failDownload(downloadErrors.timeout(type))
-			}
-		}))
+// 				this.handleDownloadResponse()
+// 			} catch (err) {
+// 				this.retryCount++
+// 				if (this.retryCount <= RETRY_MAX) {
+// 					devLog(`Failed to get file: Retry attempt ${this.retryCount}...`)
+// 					if (this.wasCanceled) { return }
+// 					this.startDownloadStream()
+// 				} else {
+// 					devLog(inspect(err))
+// 					if (err?.code && err?.response?.statusText) {
+// 						this.failDownload(downloadErrors.responseError(`${err.code} (${err.response.statusText})`))
+// 					} else {
+// 						this.failDownload(downloadErrors.responseError(err?.code ?? 'unknown'))
+// 					}
+// 				}
+// 			}
+// 		}))
+// 	}
 
-		this.req.on('err', this.cancelable((err: Error) => {
-			this.failDownload(downloadErrors.connectionError(err))
-		}))
+// 	/**
+// 	 * Pipes the data from a download response to `this.fullPath`.
+// 	 * @param req The download request.
+// 	 */
+// 	private handleDownloadResponse() {
+// 		this.callbacks.downloadProgress(0)
+// 		let downloadedSize = 0
+// 		const writeStream = createWriteStream(this.fullPath)
 
-		this.req.on('header', this.cancelable((statusCode, headers: Headers) => {
-			if (statusCode != 200) {
-				this.failDownload(downloadErrors.responseError(statusCode))
-				return
-			}
+// 		try {
+// 			this.downloadStream.pipe(writeStream)
+// 		} catch (err) {
+// 			this.failDownload(downloadErrors.connectionError(err))
+// 		}
 
-			if (headers['content-type'].startsWith('text/html')) {
-				this.handleHTMLResponse(headers['set-cookie'])
-			} else {
-				this.handleDownloadResponse()
-			}
-		}))
-	}
+// 		this.downloadStream.on('data', this.cancelable((chunk: Buffer) => {
+// 			downloadedSize += chunk.length
+// 		}))
 
-	/**
-	 * A Google Drive HTML response to a download request usually means this is the "file too large to scan for viruses" warning.
-	 * This function sends the request that results from clicking "download anyway", or generates an error if it can't be found.
-	 * @param cookieHeader The "cookie=" header of this request.
-	 */
-	private handleHTMLResponse(cookieHeader: string) {
-		let virusScanHTML = ''
-		this.req.on('data', this.cancelable(data => virusScanHTML += data))
-		this.req.on('done', this.cancelable((err: Error) => {
-			if (err) {
-				this.failDownload(downloadErrors.connectionError(err))
-			} else {
-				try {
-					const confirmTokenRegex = /confirm=([0-9A-Za-z\-_]+)&/g
-					const confirmTokenResults = confirmTokenRegex.exec(virusScanHTML)
-					const confirmToken = confirmTokenResults[1]
-					const downloadID = this.url.substr(this.url.indexOf('id=') + 'id='.length)
-					this.url = `https://drive.google.com/uc?confirm=${confirmToken}&id=${downloadID}`
-					const warningCode = /download_warning_([^=]*)=/.exec(cookieHeader)[1]
-					const NID = /NID=([^;]*);/.exec(cookieHeader)[1].replace('=', '%')
-					const newHeader = `download_warning_${warningCode}=${confirmToken}; NID=${NID}`
-					this.requestDownload(newHeader)
-				} catch (e) {
-					this.saveHTMLError(virusScanHTML).then(path => {
-						this.failDownload(downloadErrors.htmlError(path))
-					})
-				}
-			}
-		}))
-	}
+// 		const progressUpdater = setInterval(() => {
+// 			this.callbacks.downloadProgress(downloadedSize)
+// 		}, 100)
 
-	/**
-	 * Pipes the data from a download response to `this.fullPath`.
-	 * @param req The download request.
-	 */
-	private handleDownloadResponse() {
-		this.callbacks.downloadProgress(0)
-		let downloadedSize = 0
-		this.req.pipe(createWriteStream(this.fullPath))
-		this.req.on('data', this.cancelable(data => {
-			downloadedSize += data.length
-			this.callbacks.downloadProgress(downloadedSize)
-		}))
+// 		this.downloadStream.on('error', this.cancelable((err: Error) => {
+// 			clearInterval(progressUpdater)
+// 			this.failDownload(downloadErrors.connectionError(err))
+// 		}))
 
-		this.req.on('err', this.cancelable((err: Error) => {
-			this.failDownload(downloadErrors.connectionError(err))
-		}))
+// 		this.downloadStream.on('end', this.cancelable(() => {
+// 			clearInterval(progressUpdater)
+// 			writeStream.end()
+// 			this.downloadStream.destroy()
+// 			this.downloadStream = null
 
-		this.req.on('end', this.cancelable(() => {
-			this.callbacks.complete()
-		}))
-	}
+// 			this.callbacks.complete()
+// 		}))
+// 	}
 
-	private async saveHTMLError(text: string) {
-		const errorPath = join(tempPath, 'HTMLError.html')
-		await writeFile(errorPath, text)
-		return errorPath
-	}
+// 	/**
+// 	 * Display an error message and provide a function to retry the download.
+// 	 */
+// 	private failDownload(error: DownloadError) {
+// 		this.callbacks.error(error, this.cancelable(() => this.beginDownload()))
+// 	}
 
-	/**
-	 * Display an error message and provide a function to retry the download.
-	 */
-	private failDownload(error: DownloadError) {
-		this.callbacks.error(error, this.cancelable(() => this.beginDownload()))
-	}
+// 	/**
+// 	 * Stop the process of downloading the file. (no more events will be fired after this is called)
+// 	 */
+// 	cancelDownload() {
+// 		this.wasCanceled = true
+// 		googleTimer.cancelTimer() // Prevents timer from trying to activate a download and resetting
+// 		if (this.downloadStream) {
+// 			this.downloadStream.destroy()
+// 		}
+// 	}
 
-	/**
-	 * Stop the process of downloading the file. (no more events will be fired after this is called)
-	 */
-	cancelDownload() {
-		this.wasCanceled = true
-		googleTimer.cancelTimer() // Prevents timer from trying to activate a download and resetting
-		if (this.req) {
-			// TODO: destroy request
-		}
-	}
+// 	/**
+// 	 * Wraps a function that is able to be prevented if `this.cancelDownload()` was called.
+// 	 */
+// 	private cancelable<F extends AnyFunction>(fn: F) {
+// 		return (...args: Parameters<F>): ReturnType<F> => {
+// 			if (this.wasCanceled) { return }
+// 			return fn(...Array.from(args))
+// 		}
+// 	}
+// }
 
-	/**
-	 * Wraps a function that is able to be prevented if `this.cancelDownload()` was called.
-	 */
-	private cancelable<F extends AnyFunction>(fn: F) {
-		return (...args: Parameters<F>): ReturnType<F> => {
-			if (this.wasCanceled) { return }
-			return fn(...Array.from(args))
-		}
-	}
-}
+// /**
+//  * Downloads a file from `url` to `fullPath`.
+//  * Will handle google drive virus scan warnings. Provides event listeners for download progress.
+//  * On error, provides the ability to retry.
+//  * Will only send download requests once every `getSettings().rateLimitDelay` seconds if a Google account has not been authenticated.
+//  * @param url The download link.
+//  * @param fullPath The full path to where this file should be stored (including the filename).
+//  */
+// export function getDownloader(url: string, fullPath: string): FileDownloader {
+// 	return new SlowFileDownloader(url, fullPath)
+// }
