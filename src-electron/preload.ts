@@ -7,7 +7,7 @@ function getInvoker<K extends keyof IpcInvokeEvents>(key: K) {
 }
 
 function getEmitter<K extends keyof IpcToMainEmitEvents>(key: K) {
-	return (data: IpcToMainEmitEvents[K]) => ipcRenderer.emit(key, data)
+	return (data: IpcToMainEmitEvents[K]) => ipcRenderer.send(key, data)
 }
 
 function getListenerAdder<K extends keyof IpcFromMainEmitEvents>(key: K) {

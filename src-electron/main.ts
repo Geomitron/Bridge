@@ -131,6 +131,7 @@ async function loadWindow(retries = 0) {
 	try {
 		await mainWindow.loadURL(getLoadUrl())
 	} catch (err) {
+		console.log('FAILED TO LOAD WINDOW #', retries)
 		await loadWindow(retries + 1)
 	}
 }

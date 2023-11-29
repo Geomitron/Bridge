@@ -1,15 +1,19 @@
-<div class="navbar bg-base-100">
-	<button class="btn btn-square btn-ghost" routerLinkActive="active" routerLink="/browse">Browse</button>
-	<!-- TODO <a class="item" routerLinkActive="active" routerLink="/library">Library</a> -->
-	<button class="btn btn-square btn-ghost" routerLinkActive="active" routerLink="/settings">
-		<i *ngIf="updateAvailable" class="teal small circle icon"></i>
-		<i *ngIf="updateAvailable === null" class="small yellow exclamation triangle icon"></i>
-		Settings
-	</button>
-
-	<div class="right menu">
-		<a class="item traffic-light" (click)="minimize()"><i class="bi bi-dash-lg"></i></a>
-		<a class="item traffic-light" (click)="toggleMaximized()"><i class="bi" [ngClass]="isMaximized ? 'bi-window-stack' : 'bi-window'"></i></a>
-		<a class="item traffic-light close" (click)="close()"><i class="bi bi-x"></i></a>
+<div class="navbar p-0 min-h-0 bg-base-100" style="-webkit-app-region: drag">
+	<div style="-webkit-app-region: no-drag">
+		<button class="btn btn-square btn-ghost rounded-none px-14 cursor-default" routerLinkActive="btn-active" routerLink="/browse">Browse</button>
+		<!-- TODO <a class="btn btn-square btn-ghost rounded-none cursor-default" routerLinkActive="btn-active" routerLink="/library">Library</a> -->
+		<button class="btn btn-square btn-ghost rounded-none px-12 cursor-default" routerLinkActive="btn-active" routerLink="/settings">
+			<i *ngIf="updateAvailable" class="teal small circle icon"></i>
+			<i *ngIf="updateAvailable === null" class="small yellow exclamation triangle icon"></i>
+			Settings
+		</button>
+	</div>
+	<div class="flex-1"></div>
+	<div style="-webkit-app-region: no-drag">
+		<button class="btn btn-square btn-ghost rounded-none cursor-default" (click)="minimize()"><i class="bi bi-dash-lg"></i></button>
+		<button class="btn btn-square btn-ghost rounded-none cursor-default" (click)="toggleMaximized()">
+			<i class="bi" [ngClass]="isMaximized ? 'bi-window-stack' : 'bi-window'"></i>
+		</button>
+		<button class="btn btn-square btn-ghost rounded-none hover:bg-red-600/20 cursor-default" (click)="close()"><i class="bi bi-x-lg"></i></button>
 	</div>
 </div>
