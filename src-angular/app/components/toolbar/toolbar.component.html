@@ -1,15 +1,15 @@
-<div class="ui top menu">
-	<a class="item" routerLinkActive="active" routerLink="/browse">Browse</a>
+<div class="navbar bg-base-100">
+	<button class="btn btn-square btn-ghost" routerLinkActive="active" routerLink="/browse">Browse</button>
 	<!-- TODO <a class="item" routerLinkActive="active" routerLink="/library">Library</a> -->
-	<a class="item" routerLinkActive="active" routerLink="/settings">
+	<button class="btn btn-square btn-ghost" routerLinkActive="active" routerLink="/settings">
 		<i *ngIf="updateAvailable" class="teal small circle icon"></i>
 		<i *ngIf="updateAvailable === null" class="small yellow exclamation triangle icon"></i>
 		Settings
-	</a>
+	</button>
 
 	<div class="right menu">
-		<a class="item traffic-light" (click)="minimize()"><i class="minus icon"></i></a>
-		<a class="item traffic-light" (click)="toggleMaximized()"><i class="icon window" [ngClass]="isMaximized ? 'restore' : 'maximize'"></i></a>
-		<a class="item traffic-light close" (click)="close()"><i class="x icon"></i></a>
+		<a class="item traffic-light" (click)="minimize()"><i class="bi bi-dash-lg"></i></a>
+		<a class="item traffic-light" (click)="toggleMaximized()"><i class="bi" [ngClass]="isMaximized ? 'bi-window-stack' : 'bi-window'"></i></a>
+		<a class="item traffic-light close" (click)="close()"><i class="bi bi-x"></i></a>
 	</div>
 </div>

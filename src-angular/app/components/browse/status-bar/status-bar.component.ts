@@ -1,9 +1,8 @@
 import { ChangeDetectorRef, Component } from '@angular/core'
 
-import { VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
-import { groupBy } from '../../../../electron/shared/UtilFunctions'
+import { VersionResult } from '../../../../../src-shared/interfaces/songDetails.interface'
+import { groupBy } from '../../../../../src-shared/UtilFunctions'
 import { DownloadService } from '../../../core/services/download.service'
-import { ElectronService } from '../../../core/services/electron.service'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
 
@@ -23,7 +22,6 @@ export class StatusBarComponent {
 	chartGroups: VersionResult[][]
 
 	constructor(
-		private electronService: ElectronService,
 		private downloadService: DownloadService,
 		private searchService: SearchService,
 		private selectionService: SelectionService,
@@ -53,25 +51,26 @@ export class StatusBarComponent {
 	}
 
 	showDownloads() {
-		$('#downloadsModal').modal('show')
+		// TODO
+		// $('#downloadsModal').modal('show')
 	}
 
 	async downloadSelected() {
 		this.chartGroups = []
-		this.batchResults = await this.electronService.invoke('batch-song-details', this.selectedResults.map(result => result.id))
+		this.batchResults = await window.electron.invoke.getBatchSongDetails(this.selectedResults.map(result => result.id))
 		const versionGroups = groupBy(this.batchResults, 'songID')
 		for (const versionGroup of versionGroups) {
-			if (versionGroup.findIndex(version => version.chartID != versionGroup[0].chartID) != -1) {
+			if (versionGroup.findIndex(version => version.chartID !== versionGroup[0].chartID) !== -1) {
 				// Must have multiple charts of this song
-				this.chartGroups.push(versionGroup.filter(version => version.versionID == version.latestVersionID))
+				this.chartGroups.push(versionGroup.filter(version => version.versionID === version.latestVersionID))
 			}
 		}
 
-		if (this.chartGroups.length == 0) {
+		if (this.chartGroups.length === 0) {
 			for (const versions of versionGroups) {
 				this.searchService.sortChart(versions)
 				const downloadVersion = versions[0]
-				const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
+				const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
 				this.downloadService.addDownload(
 					downloadVersion.versionID, {
 					chartName: downloadVersion.chartName,
@@ -81,7 +80,8 @@ export class StatusBarComponent {
 				})
 			}
 		} else {
-			$('#selectedModal').modal('show')
+			// TODO
+			// $('#selectedModal').modal('show')
 			// [download all charts for each song] [deselect these songs] [X]
 		}
 	}
@@ -91,7 +91,7 @@ export class StatusBarComponent {
 		for (const chart of songChartGroups) {
 			this.searchService.sortChart(chart)
 			const downloadVersion = chart[0]
-			const downloadSong = this.selectedResults.find(song => song.id == downloadVersion.songID)
+			const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
 			this.downloadService.addDownload(
 				downloadVersion.versionID, {
 				chartName: downloadVersion.chartName,

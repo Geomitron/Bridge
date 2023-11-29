@@ -1,94 +1,56 @@
-import * as fs from 'fs'
-import { promisify } from 'util'
+import { readFileSync } from 'fs'
+import { writeFile } from 'fs/promises'
+import { cloneDeep } from 'lodash'
+import { mkdirp } from 'mkdirp'
+import { inspect } from 'util'
 
-import { IPCEmitHandler, IPCInvokeHandler } from '../shared/IPCHandler'
-import { dataPath, settingsPath, tempPath, themesPath } from '../shared/Paths'
-import { defaultSettings, Settings } from '../shared/Settings'
+import { dataPath, settingsPath, tempPath, themesPath } from '../../src-shared/Paths'
+import { defaultSettings, Settings } from '../../src-shared/Settings'
+import { devLog } from '../ElectronUtilFunctions'
 
-const exists = promisify(fs.exists)
-const mkdir = promisify(fs.mkdir)
-const readFile = promisify(fs.readFile)
-const writeFile = promisify(fs.writeFile)
+export let settings = readSettings()
 
-let settings: Settings
-
-/**
- * Handles the 'set-settings' event.
- */
-class SetSettingsHandler implements IPCEmitHandler<'set-settings'> {
-	event = 'set-settings' as const
-
-	/**
-	 * Updates Bridge's settings object to `newSettings` and saves them to Bridge's data directories.
-	 */
-	handler(newSettings: Settings) {
-		settings = newSettings
-		SetSettingsHandler.saveSettings(settings)
-	}
-
-	/**
-	 * Saves `settings` to Bridge's data directories.
-	 */
-	static async saveSettings(settings: Settings) {
-		const settingsJSON = JSON.stringify(settings, undefined, 2)
-		await writeFile(settingsPath, settingsJSON, 'utf8')
-	}
-}
-
-/**
- * Handles the 'get-settings' event.
- */
-class GetSettingsHandler implements IPCInvokeHandler<'get-settings'> {
-	event = 'get-settings' as const
-
-	/**
-	 * @returns the current settings oject, or default settings if they couldn't be loaded.
-	 */
-	handler() {
-		return this.getSettings()
-	}
-
-	/**
-	 * @returns the current settings oject, or default settings if they couldn't be loaded.
-	 */
-	getSettings() {
-		if (settings == undefined) {
-			return defaultSettings
+function readSettings() {
+	try {
+		const settings = JSON.parse(readFileSync(settingsPath, 'utf8')) as Partial<Settings>
+		return Object.assign(cloneDeep(defaultSettings), settings)
+	} catch (err) {
+		if (err?.code === 'ENOENT') {
+			saveSettings(cloneDeep(defaultSettings))
 		} else {
-			return settings
+			devLog('Failed to load settings. Default settings will be used.\n' + inspect(err))
 		}
-	}
-
-	/**
-	 * If data directories don't exist, creates them and saves the default settings.
-	 * Otherwise, loads user settings from data directories.
-	 * If this process fails, default settings are used.
-	 */
-	async initSettings() {
-		try {
-			// Create data directories if they don't exists
-			for (const path of [dataPath, tempPath, themesPath]) {
-				if (!await exists(path)) {
-					await mkdir(path)
-				}
-			}
-
-			// Read/create settings
-			if (await exists(settingsPath)) {
-				settings = JSON.parse(await readFile(settingsPath, 'utf8'))
-				settings = Object.assign(JSON.parse(JSON.stringify(defaultSettings)), settings)
-			} else {
-				await SetSettingsHandler.saveSettings(defaultSettings)
-				settings = defaultSettings
-			}
-		} catch (e) {
-			console.error('Failed to initialize settings! Default settings will be used.')
-			console.error(e)
-			settings = defaultSettings
-		}
+		return cloneDeep(defaultSettings)
 	}
 }
 
-export const getSettingsHandler = new GetSettingsHandler()
-export const setSettingsHandler = new SetSettingsHandler()
-export function getSettings() { return getSettingsHandler.getSettings() }
+/**
+ * Updates Bridge's settings object to `newSettings` and saves them to Bridge's data directories.
+ */
+export async function setSettings(newSettings: Settings) {
+	settings = newSettings
+	await saveSettings(newSettings)
+}
+
+/**
+ * @returns the current settings object, or default settings if they couldn't be loaded.
+ */
+export async function getSettings() {
+	return settings
+}
+
+/**
+ * Saves `settings` to Bridge's data directories. If settings are not provided, default settings are used.
+ */
+async function saveSettings(settings: Settings) {
+	try {
+		// Create data directories if they don't exist
+		for (const path of [dataPath, tempPath, themesPath]) {
+			await mkdirp(path)
+		}
+
+		await writeFile(settingsPath, JSON.stringify(settings, undefined, 2), 'utf8')
+	} catch (err) {
+		devLog('Failed to save settings.\n' + inspect(err))
+	}
+}

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core'
 
-import { SongResult } from '../../../../../electron/shared/interfaces/search.interface'
+import { SongResult } from '../../../../../../src-shared/interfaces/search.interface'
 import { SelectionService } from '../../../../core/services/selection.service'
 
 @Component({
@@ -22,19 +22,20 @@ export class ResultTableRowComponent implements AfterViewInit {
 	ngAfterViewInit() {
 		this.selectionService.onSelectionChanged(this.songID, isChecked => {
 			if (isChecked) {
-				$(this.checkbox.nativeElement).checkbox('check')
+				// TODO
+				// $(this.checkbox.nativeElement).checkbox('check')
 			} else {
-				$(this.checkbox.nativeElement).checkbox('uncheck')
+				// $(this.checkbox.nativeElement).checkbox('uncheck')
 			}
 		})
 
-		$(this.checkbox.nativeElement).checkbox({
-			onChecked: () => {
-				this.selectionService.selectSong(this.songID)
-			},
-			onUnchecked: () => {
-				this.selectionService.deselectSong(this.songID)
-			},
-		})
+		// $(this.checkbox.nativeElement).checkbox({
+		// 	onChecked: () => {
+		// 		this.selectionService.selectSong(this.songID)
+		// 	},
+		// 	onUnchecked: () => {
+		// 		this.selectionService.deselectSong(this.songID)
+		// 	},
+		// })
 	}
 }

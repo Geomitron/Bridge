@@ -1,11 +1,4 @@
 /**
- * The image data for a song's album art.
- */
-export interface AlbumArtResult {
-	base64Art: string
-}
-
-/**
  * Represents a single chart version.
  */
 export interface VersionResult {

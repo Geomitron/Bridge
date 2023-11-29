@@ -52,11 +52,11 @@
 // 			readdir(this.sourceFolder, (err, files) => {
 // 				if (err) {
 // 					this.callbacks.error(extractErrors.readError(err), () => this.beginExtract())
-// 				} else if (files.length == 0) {
+// 				} else if (files.length === 0) {
 // 					this.callbacks.error(extractErrors.emptyError(), () => this.beginExtract())
 // 				} else {
 // 					this.callbacks.start(files[0])
-// 					this.extract(join(this.sourceFolder, files[0]), extname(files[0]) == '.rar')
+// 					this.extract(join(this.sourceFolder, files[0]), extname(files[0]) === '.rar')
 // 				}
 // 			})
 // 		}), 100) // Wait for filesystem to process downloaded file
@@ -82,7 +82,7 @@
 
 // 		const fileList = extractor.getFileList()
 
-// 		if (fileList[0].state != 'FAIL') {
+// 		if (fileList[0].state !== 'FAIL') {
 
 // 			// Create directories for nested archives (because unrarjs didn't feel like handling that automatically)
 // 			const headers = fileList[1].fileHeaders
@@ -93,7 +93,7 @@
 // 					} catch (err) {
 // 						this.callbacks.error(
 // 							extractErrors.rarmkdirError(err, fullPath),
-// 							() => this.extract(fullPath, extname(fullPath) == '.rar'),
+// 							() => this.extract(fullPath, extname(fullPath) === '.rar'),
 // 						)
 // 						return
 // 					}
@@ -103,10 +103,10 @@
 
 // 		const extractResult = extractor.extractAll()
 
-// 		if (extractResult[0].state == 'FAIL') {
+// 		if (extractResult[0].state === 'FAIL') {
 // 			this.callbacks.error(
 // 				extractErrors.rarextractError(extractResult[0], fullPath),
-// 				() => this.extract(fullPath, extname(fullPath) == '.rar'),
+// 				() => this.extract(fullPath, extname(fullPath) === '.rar'),
 // 			)
 // 		} else {
 // 			this.deleteArchive(fullPath)
@@ -143,7 +143,7 @@
 // 	 */
 // 	private deleteArchive(fullPath: string) {
 // 		unlink(fullPath, this.cancelable(err => {
-// 			if (err && err.code != 'ENOENT') {
+// 			if (err && err.code !== 'ENOENT') {
 // 				devLog(`Warning: failed to delete archive at [${fullPath}]`)
 // 			}
 

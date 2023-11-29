@@ -6,7 +6,7 @@ import { DriveChart } from './songDetails.interface'
 export interface Download {
 	action: 'add' | 'retry' | 'cancel'
 	versionID: number
-	data?: NewDownload // Should be defined if action == 'add'
+	data?: NewDownload // Should be defined if action === 'add'
 }
 
 /**

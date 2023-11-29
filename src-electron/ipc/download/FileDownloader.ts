@@ -112,7 +112,7 @@
 // 		}))
 
 // 		this.req.on('header', this.cancelable((statusCode, headers: Headers) => {
-// 			if (statusCode != 200) {
+// 			if (statusCode !== 200) {
 // 				this.failDownload(downloadErrors.responseError(statusCode))
 // 				return
 // 			}
@@ -246,7 +246,7 @@
 // 	 * Download the file after waiting for the google rate limit.
 // 	 */
 // 	beginDownload() {
-// 		if (this.fileID == undefined) {
+// 		if (this.fileID === undefined) {
 // 			this.failDownload(downloadErrors.linkError(this.url))
 // 		}
 

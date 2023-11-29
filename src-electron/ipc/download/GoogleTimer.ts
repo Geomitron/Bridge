@@ -1,4 +1,4 @@
-import { getSettings } from '../SettingsHandler.ipc'
+import { settings } from '../SettingsHandler.ipc'
 
 interface EventCallback {
 	'waitProgress': (remainingSeconds: number, totalSeconds: number) => void
@@ -33,10 +33,10 @@ class GoogleTimer {
 	 * Check the state of the callbacks and call them if necessary.
 	 */
 	private updateCallbacks() {
-		if (this.hasTimerEnded() && this.callbacks.complete != undefined) {
+		if (this.hasTimerEnded() && this.callbacks.complete !== undefined) {
 			this.endTimer()
-		} else if (this.callbacks.waitProgress != undefined) {
-			const delay = getSettings().rateLimitDelay
+		} else if (this.callbacks.waitProgress !== undefined) {
+			const delay = settings.rateLimitDelay
 			this.callbacks.waitProgress(delay - this.rateLimitCounter, delay)
 		}
 	}
@@ -52,7 +52,7 @@ class GoogleTimer {
 	 * Checks if enough time has elapsed since the last timer activation.
 	 */
 	private hasTimerEnded() {
-		return this.rateLimitCounter > getSettings().rateLimitDelay
+		return this.rateLimitCounter > settings.rateLimitDelay
 	}
 
 	/**
@@ -62,7 +62,7 @@ class GoogleTimer {
 		this.rateLimitCounter = 0
 		const completeCallback = this.callbacks.complete
 		this.callbacks = {}
-		completeCallback()
+		completeCallback?.()
 	}
 }
 

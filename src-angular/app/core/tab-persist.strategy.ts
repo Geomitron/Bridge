@@ -13,15 +13,15 @@ export class TabPersistStrategy extends RouteReuseStrategy {
 	}
 	store(route: ActivatedRouteSnapshot, handle: DetachedRouteHandle) {
 		if (route.data.shouldReuse) {
-			this.handles[route.routeConfig.path] = handle
+			this.handles[route.routeConfig!.path!] = handle
 		}
 	}
 	shouldAttach(route: ActivatedRouteSnapshot) {
-		return !!route.routeConfig && !!this.handles[route.routeConfig.path]
+		return !!route.routeConfig && !!this.handles[route.routeConfig!.path!]
 	}
 	retrieve(route: ActivatedRouteSnapshot) {
 		if (!route.routeConfig) return null
-		return this.handles[route.routeConfig.path]
+		return this.handles[route.routeConfig!.path!]
 	}
 	shouldReuseRoute(future: ActivatedRouteSnapshot) {
 		return future.data.shouldReuse || false

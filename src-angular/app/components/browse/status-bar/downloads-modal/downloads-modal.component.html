@@ -9,7 +9,7 @@
 			<span style="flex-grow: 1">{{ download.header }}</span>
 			<span *ngIf="!download.isLink" class="description">{{ download.description }}</span>
 			<span *ngIf="download.isLink" class="description">
-				<a (click)="openFolder(download.description)">{{ download.description }}</a>
+				<a (click)="showFile(download.description)">{{ download.description }}</a>
 			</span>
 		</div>
 

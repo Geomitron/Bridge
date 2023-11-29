@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core'
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
+import { SafeUrl } from '@angular/platform-browser'
 
-import { SearchService } from 'src/app/core/services/search.service'
-import { SettingsService } from 'src/app/core/services/settings.service'
-import { groupBy } from 'src/electron/shared/UtilFunctions'
-import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
-import { ChartedDifficulty, getInstrumentIcon, Instrument, VersionResult } from '../../../../electron/shared/interfaces/songDetails.interface'
-import { AlbumArtService } from '../../../core/services/album-art.service'
+import { SearchService } from 'src-angular/app/core/services/search.service'
+import { SettingsService } from 'src-angular/app/core/services/settings.service'
+
+import { SongResult } from '../../../../../src-shared/interfaces/search.interface'
+import { ChartedDifficulty, getInstrumentIcon, Instrument, VersionResult } from '../../../../../src-shared/interfaces/songDetails.interface'
+import { groupBy } from '../../../../../src-shared/UtilFunctions'
 import { DownloadService } from '../../../core/services/download.service'
-import { ElectronService } from '../../../core/services/electron.service'
 
 interface Difficulty {
 	instrument: string
@@ -23,7 +22,7 @@ interface Difficulty {
 })
 export class ChartSidebarComponent implements OnInit {
 
-	songResult: SongResult
+	songResult: SongResult | undefined
 	selectedVersion: VersionResult
 	charts: VersionResult[][]
 
@@ -34,11 +33,8 @@ export class ChartSidebarComponent implements OnInit {
 	downloadButtonText: string
 
 	constructor(
-		private electronService: ElectronService,
-		private albumArtService: AlbumArtService,
 		private downloadService: DownloadService,
 		private searchService: SearchService,
-		private sanitizer: DomSanitizer,
 		public settingsService: SettingsService
 	) { }
 
@@ -53,16 +49,13 @@ export class ChartSidebarComponent implements OnInit {
 	 * Displays the information for the selected song.
 	 */
 	async onRowClicked(result: SongResult) {
-		if (this.songResult == undefined || result.id != this.songResult.id) { // Clicking the same row again will not reload
+		if (this.songResult === undefined || result.id !== this.songResult.id) { // Clicking the same row again will not reload
 			this.songResult = result
-			const albumArt = this.albumArtService.getImage(result.id)
-			const results = await this.electronService.invoke('song-details', result.id)
+			const results = await window.electron.invoke.getSongDetails(result.id)
 			this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].chartName.length - v2[0].chartName.length)
 			this.sortCharts()
 			await this.selectChart(this.charts[0][0].chartID)
 			this.initChartDropdown()
-
-			this.updateAlbumArtSrc(await albumArt)
 		}
 	}
 
@@ -80,36 +73,26 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	/**
-	 * Updates the sidebar to display the album art.
-	 */
-	updateAlbumArtSrc(albumArtBase64String?: string) {
-		if (albumArtBase64String) {
-			this.albumArtSrc = this.sanitizer.bypassSecurityTrustUrl('data:image/jpg;base64,' + albumArtBase64String)
-		} else {
-			this.albumArtSrc = null
-		}
-	}
-
-	/**
 	 * Initializes the chart dropdown from `this.charts` (or removes it if there's only one chart).
 	 */
 	private initChartDropdown() {
-		const values = this.charts.map(chart => {
-			const version = chart[0]
-			return {
-				value: version.chartID,
-				text: version.chartName,
-				name: `${version.chartName} <b>[${version.charters}]</b>`,
-			}
-		})
-		const $chartDropdown = $('#chartDropdown')
-		$chartDropdown.dropdown('setup menu', { values })
-		$chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.selectChart(chartID))
-		$chartDropdown.dropdown('set selected', values[0].value)
+		// TODO
+		// const values = this.charts.map(chart => {
+		// 	const version = chart[0]
+		// 	return {
+		// 		value: version.chartID,
+		// 		text: version.chartName,
+		// 		name: `${version.chartName} <b>[${version.charters}]</b>`,
+		// 	}
+		// })
+		// const $chartDropdown = $('#chartDropdown')
+		// $chartDropdown.dropdown('setup menu', { values })
+		// $chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.selectChart(chartID))
+		// $chartDropdown.dropdown('set selected', values[0].value)
 	}
 
 	private async selectChart(chartID: number) {
-		const chart = this.charts.find(chart => chart[0].chartID == chartID)
+		const chart = this.charts.find(chart => chart[0].chartID === chartID)!
 		await this.selectVersion(chart[0])
 		this.initVersionDropdown()
 	}
@@ -117,11 +100,11 @@ export class ChartSidebarComponent implements OnInit {
 	/**
 	 * Updates the sidebar to display the metadata for `selectedVersion`.
 	 */
-	async selectVersion(selectedVersion: VersionResult) {
-		this.selectedVersion = selectedVersion
+	async selectVersion(selectedVersion: VersionResult | undefined) {
+		this.selectedVersion = selectedVersion!
 		await new Promise<void>(resolve => setTimeout(() => resolve(), 0)) // Wait for *ngIf to update DOM
 
-		if (this.selectedVersion != undefined) {
+		if (this.selectedVersion !== undefined) {
 			this.updateCharterPlural()
 			this.updateSongLength()
 			this.updateDifficultiesList()
@@ -133,7 +116,7 @@ export class ChartSidebarComponent implements OnInit {
 	 * Chooses to display 'Charter:' or 'Charters:'.
 	 */
 	private updateCharterPlural() {
-		this.charterPlural = this.selectedVersion.charterIDs.split('&').length == 1 ? 'Charter:' : 'Charters:'
+		this.charterPlural = this.selectedVersion.charterIDs.split('&').length === 1 ? 'Charter:' : 'Charters:'
 	}
 
 	/**
@@ -141,7 +124,7 @@ export class ChartSidebarComponent implements OnInit {
 	 */
 	private updateSongLength() {
 		let seconds = this.selectedVersion.songLength
-		if (seconds < 60) { this.songLength = `${seconds} second${seconds == 1 ? '' : 's'}`; return }
+		if (seconds < 60) { this.songLength = `${seconds} second${seconds === 1 ? '' : 's'}`; return }
 		let minutes = Math.floor(seconds / 60)
 		let hours = 0
 		while (minutes > 59) {
@@ -149,7 +132,7 @@ export class ChartSidebarComponent implements OnInit {
 			minutes -= 60
 		}
 		seconds = Math.floor(seconds % 60)
-		this.songLength = `${hours == 0 ? '' : hours + ':'}${minutes == 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
+		this.songLength = `${hours === 0 ? '' : hours + ':'}${minutes === 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
 	}
 
 	/**
@@ -159,7 +142,7 @@ export class ChartSidebarComponent implements OnInit {
 		const instruments = Object.keys(this.selectedVersion.chartData.noteCounts) as Instrument[]
 		this.difficultiesList = []
 		for (const instrument of instruments) {
-			if (instrument != 'undefined') {
+			if (instrument !== 'undefined') {
 				this.difficultiesList.push({
 					instrument: getInstrumentIcon(instrument),
 					diffNumber: this.getDiffNumber(instrument),
@@ -173,8 +156,9 @@ export class ChartSidebarComponent implements OnInit {
 	 * @returns a string describing the difficulty number in the selected version.
 	 */
 	private getDiffNumber(instrument: Instrument) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const diffNumber: number = (this.selectedVersion as any)[`diff_${instrument}`]
-		return diffNumber == -1 || diffNumber == undefined ? 'Unknown' : String(diffNumber)
+		return diffNumber === -1 || diffNumber === undefined ? 'Unknown' : String(diffNumber)
 	}
 
 	/**
@@ -182,7 +166,7 @@ export class ChartSidebarComponent implements OnInit {
 	 */
 	private getChartedDifficultiesText(instrument: Instrument) {
 		const difficulties = Object.keys(this.selectedVersion.chartData.noteCounts[instrument]) as ChartedDifficulty[]
-		if (difficulties.length == 4) { return 'Full Difficulty' }
+		if (difficulties.length === 4) { return 'Full Difficulty' }
 		const difficultyNames = []
 		if (difficulties.includes('x')) { difficultyNames.push('Expert') }
 		if (difficulties.includes('h')) { difficultyNames.push('Hard') }
@@ -204,7 +188,7 @@ export class ChartSidebarComponent implements OnInit {
 		}
 
 		if (this.getSelectedChartVersions().length > 1) {
-			if (this.selectedVersion.versionID == this.selectedVersion.latestVersionID) {
+			if (this.selectedVersion.versionID === this.selectedVersion.latestVersionID) {
 				this.downloadButtonText += ' (Latest)'
 			} else {
 				this.downloadButtonText += ` (${this.getLastModifiedText(this.selectedVersion.lastModified)})`
@@ -216,26 +200,27 @@ export class ChartSidebarComponent implements OnInit {
 	 * Initializes the version dropdown from `this.selectedVersion` (or removes it if there's only one version).
 	 */
 	private initVersionDropdown() {
-		const $versionDropdown = $('#versionDropdown')
-		const versions = this.getSelectedChartVersions()
-		const values = versions.map(version => ({
-			value: version.versionID,
-			text: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
-			name: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
-		}))
+		// TODO
+		// const $versionDropdown = $('#versionDropdown')
+		// const versions = this.getSelectedChartVersions()
+		// const values = versions.map(version => ({
+		// 	value: version.versionID,
+		// 	text: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
+		// 	name: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
+		// }))
 
-		$versionDropdown.dropdown('setup menu', { values })
-		$versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
-			this.selectVersion(versions.find(version => version.versionID == versionID))
-		})
-		$versionDropdown.dropdown('set selected', values[0].value)
+		// $versionDropdown.dropdown('setup menu', { values })
+		// $versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
+		// 	this.selectVersion(versions.find(version => version.versionID === versionID))
+		// })
+		// $versionDropdown.dropdown('set selected', values[0].value)
 	}
 
 	/**
 	 * Returns the list of versions for the selected chart, sorted by `lastModified`.
 	 */
 	getSelectedChartVersions() {
-		return this.charts.find(chart => chart[0].chartID == this.selectedVersion.chartID)
+		return this.charts.find(chart => chart[0].chartID === this.selectedVersion.chartID)!
 	}
 
 	/**
@@ -255,7 +240,7 @@ export class ChartSidebarComponent implements OnInit {
 	 */
 	onSourceLinkClicked() {
 		const source = this.selectedVersion.driveData.source
-		this.electronService.sendIPC('open-url', source.proxyLink ?? `https://drive.google.com/drive/folders/${source.sourceDriveID}`)
+		window.electron.emit.openUrl(source.proxyLink ?? `https://drive.google.com/drive/folders/${source.sourceDriveID}`)
 	}
 
 	/**
@@ -263,14 +248,14 @@ export class ChartSidebarComponent implements OnInit {
 	 */
 	shownFolderButton() {
 		const driveData = this.selectedVersion.driveData
-		return driveData.source.proxyLink || driveData.source.sourceDriveID != driveData.folderID
+		return driveData.source.proxyLink || driveData.source.sourceDriveID !== driveData.folderID
 	}
 
 	/**
 	 * Opens the chart folder in the default browser.
 	 */
 	onFolderButtonClicked() {
-		this.electronService.sendIPC('open-url', `https://drive.google.com/drive/folders/${this.selectedVersion.driveData.folderID}`)
+		window.electron.emit.openUrl(`https://drive.google.com/drive/folders/${this.selectedVersion.driveData.folderID}`)
 	}
 
 	/**
@@ -280,7 +265,7 @@ export class ChartSidebarComponent implements OnInit {
 		this.downloadService.addDownload(
 			this.selectedVersion.versionID, {
 			chartName: this.selectedVersion.chartName,
-			artist: this.songResult.artist,
+			artist: this.songResult!.artist,
 			charter: this.selectedVersion.charters,
 			driveData: this.selectedVersion.driveData,
 		})

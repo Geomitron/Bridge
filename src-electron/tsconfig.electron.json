@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "files": [
+    "./main.ts",
+		"./preload.ts"
+  ],
+  "include": [
+    "./**/*.ts"
+  ],
+  "compilerOptions": {
+		"target": "ES5",
+		"module": "CommonJS",
+    "outDir": "../dist/electron"
+  }
+}

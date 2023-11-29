@@ -1,8 +1,7 @@
 import { EventEmitter, Injectable } from '@angular/core'
 
-import { SongResult, SongSearch } from 'src/electron/shared/interfaces/search.interface'
-import { VersionResult } from 'src/electron/shared/interfaces/songDetails.interface'
-import { ElectronService } from './electron.service'
+import { SongResult, SongSearch } from '../../../../src-shared/interfaces/search.interface'
+import { VersionResult } from '../../../../src-shared/interfaces/songDetails.interface'
 
 @Injectable({
 	providedIn: 'root',
@@ -17,14 +16,12 @@ export class SearchService {
 	private currentQuery: SongSearch
 	private _allResultsVisible = true
 
-	constructor(private electronService: ElectronService) { }
-
 	async newSearch(query: SongSearch) {
 		if (this.awaitingResults) { return }
 		this.awaitingResults = true
 		this.currentQuery = query
 		try {
-			this.results = this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery))
+			this.results = this.trimLastChart(await window.electron.invoke.songSearch(this.currentQuery))
 			this.errorStateEmitter.emit(false)
 		} catch (err) {
 			this.results = []
@@ -74,7 +71,7 @@ export class SearchService {
 		if (!this.awaitingResults && !this._allResultsVisible) {
 			this.awaitingResults = true
 			this.currentQuery.offset += 50
-			this.results.push(...this.trimLastChart(await this.electronService.invoke('song-search', this.currentQuery)))
+			this.results.push(...this.trimLastChart(await window.electron.invoke.songSearch(this.currentQuery)))
 			this.awaitingResults = false
 
 			this.resultsChangedEmitter.emit(this.results)
@@ -105,7 +102,7 @@ export class SearchService {
 		versionResults.forEach(version => dates[version.versionID] = new Date(version.lastModified).getTime())
 		versionResults.sort((v1, v2) => {
 			const diff = dates[v2.versionID] - dates[v1.versionID]
-			if (Math.abs(diff) < 6.048e+8 && v1.driveData.inChartPack != v2.driveData.inChartPack) {
+			if (Math.abs(diff) < 6.048e+8 && v1.driveData.inChartPack !== v2.driveData.inChartPack) {
 				if (v1.driveData.inChartPack) {
 					return 1 // prioritize v2
 				} else {

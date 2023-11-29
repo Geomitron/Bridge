@@ -11,9 +11,9 @@
 	<div id="textPanel" class="content">
 		<span class="header">{{ selectedVersion.chartName }}</span>
 		<div class="description">
-			<div *ngIf="songResult.album === null"><b>Album:</b> {{ selectedVersion.album }} ({{ selectedVersion.year }})</div>
-			<div *ngIf="songResult.album !== null"><b>Year:</b> {{ selectedVersion.year }}</div>
-			<div *ngIf="songResult.genre === null"><b>Genre:</b> {{ selectedVersion.genre }}</div>
+			<div *ngIf="songResult!.album === null"><b>Album:</b> {{ selectedVersion.album }} ({{ selectedVersion.year }})</div>
+			<div *ngIf="songResult!.album !== null"><b>Year:</b> {{ selectedVersion.year }}</div>
+			<div *ngIf="songResult!.genre === null"><b>Genre:</b> {{ selectedVersion.genre }}</div>
 			<div>
 				<b>{{ charterPlural }}</b> {{ selectedVersion.charters }}
 			</div>

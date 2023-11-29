@@ -1,9 +1,9 @@
 import { Component, EventEmitter, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
 
 import Comparators from 'comparators'
+import { SettingsService } from 'src-angular/app/core/services/settings.service'
 
-import { SettingsService } from 'src/app/core/services/settings.service'
-import { SongResult } from '../../../../electron/shared/interfaces/search.interface'
+import { SongResult } from '../../../../../src-shared/interfaces/search.interface'
 import { CheckboxDirective } from '../../../core/directives/checkbox.directive'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
@@ -22,7 +22,7 @@ export class ResultTableComponent implements OnInit {
 	@ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
 	results: SongResult[] = []
-	activeRowID: number = null
+	activeRowID: number | null = null
 	sortDirection: 'ascending' | 'descending' = 'descending'
 	sortColumn: 'name' | 'artist' | 'album' | 'genre' | null = null
 
@@ -54,11 +54,11 @@ export class ResultTableComponent implements OnInit {
 	}
 
 	onColClicked(column: 'name' | 'artist' | 'album' | 'genre') {
-		if (this.results.length == 0) { return }
-		if (this.sortColumn != column) {
+		if (this.results.length === 0) { return }
+		if (this.sortColumn !== column) {
 			this.sortColumn = column
 			this.sortDirection = 'descending'
-		} else if (this.sortDirection == 'descending') {
+		} else if (this.sortDirection === 'descending') {
 			this.sortDirection = 'ascending'
 		} else {
 			this.sortDirection = 'descending'
@@ -67,8 +67,8 @@ export class ResultTableComponent implements OnInit {
 	}
 
 	private updateSort() {
-		if (this.sortColumn != null) {
-			this.results.sort(Comparators.comparing(this.sortColumn, { reversed: this.sortDirection == 'ascending' }))
+		if (this.sortColumn !== null) {
+			this.results.sort(Comparators.comparing(this.sortColumn, { reversed: this.sortDirection === 'ascending' }))
 		}
 	}
 

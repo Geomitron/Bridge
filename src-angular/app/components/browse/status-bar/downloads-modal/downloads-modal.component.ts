@@ -1,8 +1,7 @@
 import { ChangeDetectorRef, Component } from '@angular/core'
 
-import { DownloadProgress } from '../../../../../electron/shared/interfaces/download.interface'
+import { DownloadProgress } from '../../../../../../src-shared/interfaces/download.interface'
 import { DownloadService } from '../../../../core/services/download.service'
-import { ElectronService } from '../../../../core/services/electron.service'
 
 @Component({
 	selector: 'app-downloads-modal',
@@ -13,16 +12,16 @@ export class DownloadsModalComponent {
 
 	downloads: DownloadProgress[] = []
 
-	constructor(private electronService: ElectronService, private downloadService: DownloadService, ref: ChangeDetectorRef) {
-		electronService.receiveIPC('queue-updated', order => {
+	constructor(private downloadService: DownloadService, ref: ChangeDetectorRef) {
+		window.electron.on.queueUpdated(order => {
 			this.downloads.sort((a, b) => order.indexOf(a.versionID) - order.indexOf(b.versionID))
 		})
 
 		downloadService.onDownloadUpdated(download => {
-			const index = this.downloads.findIndex(thisDownload => thisDownload.versionID == download.versionID)
-			if (download.type == 'cancel') {
-				this.downloads = this.downloads.filter(thisDownload => thisDownload.versionID != download.versionID)
-			} else if (index == -1) {
+			const index = this.downloads.findIndex(thisDownload => thisDownload.versionID === download.versionID)
+			if (download.type === 'cancel') {
+				this.downloads = this.downloads.filter(thisDownload => thisDownload.versionID !== download.versionID)
+			} else if (index === -1) {
 				this.downloads.push(download)
 			} else {
 				this.downloads[index] = download
@@ -50,7 +49,7 @@ export class DownloadsModalComponent {
 		}
 	}
 
-	openFolder(filepath: string) {
-		this.electronService.showFolder(filepath)
+	showFile(filepath: string) {
+		window.electron.emit.showFile(filepath)
 	}
 }

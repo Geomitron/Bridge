@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "module": "esnext",
+  "files": [
+    "./main.ts"
+  ],
+  "include": [
+    "./**/*.d.ts"
+  ],
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

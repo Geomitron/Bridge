@@ -4,6 +4,8 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic'
 import { AppModule } from './app/app.module'
 import { environment } from './environments/environment'
 
+window.electron.on.errorLog(data => console.error(data))
+
 if (environment.production) {
 	enableProdMode()
 }

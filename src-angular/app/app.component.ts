@@ -11,7 +11,7 @@ export class AppComponent {
 
 	settingsLoaded = false
 
-	constructor(private settingsService: SettingsService) {
+	constructor(settingsService: SettingsService) {
 		// Ensure settings are loaded before rendering the application
 		settingsService.loadSettings().then(() => this.settingsLoaded = true)
 	}

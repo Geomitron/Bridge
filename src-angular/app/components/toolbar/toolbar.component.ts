@@ -1,7 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core'
 
-import { ElectronService } from '../../core/services/electron.service'
-
 @Component({
 	selector: 'app-toolbar',
 	templateUrl: './toolbar.component.html',
@@ -10,47 +8,47 @@ import { ElectronService } from '../../core/services/electron.service'
 export class ToolbarComponent implements OnInit {
 
 	isMaximized: boolean
-	updateAvailable = false
+	updateAvailable: boolean | null = false
 
-	constructor(private electronService: ElectronService, private ref: ChangeDetectorRef) { }
+	constructor(private ref: ChangeDetectorRef) { }
 
 	async ngOnInit() {
-		this.isMaximized = this.electronService.currentWindow.isMaximized()
-		this.electronService.currentWindow.on('unmaximize', () => {
+		this.isMaximized = await window.electron.invoke.isMaximized()
+		window.electron.on.minimized(() => {
 			this.isMaximized = false
 			this.ref.detectChanges()
 		})
-		this.electronService.currentWindow.on('maximize', () => {
+		window.electron.on.maximized(() => {
 			this.isMaximized = true
 			this.ref.detectChanges()
 		})
 
-		this.electronService.receiveIPC('update-available', result => {
-			this.updateAvailable = result != null
+		window.electron.on.updateAvailable(result => {
+			this.updateAvailable = result !== null
 			this.ref.detectChanges()
 		})
-		this.electronService.receiveIPC('update-error', () => {
+		window.electron.on.updateError(() => {
 			this.updateAvailable = null
 			this.ref.detectChanges()
 		})
-		this.updateAvailable = await this.electronService.invoke('get-update-available', undefined)
+		this.updateAvailable = await window.electron.invoke.getUpdateAvailable()
 		this.ref.detectChanges()
 	}
 
 	minimize() {
-		this.electronService.currentWindow.minimize()
+		window.electron.emit.minimize()
 	}
 
-	toggleMaximized() {
-		if (this.isMaximized) {
-			this.electronService.currentWindow.restore()
+	async toggleMaximized() {
+		if (await window.electron.invoke.isMaximized()) {
+			window.electron.emit.restore()
 		} else {
-			this.electronService.currentWindow.maximize()
+			window.electron.emit.maximize()
 		}
 		this.isMaximized = !this.isMaximized
 	}
 
 	close() {
-		this.electronService.quit()
+		window.electron.emit.quit()
 	}
 }

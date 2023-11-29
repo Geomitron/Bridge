@@ -1,15 +1,18 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "cli": {
-    "analytics": false
-  },
   "version": 1,
+  "cli": {
+    "analytics": false,
+    "packageManager": "pnpm"
+  },
   "newProjectRoot": "projects",
   "projects": {
     "Bridge": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
+          "inlineTemplate": true,
+          "inlineStyle": true,
           "style": "scss",
           "skipTests": true
         },
@@ -22,9 +25,13 @@
         "@schematics/angular:guard": {
           "skipTests": true
         },
-        "@schematics/angular:module": {
+        "@schematics/angular:interceptor": {
+          "skipTests": true
         },
         "@schematics/angular:pipe": {
+          "skipTests": true
+        },
+        "@schematics/angular:resolver": {
           "skipTests": true
         },
         "@schematics/angular:service": {
@@ -32,66 +39,55 @@
         }
       },
       "root": "",
-      "sourceRoot": "src",
+      "sourceRoot": "src-angular",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.angular.json",
+            "outputPath": "dist/angular",
+            "index": "src-angular/index.html",
+            "main": "src-angular/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "src-angular/tsconfig.angular.json",
+            "inlineStyleLanguage": "scss",
             "watch": true,
             "assets": [
-              "src/assets"
+              "src-angular/assets"
             ],
             "styles": [
-              "src/assets/semantic/dist/semantic.min.css",
-              "src/styles.scss"
+              "src-angular/styles.scss",
+							"node_modules/tailwindcss/tailwind.css"
             ],
-            "scripts": [
-              "src/assets/semantic/jqueryImport.js",
-              "src/assets/semantic/dist/semantic.min.js"
-            ],
-            "vendorChunk": true,
-            "extractLicenses": false,
-            "buildOptimizer": false,
-            "sourceMap": true,
-            "optimization": false,
-            "namedChunks": true
+						"scripts": [],
+            "extractLicenses": false
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kb"
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
                 }
               ],
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
+                  "replace": "src-angular/environments/environment.ts",
+                  "with": "src-angular/environments/environment.prod.ts"
                 }
               ],
-              "baseHref": "./",
-              "optimization": {
-                "styles": {
-                  "minify": false
-                }
-              },
-              "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
-              "watch": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true
+              "outputHashing": "all"
             }
           },
-          "defaultConfiguration": ""
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
@@ -101,19 +97,10 @@
           "configurations": {
             "production": {
               "buildTarget": "Bridge:build:production"
+            },
+            "development": {
+              "buildTarget": "angular:build:development"
             }
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "eslintConfig": "./.eslintrc.json",
-            "tsConfig": [
-              "./tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         }
       }

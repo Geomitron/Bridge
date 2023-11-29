@@ -1,15 +1,11 @@
-import { randomBytes as _randomBytes } from 'crypto'
 import { access, constants, mkdir } from 'fs'
 import { join } from 'path'
-import { promisify } from 'util'
 
-import { devLog } from '../../shared/ElectronUtilFunctions'
-import { tempPath } from '../../shared/Paths'
-import { AnyFunction } from '../../shared/UtilFunctions'
-import { getSettings } from '../SettingsHandler.ipc'
+import { tempPath } from '../../../src-shared/Paths'
+import { AnyFunction } from '../../../src-shared/UtilFunctions'
+import { devLog } from '../../ElectronUtilFunctions'
+import { settings } from '../SettingsHandler.ipc'
 import { DownloadError } from './ChartDownload'
-
-const randomBytes = promisify(_randomBytes)
 
 interface EventCallback {
 	'start': () => void
@@ -19,7 +15,7 @@ interface EventCallback {
 type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
 const filesystemErrors = {
-	libraryFolder: () => ({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }),
+	libraryError: () => ({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }),
 	libraryAccess: (err: NodeJS.ErrnoException) => fsError(err, 'Failed to access library folder.'),
 	destinationFolderExists: (destinationPath: string) => {
 		return { header: 'This chart already exists in your library folder.', body: destinationPath, isLink: true }
@@ -56,10 +52,10 @@ export class FilesystemChecker {
 	 * Verifies that the user has specified a library folder.
 	 */
 	private checkLibraryFolder() {
-		if (getSettings().libraryPath == undefined) {
-			this.callbacks.error(filesystemErrors.libraryFolder(), () => this.beginCheck())
+		if (settings.libraryPath === undefined) {
+			this.callbacks.error(filesystemErrors.libraryError(), () => this.beginCheck())
 		} else {
-			access(getSettings().libraryPath, constants.W_OK, this.cancelable(err => {
+			access(settings.libraryPath, constants.W_OK, this.cancelable(err => {
 				if (err) {
 					this.callbacks.error(filesystemErrors.libraryAccess(err), () => this.beginCheck())
 				} else {
@@ -73,21 +69,25 @@ export class FilesystemChecker {
 	 * Checks that the destination folder doesn't already exist.
 	 */
 	private checkDestinationFolder() {
-		const destinationPath = join(getSettings().libraryPath, this.destinationFolderName)
-		access(destinationPath, constants.F_OK, this.cancelable(err => {
-			if (err) { // File does not exist
-				this.createDownloadFolder()
-			} else {
-				this.callbacks.error(filesystemErrors.destinationFolderExists(destinationPath), () => this.beginCheck())
-			}
-		}))
+		if (!settings.libraryPath) {
+			this.callbacks.error(filesystemErrors.libraryError(), () => this.beginCheck())
+		} else {
+			const destinationPath = join(settings.libraryPath, this.destinationFolderName)
+			access(destinationPath, constants.F_OK, this.cancelable(err => {
+				if (err) { // File does not exist
+					this.createDownloadFolder()
+				} else {
+					this.callbacks.error(filesystemErrors.destinationFolderExists(destinationPath), () => this.beginCheck())
+				}
+			}))
+		}
 	}
 
 	/**
 	 * Attempts to create a unique folder in Bridge's data paths.
 	 */
 	private async createDownloadFolder(retryCount = 0) {
-		const tempChartPath = join(tempPath, `chart_${(await randomBytes(5)).toString('hex')}`)
+		const tempChartPath = join(tempPath, `chart_TODO_MAKE_UNIQUE`)
 
 		mkdir(tempChartPath, this.cancelable(err => {
 			if (err) {
@@ -114,7 +114,7 @@ export class FilesystemChecker {
 	 * Wraps a function that is able to be prevented if `this.cancelCheck()` was called.
 	 */
 	private cancelable<F extends AnyFunction>(fn: F) {
-		return (...args: Parameters<F>): ReturnType<F> => {
+		return (...args: Parameters<F>): ReturnType<F> | void => {
 			if (this.wasCanceled) { return }
 			return fn(...Array.from(args))
 		}

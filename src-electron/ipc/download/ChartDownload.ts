@@ -1,12 +1,12 @@
 import { parse } from 'path'
 import { rimraf } from 'rimraf'
 
-import { NewDownload, ProgressType } from 'src/electron/shared/interfaces/download.interface'
-import { DriveFile } from 'src/electron/shared/interfaces/songDetails.interface'
-import { emitIPCEvent } from '../../main'
-import { hasVideoExtension } from '../../shared/ElectronUtilFunctions'
-import { sanitizeFilename } from '../../shared/UtilFunctions'
-import { getSettings } from '../SettingsHandler.ipc'
+import { NewDownload, ProgressType } from '../../../src-shared/interfaces/download.interface'
+import { DriveFile } from '../../../src-shared/interfaces/songDetails.interface'
+import { sanitizeFilename } from '../../../src-shared/UtilFunctions'
+import { hasVideoExtension } from '../../ElectronUtilFunctions'
+import { emitIpcEvent } from '../../main'
+import { settings } from '../SettingsHandler.ipc'
 // import { FileDownloader, getDownloader } from './FileDownloader'
 import { FilesystemChecker } from './FilesystemChecker'
 import { FileTransfer } from './FileTransfer'
@@ -22,8 +22,8 @@ export interface DownloadError { header: string; body: string; isLink?: boolean 
 
 export class ChartDownload {
 
-	private retryFn: () => void | Promise<void>
-	private cancelFn: () => void
+	private retryFn: undefined | (() => void | Promise<void>)
+	private cancelFn: undefined | (() => void)
 
 	private callbacks = {} as Callbacks
 	private files: DriveFile[]
@@ -62,7 +62,7 @@ export class ChartDownload {
 
 	filterDownloadFiles(files: DriveFile[]) {
 		return files.filter(file => {
-			return (file.name != 'ch.dat') && (getSettings().downloadVideos || !hasVideoExtension(file.name))
+			return (file.name !== 'ch.dat') && (settings.downloadVideos || !hasVideoExtension(file.name))
 		})
 	}
 
@@ -70,7 +70,7 @@ export class ChartDownload {
 	 * Retries the last failed step if it is running.
 	 */
 	retry() { // Only allow it to be called once
-		if (this.retryFn != undefined) {
+		if (this.retryFn !== undefined) {
 			this._hasFailed = false
 			const retryFn = this.retryFn
 			this.retryFn = undefined
@@ -89,7 +89,7 @@ export class ChartDownload {
 	 * Cancels the download if it is running.
 	 */
 	cancel() { // Only allow it to be called once
-		if (this.cancelFn != undefined) {
+		if (this.cancelFn !== undefined) {
 			const cancelFn = this.cancelFn
 			this.cancelFn = undefined
 			cancelFn()
@@ -105,7 +105,7 @@ export class ChartDownload {
 	private updateGUI(header: string, description: string, type: ProgressType, isLink = false) {
 		if (this.wasCanceled) { return }
 
-		emitIPCEvent('download-updated', {
+		emitIpcEvent('downloadUpdated', {
 			versionID: this.versionID,
 			title: `${this.data.chartName} - ${this.data.artist}`,
 			header: header,
@@ -122,7 +122,7 @@ export class ChartDownload {
 	private handleError(err: DownloadError, retry: () => void) {
 		this._hasFailed = true
 		this.retryFn = retry
-		this.updateGUI(err.header, err.body, 'error', err.isLink == true)
+		this.updateGUI(err.header, err.body, 'error', err.isLink === true)
 		this.callbacks.error()
 	}
 
@@ -245,7 +245,7 @@ export class ChartDownload {
 
 	// 	extractor.on('extractProgress', (percent, filecount) => {
 	// 		this.percent = interpolate(percent, 0, 100, 80, 95)
-	// 		this.updateGUI(`[${archive}] (${filecount} file${filecount == 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'good')
+	// 		this.updateGUI(`[${archive}] (${filecount} file${filecount === 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'good')
 	// 	})
 
 	// 	extractor.on('error', this.handleError.bind(this))

@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core'
 
-import { SongResult } from '../../../electron/shared/interfaces/search.interface'
+import { SongResult } from '../../../../src-shared/interfaces/search.interface'
 import { SearchService } from './search.service'
 
 // Note: this class prevents event cycles by only emitting events if the checkbox changes
@@ -35,7 +35,7 @@ export class SelectionService {
 	}
 
 	getSelectedResults() {
-		return this.searchResults.filter(result => this.selections[result.id] == true)
+		return this.searchResults.filter(result => this.selections[result.id] === true)
 	}
 
 	onSelectAllChanged(callback: (selected: boolean) => void) {

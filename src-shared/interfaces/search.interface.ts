@@ -22,12 +22,14 @@ export function getDefaultSearch(): SongSearch {
 		similarity: 'similar',
 		fields: { name: true, artist: true, album: true, genre: true, year: true, charter: true, tag: true },
 		tags: {
+			// eslint-disable-next-line @typescript-eslint/naming-convention
 			'sections': false, 'star power': false, 'forcing': false, 'taps': false, 'lyrics': false,
-			'video': false, 'stems': false, 'solo sections': false, 'open notes': false
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			'video': false, 'stems': false, 'solo sections': false, 'open notes': false,
 		},
 		instruments: {
 			guitar: false, bass: false, rhythm: false, keys: false,
-			drums: false, guitarghl: false, bassghl: false, vocals: false
+			drums: false, guitarghl: false, bassghl: false, vocals: false,
 		},
 		difficulties: { expert: false, hard: false, medium: false, easy: false },
 		minDiff: 0,
@@ -49,13 +51,16 @@ export interface SearchFields {
 
 export interface SearchTags {
 	'sections': boolean    // Tag inverted
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	'star power': boolean  // Tag inverted
 	'forcing': boolean     // Tag inverted
 	'taps': boolean
 	'lyrics': boolean
 	'video': boolean
 	'stems': boolean
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	'solo sections': boolean
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	'open notes': boolean
 }
 

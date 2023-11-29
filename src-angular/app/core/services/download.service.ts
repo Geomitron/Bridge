@@ -1,7 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core'
 
-import { DownloadProgress, NewDownload } from '../../../electron/shared/interfaces/download.interface'
-import { ElectronService } from './electron.service'
+import { DownloadProgress, NewDownload } from '../../../../src-shared/interfaces/download.interface'
 
 @Injectable({
 	providedIn: 'root',
@@ -11,13 +10,13 @@ export class DownloadService {
 	private downloadUpdatedEmitter = new EventEmitter<DownloadProgress>()
 	private downloads: DownloadProgress[] = []
 
-	constructor(private electronService: ElectronService) {
-		this.electronService.receiveIPC('download-updated', result => {
+	constructor() {
+		window.electron.on.downloadUpdated(result => {
 			// Update <this.downloads> with result
-			const thisDownloadIndex = this.downloads.findIndex(download => download.versionID == result.versionID)
-			if (result.type == 'cancel') {
-				this.downloads = this.downloads.filter(download => download.versionID != result.versionID)
-			} else if (thisDownloadIndex == -1) {
+			const thisDownloadIndex = this.downloads.findIndex(download => download.versionID === result.versionID)
+			if (result.type === 'cancel') {
+				this.downloads = this.downloads.filter(download => download.versionID !== result.versionID)
+			} else if (thisDownloadIndex === -1) {
 				this.downloads.push(result)
 			} else {
 				this.downloads[thisDownloadIndex] = result
@@ -32,7 +31,7 @@ export class DownloadService {
 	}
 
 	get completedCount() {
-		return this.downloads.filter(download => download.type == 'done').length
+		return this.downloads.filter(download => download.type === 'done').length
 	}
 
 	get totalDownloadingPercent() {
@@ -48,15 +47,15 @@ export class DownloadService {
 	}
 
 	get anyErrorsExist() {
-		return this.downloads.find(download => download.type == 'error') ? true : false
+		return this.downloads.find(download => download.type === 'error') ? true : false
 	}
 
 	addDownload(versionID: number, newDownload: NewDownload) {
-		if (!this.downloads.find(download => download.versionID == versionID)) { // Don't download something twice
-			if (this.downloads.every(download => download.type == 'done')) { // Reset overall progress bar if it finished
+		if (!this.downloads.find(download => download.versionID === versionID)) { // Don't download something twice
+			if (this.downloads.every(download => download.type === 'done')) { // Reset overall progress bar if it finished
 				this.downloads.forEach(download => download.stale = true)
 			}
-			this.electronService.sendIPC('download', { action: 'add', versionID, data: newDownload })
+			window.electron.emit.download({ action: 'add', versionID, data: newDownload })
 		}
 	}
 
@@ -65,25 +64,25 @@ export class DownloadService {
 	}
 
 	cancelDownload(versionID: number) {
-		const removedDownload = this.downloads.find(download => download.versionID == versionID)
+		const removedDownload = this.downloads.find(download => download.versionID === versionID)!
 		if (['error', 'done'].includes(removedDownload.type)) {
-			this.downloads = this.downloads.filter(download => download.versionID != versionID)
+			this.downloads = this.downloads.filter(download => download.versionID !== versionID)
 			removedDownload.type = 'cancel'
 			this.downloadUpdatedEmitter.emit(removedDownload)
 		} else {
-			this.electronService.sendIPC('download', { action: 'cancel', versionID })
+			window.electron.emit.download({ action: 'cancel', versionID })
 		}
 	}
 
 	cancelCompleted() {
 		for (const download of this.downloads) {
-			if (download.type == 'done') {
+			if (download.type === 'done') {
 				this.cancelDownload(download.versionID)
 			}
 		}
 	}
 
 	retryDownload(versionID: number) {
-		this.electronService.sendIPC('download', { action: 'retry', versionID })
+		window.electron.emit.download({ action: 'retry', versionID })
 	}
 }

@@ -1,34 +1,27 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
+import electronUnhandled from 'electron-unhandled'
 import windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
 
-import { getSettingsHandler } from './ipc/SettingsHandler.ipc'
-import { updateChecker } from './ipc/UpdateHandler.ipc'
-// IPC Handlers
-import { getIPCEmitHandlers, getIPCInvokeHandlers, IPCEmitEvents } from './shared/IPCHandler'
-import { dataPath } from './shared/Paths'
+import { IpcFromMainEmitEvents } from '../src-shared/interfaces/ipc.interface'
+import { dataPath } from '../src-shared/Paths'
+import { retryUpdate } from './ipc/UpdateHandler.ipc'
+import { getIpcInvokeHandlers, getIpcToMainEmitHandlers } from './IpcHandler'
 
-import unhandled = require('electron-unhandled')
-unhandled({ showDialog: true })
+electronUnhandled({ showDialog: true })
 
 export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
-const isDevBuild = args.some(val => val == '--dev')
-import remote = require('@electron/remote/main')
+const isDevBuild = args.some(val => val === '--dev')
 
-
-remote.initialize()
 restrictToSingleInstance()
 handleOSXWindowClosed()
-app.on('ready', () => {
-	// Load settings from file before the window is created
-	getSettingsHandler.initSettings().then(() => {
-		createBridgeWindow()
-		if (!isDevBuild) {
-			updateChecker.checkForUpdates()
-		}
-	})
+app.on('ready', async () => {
+	createBridgeWindow()
+	if (!isDevBuild) {
+		retryUpdate()
+	}
 })
 
 /**
@@ -39,7 +32,7 @@ function restrictToSingleInstance() {
 	const isFirstBridgeInstance = app.requestSingleInstanceLock()
 	if (!isFirstBridgeInstance) app.quit()
 	app.on('second-instance', () => {
-		if (mainWindow != undefined) {
+		if (mainWindow !== undefined) {
 			if (mainWindow.isMinimized()) mainWindow.restore()
 			mainWindow.focus()
 		}
@@ -52,13 +45,13 @@ function restrictToSingleInstance() {
  */
 function handleOSXWindowClosed() {
 	app.on('window-all-closed', () => {
-		if (process.platform != 'darwin') {
+		if (process.platform !== 'darwin') {
 			app.quit()
 		}
 	})
 
 	app.on('activate', () => {
-		if (mainWindow == undefined) {
+		if (mainWindow === undefined) {
 			createBridgeWindow()
 		}
 	})
@@ -86,8 +79,16 @@ async function createBridgeWindow() {
 	mainWindow.setMenu(null)
 
 	// IPC handlers
-	getIPCInvokeHandlers().map(handler => ipcMain.handle(handler.event, (_event, ...args) => handler.handler(args[0])))
-	getIPCEmitHandlers().map(handler => ipcMain.on(handler.event, (_event, ...args) => handler.handler(args[0])))
+	for (const [key, handler] of Object.entries(getIpcInvokeHandlers())) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		ipcMain.handle(key, (_event, ...args) => (handler as any)(args[0]))
+	}
+	for (const [key, handler] of Object.entries(getIpcToMainEmitHandlers())) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		ipcMain.on(key, (_event, ...args) => (handler as any)(args[0]))
+	}
+	mainWindow.on('unmaximize', () => emitIpcEvent('minimized', undefined))
+	mainWindow.on('maximize', () => emitIpcEvent('maximized', undefined))
 
 	// Load angular app
 	await loadWindow()
@@ -95,13 +96,6 @@ async function createBridgeWindow() {
 	if (isDevBuild) {
 		mainWindow.webContents.openDevTools()
 	}
-
-	mainWindow.on('closed', () => {
-		mainWindow = null // Dereference mainWindow when the window is closed
-	})
-
-	// enable the remote webcontents
-	remote.enable(mainWindow.webContents)
 }
 
 /**
@@ -116,7 +110,7 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 		frame: false,
 		title: 'Bridge',
 		webPreferences: {
-			// preload:
+			preload: path.join(__dirname, 'preload.js'),
 			allowRunningInsecureContent: (isDevBuild) ? true : false,
 			textAreasAreResizable: false,
 		},
@@ -125,7 +119,7 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 		backgroundColor: '#121212',
 	}
 
-	if (process.platform == 'linux' && !isDevBuild) {
+	if (process.platform === 'linux' && !isDevBuild) {
 		options = Object.assign(options, { icon: path.join(__dirname, '..', 'assets', 'images', 'system', 'icons', 'png', '48x48.png') })
 	}
 
@@ -152,6 +146,7 @@ function getLoadUrl() {
 	})
 }
 
-export function emitIPCEvent<E extends keyof IPCEmitEvents>(event: E, data: IPCEmitEvents[E]) {
+// TODO: await mainWindow first
+export function emitIpcEvent<E extends keyof IpcFromMainEmitEvents>(event: E, data: IpcFromMainEmitEvents[E]) {
 	mainWindow.webContents.send(event, data)
 }

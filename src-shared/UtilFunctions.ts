@@ -1,4 +1,3 @@
-import randomBytes from 'randombytes'
 import sanitize from 'sanitize-filename'
 
 // WARNING: do not import anything related to Electron; the code will not compile correctly.
@@ -26,7 +25,7 @@ export function sanitizeFilename(filename: string): string {
 			}
 		}),
 	})
-	return (newFilename == '' ? randomBytes(5).toString('hex') : newFilename)
+	return (newFilename === '' ? 'TODO_MAKE_UNIQUE' : newFilename)
 }
 
 /**
@@ -49,8 +48,8 @@ export function interpolate(val: number, fromStart: number, fromEnd: number, toS
 export function groupBy<T>(objectList: T[], ...keys: (keyof T)[]) {
 	const results: T[][] = []
 	for (const object of objectList) {
-		const matchingGroup = results.find(result => keys.every(key => result[0][key] == object[key]))
-		if (matchingGroup != undefined) {
+		const matchingGroup = results.find(result => keys.every(key => result[0][key] === object[key]))
+		if (matchingGroup !== undefined) {
 			matchingGroup.push(object)
 		} else {
 			results.push([object])

@@ -1,7 +1,8 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core'
 
-import { SearchService } from 'src/app/core/services/search.service'
-import { getDefaultSearch } from 'src/electron/shared/interfaces/search.interface'
+import { SearchService } from 'src-angular/app/core/services/search.service'
+
+import { getDefaultSearch } from '../../../../../src-shared/interfaces/search.interface'
 
 @Component({
 	selector: 'app-search-bar',
@@ -23,22 +24,23 @@ export class SearchBarComponent implements AfterViewInit {
 	constructor(public searchService: SearchService) { }
 
 	ngAfterViewInit() {
-		$(this.searchIcon.nativeElement).popup({
-			onShow: () => this.isError, // Only show the popup if there is an error
-		})
+		// TODO
+		// $(this.searchIcon.nativeElement).popup({
+		// 	onShow: () => this.isError, // Only show the popup if there is an error
+		// })
 		this.searchService.onSearchErrorStateUpdate(isError => {
 			this.isError = isError
 		})
-		$(this.quantityDropdown.nativeElement).dropdown({
-			onChange: (value: string) => {
-				this.searchSettings.quantity = value as 'all' | 'any'
-			},
-		})
-		$(this.similarityDropdown.nativeElement).dropdown({
-			onChange: (value: string) => {
-				this.searchSettings.similarity = value as 'similar' | 'exact'
-			},
-		})
+		// $(this.quantityDropdown.nativeElement).dropdown({
+		// 	onChange: (value: string) => {
+		// 		this.searchSettings.quantity = value as 'all' | 'any'
+		// 	},
+		// })
+		// $(this.similarityDropdown.nativeElement).dropdown({
+		// 	onChange: (value: string) => {
+		// 		this.searchSettings.similarity = value as 'similar' | 'exact'
+		// 	},
+		// })
 	}
 
 	onSearch(query: string) {
@@ -53,17 +55,18 @@ export class SearchBarComponent implements AfterViewInit {
 
 		if (!this.sliderInitialized) {
 			setTimeout(() => { // Initialization requires this element to not be collapsed
-				$(this.diffSlider.nativeElement).slider({
-					min: 0,
-					max: 6,
-					start: 0,
-					end: 6,
-					step: 1,
-					onChange: (_length: number, min: number, max: number) => {
-						this.searchSettings.minDiff = min
-						this.searchSettings.maxDiff = max
-					},
-				})
+				// TODO
+				// $(this.diffSlider.nativeElement).slider({
+				// 	min: 0,
+				// 	max: 6,
+				// 	start: 0,
+				// 	end: 6,
+				// 	step: 1,
+				// 	onChange: (_length: number, min: number, max: number) => {
+				// 		this.searchSettings.minDiff = min
+				// 		this.searchSettings.maxDiff = max
+				// 	},
+				// })
 			}, 50)
 			this.sliderInitialized = true
 		}
