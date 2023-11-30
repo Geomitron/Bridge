@@ -1,16 +1,15 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
 
-import { CheckboxDirective } from 'src-angular/app/core/directives/checkbox.directive'
+import { capitalize } from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
+import { themes } from 'src-shared/Settings'
 
 @Component({
 	selector: 'app-settings',
 	templateUrl: './settings.component.html',
-	styleUrls: ['./settings.component.scss'],
 })
-export class SettingsComponent implements OnInit, AfterViewInit {
+export class SettingsComponent implements OnInit {
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
-	@ViewChild(CheckboxDirective, { static: true }) videoCheckbox: CheckboxDirective
 
 	updateAvailable: boolean | null = false
 	loginClicked = false
@@ -52,17 +51,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		})
 	}
 
-	ngAfterViewInit() {
-		// TODO
-		// $(this.themeDropdown.nativeElement).dropdown({
-		// 	onChange: (_value: string, text: string) => {
-		// 		this.settingsService.theme = text
-		// 	},
-		// })
-
-		this.videoCheckbox.check(this.settingsService.downloadVideos)
-	}
-
 	async downloadVideos(isChecked: boolean) {
 		this.settingsService.downloadVideos = isChecked
 	}
@@ -85,9 +73,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	changeRateLimit(event: Event) {
-		const inputElement = event.srcElement as HTMLInputElement
-		this.settingsService.rateLimitDelay = Number(inputElement.value)
+	setTheme(theme: typeof themes[number]) {
+		this.settingsService.theme = theme
+	}
+
+	capitalize(text: string) {
+		return capitalize(text)
 	}
 
 	downloadUpdate() {

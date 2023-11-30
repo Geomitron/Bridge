@@ -1,19 +1,24 @@
-import { Injectable } from '@angular/core'
+import { DOCUMENT } from '@angular/common'
+import { Inject, Injectable } from '@angular/core'
 
-import { Settings } from '../../../../src-shared/Settings'
+import { Settings, themes } from '../../../../src-shared/Settings'
 
 @Injectable({
 	providedIn: 'root',
 })
 export class SettingsService {
-	readonly builtinThemes = ['Default', 'Dark']
 
 	private settings: Settings
-	private currentThemeLink: HTMLLinkElement
+
+	constructor(
+		@Inject(DOCUMENT) private document: Document,
+	) { }
 
 	async loadSettings() {
 		this.settings = await window.electron.invoke.getSettings()
-		if (this.settings.theme !== this.builtinThemes[0]) {
+		if (!themes.includes(this.settings.theme)) {
+			this.changeTheme('dark')
+		} else {
 			this.changeTheme(this.settings.theme)
 		}
 	}
@@ -22,15 +27,8 @@ export class SettingsService {
 		window.electron.emit.setSettings(this.settings)
 	}
 
-	changeTheme(theme: string) {
-		if (this.currentThemeLink !== undefined) this.currentThemeLink.remove()
-		if (theme === 'Default') { return }
-
-		const link = document.createElement('link')
-		link.type = 'text/css'
-		link.rel = 'stylesheet'
-		link.href = `./assets/themes/${theme.toLowerCase()}.css`
-		this.currentThemeLink = document.head.appendChild(link)
+	changeTheme(theme: typeof themes[number]) {
+		this.document.documentElement.setAttribute('data-theme', theme)
 	}
 
 	// Individual getters/setters
@@ -53,7 +51,7 @@ export class SettingsService {
 	get theme() {
 		return this.settings.theme
 	}
-	set theme(newValue: string) {
+	set theme(newValue: typeof themes[number]) {
 		this.settings.theme = newValue
 		this.changeTheme(newValue)
 		this.saveSettings()

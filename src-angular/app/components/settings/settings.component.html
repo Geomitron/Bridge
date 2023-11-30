@@ -1,64 +1,68 @@
-<h3 class="ui header">Paths</h3>
-<div class="ui form">
-	<div class="field">
-		<label>Chart library directory</label>
-		<div class="ui action input">
+<div class="p-8 flex flex-col gap-3">
+	<label class="form-control w-full">
+		<div class="label">
+			<span class="label-text">Chart library directory</span>
+		</div>
+		<div class="join w-full">
 			<input
 				[value]="settingsService.libraryDirectory || 'No folder selected'"
-				class="default-cursor"
+				class="join-item input input-bordered cursor-default pointer-events-none flex-1"
 				readonly
 				type="text"
 				placeholder="No directory selected!" />
-			<button *ngIf="settingsService.libraryDirectory !== undefined" (click)="openLibraryDirectory()" class="ui button">Open Folder</button>
-			<button (click)="getLibraryDirectory()" class="ui button positive">Choose</button>
+			<button *ngIf="settingsService.libraryDirectory !== undefined" (click)="openLibraryDirectory()" class="join-item btn btn-neutral">
+				Open Folder
+			</button>
+			<button (click)="getLibraryDirectory()" class="join-item btn btn-primary">Choose</button>
+		</div>
+	</label>
+
+	<label class="form-control w-full max-w-xs">
+		<div class="label">
+			<span class="label-text">Theme</span>
+		</div>
+		<div class="dropdown dropdown-hover">
+			<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
+			<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
+				<li>
+					<h2 class="menu-title text-neutral-content text-opacity-50">Dark</h2>
+					<ul>
+						<li><a (click)="setTheme('business')">Business</a></li>
+						<li><a (click)="setTheme('dark')">Dark</a></li>
+						<li><a (click)="setTheme('halloween')">Halloween</a></li>
+						<li><a (click)="setTheme('night')">Night</a></li>
+						<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
+					</ul>
+				</li>
+				<li>
+					<h2 class="menu-title text-neutral-content text-opacity-50">Light</h2>
+					<ul>
+						<li><a (click)="setTheme('aqua')">Aqua</a></li>
+						<li><a (click)="setTheme('emerald')">Emerald</a></li>
+						<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
+						<li><a (click)="setTheme('valentine')">Valentine</a></li>
+						<li><a (click)="setTheme('winter')">Winter</a></li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</label>
+
+	<div class="absolute bottom-8 right-8 flex gap-6">
+		<div class="join">
+			<button *ngIf="updateAvailable" class="join-item btn btn-primary" (click)="downloadUpdate()">
+				<i class="bi text-xl" [ngClass]="updateDownloaded ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>{{ downloadUpdateText }}
+			</button>
+			<button *ngIf="updateAvailable === null" class="join-item btn btn-warning" [class.disabled]="updateRetrying" (click)="retryUpdate()">
+				<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying"></i>{{ retryUpdateText }}
+			</button>
+			<button class="join-item btn btn-outline btn-disabled">{{ currentVersion }}</button>
+		</div>
+
+		<div class="tooltip tooltip-left" data-tip="Toggle developer tools">
+			<button class="btn btn-primary btn-square btn-neutral" (click)="toggleDevTools()">
+				<i class="bi bi-gear text-lg"></i>
+			</button>
 		</div>
 	</div>
-</div>
-
-<h3 class="ui header">Downloads</h3>
-<div class="ui form">
-	<div class="field">
-		<div appCheckbox #videoCheckbox class="ui checkbox" (checked)="downloadVideos($event)">
-			<input type="checkbox" />
-			<label>Download video backgrounds</label>
-		</div>
-	</div>
-</div>
-<div class="field">
-	<label>Google rate limit delay</label>
-	<div id="rateLimitInput" class="ui right labeled input">
-		<input type="number" [value]="settingsService.rateLimitDelay" (input)="changeRateLimit($event)" />
-		<div class="ui basic label">sec</div>
-	</div>
-</div>
-<div *ngIf="settingsService.rateLimitDelay < 30" class="ui warning message">
-	<i class="exclamation circle icon"></i>
-	<b>Warning:</b> downloading files from Google with a delay less than about 30 seconds will eventually cause Google to refuse download requests from
-	this program for a few hours. This limitation will be removed in a future update.
-</div>
-
-<h3 class="ui header">Theme</h3>
-<div #themeDropdown class="ui selection dropdown mr">
-	<input type="hidden" name="sort" [value]="settingsService.theme" />
-	<i class="dropdown icon"></i>
-	<div class="default text">{{ settingsService.theme }}</div>
-	<div class="menu">
-		<div class="item" [attr.data-value]="i" *ngFor="let theme of settingsService.builtinThemes; let i = index">{{ theme }}</div>
-	</div>
-</div>
-
-<div class="bottom">
-	<div class="ui buttons">
-		<button *ngIf="updateAvailable" class="ui labeled icon positive button" (click)="downloadUpdate()">
-			<i class="left alternate icon" [ngClass]="updateDownloaded ? 'sync' : 'cloud download'"></i>{{ downloadUpdateText }}
-		</button>
-		<button *ngIf="updateAvailable === null" class="ui labeled yellow icon button" [class.disabled]="updateRetrying" (click)="retryUpdate()">
-			<i class="left alternate sync alternate icon" [class.loading]="updateRetrying"></i>{{ retryUpdateText }}
-		</button>
-		<button id="versionNumberButton" class="ui basic disabled button">{{ currentVersion }}</button>
-	</div>
-
-	<button class="ui basic icon button" data-tooltip="Toggle developer tools" data-position="top right" (click)="toggleDevTools()">
-		<i class="cog icon"></i>
-	</button>
 </div>

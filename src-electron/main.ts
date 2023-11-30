@@ -131,7 +131,7 @@ async function loadWindow(retries = 0) {
 	try {
 		await mainWindow.loadURL(getLoadUrl())
 	} catch (err) {
-		console.log('FAILED TO LOAD WINDOW #', retries)
+		await new Promise<void>(resolve => setTimeout(resolve, 1000))
 		await loadWindow(retries + 1)
 	}
 }
