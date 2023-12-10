@@ -2,7 +2,6 @@ import { parse } from 'path'
 import { rimraf } from 'rimraf'
 
 import { NewDownload, ProgressType } from '../../../src-shared/interfaces/download.interface'
-import { DriveFile } from '../../../src-shared/interfaces/songDetails.interface'
 import { sanitizeFilename } from '../../../src-shared/UtilFunctions'
 import { hasVideoExtension } from '../../ElectronUtilFunctions'
 import { emitIpcEvent } from '../../main'
@@ -26,7 +25,9 @@ export class ChartDownload {
 	private cancelFn: undefined | (() => void)
 
 	private callbacks = {} as Callbacks
-	private files: DriveFile[]
+	// TODO
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private files: any[]
 	private percent = 0 // Needs to be stored here because errors won't know the exact percent
 	private tempPath: string
 	private wasCanceled = false
@@ -60,7 +61,9 @@ export class ChartDownload {
 		this.callbacks[event] = callback
 	}
 
-	filterDownloadFiles(files: DriveFile[]) {
+	// TODO
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	filterDownloadFiles(files: any[]) {
 		return files.filter(file => {
 			return (file.name !== 'ch.dat') && (settings.downloadVideos || !hasVideoExtension(file.name))
 		})

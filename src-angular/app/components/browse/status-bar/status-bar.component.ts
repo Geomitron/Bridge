@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component } from '@angular/core'
 
-import { VersionResult } from '../../../../../src-shared/interfaces/songDetails.interface'
 import { groupBy } from '../../../../../src-shared/UtilFunctions'
 import { DownloadService } from '../../../core/services/download.service'
 import { SearchService } from '../../../core/services/search.service'
@@ -13,17 +12,19 @@ import { SelectionService } from '../../../core/services/selection.service'
 })
 export class StatusBarComponent {
 
-	resultCount = 0
 	multipleCompleted = false
 	downloading = false
 	error = false
 	percent = 0
-	batchResults: VersionResult[]
-	chartGroups: VersionResult[][]
+	// TODO
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	batchResults: any[]
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	chartGroups: any[][]
 
 	constructor(
 		private downloadService: DownloadService,
-		private searchService: SearchService,
+		public searchService: SearchService,
 		private selectionService: SelectionService,
 		ref: ChangeDetectorRef
 	) {
@@ -36,14 +37,10 @@ export class StatusBarComponent {
 				ref.detectChanges()
 			}, 0)
 		})
-
-		searchService.onSearchChanged(() => {
-			this.resultCount = searchService.resultCount
-		})
 	}
 
 	get allResultsVisible() {
-		return this.searchService.allResultsVisible
+		return false // this.searchService.allResultsVisible
 	}
 
 	get selectedResults() {
@@ -57,7 +54,8 @@ export class StatusBarComponent {
 
 	async downloadSelected() {
 		this.chartGroups = []
-		this.batchResults = await window.electron.invoke.getBatchSongDetails(this.selectedResults.map(result => result.id))
+		// TODO
+		// this.batchResults = await window.electron.invoke.getBatchSongDetails(this.selectedResults.map(result => result.id))
 		const versionGroups = groupBy(this.batchResults, 'songID')
 		for (const versionGroup of versionGroups) {
 			if (versionGroup.findIndex(version => version.chartID !== versionGroup[0].chartID) !== -1) {
@@ -68,7 +66,7 @@ export class StatusBarComponent {
 
 		if (this.chartGroups.length === 0) {
 			for (const versions of versionGroups) {
-				this.searchService.sortChart(versions)
+				// this.searchService.sortChart(versions)
 				const downloadVersion = versions[0]
 				const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
 				this.downloadService.addDownload(
@@ -89,7 +87,7 @@ export class StatusBarComponent {
 	downloadAllCharts() {
 		const songChartGroups = groupBy(this.batchResults, 'songID', 'chartID')
 		for (const chart of songChartGroups) {
-			this.searchService.sortChart(chart)
+			// this.searchService.sortChart(chart)
 			const downloadVersion = chart[0]
 			const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
 			this.downloadService.addDownload(

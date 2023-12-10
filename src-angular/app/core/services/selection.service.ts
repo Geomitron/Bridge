@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core'
 
-import { SongResult } from '../../../../src-shared/interfaces/search.interface'
+import { SearchResult } from '../../../../src-shared/interfaces/search.interface'
 import { SearchService } from './search.service'
 
 // Note: this class prevents event cycles by only emitting events if the checkbox changes
@@ -10,7 +10,7 @@ import { SearchService } from './search.service'
 })
 export class SelectionService {
 
-	private searchResults: SongResult[] = []
+	private searchResults: Partial<SearchResult>
 
 	private selectAllChangedEmitter = new EventEmitter<boolean>()
 	private selectionChangedCallbacks: { [songID: number]: (selection: boolean) => void } = {}
@@ -19,14 +19,14 @@ export class SelectionService {
 	private selections: { [songID: number]: boolean | undefined } = {}
 
 	constructor(searchService: SearchService) {
-		searchService.onSearchChanged(results => {
+		searchService.searchUpdated.subscribe(results => {
 			this.searchResults = results
 			if (this.allSelected) {
 				this.selectAll() // Select newly added rows if allSelected
 			}
 		})
 
-		searchService.onNewSearch(results => {
+		searchService.searchUpdated.subscribe(results => {
 			this.searchResults = results
 			this.selectionChangedCallbacks = {}
 			this.selections = {}
@@ -35,7 +35,9 @@ export class SelectionService {
 	}
 
 	getSelectedResults() {
-		return this.searchResults.filter(result => this.selections[result.id] === true)
+		// TODO
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return [] as any[] // this.searchResults.filter(result => this.selections[result.id] === true)
 	}
 
 	onSelectAllChanged(callback: (selected: boolean) => void) {
@@ -57,7 +59,8 @@ export class SelectionService {
 			this.selectAllChangedEmitter.emit(false)
 		}
 
-		setTimeout(() => this.searchResults.forEach(result => this.deselectSong(result.id)), 0)
+		// TODO
+		// setTimeout(() => this.searchResults.forEach(result => this.deselectSong(result.id)), 0)
 	}
 
 	selectAll() {
@@ -66,7 +69,8 @@ export class SelectionService {
 			this.selectAllChangedEmitter.emit(true)
 		}
 
-		setTimeout(() => this.searchResults.forEach(result => this.selectSong(result.id)), 0)
+		// TODO
+		// setTimeout(() => this.searchResults.forEach(result => this.selectSong(result.id)), 0)
 	}
 
 	deselectSong(songID: number) {

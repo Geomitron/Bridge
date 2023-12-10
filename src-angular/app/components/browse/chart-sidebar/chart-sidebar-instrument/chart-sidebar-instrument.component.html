@@ -1,0 +1,9 @@
+<div class="bg-neutral rounded-md">
+	<div class="text-center text-neutral-content">
+		{{ getEMHXString() }}
+	</div>
+	<div class="indicator">
+		<img class="w-12 m-2 mt-0" src="assets/images/instruments/{{ instrument }}.png" />
+		<span class="indicator-item indicator-bottom indicator-start badge badge-error badge-md ml-4 mb-4 font-bold">{{ getDiff() }}</span>
+	</div>
+</div>

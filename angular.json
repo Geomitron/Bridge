@@ -85,6 +85,14 @@
                 }
               ],
               "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
@@ -99,9 +107,10 @@
               "buildTarget": "Bridge:build:production"
             },
             "development": {
-              "buildTarget": "angular:build:development"
+              "buildTarget": "Bridge:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         }
       }
     }

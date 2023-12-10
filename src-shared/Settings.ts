@@ -1,3 +1,5 @@
+import { Difficulty, Instrument } from 'scan-chart'
+
 export const themes = [
 	'business',
 	'dark',
@@ -21,6 +23,8 @@ export interface Settings {
 	downloadVideos: boolean         // If background videos should be downloaded
 	theme: typeof themes[number]    // The name of the currently enabled UI theme
 	libraryPath: string | undefined // The path to the user's library
+	instrument: Instrument | null   // The instrument selected by default, or `null` for "Any Instrument"
+	difficulty: Difficulty | null   // The difficulty selected by default, or `null` for "Any Difficulty"
 }
 
 /**
@@ -31,4 +35,6 @@ export const defaultSettings: Settings = {
 	downloadVideos: true,
 	theme: 'dark',
 	libraryPath: undefined,
+	instrument: 'guitar',
+	difficulty: null,
 }

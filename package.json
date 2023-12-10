@@ -36,6 +36,7 @@
     "bootstrap-icons": "^1.11.2",
     "bottleneck": "^2.19.5",
     "comparators": "^3.0.2",
+    "dayjs": "^1.11.10",
     "electron-unhandled": "^4.0.1",
     "electron-updater": "^4.3.1",
     "electron-window-state": "^5.0.3",
@@ -45,7 +46,9 @@
     "rimraf": "^5.0.5",
     "rxjs": "~7.8.1",
     "sanitize-filename": "^1.6.3",
+    "scan-chart": "^3.4.1",
     "tslib": "^2.0.0",
+    "zod": "^3.22.4",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {

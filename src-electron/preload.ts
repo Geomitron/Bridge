@@ -19,9 +19,6 @@ function getListenerAdder<K extends keyof IpcFromMainEmitEvents>(key: K) {
 const electronApi: ContextBridgeApi = {
 	invoke: {
 		getSettings: getInvoker('getSettings'),
-		songSearch: getInvoker('songSearch'),
-		getSongDetails: getInvoker('getSongDetails'),
-		getBatchSongDetails: getInvoker('getBatchSongDetails'),
 		getCurrentVersion: getInvoker('getCurrentVersion'),
 		getUpdateAvailable: getInvoker('getUpdateAvailable'),
 		isMaximized: getInvoker('isMaximized'),

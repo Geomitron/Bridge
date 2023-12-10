@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core'
 
-import { SongResult } from '../../../../../../src-shared/interfaces/search.interface'
+import { ChartData } from '../../../../../../src-shared/interfaces/search.interface'
 import { SelectionService } from '../../../../core/services/selection.service'
 
 @Component({
@@ -9,14 +9,14 @@ import { SelectionService } from '../../../../core/services/selection.service'
 	styleUrls: ['./result-table-row.component.scss'],
 })
 export class ResultTableRowComponent implements AfterViewInit {
-	@Input() result: SongResult
+	@Input() song: ChartData[]
 
 	@ViewChild('checkbox', { static: true }) checkbox: ElementRef
 
 	constructor(private selectionService: SelectionService) { }
 
 	get songID() {
-		return this.result.id
+		return this.song[0].songId ?? this.song[0].chartId
 	}
 
 	ngAfterViewInit() {

@@ -1,36 +1,34 @@
-<div id="sidebarCard" *ngIf="selectedVersion" class="ui fluid card">
-	<div class="ui placeholder" [ngClass]="{ placeholder: albumArtSrc === '', inverted: settingsService.theme === 'dark' }">
-		<img *ngIf="albumArtSrc !== null" class="ui square image" [src]="albumArtSrc" />
+<div id="sidebarCard" *ngIf="selectedChart" class="ui fluid card">
+	<div class="ui placeholder">
+		@if (albumArtMd5) {
+			<img src="https://files.enchor.us/{{ albumArtMd5 }}.jpg" alt="Album art" loading="lazy" class="object-cover w-40" />
+		}
 	</div>
-	<div *ngIf="charts.length > 1" id="chartDropdown" class="ui fluid right labeled scrolling icon dropdown button">
+	<div *ngIf="charts && charts.length > 1" id="chartDropdown" class="ui fluid right labeled scrolling icon dropdown button">
 		<input type="hidden" name="Chart" />
 		<i id="chartDropdownIcon" class="dropdown icon"></i>
 		<div class="default text"></div>
 		<div id="chartDropdownMenu" class="menu"></div>
 	</div>
 	<div id="textPanel" class="content">
-		<span class="header">{{ selectedVersion.chartName }}</span>
+		<span class="header">{{ selectedChart.chartName }}</span>
 		<div class="description">
-			<div *ngIf="songResult!.album === null"><b>Album:</b> {{ selectedVersion.album }} ({{ selectedVersion.year }})</div>
-			<div *ngIf="songResult!.album !== null"><b>Year:</b> {{ selectedVersion.year }}</div>
-			<div *ngIf="songResult!.genre === null"><b>Genre:</b> {{ selectedVersion.genre }}</div>
-			<div>
-				<b>{{ charterPlural }}</b> {{ selectedVersion.charters }}
-			</div>
-			<div *ngIf="selectedVersion.tags"><b>Tags:</b> {{ selectedVersion.tags }}</div>
+			<div *ngIf="selectedChart.chartAlbum"><b>Album:</b> {{ selectedChart.chartAlbum }}</div>
+			<div *ngIf="selectedChart.chartGenre"><b>Genre:</b> {{ selectedChart.chartGenre }}</div>
+			<div *ngIf="selectedChart.chartYear"><b>Year:</b> {{ selectedChart.chartYear }}</div>
+			<div><b>Charter:</b> {{ selectedChart.charter }}</div>
 			<div><b>Audio Length:</b> {{ songLength }}</div>
 			<div class="ui divider"></div>
 			<div class="ui horizontal list">
-				<div *ngFor="let difficulty of difficultiesList" class="item">
-					<img class="ui avatar image" src="assets/images/instruments/{{ difficulty.instrument }}" />
-					<div class="content">
-						<div class="header">Diff: {{ difficulty.diffNumber }}</div>
-						{{ difficulty.chartedDifficulties }}
-					</div>
-				</div>
+				@if (selectedChart.notesData.hasVocals) {
+					<app-chart-sidebar-instrument [chart]="selectedChart" instrument="vocals" />
+				}
+				@for (instrument of instruments; track $index) {
+					<app-chart-sidebar-instrument [chart]="selectedChart" [instrument]="instrument" />
+				}
 			</div>
 			<div id="sourceLinks">
-				<a id="sourceLink" (click)="onSourceLinkClicked()">{{ selectedVersion.driveData.source.sourceName }}</a>
+				<a id="sourceLink" (click)="onSourceLinkClicked()">{{ selectedChart.packName ?? selectedChart.applicationUsername + "'s Chart" }}</a>
 				<button *ngIf="shownFolderButton()" id="folderButton" class="mini ui icon button" (click)="onFolderButtonClicked()">
 					<i class="folder open outline icon"></i>
 				</button>
@@ -38,8 +36,8 @@
 		</div>
 	</div>
 	<div id="downloadButtons" class="ui positive buttons">
-		<div id="downloadButton" class="ui button" (click)="onDownloadClicked()">{{ downloadButtonText }}</div>
-		<div *ngIf="getSelectedChartVersions().length > 1" id="versionDropdown" class="ui floating dropdown icon button">
+		<div id="downloadButton" class="ui button" (click)="onDownloadClicked()">Download</div>
+		<div id="versionDropdown" class="ui floating dropdown icon button">
 			<i class="dropdown icon"></i>
 		</div>
 	</div>

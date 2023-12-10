@@ -3,8 +3,6 @@ import { UpdateInfo } from 'electron-updater'
 
 import { Settings } from '../Settings'
 import { Download, DownloadProgress } from './download.interface'
-import { SongResult, SongSearch } from './search.interface'
-import { VersionResult } from './songDetails.interface'
 import { UpdateProgress } from './update.interface'
 
 export interface ContextBridgeApi {
@@ -26,18 +24,6 @@ export interface IpcInvokeEvents {
 	getSettings: {
 		input: void
 		output: Settings
-	}
-	songSearch: {
-		input: SongSearch
-		output: SongResult[]
-	}
-	getSongDetails: {
-		input: SongResult['id']
-		output: VersionResult[]
-	}
-	getBatchSongDetails: {
-		input: number[]
-		output: VersionResult[]
 	}
 	getCurrentVersion: {
 		input: void

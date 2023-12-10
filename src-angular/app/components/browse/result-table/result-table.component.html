@@ -19,12 +19,8 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr
-			app-result-table-row
-			#tableRow
-			*ngFor="let result of results"
-			(click)="onRowClicked(result)"
-			[class.active]="activeRowID === result.id"
-			[result]="result"></tr>
+		@for (song of songs; track song) {
+			<tr app-result-table-row (click)="onRowClicked(song)" [class.active]="activeSong === song" [song]="song"></tr>
+		}
 	</tbody>
 </table>

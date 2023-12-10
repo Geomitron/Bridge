@@ -1,78 +1,246 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core'
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { AbstractControl, FormBuilder, FormControl } from '@angular/forms'
 
+import dayjs from 'dayjs'
+import { distinctUntilChanged, switchMap, throttleTime } from 'rxjs'
+import { Difficulty, Instrument } from 'scan-chart'
 import { SearchService } from 'src-angular/app/core/services/search.service'
-
-import { getDefaultSearch } from '../../../../../src-shared/interfaces/search.interface'
+import { difficulties, difficultyDisplay, instrumentDisplay, instruments } from 'src-shared/UtilFunctions'
 
 @Component({
 	selector: 'app-search-bar',
 	templateUrl: './search-bar.component.html',
-	styleUrls: ['./search-bar.component.scss'],
 })
-export class SearchBarComponent implements AfterViewInit {
+export class SearchBarComponent implements OnInit, AfterViewInit {
 
-	@ViewChild('searchIcon', { static: true }) searchIcon: ElementRef
-	@ViewChild('quantityDropdown', { static: true }) quantityDropdown: ElementRef
-	@ViewChild('similarityDropdown', { static: true }) similarityDropdown: ElementRef
-	@ViewChild('diffSlider', { static: true }) diffSlider: ElementRef
+	@ViewChild('hasSoloSections') hasSoloSections: ElementRef<HTMLInputElement>
+	@ViewChild('hasForcedNotes') hasForcedNotes: ElementRef<HTMLInputElement>
+	@ViewChild('hasOpenNotes') hasOpenNotes: ElementRef<HTMLInputElement>
+	@ViewChild('hasTapNotes') hasTapNotes: ElementRef<HTMLInputElement>
+	@ViewChild('hasRollLanes') hasRollLanes: ElementRef<HTMLInputElement>
+	@ViewChild('has2xKick') has2xKick: ElementRef<HTMLInputElement>
 
-	isError = false
-	showAdvanced = false
-	searchSettings = getDefaultSearch()
-	private sliderInitialized = false
+	public showAdvanced = false
+	public instruments = instruments
+	public difficulties = difficulties
+	public instrumentDisplay = instrumentDisplay
+	public difficultyDisplay = difficultyDisplay
 
-	constructor(public searchService: SearchService) { }
+	public advancedSearchForm: ReturnType<this['getAdvancedSearchForm']>
+	public startValidation = false
+
+	constructor(
+		private searchService: SearchService,
+		private fb: FormBuilder,
+	) { }
+
+	ngOnInit() {
+		this.searchControl.valueChanges.pipe(
+			throttleTime(400, undefined, { leading: true, trailing: true }),
+			distinctUntilChanged(),
+			switchMap(search => this.searchService.search(search || '*'))
+		).subscribe()
+
+		this.initializeAdvancedSearchForm()
+	}
 
 	ngAfterViewInit() {
-		// TODO
-		// $(this.searchIcon.nativeElement).popup({
-		// 	onShow: () => this.isError, // Only show the popup if there is an error
-		// })
-		this.searchService.onSearchErrorStateUpdate(isError => {
-			this.isError = isError
+		this.updateDisabledControls()
+		this.searchService.instrument.valueChanges.subscribe(() => {
+			this.updateDisabledControls()
 		})
-		// $(this.quantityDropdown.nativeElement).dropdown({
-		// 	onChange: (value: string) => {
-		// 		this.searchSettings.quantity = value as 'all' | 'any'
-		// 	},
-		// })
-		// $(this.similarityDropdown.nativeElement).dropdown({
-		// 	onChange: (value: string) => {
-		// 		this.searchSettings.similarity = value as 'similar' | 'exact'
-		// 	},
-		// })
 	}
 
-	onSearch(query: string) {
-		this.searchSettings.query = query
-		this.searchSettings.limit = 50 + 1
-		this.searchSettings.offset = 0
-		this.searchService.newSearch(this.searchSettings)
-	}
-
-	onAdvancedSearchClick() {
-		this.showAdvanced = !this.showAdvanced
-
-		if (!this.sliderInitialized) {
-			setTimeout(() => { // Initialization requires this element to not be collapsed
-				// TODO
-				// $(this.diffSlider.nativeElement).slider({
-				// 	min: 0,
-				// 	max: 6,
-				// 	start: 0,
-				// 	end: 6,
-				// 	step: 1,
-				// 	onChange: (_length: number, min: number, max: number) => {
-				// 		this.searchSettings.minDiff = min
-				// 		this.searchSettings.maxDiff = max
-				// 	},
-				// })
-			}, 50)
-			this.sliderInitialized = true
+	setShowAdvanced(showAdvanced: boolean) {
+		this.showAdvanced = showAdvanced
+		if (showAdvanced) {
+			this.startValidation = false
+			this.searchControl.disable()
+		} else {
+			this.searchControl.enable()
 		}
 	}
 
-	isLoading() {
-		return this.searchService.isLoading()
+	get searchControl() {
+		return this.searchService.searchControl
 	}
+	get instrument() {
+		return this.searchService.instrument.value
+	}
+	setInstrument(instrument: Instrument | null, event: MouseEvent) {
+		this.searchService.instrument.setValue(instrument)
+		if (event.target instanceof HTMLElement) {
+			event.target.parentElement?.parentElement?.blur()
+		}
+	}
+
+	get difficulty() {
+		return this.searchService.difficulty.value
+	}
+	setDifficulty(difficulty: Difficulty | null, event: MouseEvent) {
+		this.searchService.difficulty.setValue(difficulty)
+		if (event.target instanceof HTMLElement) {
+			event.target.parentElement?.parentElement?.blur()
+		}
+	}
+
+	get logoType() {
+		switch (localStorage.getItem('theme')) {
+			case 'emerald': return 'emerald'
+			case 'halloween': return 'halloween'
+			case 'lemonade': return 'lemonade'
+			case 'night': return 'night'
+			case 'synthwave': return 'synthwave'
+			case 'aqua': return 'orange'
+			case 'valentine': return 'valentine'
+			case 'winter': return 'winter'
+			case 'aren': return 'aren'
+			case 'froogs': return 'froogs'
+			default: return 'default'
+		}
+	}
+
+	get todayDate() {
+		return dayjs().format('YYYY-MM-DD')
+	}
+
+	// TODO: run this when infinite scroll should happen
+	// @HostListener("window:scroll", [])
+	// onScroll(): void {
+	// 	if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+	// 		if (this.searchService.areMorePages && !this.searchService.searchLoading) {
+	// 			this.searchService.search(this.searchControl.value || '*', true).subscribe()
+	// 		}
+	// 	}
+	// }
+
+	initializeAdvancedSearchForm() {
+		this.advancedSearchForm = this.getAdvancedSearchForm() as ReturnType<this['getAdvancedSearchForm']>
+
+		for (const key of ['name', 'artist', 'album', 'genre', 'year', 'charter'] as const) {
+			this.advancedSearchForm.get(key)?.get('exact')?.disable()
+			this.advancedSearchForm.get(key)?.get('exclude')?.disable()
+			this.advancedSearchForm.get(key)?.get('value')?.valueChanges.subscribe(value => {
+				if (value) {
+					this.advancedSearchForm.get(key)?.get('exact')?.enable()
+					this.advancedSearchForm.get(key)?.get('exclude')?.enable()
+				} else {
+					this.advancedSearchForm.get(key)?.get('exact')?.disable()
+					this.advancedSearchForm.get(key)?.get('exact')?.setValue(false)
+					this.advancedSearchForm.get(key)?.get('exclude')?.disable()
+					this.advancedSearchForm.get(key)?.get('exclude')?.setValue(false)
+				}
+			})
+		}
+	}
+
+	updateDisabledControls() {
+		const isDrums = this.searchService.instrument.value === 'drums'
+		const isAny = this.searchService.instrument.value === null
+		const explanation = 'Not available for the current instrument.'
+
+		this.hasSoloSections.nativeElement.disabled = isDrums && !isAny
+		this.hasForcedNotes.nativeElement.disabled = isDrums && !isAny
+		this.hasOpenNotes.nativeElement.disabled = isDrums && !isAny
+		this.hasTapNotes.nativeElement.disabled = isDrums && !isAny
+		this.hasRollLanes.nativeElement.disabled = !isDrums && !isAny
+		this.has2xKick.nativeElement.disabled = !isDrums && !isAny
+
+		this.hasSoloSections.nativeElement.title = isDrums && !isAny ? explanation : ''
+		this.hasForcedNotes.nativeElement.title = isDrums && !isAny ? explanation : ''
+		this.hasOpenNotes.nativeElement.title = isDrums && !isAny ? explanation : ''
+		this.hasTapNotes.nativeElement.title = isDrums && !isAny ? explanation : ''
+		this.hasRollLanes.nativeElement.title = !isDrums && !isAny ? explanation : ''
+		this.has2xKick.nativeElement.title = !isDrums && !isAny ? explanation : ''
+
+		if (!isAny) {
+			if (isDrums) {
+				this.advancedSearchForm.get('hasSoloSections')?.setValue(null)
+				this.advancedSearchForm.get('hasForcedNotes')?.setValue(null)
+				this.advancedSearchForm.get('hasOpenNotes')?.setValue(null)
+				this.advancedSearchForm.get('hasTapNotes')?.setValue(null)
+				this.hasSoloSections.nativeElement.indeterminate = true
+				this.hasForcedNotes.nativeElement.indeterminate = true
+				this.hasOpenNotes.nativeElement.indeterminate = true
+				this.hasTapNotes.nativeElement.indeterminate = true
+			} else {
+				this.advancedSearchForm.get('hasRollLanes')?.setValue(null)
+				this.advancedSearchForm.get('has2xKick')?.setValue(null)
+				this.hasRollLanes.nativeElement.indeterminate = true
+				this.has2xKick.nativeElement.indeterminate = true
+			}
+		}
+	}
+
+	getAdvancedSearchForm() {
+		return this.fb.group({
+			name: this.fb.nonNullable.group({ value: '', exact: false, exclude: false }),
+			artist: this.fb.nonNullable.group({ value: '', exact: false, exclude: false }),
+			album: this.fb.nonNullable.group({ value: '', exact: false, exclude: false }),
+			genre: this.fb.nonNullable.group({ value: '', exact: false, exclude: false }),
+			year: this.fb.nonNullable.group({ value: '', exact: false, exclude: false }),
+			charter: this.fb.nonNullable.group({ value: '', exact: false, exclude: false }),
+			minLength: null as number | null,
+			maxLength: null as number | null,
+			minIntensity: null as number | null,
+			maxIntensity: null as number | null,
+			minAverageNPS: null as number | null,
+			maxAverageNPS: null as number | null,
+			minMaxNPS: null as number | null,
+			maxMaxNPS: null as number | null,
+			modifiedAfter: this.fb.nonNullable.control('', { validators: dateVaidator }),
+			hash: this.fb.nonNullable.control(''),
+			hasSoloSections: null as boolean | null,
+			hasForcedNotes: null as boolean | null,
+			hasOpenNotes: null as boolean | null,
+			hasTapNotes: null as boolean | null,
+			hasLyrics: null as boolean | null,
+			hasVocals: null as boolean | null,
+			hasRollLanes: null as boolean | null,
+			has2xKick: null as boolean | null,
+			hasIssues: null as boolean | null,
+			hasVideoBackground: null as boolean | null,
+			modchart: null as boolean | null,
+		})
+	}
+
+	clickCheckbox(key: string, event: MouseEvent) {
+		if (event.target instanceof HTMLInputElement) {
+			const control = this.advancedSearchForm.get(key) as FormControl<boolean | null>
+			if (control.value === true) {
+				control.setValue(false)
+				event.target.checked = false
+			} else if (control.value === false) {
+				control.setValue(null)
+				event.target.checked = false
+				event.target.indeterminate = true
+			} else if (control.value === null) {
+				control.setValue(true)
+				event.target.checked = true
+				event.target.indeterminate = false
+			}
+		}
+	}
+
+	formValue(key: string) {
+		return this.advancedSearchForm.get(key)?.value
+	}
+
+	searchAdvanced() {
+		this.startValidation = true
+		if (this.advancedSearchForm.valid && !this.searchService.searchLoading) {
+			this.searchService.advancedSearch({
+				instrument: this.instrument,
+				difficulty: this.difficulty,
+				...this.advancedSearchForm.getRawValue(),
+			}).subscribe()
+		}
+	}
+}
+
+function dateVaidator(control: AbstractControl) {
+	if (control.value && isNaN(Date.parse(control.value))) {
+		return { 'dateVaidator': true }
+	}
+	return null
 }

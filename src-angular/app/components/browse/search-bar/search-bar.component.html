@@ -1,4 +1,4 @@
-<div id="searchMenu" class="ui bottom attached borderless menu">
+<!-- <div id="searchMenu" class="ui bottom attached borderless menu">
 	<div class="item">
 		<div class="ui icon input" [class.loading]="isLoading()">
 			<input #searchBox type="text" placeholder=" Search..." (keyup.enter)="onSearch(searchBox.value)" />
@@ -236,5 +236,335 @@
 				<div #diffSlider class="ui labeled ticked inverted range slider" id="diffSlider"></div>
 			</div>
 		</div>
+	</div>
+</div> -->
+
+<div class="collapse navbar grid bg-base-100 overflow-visible rounded-none" [ngClass]="showAdvanced ? 'collapse-open' : 'collapse-close'">
+	<div class="flex flex-wrap justify-end gap-1">
+		<!-- Search Input -->
+		<div class="flex items-center order-3 md:order-2 xl:order-2 flex-none w-full md:w-auto md:flex-1 xl:flex-grow-[6] min-w-[21rem]">
+			<div class="form-control w-full">
+				<input type="text" [formControl]="searchControl" placeholder="What do you feel like playing today?" class="input input-bordered pr-14" />
+			</div>
+			<i class="bi bi-search -ml-11"></i>
+		</div>
+		<div class="basis-full h-0 order-4 xl:order-7"></div>
+		<div class="flex order-5 md:order-5 xl:order-3">
+			<!-- Instrument Dropdown -->
+			<div class="dropdown">
+				<label tabindex="0" class="btn btn-neutral rounded-btn rounded-r-none my-1">
+					@if (instrument) {
+						<img class="w-8 hidden sm:block" src="assets/images/instruments/{{ instrument }}.png" />
+					}
+					{{ instrumentDisplay(instrument) }}
+				</label>
+				<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-64">
+					<li>
+						<a (click)="setInstrument(null, $event)">{{ instrumentDisplay(null) }}</a>
+					</li>
+					@for (instrument of instruments; track $index) {
+						<li>
+							<a (click)="setInstrument(instrument, $event)">
+								<img class="w-8" src="assets/images/instruments/{{ instrument }}.png" />
+								{{ instrumentDisplay(instrument) }}
+							</a>
+						</li>
+					}
+				</ul>
+			</div>
+			<!-- Difficulty Dropdown -->
+			<div class="dropdown">
+				<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none my-1">{{ difficultyDisplay(difficulty) }}</label>
+				<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-40">
+					<li>
+						<a (click)="setDifficulty(null, $event)">{{ difficultyDisplay(null) }}</a>
+					</li>
+					@for (difficulty of difficulties; track $index) {
+						<li>
+							<a (click)="setDifficulty(difficulty, $event)">{{ difficultyDisplay(difficulty) }}</a>
+						</li>
+					}
+				</ul>
+			</div>
+		</div>
+		<!-- Advanced Search -->
+		<div class="order-6 md:order-6 xl:order-4 xl:flex-grow-[5]">
+			<button class="btn btn-ghost" (click)="setShowAdvanced(!showAdvanced)">
+				Advanced Search
+				<div class="cursor-pointer swap swap-rotate" [class.swap-active]="showAdvanced">
+					<i class="swap-off bi bi-chevron-down"></i>
+					<i class="swap-on bi bi-chevron-up"></i>
+				</div>
+			</button>
+		</div>
+	</div>
+	<div class="collapse-content justify-center">
+		<form [formGroup]="advancedSearchForm">
+			<div class="flex flex-wrap gap-5 justify-center">
+				<div>
+					<table class="table table-xs">
+						<thead>
+							<tr>
+								<th>
+									<div
+										class="tooltip tooltip-bottom font-normal [text-wrap:balance]"
+										data-tip='Search for text in these specific chart properties. Note: you can put a minus sign (-) before words to return only results without that word. (e.g. "Dragon -Dragonforce")'>
+										<span class="font-bold underline decoration-dotted cursor-help">Search by</span>
+									</div>
+								</th>
+								<th>
+									<div
+										class="tooltip tooltip-bottom font-normal [text-wrap:balance]"
+										data-tip="Only include results that match perfectly. (not case sensitive)">
+										<span class="font-bold underline decoration-dotted cursor-help">Exact</span>
+									</div>
+								</th>
+								<th>
+									<div class="tooltip tooltip-bottom font-normal [text-wrap:balance]" data-tip="Do not include results that match this.">
+										<span class="font-bold underline decoration-dotted cursor-help">Exclude</span>
+									</div>
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr class="border-b-0" formGroupName="name">
+								<td><input type="text" placeholder="Name" class="input input-bordered input-sm" formControlName="value" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+							</tr>
+							<tr class="border-b-0" formGroupName="artist">
+								<td><input type="text" placeholder="Artist" class="input input-bordered input-sm" formControlName="value" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+							</tr>
+							<tr class="border-b-0" formGroupName="album">
+								<td><input type="text" placeholder="Album" class="input input-bordered input-sm" formControlName="value" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+							</tr>
+							<tr class="border-b-0" formGroupName="genre">
+								<td><input type="text" placeholder="Genre" class="input input-bordered input-sm" formControlName="value" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+							</tr>
+							<tr class="border-b-0" formGroupName="year">
+								<td><input type="text" placeholder="Year" class="input input-bordered input-sm" formControlName="value" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+							</tr>
+							<tr class="border-b-0" formGroupName="charter">
+								<td><input type="text" placeholder="Charter" class="input input-bordered input-sm" formControlName="value" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
+								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="flex flex-col gap-2 justify-end">
+					<table class="table table-xs">
+						<tbody>
+							<tr class="border-b-0">
+								<td class="text-sm">Length (minutes)</td>
+								<td>
+									<div class="join">
+										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minLength" />
+										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxLength" />
+									</div>
+								</td>
+							</tr>
+							<tr class="border-b-0">
+								<td class="text-sm">
+									<span
+										class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
+										data-tip="Also known as chart difficulty. Typically a number between 0 and 6.">
+										Intensity
+									</span>
+								</td>
+								<td>
+									<div class="join">
+										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minIntensity" />
+										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxIntensity" />
+									</div>
+								</td>
+							</tr>
+							<tr class="border-b-0">
+								<td class="text-sm">Average NPS</td>
+								<td>
+									<div class="join">
+										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minAverageNPS" />
+										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxAverageNPS" />
+									</div>
+								</td>
+							</tr>
+							<tr class="border-b-0">
+								<td class="text-sm">Max NPS</td>
+								<td>
+									<div class="join">
+										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minMaxNPS" />
+										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxMaxNPS" />
+									</div>
+								</td>
+							</tr>
+							<tr class="border-b-0">
+								<td class="text-sm">
+									<span
+										class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
+										data-tip="The date of the last time this chart was modified in Google Drive.">
+										Modified After
+									</span>
+								</td>
+								<td>
+									<input
+										type="date"
+										min="2012-01-01"
+										[max]="todayDate"
+										placeholder="YYYY/MM/DD"
+										class="input input-bordered join-item input-sm w-32"
+										formControlName="modifiedAfter"
+										(blur)="startValidation = true"
+										[class.input-error]="advancedSearchForm.invalid && startValidation" />
+								</td>
+							</tr>
+							<tr class="border-b-0">
+								<td class="text-sm">
+									<span
+										class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
+										data-tip="The MD5 hash of the chart folder or .sng file. You can enter multiple values if they are separated by commas.">
+										Hash
+									</span>
+								</td>
+								<td>
+									<input type="text" class="input input-bordered join-item input-sm w-32" formControlName="hash" />
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="flex flex-col justify-between">
+					<div class="flex gap-2">
+						<div class="flex flex-col">
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasSoloSections
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasSoloSections', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasSoloSections') === null">
+										{{ formValue('hasSoloSections') === false ? 'No ' : '' }}Solo Sections
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasForcedNotes
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasForcedNotes', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasForcedNotes') === null">
+										{{ formValue('hasForcedNotes') === false ? 'No ' : '' }}Forced Notes
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasOpenNotes
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasOpenNotes', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasOpenNotes') === null">
+										{{ formValue('hasOpenNotes') === false ? 'No ' : '' }}Open Notes
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasTapNotes
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasTapNotes', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasTapNotes') === null">
+										{{ formValue('hasTapNotes') === false ? 'No ' : '' }}Tap Notes
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('hasLyrics', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasLyrics') === null">
+										{{ formValue('hasLyrics') === false ? 'No ' : '' }}Lyrics
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('hasVocals', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasVocals') === null">
+										{{ formValue('hasVocals') === false ? 'No ' : '' }}Vocals
+									</span>
+								</label>
+							</div>
+						</div>
+						<div class="flex flex-col">
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasRollLanes
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasRollLanes', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasRollLanes') === null">
+										{{ formValue('hasRollLanes') === false ? 'No ' : '' }}Roll Lanes
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input #has2xKick type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('has2xKick', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('has2xKick') === null">
+										{{ formValue('has2xKick') === false ? 'No ' : '' }}2x Kick
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('hasIssues', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasIssues') === null">
+										{{ formValue('hasIssues') === false ? 'No ' : '' }}Chart Issues
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('hasVideoBackground', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasVideoBackground') === null">
+										{{ formValue('hasVideoBackground') === false ? 'No ' : '' }}Video Background
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('modchart', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('modchart') === null">
+										{{ formValue('modchart') === false ? 'Not a ' : '' }}Modchart
+									</span>
+								</label>
+							</div>
+						</div>
+					</div>
+					<button class="btn btn-sm btn-primary" [class.btn-disabled]="advancedSearchForm.invalid && startValidation" (click)="searchAdvanced()">
+						Search{{ advancedSearchForm.invalid && startValidation ? ' ("Modified After" is invalid)' : '' }}
+					</button>
+				</div>
+			</div>
+		</form>
 	</div>
 </div>

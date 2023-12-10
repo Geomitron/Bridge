@@ -4,9 +4,8 @@
 	</div>
 </td>
 <td>
-	<span id="chartCount" *ngIf="result.chartCount > 1">{{ result.chartCount }}</span
-	>{{ result.name }}
+	<span id="chartCount" *ngIf="song.length > 1">{{ song.length }}</span> {{ song[0].name }}
 </td>
-<td>{{ result.artist }}</td>
-<td>{{ result.album || 'Various' }}</td>
-<td>{{ result.genre || 'Various' }}</td>
+<td>{{ song[0].artist }}</td>
+<td>{{ song[0].album || 'Various' }}</td>
+<td>{{ song[0].genre || 'Various' }}</td>

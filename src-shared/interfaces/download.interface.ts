@@ -1,4 +1,3 @@
-import { DriveChart } from './songDetails.interface'
 
 /**
  * Represents a user's request to interact with the download system.
@@ -16,7 +15,10 @@ export interface NewDownload {
 	chartName: string
 	artist: string
 	charter: string
-	driveData: DriveChart & { inChartPack: boolean }
+	// TODO
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	driveData: any
+	// driveData: DriveChart & { inChartPack: boolean }
 }
 
 /**

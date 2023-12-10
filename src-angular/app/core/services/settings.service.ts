@@ -1,6 +1,8 @@
 import { DOCUMENT } from '@angular/common'
 import { Inject, Injectable } from '@angular/core'
 
+import { Difficulty, Instrument } from 'scan-chart'
+
 import { Settings, themes } from '../../../../src-shared/Settings'
 
 @Injectable({
@@ -29,6 +31,22 @@ export class SettingsService {
 
 	changeTheme(theme: typeof themes[number]) {
 		this.document.documentElement.setAttribute('data-theme', theme)
+	}
+
+	get instrument() {
+		return this.settings.instrument
+	}
+	set instrument(newValue: Instrument | null) {
+		this.settings.instrument = newValue
+		this.saveSettings()
+	}
+
+	get difficulty() {
+		return this.settings.difficulty
+	}
+	set difficulty(newValue: Difficulty | null) {
+		this.settings.difficulty = newValue
+		this.saveSettings()
 	}
 
 	// Individual getters/setters

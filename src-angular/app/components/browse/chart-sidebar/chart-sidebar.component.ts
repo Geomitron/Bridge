@@ -1,13 +1,11 @@
 import { Component, OnInit } from '@angular/core'
-import { SafeUrl } from '@angular/platform-browser'
 
+import { chain, flatMap, sortBy } from 'lodash'
+import { Instrument } from 'scan-chart'
 import { SearchService } from 'src-angular/app/core/services/search.service'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
-
-import { SongResult } from '../../../../../src-shared/interfaces/search.interface'
-import { ChartedDifficulty, getInstrumentIcon, Instrument, VersionResult } from '../../../../../src-shared/interfaces/songDetails.interface'
-import { groupBy } from '../../../../../src-shared/UtilFunctions'
-import { DownloadService } from '../../../core/services/download.service'
+import { ChartData } from 'src-shared/interfaces/search.interface'
+import { driveLink, instruments } from 'src-shared/UtilFunctions'
 
 interface Difficulty {
 	instrument: string
@@ -22,252 +20,81 @@ interface Difficulty {
 })
 export class ChartSidebarComponent implements OnInit {
 
-	songResult: SongResult | undefined
-	selectedVersion: VersionResult
-	charts: VersionResult[][]
+	selectedChart: ChartData | null = null
+	charts: ChartData[][] | null = null
 
-	albumArtSrc: SafeUrl = ''
-	charterPlural: string
 	songLength: string
 	difficultiesList: Difficulty[]
-	downloadButtonText: string
 
 	constructor(
-		private downloadService: DownloadService,
 		private searchService: SearchService,
 		public settingsService: SettingsService
 	) { }
 
 	ngOnInit() {
-		this.searchService.onNewSearch(() => {
-			this.selectVersion(undefined)
-			this.songResult = undefined
+		this.searchService.searchUpdated.subscribe(() => {
+			this.charts = null
+			this.selectedChart = null
 		})
+	}
+
+	public get albumArtMd5() {
+		return flatMap(this.charts ?? []).find(c => !!c.albumArtMd5)?.albumArtMd5 || null
 	}
 
 	/**
 	 * Displays the information for the selected song.
 	 */
-	async onRowClicked(result: SongResult) {
-		if (this.songResult === undefined || result.id !== this.songResult.id) { // Clicking the same row again will not reload
-			this.songResult = result
-			const results = await window.electron.invoke.getSongDetails(result.id)
-			this.charts = groupBy(results, 'chartID').sort((v1, v2) => v1[0].chartName.length - v2[0].chartName.length)
-			this.sortCharts()
-			await this.selectChart(this.charts[0][0].chartID)
-			this.initChartDropdown()
-		}
-	}
-
-	/**
-	 * Sorts `this.charts` and its subarrays in the correct order.
-	 * The chart dropdown should display in a random order, but verified charters are prioritized.
-	 * The version dropdown should be ordered by lastModified date.
-	 * (but prefer the non-pack version if it's only a few days older)
-	 */
-	private sortCharts() {
-		for (const chart of this.charts) {
-			// TODO: sort by verified charter
-			this.searchService.sortChart(chart)
-		}
-	}
-
-	/**
-	 * Initializes the chart dropdown from `this.charts` (or removes it if there's only one chart).
-	 */
-	private initChartDropdown() {
-		// TODO
-		// const values = this.charts.map(chart => {
-		// 	const version = chart[0]
-		// 	return {
-		// 		value: version.chartID,
-		// 		text: version.chartName,
-		// 		name: `${version.chartName} <b>[${version.charters}]</b>`,
-		// 	}
-		// })
-		// const $chartDropdown = $('#chartDropdown')
-		// $chartDropdown.dropdown('setup menu', { values })
-		// $chartDropdown.dropdown('setting', 'onChange', (chartID: number) => this.selectChart(chartID))
-		// $chartDropdown.dropdown('set selected', values[0].value)
-	}
-
-	private async selectChart(chartID: number) {
-		const chart = this.charts.find(chart => chart[0].chartID === chartID)!
-		await this.selectVersion(chart[0])
-		this.initVersionDropdown()
-	}
-
-	/**
-	 * Updates the sidebar to display the metadata for `selectedVersion`.
-	 */
-	async selectVersion(selectedVersion: VersionResult | undefined) {
-		this.selectedVersion = selectedVersion!
-		await new Promise<void>(resolve => setTimeout(() => resolve(), 0)) // Wait for *ngIf to update DOM
-
-		if (this.selectedVersion !== undefined) {
-			this.updateCharterPlural()
-			this.updateSongLength()
-			this.updateDifficultiesList()
-			this.updateDownloadButtonText()
-		}
-	}
-
-	/**
-	 * Chooses to display 'Charter:' or 'Charters:'.
-	 */
-	private updateCharterPlural() {
-		this.charterPlural = this.selectedVersion.charterIDs.split('&').length === 1 ? 'Charter:' : 'Charters:'
-	}
-
-	/**
-	 * Converts `this.selectedVersion.chartMetadata.length` into a readable duration.
-	 */
-	private updateSongLength() {
-		let seconds = this.selectedVersion.songLength
-		if (seconds < 60) { this.songLength = `${seconds} second${seconds === 1 ? '' : 's'}`; return }
-		let minutes = Math.floor(seconds / 60)
-		let hours = 0
-		while (minutes > 59) {
-			hours++
-			minutes -= 60
-		}
-		seconds = Math.floor(seconds % 60)
-		this.songLength = `${hours === 0 ? '' : hours + ':'}${minutes === 0 ? '' : minutes + ':'}${seconds < 10 ? '0' + seconds : seconds}`
-	}
-
-	/**
-	 * Updates `dfficultiesList` with the difficulty information for the selected version.
-	 */
-	private updateDifficultiesList() {
-		const instruments = Object.keys(this.selectedVersion.chartData.noteCounts) as Instrument[]
-		this.difficultiesList = []
-		for (const instrument of instruments) {
-			if (instrument !== 'undefined') {
-				this.difficultiesList.push({
-					instrument: getInstrumentIcon(instrument),
-					diffNumber: this.getDiffNumber(instrument),
-					chartedDifficulties: this.getChartedDifficultiesText(instrument),
-				})
-			}
-		}
-	}
-
-	/**
-	 * @returns a string describing the difficulty number in the selected version.
-	 */
-	private getDiffNumber(instrument: Instrument) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const diffNumber: number = (this.selectedVersion as any)[`diff_${instrument}`]
-		return diffNumber === -1 || diffNumber === undefined ? 'Unknown' : String(diffNumber)
-	}
-
-	/**
-	 * @returns a string describing the list of charted difficulties in the selected version.
-	 */
-	private getChartedDifficultiesText(instrument: Instrument) {
-		const difficulties = Object.keys(this.selectedVersion.chartData.noteCounts[instrument]) as ChartedDifficulty[]
-		if (difficulties.length === 4) { return 'Full Difficulty' }
-		const difficultyNames = []
-		if (difficulties.includes('x')) { difficultyNames.push('Expert') }
-		if (difficulties.includes('h')) { difficultyNames.push('Hard') }
-		if (difficulties.includes('m')) { difficultyNames.push('Medium') }
-		if (difficulties.includes('e')) { difficultyNames.push('Easy') }
-
-		return difficultyNames.join(', ')
-	}
-
-	/**
-	 * Chooses the text to display on the download button.
-	 */
-	private updateDownloadButtonText() {
-		this.downloadButtonText = 'Download'
-		if (this.selectedVersion.driveData.inChartPack) {
-			this.downloadButtonText += ' Chart Pack'
-		} else {
-			this.downloadButtonText += (this.selectedVersion.driveData.isArchive ? ' Archive' : ' Files')
-		}
-
-		if (this.getSelectedChartVersions().length > 1) {
-			if (this.selectedVersion.versionID === this.selectedVersion.latestVersionID) {
-				this.downloadButtonText += ' (Latest)'
-			} else {
-				this.downloadButtonText += ` (${this.getLastModifiedText(this.selectedVersion.lastModified)})`
-			}
-		}
-	}
-
-	/**
-	 * Initializes the version dropdown from `this.selectedVersion` (or removes it if there's only one version).
-	 */
-	private initVersionDropdown() {
-		// TODO
-		// const $versionDropdown = $('#versionDropdown')
-		// const versions = this.getSelectedChartVersions()
-		// const values = versions.map(version => ({
-		// 	value: version.versionID,
-		// 	text: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
-		// 	name: 'Uploaded ' + this.getLastModifiedText(version.lastModified),
-		// }))
-
-		// $versionDropdown.dropdown('setup menu', { values })
-		// $versionDropdown.dropdown('setting', 'onChange', (versionID: number) => {
-		// 	this.selectVersion(versions.find(version => version.versionID === versionID))
-		// })
-		// $versionDropdown.dropdown('set selected', values[0].value)
-	}
-
-	/**
-	 * Returns the list of versions for the selected chart, sorted by `lastModified`.
-	 */
-	getSelectedChartVersions() {
-		return this.charts.find(chart => chart[0].chartID === this.selectedVersion.chartID)!
-	}
-
-	/**
-	 * Converts the <lastModified> value to a user-readable format.
-	 * @param lastModified The UNIX timestamp for the lastModified date.
-	 */
-	private getLastModifiedText(lastModified: string) {
-		const date = new Date(lastModified)
-		const day = date.getDate().toString().padStart(2, '0')
-		const month = (date.getMonth() + 1).toString().padStart(2, '0')
-		const year = date.getFullYear().toString().substr(-2)
-		return `${month}/${day}/${year}`
+	async onRowClicked(song: ChartData[]) {
+		this.charts = chain(song)
+			.groupBy(c => c.versionGroupId)
+			.values()
+			.map(versionGroup => sortBy(versionGroup, vg => vg.modifiedTime).reverse())
+			.value()
+		this.selectedChart = this.charts[0][0]
 	}
 
 	/**
 	 * Opens the proxy link or source folder in the default browser.
 	 */
 	onSourceLinkClicked() {
-		const source = this.selectedVersion.driveData.source
-		window.electron.emit.openUrl(source.proxyLink ?? `https://drive.google.com/drive/folders/${source.sourceDriveID}`)
+		window.electron.emit.openUrl(driveLink(this.selectedChart!.applicationDriveId))
 	}
 
 	/**
 	 * @returns `true` if the source folder button should be shown.
 	 */
 	shownFolderButton() {
-		const driveData = this.selectedVersion.driveData
-		return driveData.source.proxyLink || driveData.source.sourceDriveID !== driveData.folderID
+		return this.selectedChart!.applicationDriveId !== this.selectedChart!.parentFolderId
 	}
 
 	/**
 	 * Opens the chart folder in the default browser.
 	 */
 	onFolderButtonClicked() {
-		window.electron.emit.openUrl(`https://drive.google.com/drive/folders/${this.selectedVersion.driveData.folderID}`)
+		window.electron.emit.openUrl(driveLink(this.selectedChart!.parentFolderId))
 	}
 
 	/**
 	 * Adds the selected version to the download queue.
 	 */
 	onDownloadClicked() {
-		this.downloadService.addDownload(
-			this.selectedVersion.versionID, {
-			chartName: this.selectedVersion.chartName,
-			artist: this.songResult!.artist,
-			charter: this.selectedVersion.charters,
-			driveData: this.selectedVersion.driveData,
-		})
+		// TODO
+		// this.downloadService.addDownload(
+		// 	this.selectedChart.versionID, {
+		// 	chartName: this.selectedChart.chartName,
+		// 	artist: this.songResult!.artist,
+		// 	charter: this.selectedChart.charters,
+		// 	driveData: this.selectedChart.driveData,
+		// })
+	}
+
+	public get instruments(): Instrument[] {
+		if (!this.selectedChart) { return [] }
+		return chain(this.selectedChart.notesData.noteCounts)
+			.map(nc => nc.instrument)
+			.uniq()
+			.sortBy(i => instruments.indexOf(i))
+			.value()
 	}
 }

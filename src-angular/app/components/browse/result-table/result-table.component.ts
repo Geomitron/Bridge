@@ -2,8 +2,8 @@ import { Component, EventEmitter, OnInit, Output, QueryList, ViewChild, ViewChil
 
 import Comparators from 'comparators'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
+import { ChartData } from 'src-shared/interfaces/search.interface'
 
-import { SongResult } from '../../../../../src-shared/interfaces/search.interface'
 import { CheckboxDirective } from '../../../core/directives/checkbox.directive'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
@@ -16,18 +16,17 @@ import { ResultTableRowComponent } from './result-table-row/result-table-row.com
 })
 export class ResultTableComponent implements OnInit {
 
-	@Output() rowClicked = new EventEmitter<SongResult>()
+	@Output() rowClicked = new EventEmitter<ChartData[]>()
 
 	@ViewChild(CheckboxDirective, { static: true }) checkboxColumn: CheckboxDirective
 	@ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
-	results: SongResult[] = []
-	activeRowID: number | null = null
+	activeSong: ChartData[] | null = null
 	sortDirection: 'ascending' | 'descending' = 'descending'
 	sortColumn: 'name' | 'artist' | 'album' | 'genre' | null = null
 
 	constructor(
-		private searchService: SearchService,
+		public searchService: SearchService,
 		private selectionService: SelectionService,
 		public settingsService: SettingsService
 	) { }
@@ -37,24 +36,25 @@ export class ResultTableComponent implements OnInit {
 			this.checkboxColumn.check(selected)
 		})
 
-		this.searchService.onSearchChanged(results => {
-			this.activeRowID = null
-			this.results = results
+		this.searchService.searchUpdated.subscribe(() => {
+			this.activeSong = null
 			this.updateSort()
-		})
-
-		this.searchService.onNewSearch(() => {
-			this.sortColumn = null
 		})
 	}
 
-	onRowClicked(result: SongResult) {
-		this.activeRowID = result.id
-		this.rowClicked.emit(result)
+	get songs() {
+		return this.searchService.groupedSongs
+	}
+
+	onRowClicked(song: ChartData[]) {
+		if (this.activeSong !== song) {
+			this.activeSong = song
+			this.rowClicked.emit(song)
+		}
 	}
 
 	onColClicked(column: 'name' | 'artist' | 'album' | 'genre') {
-		if (this.results.length === 0) { return }
+		if (this.songs.length === 0) { return }
 		if (this.sortColumn !== column) {
 			this.sortColumn = column
 			this.sortDirection = 'descending'
@@ -68,7 +68,7 @@ export class ResultTableComponent implements OnInit {
 
 	private updateSort() {
 		if (this.sortColumn !== null) {
-			this.results.sort(Comparators.comparing(this.sortColumn, { reversed: this.sortDirection === 'ascending' }))
+			this.songs.sort(Comparators.comparing(this.sortColumn, { reversed: this.sortDirection === 'ascending' }))
 		}
 	}
 

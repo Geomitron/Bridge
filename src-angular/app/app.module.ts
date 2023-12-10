@@ -1,10 +1,12 @@
+import { HttpClientModule } from '@angular/common/http'
 import { NgModule } from '@angular/core'
-import { FormsModule } from '@angular/forms'
+import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { BrowserModule } from '@angular/platform-browser'
 
 import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { BrowseComponent } from './components/browse/browse.component'
+import { ChartSidebarInstrumentComponent } from './components/browse/chart-sidebar/chart-sidebar-instrument/chart-sidebar-instrument.component'
 import { ChartSidebarComponent } from './components/browse/chart-sidebar/chart-sidebar.component'
 import { ResultTableRowComponent } from './components/browse/result-table/result-table-row/result-table-row.component'
 import { ResultTableComponent } from './components/browse/result-table/result-table.component'
@@ -25,6 +27,7 @@ import { ProgressBarDirective } from './core/directives/progress-bar.directive'
 		StatusBarComponent,
 		ResultTableComponent,
 		ChartSidebarComponent,
+		ChartSidebarInstrumentComponent,
 		ResultTableRowComponent,
 		DownloadsModalComponent,
 		ProgressBarDirective,
@@ -35,6 +38,8 @@ import { ProgressBarDirective } from './core/directives/progress-bar.directive'
 		BrowserModule,
 		AppRoutingModule,
 		FormsModule,
+		ReactiveFormsModule,
+		HttpClientModule,
 	],
 	bootstrap: [AppComponent],
 })
