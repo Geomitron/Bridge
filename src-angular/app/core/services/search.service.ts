@@ -5,6 +5,7 @@ import { FormControl } from '@angular/forms'
 import { chain, xorBy } from 'lodash'
 import { catchError, mergeMap, tap, throwError, timer } from 'rxjs'
 import { Difficulty, Instrument } from 'scan-chart'
+import { environment } from 'src-angular/environments/environment'
 import { AdvancedSearch, ChartData, SearchResult } from 'src-shared/interfaces/search.interface'
 
 @Injectable({
@@ -60,7 +61,7 @@ export class SearchService {
 		this.search().subscribe()
 	}
 
-	get areMorePages() { return this.songsResponse.page && this.groupedSongs.length === this.songsResponse.page * 20 }
+	get areMorePages() { return this.songsResponse.page && this.groupedSongs.length === this.songsResponse.page * 10 }
 
 	/**
 	 * General search, uses the `/search?q=` endpoint.
@@ -80,8 +81,9 @@ export class SearchService {
 		}
 
 		let retries = 10
-		return this.http.post<SearchResult>(`/api/search`, {
+		return this.http.post<SearchResult>(`${environment.apiUrl}/search`, {
 			search,
+			per_page: 25,
 			page: this.currentPage,
 			instrument: this.instrument.value,
 			difficulty: this.difficulty.value,
@@ -125,7 +127,7 @@ export class SearchService {
 		this.isDefaultSearch = false
 
 		let retries = 10
-		return this.http.post<{ data: SearchResult['data'] }>(`/api/search/advanced`, search).pipe(
+		return this.http.post<{ data: SearchResult['data'] }>(`${environment.apiUrl}/search/advanced`, search).pipe(
 			catchError((err, caught) => {
 				if (err.status === 400 || retries-- <= 0) {
 					this.searchLoading = false

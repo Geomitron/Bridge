@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core'
+import { Component, HostBinding, ViewChild } from '@angular/core'
 
 import { SearchService } from 'src-angular/app/core/services/search.service'
 
@@ -9,10 +9,9 @@ import { StatusBarComponent } from './status-bar/status-bar.component'
 @Component({
 	selector: 'app-browse',
 	templateUrl: './browse.component.html',
-	styleUrls: ['./browse.component.scss'],
 })
 export class BrowseComponent {
-
+	@HostBinding('class.contents') contents = true
 	@ViewChild('resultTable', { static: true }) resultTable: ResultTableComponent
 	@ViewChild('chartSidebar', { static: true }) chartSidebar: ChartSidebarComponent
 	@ViewChild('statusBar', { static: true }) statusBar: StatusBarComponent

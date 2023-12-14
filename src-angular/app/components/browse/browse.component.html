@@ -1,12 +1,12 @@
 <app-search-bar></app-search-bar>
-<div class="ui celled two column grid">
-	<div id="table-row" class="row">
-		<div id="table-column" class="column twelve wide">
-			<app-result-table #resultTable (rowClicked)="chartSidebar.onRowClicked($event)"></app-result-table>
-		</div>
-		<div id="sidebar-column" class="column four wide">
-			<app-chart-sidebar #chartSidebar></app-chart-sidebar>
-		</div>
+<div class="flex flex-1 overflow-y-hidden">
+	<!-- TODO: adjust sizing -->
+	<div
+		class="flex-grow-[1] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+		<app-result-table #resultTable (rowClicked)="chartSidebar.onRowClicked($event)"></app-result-table>
+	</div>
+	<div class="flex-grow-[1] min-w-[175px]">
+		<app-chart-sidebar #chartSidebar></app-chart-sidebar>
 	</div>
 </div>
 <app-status-bar #statusBar></app-status-bar>

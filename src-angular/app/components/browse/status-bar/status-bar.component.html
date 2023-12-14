@@ -1,4 +1,4 @@
-<div id="bottomMenu" class="ui bottom borderless menu">
+<div id="bottomMenu" class="ui bottom borderless menu border-t border-t-neutral">
 	<div *ngIf="(searchService.groupedSongs?.length ?? 0) > 0" class="item">
 		{{ searchService.groupedSongs.length }}{{ allResultsVisible ? '' : '+' }} Result{{ searchService.groupedSongs.length === 1 ? '' : 's' }}
 	</div>

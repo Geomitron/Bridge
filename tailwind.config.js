@@ -8,7 +8,10 @@ module.exports = {
     },
   },
   content: ['./src-angular/**/*.{html,js,ts}'],
-  plugins: [require('daisyui')],
+  plugins: [
+		require('tailwind-scrollbar')({ nocompatible: true }),
+		require('daisyui'),
+	],
 	daisyui: {
 		logs: false,
 		themes: [

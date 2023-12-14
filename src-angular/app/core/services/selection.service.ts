@@ -1,6 +1,5 @@
 import { EventEmitter, Injectable } from '@angular/core'
 
-import { SearchResult } from '../../../../src-shared/interfaces/search.interface'
 import { SearchService } from './search.service'
 
 // Note: this class prevents event cycles by only emitting events if the checkbox changes
@@ -10,27 +9,13 @@ import { SearchService } from './search.service'
 })
 export class SelectionService {
 
-	private searchResults: Partial<SearchResult>
-
 	private selectAllChangedEmitter = new EventEmitter<boolean>()
-	private selectionChangedCallbacks: { [songID: number]: (selection: boolean) => void } = {}
 
-	private allSelected = false
-	private selections: { [songID: number]: boolean | undefined } = {}
+	public selections: { [groupId: number]: boolean | undefined } = {}
 
 	constructor(searchService: SearchService) {
-		searchService.searchUpdated.subscribe(results => {
-			this.searchResults = results
-			if (this.allSelected) {
-				this.selectAll() // Select newly added rows if allSelected
-			}
-		})
-
-		searchService.searchUpdated.subscribe(results => {
-			this.searchResults = results
-			this.selectionChangedCallbacks = {}
+		searchService.searchUpdated.subscribe(() => {
 			this.selections = {}
-			this.selectAllChangedEmitter.emit(false)
 		})
 	}
 
@@ -44,46 +29,17 @@ export class SelectionService {
 		this.selectAllChangedEmitter.subscribe(callback)
 	}
 
-	/**
-	 * Emits an event when the selection for `songID` needs to change.
-	 * (note: only one emitter can be registered per `songID`)
-	 */
-	onSelectionChanged(songID: number, callback: (selection: boolean) => void) {
-		this.selectionChangedCallbacks[songID] = callback
-	}
-
-
 	deselectAll() {
-		if (this.allSelected) {
-			this.allSelected = false
-			this.selectAllChangedEmitter.emit(false)
+		for (const groupId in this.selections) {
+			this.selections[groupId] = false
 		}
-
-		// TODO
-		// setTimeout(() => this.searchResults.forEach(result => this.deselectSong(result.id)), 0)
+		this.selectAllChangedEmitter.emit(false)
 	}
 
 	selectAll() {
-		if (!this.allSelected) {
-			this.allSelected = true
-			this.selectAllChangedEmitter.emit(true)
+		for (const groupId in this.selections) {
+			this.selections[groupId] = true
 		}
-
-		// TODO
-		// setTimeout(() => this.searchResults.forEach(result => this.selectSong(result.id)), 0)
-	}
-
-	deselectSong(songID: number) {
-		if (this.selections[songID]) {
-			this.selections[songID] = false
-			this.selectionChangedCallbacks[songID](false)
-		}
-	}
-
-	selectSong(songID: number) {
-		if (!this.selections[songID]) {
-			this.selections[songID] = true
-			this.selectionChangedCallbacks[songID](true)
-		}
+		this.selectAllChangedEmitter.emit(true)
 	}
 }

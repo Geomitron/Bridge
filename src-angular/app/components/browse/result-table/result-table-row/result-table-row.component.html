@@ -1,10 +1,8 @@
 <td>
-	<div #checkbox class="ui checkbox" (click)="$event.stopPropagation()">
-		<input type="checkbox" />
-	</div>
+	<input #checkAllCheckbox type="checkbox" class="checkbox" (click)="$event.stopPropagation()" [(ngModel)]="selected" />
 </td>
 <td>
-	<span id="chartCount" *ngIf="song.length > 1">{{ song.length }}</span> {{ song[0].name }}
+	<span *ngIf="song.length > 1" class="rounded-sm bg-accent text-accent-content px-1 mr-1 font-bold">{{ song.length }}</span> {{ song[0].name }}
 </td>
 <td>{{ song[0].artist }}</td>
 <td>{{ song[0].album || 'Various' }}</td>

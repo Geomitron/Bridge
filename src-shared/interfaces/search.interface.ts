@@ -131,6 +131,8 @@ export interface SearchResult {
 		chartId: number
 		/** The unique database identifier for the song, or `null` if there is only one chart of the song. */
 		songId: number | null
+		/** The unique database identifier for the song, or (-versionGroupId) if there is only one chart of the song. */
+		groupId: number
 		/** The MD5 hash of the normalized album art file. */
 		albumArtMd5: string | null
 		/** The MD5 hash of the chart folder or .sng file. */

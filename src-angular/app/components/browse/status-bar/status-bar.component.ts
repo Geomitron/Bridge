@@ -102,9 +102,10 @@ export class StatusBarComponent {
 	}
 
 	deselectSongsWithMultipleCharts() {
-		for (const chartGroup of this.chartGroups) {
-			this.selectionService.deselectSong(chartGroup[0].songID)
-		}
+		// TODO
+		// for (const chartGroup of this.chartGroups) {
+		// this.selectionService.deselectSong(chartGroup[0].songID)
+		// }
 	}
 
 	clearCompleted() {

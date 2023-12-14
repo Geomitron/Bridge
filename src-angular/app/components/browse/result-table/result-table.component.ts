@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
+import { Component, EventEmitter, HostBinding, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
 
 import Comparators from 'comparators'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -12,9 +12,9 @@ import { ResultTableRowComponent } from './result-table-row/result-table-row.com
 @Component({
 	selector: 'app-result-table',
 	templateUrl: './result-table.component.html',
-	styleUrls: ['./result-table.component.scss'],
 })
 export class ResultTableComponent implements OnInit {
+	@HostBinding('class.contents') contents = true
 
 	@Output() rowClicked = new EventEmitter<ChartData[]>()
 
@@ -32,10 +32,6 @@ export class ResultTableComponent implements OnInit {
 	) { }
 
 	ngOnInit() {
-		this.selectionService.onSelectAllChanged(selected => {
-			this.checkboxColumn.check(selected)
-		})
-
 		this.searchService.searchUpdated.subscribe(() => {
 			this.activeSong = null
 			this.updateSort()
@@ -76,6 +72,7 @@ export class ResultTableComponent implements OnInit {
 	 * Called when the user checks the `checkboxColumn`.
 	 */
 	checkAll(isChecked: boolean) {
+		console.log(isChecked)
 		if (isChecked) {
 			this.selectionService.selectAll()
 		} else {
