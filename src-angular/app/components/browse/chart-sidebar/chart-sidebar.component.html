@@ -1,25 +1,59 @@
-<div id="sidebarCard" *ngIf="selectedChart" class="ui fluid card">
-	<div class="ui placeholder">
+<div class="flex h-full flex-col" *ngIf="selectedChart">
+	<div class="relative">
 		@if (albumArtMd5) {
-			<img src="https://files.enchor.us/{{ albumArtMd5 }}.jpg" alt="Album art" loading="lazy" class="object-cover w-40" />
+			@if (hasIcons && icon) {
+				<div class="tooltip absolute bottom-3 left-3" [attr.data-tip]="iconTooltip">
+					<img
+						class="w-16"
+						src="https://clonehero.gitlab.io/sources/icons/{{ icon }}"
+						[alt]="selectedChart.icon"
+						(load)="iconLoading = false"
+						(error)="iconLoading = false"
+						[class.hidden]="iconLoading" />
+				</div>
+			}
+			@if (albumLoading) {
+				<div class="skeleton w-full aspect-square"></div>
+			}
+			<img
+				src="https://files.enchor.us/{{ albumArtMd5 }}.jpg"
+				alt="Album art"
+				(load)="albumLoading = false"
+				(error)="albumLoading = false"
+				[class.hidden]="albumLoading" />
 		}
 	</div>
-	<div *ngIf="charts && charts.length > 1" id="chartDropdown" class="ui fluid right labeled scrolling icon dropdown button">
-		<input type="hidden" name="Chart" />
-		<i id="chartDropdownIcon" class="dropdown icon"></i>
-		<div class="default text"></div>
-		<div id="chartDropdownMenu" class="menu"></div>
-	</div>
-	<div id="textPanel" class="content">
-		<span class="header">{{ selectedChart.chartName }}</span>
-		<div class="description">
-			<div *ngIf="selectedChart.chartAlbum"><b>Album:</b> {{ selectedChart.chartAlbum }}</div>
-			<div *ngIf="selectedChart.chartGenre"><b>Genre:</b> {{ selectedChart.chartGenre }}</div>
-			<div *ngIf="selectedChart.chartYear"><b>Year:</b> {{ selectedChart.chartYear }}</div>
-			<div><b>Charter:</b> {{ selectedChart.charter }}</div>
-			<div><b>Audio Length:</b> {{ songLength }}</div>
-			<div class="ui divider"></div>
-			<div class="ui horizontal list">
+	<div
+		class="flex flex-1 p-2 gap-1 justify-between overflow-x-hidden overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+		<div class="flex flex-1 flex-col gap-1">
+			<div>
+				<!-- TODO: Change this to a dropdown if there is more than one chart -->
+				<b>Charter: </b>
+				<a class="link link-hover" (click)="onSourceLinkClicked()">{{ selectedChart.charter | removeStyleTags }}</a>
+			</div>
+			<div class="whitespace-nowrap">
+				<span class="font-bold">Length:</span>
+				{{ effectiveLength }} (+{{ extraLengthSeconds }}s)
+				<div
+					class="tooltip tooltip-bottom cursor-help [text-wrap:balance]"
+					data-tip="The time between the first and last note. The second value is the extra time at the start and end of the song without notes.">
+					<i class="bi bi-info-circle text-xs"></i>
+				</div>
+			</div>
+			<div class="flex flex-wrap">
+				<div class="flex-1">
+					@for (pair of boolProperties; track $index) {
+						<p class="flex items-center">
+							<i class="bi text-2xl -my-3" [ngClass]="pair.value ? 'bi-check2' : 'bi-x'" [ngStyle]="{ color: pair.value ? 'green' : 'red' }"> </i>
+							<span class="ml-1 whitespace-nowrap" [class.font-bold]="pair.value">{{ pair.text }}</span>
+						</p>
+					}
+				</div>
+			</div>
+		</div>
+		<div class="flex flex-1 flex-col gap-1">
+			<div
+				class="flex flex-wrap gap-1 max-h-40 min-h-[44px] max-w-[234px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
 				@if (selectedChart.notesData.hasVocals) {
 					<app-chart-sidebar-instrument [chart]="selectedChart" instrument="vocals" />
 				}
@@ -27,18 +61,86 @@
 					<app-chart-sidebar-instrument [chart]="selectedChart" [instrument]="instrument" />
 				}
 			</div>
-			<div id="sourceLinks">
-				<a id="sourceLink" (click)="onSourceLinkClicked()">{{ selectedChart.packName ?? selectedChart.applicationUsername + "'s Chart" }}</a>
-				<button *ngIf="shownFolderButton()" id="folderButton" class="mini ui icon button" (click)="onFolderButtonClicked()">
-					<i class="folder open outline icon"></i>
-				</button>
+			<div class="flex flex-1 flex-col">
+				@if (instruments.length > 1 || difficulties.length > 1) {
+					<div class="flex flex-wrap gap-1">
+						@if (instruments.length > 1) {
+							<select class="select select-bordered select-sm grow-[40]" [formControl]="instrumentDropdown">
+								@for (instrument of instruments; track $index) {
+									<option [value]="instrument">{{ shortInstrumentDisplay(instrument) }}</option>
+								}
+							</select>
+						}
+						@if (difficulties.length > 1) {
+							<select class="select select-bordered select-sm flex-1" [formControl]="difficultyDropdown">
+								@for (difficulty of difficulties; track $index) {
+									<option [value]="difficulty">{{ difficultyDisplay(difficulty) }}</option>
+								}
+							</select>
+						}
+					</div>
+				}
+				<p class="font-bold whitespace-nowrap">Average NPS: {{ averageNps || 'N/A' }}</p>
+				<p class="font-bold whitespace-nowrap">Maximum NPS: {{ maximumNps }}</p>
+				<p class="font-bold whitespace-nowrap">Note Count: {{ noteCount }}</p>
 			</div>
 		</div>
 	</div>
-	<div id="downloadButtons" class="ui positive buttons">
-		<div id="downloadButton" class="ui button" (click)="onDownloadClicked()">Download</div>
-		<div id="versionDropdown" class="ui floating dropdown icon button">
-			<i class="dropdown icon"></i>
+	<div class="join">
+		<button class="btn rounded-md flex-1 join-item btn-primary" (click)="onDownloadClicked()">Download</button>
+		<dialog #selectSngModal id="report_modal" class="modal">
+			<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+						<i class="bi bi-x-lg text-2xl"></i>
+					</button>
+				</form>
+				<h3 class="font-bold text-lg">Select Download Format:</h3>
+				<div class="flex gap-6">
+					<div class="form-control flex-1">
+						<label class="label cursor-pointer justify-normal gap-2">
+							<input type="radio" name="selectedDownloadFormat{{ selectedChart.chartId }}" class="radio" (change)="selectDownloadFormat(true)" />
+							<span>.sng (new)</span>
+						</label>
+						<ul class="list-disc pl-5">
+							<li>Single chart file</li>
+							<li>Can be scanned in-game directly without extracting</li>
+							<li>Currently only supported by YARG and Clone Hero v1.1</li>
+						</ul>
+					</div>
+					<div class="form-control flex-1">
+						<label class="label cursor-pointer justify-normal gap-2">
+							<input type="radio" name="selectedDownloadFormat{{ selectedChart.chartId }}" class="radio" (change)="selectDownloadFormat(false)" />
+							<span>.zip</span>
+						</label>
+						<ul class="list-disc pl-5">
+							<li>Contains chart folder</li>
+							<li>Must be extracted before it can be scanned in-game</li>
+							<li>Supported across many games</li>
+						</ul>
+					</div>
+				</div>
+				<br />
+				<div class="text-xs">This can be changed later in the (<i class="bi bi-three-dots align-middle"></i>) menu.</div>
+				<div class="text-xs">
+					A program to convert between .sng files and chart folders can be found
+					<a class="link" href="https://github.com/mdsitton/SngFileFormat/releases" target="_blank">here</a>.
+				</div>
+				<div class="form-control flex-row justify-end">
+					<button class="btn btn-primary" [disabled]="!hasSelectedDownloadFormat" (click)="onDownloadClicked()">Download</button>
+				</div>
+			</div>
+			<form method="dialog" class="modal-backdrop">
+				<button>close</button>
+			</form>
+		</dialog>
+		<div
+			#menu
+			class="cursor-pointer bg-neutral rounded-md join-item dropdown dropdown-top dropdown-end p-1 flex items-center"
+			(click)="showMenu()"
+			[class.dropdown-open]="menuVisible">
+			<i class="bi bi-three-dots text-2xl px-1 text-neutral-content"></i>
+			<app-chart-sidebar-menu [chartVersions]="charts![0]" (selectedVersionChanges)="selectedChart = $event" />
 		</div>
 	</div>
 </div>

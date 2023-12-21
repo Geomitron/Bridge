@@ -7,6 +7,7 @@ import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { BrowseComponent } from './components/browse/browse.component'
 import { ChartSidebarInstrumentComponent } from './components/browse/chart-sidebar/chart-sidebar-instrument/chart-sidebar-instrument.component'
+import { ChartSidebarMenutComponent } from './components/browse/chart-sidebar/chart-sidebar-menu/chart-sidebar-menu.component'
 import { ChartSidebarComponent } from './components/browse/chart-sidebar/chart-sidebar.component'
 import { ResultTableRowComponent } from './components/browse/result-table/result-table-row/result-table-row.component'
 import { ResultTableComponent } from './components/browse/result-table/result-table.component'
@@ -17,6 +18,7 @@ import { SettingsComponent } from './components/settings/settings.component'
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
 import { CheckboxDirective } from './core/directives/checkbox.directive'
 import { ProgressBarDirective } from './core/directives/progress-bar.directive'
+import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 
 @NgModule({
 	declarations: [
@@ -28,10 +30,12 @@ import { ProgressBarDirective } from './core/directives/progress-bar.directive'
 		ResultTableComponent,
 		ChartSidebarComponent,
 		ChartSidebarInstrumentComponent,
+		ChartSidebarMenutComponent,
 		ResultTableRowComponent,
 		DownloadsModalComponent,
 		ProgressBarDirective,
 		CheckboxDirective,
+		RemoveStyleTagsPipe,
 		SettingsComponent,
 	],
 	imports: [

@@ -139,14 +139,12 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 		const isAny = this.searchService.instrument.value === null
 		const explanation = 'Not available for the current instrument.'
 
-		this.hasSoloSections.nativeElement.disabled = isDrums && !isAny
 		this.hasForcedNotes.nativeElement.disabled = isDrums && !isAny
 		this.hasOpenNotes.nativeElement.disabled = isDrums && !isAny
 		this.hasTapNotes.nativeElement.disabled = isDrums && !isAny
 		this.hasRollLanes.nativeElement.disabled = !isDrums && !isAny
 		this.has2xKick.nativeElement.disabled = !isDrums && !isAny
 
-		this.hasSoloSections.nativeElement.title = isDrums && !isAny ? explanation : ''
 		this.hasForcedNotes.nativeElement.title = isDrums && !isAny ? explanation : ''
 		this.hasOpenNotes.nativeElement.title = isDrums && !isAny ? explanation : ''
 		this.hasTapNotes.nativeElement.title = isDrums && !isAny ? explanation : ''
@@ -155,11 +153,9 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 
 		if (!isAny) {
 			if (isDrums) {
-				this.advancedSearchForm.get('hasSoloSections')?.setValue(null)
 				this.advancedSearchForm.get('hasForcedNotes')?.setValue(null)
 				this.advancedSearchForm.get('hasOpenNotes')?.setValue(null)
 				this.advancedSearchForm.get('hasTapNotes')?.setValue(null)
-				this.hasSoloSections.nativeElement.indeterminate = true
 				this.hasForcedNotes.nativeElement.indeterminate = true
 				this.hasOpenNotes.nativeElement.indeterminate = true
 				this.hasTapNotes.nativeElement.indeterminate = true

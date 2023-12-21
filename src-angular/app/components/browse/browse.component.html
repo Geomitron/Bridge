@@ -2,10 +2,10 @@
 <div class="flex flex-1 overflow-y-hidden">
 	<!-- TODO: adjust sizing -->
 	<div
-		class="flex-grow-[1] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+		class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
 		<app-result-table #resultTable (rowClicked)="chartSidebar.onRowClicked($event)"></app-result-table>
 	</div>
-	<div class="flex-grow-[1] min-w-[175px]">
+	<div class="basis-1/3 min-w-[310px] max-w-[512px]">
 		<app-chart-sidebar #chartSidebar></app-chart-sidebar>
 	</div>
 </div>

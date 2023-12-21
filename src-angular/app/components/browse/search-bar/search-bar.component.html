@@ -207,19 +207,6 @@
 							<div class="form-control">
 								<label class="label cursor-pointer justify-normal gap-2">
 									<input
-										#hasSoloSections
-										type="checkbox"
-										class="toggle toggle-sm"
-										[indeterminate]="true"
-										(click)="clickCheckbox('hasSoloSections', $event)" />
-									<span class="label-text" [class.text-opacity-70]="formValue('hasSoloSections') === null">
-										{{ formValue('hasSoloSections') === false ? 'No ' : '' }}Solo Sections
-									</span>
-								</label>
-							</div>
-							<div class="form-control">
-								<label class="label cursor-pointer justify-normal gap-2">
-									<input
 										#hasForcedNotes
 										type="checkbox"
 										class="toggle toggle-sm"
@@ -253,6 +240,19 @@
 										(click)="clickCheckbox('hasTapNotes', $event)" />
 									<span class="label-text" [class.text-opacity-70]="formValue('hasTapNotes') === null">
 										{{ formValue('hasTapNotes') === false ? 'No ' : '' }}Tap Notes
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasSoloSections
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasSoloSections', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasSoloSections') === null">
+										{{ formValue('hasSoloSections') === false ? 'No ' : '' }}Solo Sections
 									</span>
 								</label>
 							</div>

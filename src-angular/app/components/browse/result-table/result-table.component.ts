@@ -23,7 +23,7 @@ export class ResultTableComponent implements OnInit {
 
 	activeSong: ChartData[] | null = null
 	sortDirection: 'ascending' | 'descending' = 'descending'
-	sortColumn: 'name' | 'artist' | 'album' | 'genre' | null = null
+	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | null = null
 
 	constructor(
 		public searchService: SearchService,
@@ -49,7 +49,7 @@ export class ResultTableComponent implements OnInit {
 		}
 	}
 
-	onColClicked(column: 'name' | 'artist' | 'album' | 'genre') {
+	onColClicked(column: 'name' | 'artist' | 'album' | 'genre' | 'year') {
 		if (this.songs.length === 0) { return }
 		if (this.sortColumn !== column) {
 			this.sortColumn = column

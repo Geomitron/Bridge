@@ -11,6 +11,7 @@
 			<th [class.sorted]="sortColumn === 'artist'" [ngClass]="sortDirection" (click)="onColClicked('artist')">Artist</th>
 			<th [class.sorted]="sortColumn === 'album'" [ngClass]="sortDirection" (click)="onColClicked('album')">Album</th>
 			<th [class.sorted]="sortColumn === 'genre'" [ngClass]="sortDirection" (click)="onColClicked('genre')">Genre</th>
+			<th [class.sorted]="sortColumn === 'year'" [ngClass]="sortDirection" (click)="onColClicked('year')">Year</th>
 		</tr>
 	</thead>
 	<tbody>

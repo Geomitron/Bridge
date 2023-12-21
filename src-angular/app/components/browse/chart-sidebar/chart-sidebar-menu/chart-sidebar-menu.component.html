@@ -1,0 +1,185 @@
+<div
+	class="dropdown-content card card-compact p-2 shadow bg-neutral text-neutral-content z-10 cursor-auto border-2 border-base-300 max-w-[90vw] sm:max-w-[80vw] lg:max-w-[70vw] 2xl:max-w-[60vw]">
+	<div class="card-body">
+		<div class="flex">
+			<div class="flex-1">
+				<h1 class="menu-title pl-0 pb-0 whitespace-nowrap text-neutral-content">
+					DOWNLOAD FORMAT
+					<button class="btn btn-xs btn-circle btn-ghost" (click)="selectSngModal.showModal()">
+						<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
+					</button>
+					<dialog #selectSngModal id="report_modal" class="modal whitespace-normal">
+						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+							<form method="dialog">
+								<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+									<i class="bi bi-x-lg text-lg"></i>
+								</button>
+							</form>
+							<div class="flex gap-6">
+								<div class="flex-1">
+									<span class="font-bold text-lg">.sng (new)</span>
+									<ul class="list-disc pl-5">
+										<li>Single chart file</li>
+										<li>Can be scanned in-game directly without extracting</li>
+										<li>Currently only supported by YARG and Clone Hero v1.1</li>
+									</ul>
+								</div>
+								<div class="flex-1">
+									<span class="font-bold text-lg">.zip</span>
+									<ul class="list-disc pl-5">
+										<li>Contains chart folder</li>
+										<li>Must be extracted before it can be scanned in-game</li>
+										<li>Supported across many games</li>
+									</ul>
+								</div>
+							</div>
+							<br />
+							<div class="text-xs">
+								A program to convert between .sng files and chart folders can be found
+								<a class="link" href="https://github.com/mdsitton/SngFileFormat/releases" target="_blank">here</a>.
+							</div>
+						</div>
+						<form method="dialog" class="modal-backdrop">
+							<button>close</button>
+						</form>
+					</dialog>
+				</h1>
+				<div class="flex gap-2">
+					<label class="label cursor-pointer">
+						<input type="radio" class="radio radio-secondary mr-2" [value]="true" [formControl]="isSngControl" />
+						.sng
+					</label>
+
+					<label class="label cursor-pointer">
+						<input type="radio" class="radio radio-secondary mr-2" [value]="false" [formControl]="isSngControl" />
+						.zip
+					</label>
+				</div>
+			</div>
+			<div class="pt-2">
+				<button class="btn btn-secondary btn-xs flex-nowrap uppercase" (click)="reportModal.showModal()">
+					<i class="bi bi-exclamation-triangle text-sm text-secondary-content"></i> Report issue
+				</button>
+				<dialog #reportModal id="report_modal" class="modal">
+					@if (reportSent) {
+						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+							<form method="dialog">
+								<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+									<i class="bi bi-x-lg text-lg"></i>
+								</button>
+							</form>
+							<span class="text-xl text-center">{{ reportMessage }}</span>
+						</div>
+					} @else {
+						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+							<form method="dialog">
+								<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+									<i class="bi bi-x-lg text-lg"></i>
+								</button>
+							</form>
+							<h3 class="font-bold text-lg">Report Issue</h3>
+							<div>
+								@for (option of reportOptions; track $index) {
+									<div class="form-control">
+										<label class="label cursor-pointer justify-normal gap-2">
+											<input
+												type="radio"
+												name="selectedReportOption{{ selectedVersion.value.chartId }}"
+												class="radio checked:bg-red-500"
+												[value]="option"
+												[formControl]="reportOption" />
+											<span>{{ option }}</span>
+										</label>
+									</div>
+								}
+							</div>
+							<div class="form-control">
+								<textarea class="textarea textarea-bordered h-24" placeholder="More details (optional)" [formControl]="reportExtraInfo"></textarea>
+							</div>
+							<div class="form-control flex-row justify-end">
+								<button class="btn btn-primary" (click)="report()">Submit</button>
+							</div>
+						</div>
+					}
+					<form method="dialog" class="modal-backdrop">
+						<button>close</button>
+					</form>
+				</dialog>
+			</div>
+		</div>
+		@if (displayVersions.length > 1) {
+			<h1 class="menu-title pl-0 pb-0 pt-4 whitespace-nowrap text-neutral-content">SELECT VERSION</h1>
+		}
+		<div
+			class="pt-2 overflow-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-neutral scrollbar-thumb-neutral-content scrollbar-thumb-rounded-full">
+			<table class="table table-xs">
+				<thead>
+					<tr>
+						@if (displayVersions.length > 1) {
+							<th></th>
+						}
+						<th class="text-neutral-content">Uploaded</th>
+						<th class="text-neutral-content">
+							<span class="label-text cursor-help underline decoration-dotted" title="The MD5 hash of the chart folder or .sng file.">Hash</span>
+						</th>
+						<th class="text-neutral-content">
+							<span class="label-text cursor-help underline decoration-dotted" title="The MD5 hash of just the .chart or .mid file.">Chart Hash</span>
+						</th>
+						<th class="text-neutral-content">Google Drive Location</th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (version of displayVersions; track version.chartId) {
+						<tr>
+							@if (displayVersions.length > 1) {
+								<td>
+									<input
+										type="radio"
+										name="selectedVersion{{ version.chartId }}"
+										class="radio radio-secondary"
+										[value]="version"
+										[formControl]="selectedVersion" />
+								</td>
+							}
+							<td>{{ version.modifiedTime | date: 'y/MM/dd' }}</td>
+							<td>
+								<div class="flex flex-nowrap items-center">
+									{{ version.md5.substring(0, 7) }}
+									<div class="tooltip tooltip-accent" data-tip="Copy full hash">
+										<button class="btn btn-circle btn-ghost btn-xs" (click)="copyHash(version.md5)">
+											<i class="bi bi-copy text-sx"></i>
+										</button>
+									</div>
+								</div>
+							</td>
+							<td>
+								<div class="flex flex-nowrap items-center">
+									{{ version.chartMd5.substring(0, 7) }}
+									<div class="tooltip tooltip-accent" data-tip="Copy full hash">
+										<button class="btn btn-circle btn-ghost btn-xs" (click)="copyHash(version.chartMd5)">
+											<i class="bi bi-copy text-sx"></i>
+										</button>
+									</div>
+								</div>
+							</td>
+							<td>
+								<div class="breadcrumbs overflow-visible">
+									<ul>
+										@for (breadcrumb of getVersionBreadcrumbs(version); track $index) {
+											<li>
+												<ng-container *ngIf="breadcrumb.link">
+													<a [href]="breadcrumb.link" target="_blank">{{ breadcrumb.name }}</a>
+												</ng-container>
+												<ng-container *ngIf="!breadcrumb.link">{{ breadcrumb.name }}</ng-container>
+											</li>
+										}
+									</ul>
+								</div>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

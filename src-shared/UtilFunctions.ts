@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import sanitize from 'sanitize-filename'
 import { Difficulty, Instrument } from 'scan-chart'
 
@@ -95,6 +96,21 @@ export function instrumentDisplay(instrument: Instrument | null) {
 		case null: return 'Any Instrument'
 	}
 }
+export function shortInstrumentDisplay(instrument: Instrument | null) {
+	switch (instrument) {
+		case 'guitar': return 'Guitar'
+		case 'guitarcoop': return 'Co-op'
+		case 'rhythm': return 'Rhythm'
+		case 'bass': return 'Bass'
+		case 'drums': return 'Drums'
+		case 'keys': return 'Keys'
+		case 'guitarghl': return 'GHL Guitar'
+		case 'guitarcoopghl': return 'GHL Co-op'
+		case 'rhythmghl': return 'GHL Rhythm'
+		case 'bassghl': return 'GHL Bass'
+		case null: return 'Any Instrument'
+	}
+}
 export function difficultyDisplay(difficulty: Difficulty | null) {
 	switch (difficulty) {
 		case 'expert': return 'Expert'
@@ -118,4 +134,35 @@ export function instrumentToDiff(instrument: Instrument | 'vocals') {
 		case 'bassghl': return 'diff_bassghl'
 		case 'vocals': return 'diff_vocals'
 	}
+}
+
+/**
+ * @returns a string representation of `ms` that looks like HH:MM:SS
+ */
+export function msToRoughTime(ms: number) {
+	const seconds = _.round((ms / 1000) % 60)
+	const minutes = Math.floor((ms / 1000 / 60) % 60)
+	const hours = Math.floor((ms / 1000 / 60 / 60) % 24)
+	return `${hours ? `${hours}:` : ''}${minutes}:${_.padStart(String(seconds), 2, '0')}`
+}
+
+const allowedTags = [
+	'align', 'allcaps', 'alpha', 'b', 'br', 'color', 'cspace', 'font', 'font-weight',
+	'gradient', 'i', 'indent', 'line-height', 'line-indent', 'link', 'lowercase',
+	'margin', 'mark', 'mspace', 'nobr', 'noparse', 'page', 'pos', 'rotate', 's',
+	'size', 'smallcaps', 'space', 'sprite', 'strikethrough', 'style', 'sub', 'sup',
+	'u', 'uppercase', 'voffset', 'width',
+]
+const tagPattern = allowedTags.map(tag => `\\b${tag}\\b`).join('|')
+/**
+ * @returns `text` with all style tags removed. (e.g. "<color=#AEFFFF>Aren Eternal</color> & Geo" -> "Aren Eternal & Geo")
+ */
+export function removeStyleTags(text: string) {
+	let oldText = text
+	let newText = text
+	do {
+		oldText = newText
+		newText = newText.replace(new RegExp(`<\\s*\\/?\\s*(?:${tagPattern})[^>]*>`, 'gi'), '').trim()
+	} while (newText !== oldText)
+	return newText
 }
