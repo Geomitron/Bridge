@@ -8,6 +8,8 @@ import { Difficulty, Instrument } from 'scan-chart'
 import { environment } from 'src-angular/environments/environment'
 import { AdvancedSearch, ChartData, SearchResult } from 'src-shared/interfaces/search.interface'
 
+const resultsPerPage = 25
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -61,7 +63,7 @@ export class SearchService {
 		this.search().subscribe()
 	}
 
-	get areMorePages() { return this.songsResponse.page && this.groupedSongs.length === this.songsResponse.page * 10 }
+	get areMorePages() { return this.songsResponse.page && this.groupedSongs.length === this.songsResponse.page * resultsPerPage }
 
 	/**
 	 * General search, uses the `/search?q=` endpoint.
@@ -83,7 +85,7 @@ export class SearchService {
 		let retries = 10
 		return this.http.post<SearchResult>(`${environment.apiUrl}/search`, {
 			search,
-			per_page: 25,
+			per_page: resultsPerPage,
 			page: this.currentPage,
 			instrument: this.instrument.value,
 			difficulty: this.difficulty.value,

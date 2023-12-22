@@ -1,17 +1,27 @@
-<table id="resultTable" class="table table-zebra table-pin-rows overflow-y-auto">
+<table id="resultTable" class="table table-zebra table-pin-rows">
 	<!-- TODO: maybe have some of these tags customizable? E.g. small/large/compact/padded -->
 	<!-- TODO: learn semantic themes in order to change the $mobileBreakpoint global variable (better search table adjustment) -->
 	<thead>
-		<!-- NOTE: it would be nice to make this header sticky, but Fomantic-UI doesn't currently support that -->
 		<tr>
 			<th class="collapsing" id="checkboxColumn">
 				<input #checkAllCheckbox type="checkbox" class="checkbox" (change)="checkAll(checkAllCheckbox.checked)" />
 			</th>
-			<th [class.sorted]="sortColumn === 'name'" [ngClass]="sortDirection" (click)="onColClicked('name')">Name</th>
-			<th [class.sorted]="sortColumn === 'artist'" [ngClass]="sortDirection" (click)="onColClicked('artist')">Artist</th>
-			<th [class.sorted]="sortColumn === 'album'" [ngClass]="sortDirection" (click)="onColClicked('album')">Album</th>
-			<th [class.sorted]="sortColumn === 'genre'" [ngClass]="sortDirection" (click)="onColClicked('genre')">Genre</th>
-			<th [class.sorted]="sortColumn === 'year'" [ngClass]="sortDirection" (click)="onColClicked('year')">Year</th>
+			<th [ngClass]="sortDirection" (click)="onColClicked('name')">
+				Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+			</th>
+			<th [ngClass]="sortDirection" (click)="onColClicked('artist')">
+				Artist
+				<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+			</th>
+			<th [ngClass]="sortDirection" (click)="onColClicked('album')">
+				Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+			</th>
+			<th [ngClass]="sortDirection" (click)="onColClicked('genre')">
+				Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+			</th>
+			<th [ngClass]="sortDirection" (click)="onColClicked('year')">
+				Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+			</th>
 		</tr>
 	</thead>
 	<tbody>

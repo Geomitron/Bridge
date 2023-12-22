@@ -1,6 +1,6 @@
 import { Component, EventEmitter, HostBinding, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
 
-import Comparators from 'comparators'
+import { sortBy } from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 
@@ -22,7 +22,7 @@ export class ResultTableComponent implements OnInit {
 	@ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
 	activeSong: ChartData[] | null = null
-	sortDirection: 'ascending' | 'descending' = 'descending'
+	sortDirection: 'ascending' | 'descending' = 'ascending'
 	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | null = null
 
 	constructor(
@@ -53,7 +53,7 @@ export class ResultTableComponent implements OnInit {
 		if (this.songs.length === 0) { return }
 		if (this.sortColumn !== column) {
 			this.sortColumn = column
-			this.sortDirection = 'descending'
+			this.sortDirection = 'ascending'
 		} else if (this.sortDirection === 'descending') {
 			this.sortDirection = 'ascending'
 		} else {
@@ -63,8 +63,11 @@ export class ResultTableComponent implements OnInit {
 	}
 
 	private updateSort() {
-		if (this.sortColumn !== null) {
-			this.songs.sort(Comparators.comparing(this.sortColumn, { reversed: this.sortDirection === 'ascending' }))
+		const col = this.sortColumn
+		if (col !== null) {
+			const groupedSongs = sortBy(this.searchService.groupedSongs, song => song[0][col])
+			if (this.sortDirection === 'descending') { groupedSongs.reverse() }
+			this.searchService.groupedSongs = groupedSongs
 		}
 	}
 
@@ -77,6 +80,17 @@ export class ResultTableComponent implements OnInit {
 			this.selectionService.selectAll()
 		} else {
 			this.selectionService.deselectAll()
+		}
+	}
+
+	tableScrolled(event: Event): void {
+		if (event.target instanceof HTMLElement) {
+			if (event.target.scrollHeight - (event.target.scrollTop + event.target.clientHeight) < 100) {
+				// Scrolled near the bottom of the table
+				if (this.searchService.areMorePages && !this.searchService.searchLoading) {
+					this.searchService.search(this.searchService.searchControl.value || '*', true).subscribe()
+				}
+			}
 		}
 	}
 }

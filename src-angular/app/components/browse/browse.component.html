@@ -2,7 +2,8 @@
 <div class="flex flex-1 overflow-y-hidden">
 	<!-- TODO: adjust sizing -->
 	<div
-		class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+		class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
+		(scroll)="resultTable.tableScrolled($event)">
 		<app-result-table #resultTable (rowClicked)="chartSidebar.onRowClicked($event)"></app-result-table>
 	</div>
 	<div class="basis-1/3 min-w-[310px] max-w-[512px]">
