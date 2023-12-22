@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { FormControl } from '@angular/forms'
 
 import { capitalize } from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -10,6 +11,8 @@ import { themes } from 'src-shared/Settings'
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
+
+	public isSng: FormControl<boolean>
 
 	updateAvailable: boolean | null = false
 	loginClicked = false
@@ -23,7 +26,10 @@ export class SettingsComponent implements OnInit {
 	constructor(
 		public settingsService: SettingsService,
 		private ref: ChangeDetectorRef
-	) { }
+	) {
+		this.isSng = new FormControl<boolean>(settingsService.isSng, { nonNullable: true })
+		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
+	}
 
 	async ngOnInit() {
 		window.electron.on.updateAvailable(result => {
@@ -71,6 +77,10 @@ export class SettingsComponent implements OnInit {
 		if (this.settingsService.libraryDirectory) {
 			window.electron.emit.showFolder(this.settingsService.libraryDirectory)
 		}
+	}
+
+	openUrl(url: string) {
+		window.electron.emit.openUrl(url)
 	}
 
 	setTheme(theme: typeof themes[number]) {

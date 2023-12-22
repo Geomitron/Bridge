@@ -3,7 +3,6 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
 import { FormControl } from '@angular/forms'
 
 import { sortBy } from 'lodash'
-import { SearchService } from 'src-angular/app/core/services/search.service'
 import { environment } from 'src-angular/environments/environment'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { driveLink } from 'src-shared/UtilFunctions'
@@ -26,13 +25,8 @@ export class ChartSidebarMenutComponent implements OnInit {
 	public reportMessage = ''
 
 	constructor(
-		private searchService: SearchService,
 		private http: HttpClient,
 	) { }
-
-	get isSngControl() {
-		return this.searchService.isSng
-	}
 
 	ngOnInit(): void {
 		this.selectedVersion = new FormControl<ChartData>(this.displayVersions[0], { nonNullable: true })

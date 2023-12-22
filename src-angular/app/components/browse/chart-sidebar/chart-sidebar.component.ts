@@ -17,7 +17,6 @@ export class ChartSidebarComponent implements OnInit {
 	@HostBinding('class.contents') contents = true
 
 	@ViewChild('menu') menu: ElementRef
-	@ViewChild('selectSngModal') selectSngModal: ElementRef<HTMLDialogElement>
 
 	public shortInstrumentDisplay = shortInstrumentDisplay
 	public difficultyDisplay = difficultyDisplay
@@ -181,27 +180,11 @@ export class ChartSidebarComponent implements OnInit {
 		return this.selectedChart!.notesData.noteCounts.filter(this.currentTrackFilter)[0].count
 	}
 
-	public get hasSelectedDownloadFormat() {
-		// TODO
-		return localStorage.getItem('selectedDownloadFormat') === 'true'
-	}
-	public selectDownloadFormat(isSng: boolean) {
-		// TODO
-		this.searchService.isSng.setValue(isSng)
-		localStorage.setItem('selectedDownloadFormat', 'true')
-	}
-
 	/**
 	 * Adds the selected version to the download queue.
 	 */
 	onDownloadClicked() {
 		// TODO
-		if (!this.hasSelectedDownloadFormat) {
-			this.selectSngModal.nativeElement.showModal()
-			return
-		} else {
-			this.selectSngModal.nativeElement.close()
-		}
 		// this.downloadService.addDownload(
 		// 	this.selectedChart.versionID, {
 		// 	chartName: this.selectedChart.chartName,

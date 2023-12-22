@@ -48,6 +48,63 @@
 		</div>
 	</label>
 
+	<div class="form-control">
+		<div class="label">
+			<span class="label-text">
+				Download Format
+				<button class="btn btn-xs btn-circle btn-ghost" (click)="selectSngModal.showModal()">
+					<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
+				</button>
+				<dialog #selectSngModal id="report_modal" class="modal whitespace-normal">
+					<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+						<form method="dialog">
+							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+								<i class="bi bi-x-lg text-lg"></i>
+							</button>
+						</form>
+						<div class="flex gap-6">
+							<div class="flex-1">
+								<span class="font-bold text-lg">.sng (new)</span>
+								<ul class="list-disc pl-5">
+									<li>Single chart file</li>
+									<li>Can be scanned in-game directly without extracting</li>
+									<li>Currently only supported by YARG and Clone Hero v1.1</li>
+								</ul>
+							</div>
+							<div class="flex-1">
+								<span class="font-bold text-lg">.zip</span>
+								<ul class="list-disc pl-5">
+									<li>Contains chart folder</li>
+									<li>Must be extracted before it can be scanned in-game</li>
+									<li>Supported across many games</li>
+								</ul>
+							</div>
+						</div>
+						<br />
+						<div class="text-xs">
+							A program to convert between .sng files and chart folders can be found
+							<a class="link" (click)="openUrl('https://github.com/mdsitton/SngFileFormat/releases')">here</a>.
+						</div>
+					</div>
+					<form method="dialog" class="modal-backdrop">
+						<button>close</button>
+					</form>
+				</dialog>
+			</span>
+		</div>
+		<div class="flex gap-2">
+			<label class="label cursor-pointer">
+				<input type="radio" class="radio radio-secondary mr-2" [value]="true" [formControl]="isSng" />
+				.sng
+			</label>
+
+			<label class="label cursor-pointer">
+				<input type="radio" class="radio radio-secondary mr-2" [value]="false" [formControl]="isSng" />
+				.zip
+			</label>
+		</div>
+	</div>
+
 	<div class="absolute bottom-8 right-8 flex gap-6">
 		<div class="join">
 			<button *ngIf="updateAvailable" class="join-item btn btn-primary" (click)="downloadUpdate()">

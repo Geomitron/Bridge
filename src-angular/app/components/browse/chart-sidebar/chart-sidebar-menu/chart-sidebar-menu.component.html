@@ -1,62 +1,8 @@
 <div
 	class="dropdown-content card card-compact p-2 shadow bg-neutral text-neutral-content z-10 cursor-auto border-2 border-base-300 max-w-[90vw] sm:max-w-[80vw] lg:max-w-[70vw] 2xl:max-w-[60vw]">
 	<div class="card-body">
-		<div class="flex">
-			<div class="flex-1">
-				<h1 class="menu-title pl-0 pb-0 whitespace-nowrap text-neutral-content">
-					DOWNLOAD FORMAT
-					<button class="btn btn-xs btn-circle btn-ghost" (click)="selectSngModal.showModal()">
-						<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
-					</button>
-					<dialog #selectSngModal id="report_modal" class="modal whitespace-normal">
-						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
-							<form method="dialog">
-								<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-									<i class="bi bi-x-lg text-lg"></i>
-								</button>
-							</form>
-							<div class="flex gap-6">
-								<div class="flex-1">
-									<span class="font-bold text-lg">.sng (new)</span>
-									<ul class="list-disc pl-5">
-										<li>Single chart file</li>
-										<li>Can be scanned in-game directly without extracting</li>
-										<li>Currently only supported by YARG and Clone Hero v1.1</li>
-									</ul>
-								</div>
-								<div class="flex-1">
-									<span class="font-bold text-lg">.zip</span>
-									<ul class="list-disc pl-5">
-										<li>Contains chart folder</li>
-										<li>Must be extracted before it can be scanned in-game</li>
-										<li>Supported across many games</li>
-									</ul>
-								</div>
-							</div>
-							<br />
-							<div class="text-xs">
-								A program to convert between .sng files and chart folders can be found
-								<a class="link" href="https://github.com/mdsitton/SngFileFormat/releases" target="_blank">here</a>.
-							</div>
-						</div>
-						<form method="dialog" class="modal-backdrop">
-							<button>close</button>
-						</form>
-					</dialog>
-				</h1>
-				<div class="flex gap-2">
-					<label class="label cursor-pointer">
-						<input type="radio" class="radio radio-secondary mr-2" [value]="true" [formControl]="isSngControl" />
-						.sng
-					</label>
-
-					<label class="label cursor-pointer">
-						<input type="radio" class="radio radio-secondary mr-2" [value]="false" [formControl]="isSngControl" />
-						.zip
-					</label>
-				</div>
-			</div>
-			<div class="pt-2">
+		<div class="flex flex-row-reverse justify-between menu-title p-0 whitespace-nowrap text-neutral-content">
+			<div>
 				<button class="btn btn-secondary btn-xs flex-nowrap uppercase" (click)="reportModal.showModal()">
 					<i class="bi bi-exclamation-triangle text-sm text-secondary-content"></i> Report issue
 				</button>
@@ -106,12 +52,12 @@
 					</form>
 				</dialog>
 			</div>
+			@if (displayVersions.length > 1) {
+				<span class="uppercase">Select Version</span>
+			}
 		</div>
-		@if (displayVersions.length > 1) {
-			<h1 class="menu-title pl-0 pb-0 pt-4 whitespace-nowrap text-neutral-content">SELECT VERSION</h1>
-		}
 		<div
-			class="pt-2 overflow-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-neutral scrollbar-thumb-neutral-content scrollbar-thumb-rounded-full">
+			class="overflow-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-neutral scrollbar-thumb-neutral-content scrollbar-thumb-rounded-full">
 			<table class="table table-xs">
 				<thead>
 					<tr>

@@ -75,11 +75,11 @@ export class SettingsService {
 		this.saveSettings()
 	}
 
-	get rateLimitDelay() {
-		return this.settings.rateLimitDelay
+	get isSng() {
+		return this.settings.isSng
 	}
-	set rateLimitDelay(delay: number) {
-		this.settings.rateLimitDelay = delay
+	set isSng(value: boolean) {
+		this.settings.isSng = value
 		this.saveSettings()
 	}
 }

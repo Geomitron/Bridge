@@ -26,16 +26,12 @@ export class SearchService {
 	public availableIcons: string[]
 
 	public searchControl = new FormControl('', { nonNullable: true })
-	public isSng: FormControl<boolean>
 	public instrument: FormControl<Instrument | null>
 	public difficulty: FormControl<Difficulty | null>
 
 	constructor(
 		private http: HttpClient,
 	) {
-		this.isSng = new FormControl<boolean>((localStorage.getItem('isSng') ?? 'true') === 'true', { nonNullable: true })
-		this.isSng.valueChanges.subscribe(isSng => localStorage.setItem('isSng', `${isSng}`))
-
 		this.instrument = new FormControl<Instrument>(
 			(localStorage.getItem('instrument') === 'null' ? null : localStorage.getItem('instrument')) as Instrument
 		)

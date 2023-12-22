@@ -88,52 +88,6 @@
 	</div>
 	<div class="join">
 		<button class="btn rounded-md flex-1 join-item btn-primary" (click)="onDownloadClicked()">Download</button>
-		<dialog #selectSngModal id="report_modal" class="modal">
-			<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-						<i class="bi bi-x-lg text-2xl"></i>
-					</button>
-				</form>
-				<h3 class="font-bold text-lg">Select Download Format:</h3>
-				<div class="flex gap-6">
-					<div class="form-control flex-1">
-						<label class="label cursor-pointer justify-normal gap-2">
-							<input type="radio" name="selectedDownloadFormat{{ selectedChart.chartId }}" class="radio" (change)="selectDownloadFormat(true)" />
-							<span>.sng (new)</span>
-						</label>
-						<ul class="list-disc pl-5">
-							<li>Single chart file</li>
-							<li>Can be scanned in-game directly without extracting</li>
-							<li>Currently only supported by YARG and Clone Hero v1.1</li>
-						</ul>
-					</div>
-					<div class="form-control flex-1">
-						<label class="label cursor-pointer justify-normal gap-2">
-							<input type="radio" name="selectedDownloadFormat{{ selectedChart.chartId }}" class="radio" (change)="selectDownloadFormat(false)" />
-							<span>.zip</span>
-						</label>
-						<ul class="list-disc pl-5">
-							<li>Contains chart folder</li>
-							<li>Must be extracted before it can be scanned in-game</li>
-							<li>Supported across many games</li>
-						</ul>
-					</div>
-				</div>
-				<br />
-				<div class="text-xs">This can be changed later in the (<i class="bi bi-three-dots align-middle"></i>) menu.</div>
-				<div class="text-xs">
-					A program to convert between .sng files and chart folders can be found
-					<a class="link" href="https://github.com/mdsitton/SngFileFormat/releases" target="_blank">here</a>.
-				</div>
-				<div class="form-control flex-row justify-end">
-					<button class="btn btn-primary" [disabled]="!hasSelectedDownloadFormat" (click)="onDownloadClicked()">Download</button>
-				</div>
-			</div>
-			<form method="dialog" class="modal-backdrop">
-				<button>close</button>
-			</form>
-		</dialog>
 		<div
 			#menu
 			class="cursor-pointer bg-neutral rounded-md join-item dropdown dropdown-top dropdown-end p-1 flex items-center"
