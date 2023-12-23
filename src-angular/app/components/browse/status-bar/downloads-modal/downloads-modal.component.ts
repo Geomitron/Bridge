@@ -6,7 +6,6 @@ import { DownloadService } from '../../../../core/services/download.service'
 @Component({
 	selector: 'app-downloads-modal',
 	templateUrl: './downloads-modal.component.html',
-	styleUrls: ['./downloads-modal.component.scss'],
 })
 export class DownloadsModalComponent {
 

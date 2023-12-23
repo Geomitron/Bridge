@@ -1,37 +1,15 @@
-<div id="bottomMenu" class="ui bottom borderless menu border-t border-t-neutral">
-	<div *ngIf="(searchService.groupedSongs?.length ?? 0) > 0" class="item">
-		{{ searchService.groupedSongs.length }}{{ allResultsVisible ? '' : '+' }} Result{{ searchService.groupedSongs.length === 1 ? '' : 's' }}
+<div class="border-t border-t-neutral p-2 flex gap-2 items-center">
+	<div *ngIf="searchService.songsResponse">
+		{{ searchService.songsResponse.found }} Result{{ searchService.songsResponse.found === 1 ? '' : 's' }}
 	</div>
-	<div class="item">
-		<button *ngIf="selectedResults.length > 1" (click)="downloadSelected()" class="ui positive button">
-			Download {{ selectedResults.length }} Results
+	<div class="flex-1">
+		<button *ngIf="selectedGroupIds.length > 1" (click)="downloadSelected()" class="btn btn-sm btn-primary">
+			Download {{ selectedGroupIds.length }} Results
 		</button>
 	</div>
-	<a *ngIf="downloading" class="item right" (click)="showDownloads()">
-		<div #progressBar appProgressBar [percent]="percent" class="ui progress" [style.background-color]="error ? 'indianred' : undefined">
-			<div class="bar">
-				<div class="progress"></div>
-			</div>
-		</div>
-	</a>
-
-	<div id="selectedModal" class="ui modal">
-		<div class="header">Some selected songs have more than one chart!</div>
-		<div class="scrolling content">
-			<div class="ui segments">
-				<div class="ui segment" *ngFor="let chartGroup of chartGroups">
-					<p *ngFor="let chart of chartGroup">
-						{{ chart.chartName }} <b>[{{ chart.charters }}]</b>
-					</p>
-				</div>
-			</div>
-		</div>
-		<div class="actions">
-			<div class="ui approve button" (click)="downloadAllCharts()">Download all charts for each song</div>
-			<div class="ui cancel button" (click)="deselectSongsWithMultipleCharts()">Deselect these songs</div>
-			<div class="ui cancel button">Cancel</div>
-		</div>
-	</div>
+	<button *ngIf="downloading" (click)="showDownloads()" class="btn btn-sm btn-ghost w-[30vw]">
+		<progress [value]="percent" max="100" class="progress h-3 rounded-md" [class.progress-error]="error"></progress>
+	</button>
 
 	<div id="downloadsModal" class="ui modal">
 		<i class="inside close icon"></i>

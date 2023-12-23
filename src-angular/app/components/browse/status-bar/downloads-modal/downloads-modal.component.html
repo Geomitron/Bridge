@@ -14,11 +14,7 @@
 		</div>
 
 		<div id="downloadProgressDiv">
-			<div id="downloadProgressBar" appProgressBar [percent]="download.percent" class="ui small progress">
-				<div class="bar" [style.height]="download.type === 'error' ? '-webkit-fill-available' : undefined">
-					<div class="progress"></div>
-				</div>
-			</div>
+			<progress [value]="download.percent" max="100" class="progress w-96" [class.progress-error]="download.type === 'error'"></progress>
 			<button *ngIf="download.type === 'error'" class="ui right attached labeled compact icon button" (click)="retryDownload(download.versionID)">
 				<i class="redo icon"></i>
 				Retry

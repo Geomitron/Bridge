@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component } from '@angular/core'
 
-import { groupBy } from '../../../../../src-shared/UtilFunctions'
+import { keys, pickBy } from 'lodash'
+
 import { DownloadService } from '../../../core/services/download.service'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
@@ -8,7 +9,6 @@ import { SelectionService } from '../../../core/services/selection.service'
 @Component({
 	selector: 'app-status-bar',
 	templateUrl: './status-bar.component.html',
-	styleUrls: ['./status-bar.component.scss'],
 })
 export class StatusBarComponent {
 
@@ -39,12 +39,8 @@ export class StatusBarComponent {
 		})
 	}
 
-	get allResultsVisible() {
-		return false // this.searchService.allResultsVisible
-	}
-
-	get selectedResults() {
-		return this.selectionService.getSelectedResults()
+	get selectedGroupIds() {
+		return keys(pickBy(this.selectionService.selections)).map(k => Number(k))
 	}
 
 	showDownloads() {
@@ -53,52 +49,52 @@ export class StatusBarComponent {
 	}
 
 	async downloadSelected() {
-		this.chartGroups = []
-		// TODO
-		// this.batchResults = await window.electron.invoke.getBatchSongDetails(this.selectedResults.map(result => result.id))
-		const versionGroups = groupBy(this.batchResults, 'songID')
-		for (const versionGroup of versionGroups) {
-			if (versionGroup.findIndex(version => version.chartID !== versionGroup[0].chartID) !== -1) {
-				// Must have multiple charts of this song
-				this.chartGroups.push(versionGroup.filter(version => version.versionID === version.latestVersionID))
-			}
-		}
+		// this.chartGroups = []
+		// // TODO
+		// // this.batchResults = await window.electron.invoke.getBatchSongDetails(this.selectedResults.map(result => result.id))
+		// const versionGroups = groupBy(this.batchResults, 'songID')
+		// for (const versionGroup of versionGroups) {
+		// 	if (versionGroup.findIndex(version => version.chartID !== versionGroup[0].chartID) !== -1) {
+		// 		// Must have multiple charts of this song
+		// 		this.chartGroups.push(versionGroup.filter(version => version.versionID === version.latestVersionID))
+		// 	}
+		// }
 
-		if (this.chartGroups.length === 0) {
-			for (const versions of versionGroups) {
-				// this.searchService.sortChart(versions)
-				const downloadVersion = versions[0]
-				const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
-				this.downloadService.addDownload(
-					downloadVersion.versionID, {
-					chartName: downloadVersion.chartName,
-					artist: downloadSong.artist,
-					charter: downloadVersion.charters,
-					driveData: downloadVersion.driveData,
-				})
-			}
-		} else {
-			// TODO
-			// $('#selectedModal').modal('show')
-			// [download all charts for each song] [deselect these songs] [X]
-		}
+		// if (this.chartGroups.length === 0) {
+		// 	for (const versions of versionGroups) {
+		// 		// this.searchService.sortChart(versions)
+		// 		const downloadVersion = versions[0]
+		// 		const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
+		// 		this.downloadService.addDownload(
+		// 			downloadVersion.versionID, {
+		// 			chartName: downloadVersion.chartName,
+		// 			artist: downloadSong.artist,
+		// 			charter: downloadVersion.charters,
+		// 			driveData: downloadVersion.driveData,
+		// 		})
+		// 	}
+		// } else {
+		// 	// TODO
+		// 	// $('#selectedModal').modal('show')
+		// 	// [download all charts for each song] [deselect these songs] [X]
+		// }
 	}
 
 	downloadAllCharts() {
-		const songChartGroups = groupBy(this.batchResults, 'songID', 'chartID')
-		for (const chart of songChartGroups) {
-			// this.searchService.sortChart(chart)
-			const downloadVersion = chart[0]
-			const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
-			this.downloadService.addDownload(
-				downloadVersion.versionID, {
-				chartName: downloadVersion.chartName,
-				artist: downloadSong.artist,
-				charter: downloadVersion.charters,
-				driveData: downloadVersion.driveData,
-			}
-			)
-		}
+		// const songChartGroups = groupBy(this.batchResults, 'songID', 'chartID')
+		// for (const chart of songChartGroups) {
+		// 	// this.searchService.sortChart(chart)
+		// 	const downloadVersion = chart[0]
+		// 	const downloadSong = this.selectedResults.find(song => song.id === downloadVersion.songID)!
+		// 	this.downloadService.addDownload(
+		// 		downloadVersion.versionID, {
+		// 		chartName: downloadVersion.chartName,
+		// 		artist: downloadSong.artist,
+		// 		charter: downloadVersion.charters,
+		// 		driveData: downloadVersion.driveData,
+		// 	}
+		// 	)
+		// }
 	}
 
 	deselectSongsWithMultipleCharts() {

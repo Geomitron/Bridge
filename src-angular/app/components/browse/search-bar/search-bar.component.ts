@@ -67,6 +67,9 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	get instrument() {
 		return this.searchService.instrument.value
 	}
+	get searchLoading() {
+		return this.searchService.searchLoading
+	}
 	setInstrument(instrument: Instrument | null, event: MouseEvent) {
 		this.searchService.instrument.setValue(instrument)
 		if (event.target instanceof HTMLElement) {

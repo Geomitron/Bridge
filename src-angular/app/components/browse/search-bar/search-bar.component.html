@@ -7,7 +7,11 @@
 			<div class="form-control w-full">
 				<input type="text" [formControl]="searchControl" placeholder="Search..." class="input input-bordered pr-14" />
 			</div>
-			<i class="bi bi-search -ml-9"></i>
+			@if (searchLoading) {
+				<span class="loading loading-spinner loading-sm self-center -ml-9"></span>
+			} @else {
+				<i class="bi bi-search -ml-9"></i>
+			}
 		</div>
 		<div class="flex">
 			<!-- Instrument Dropdown -->
