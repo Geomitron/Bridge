@@ -42,6 +42,40 @@
 			</div>
 			<div class="flex flex-wrap">
 				<div class="flex-1">
+					@if (hasIssues) {
+						<div class="dropdown dropdown-hover">
+							<label tabindex="0" class="cursor-help"><i class="bi bi-exclamation-triangle text-lg -my-3 ml-1"></i> Issues Detected</label>
+							<div tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box min-w-max">
+								@if (metadataIssues.length > 0) {
+									<div class="menu-title">Metadata Issues Found:</div>
+									<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
+										<li *ngFor="let issue of metadataIssues" class="list-item">{{ getMetadataIssueText(issue) }}</li>
+									</ul>
+								}
+								@if (folderIssues.length > 0) {
+									<div class="menu-title">Chart Folder Issues Found:</div>
+									<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
+										<li *ngFor="let issue of folderIssues" class="list-item">{{ getFolderIssueText(issue) }}</li>
+									</ul>
+								}
+								@if (chartIssues.length > 0) {
+									<div class="menu-title">Chart Issues Found:</div>
+									<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
+										<li *ngFor="let issue of chartIssues" class="list-item">{{ getChartIssueText(issue) }}</li>
+									</ul>
+								}
+								@for (trackIssues of trackIssuesGroups; track $index) {
+									<div class="menu-title">{{ trackIssues.groupName }}</div>
+									<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
+										<li *ngFor="let issue of trackIssues.issues" class="list-item">{{ getTrackIssueText(issue) }}</li>
+									</ul>
+								}
+							</div>
+						</div>
+					}
+					@if (selectedChart.modchart) {
+						<div><i class="bi bi-star text-lg -my-3 ml-1"></i> Modchart</div>
+					}
 					@for (pair of boolProperties; track $index) {
 						<p class="flex items-center">
 							<i class="bi text-2xl -my-3" [ngClass]="pair.value ? 'bi-check2' : 'bi-x'" [ngStyle]="{ color: pair.value ? 'green' : 'red' }"> </i>

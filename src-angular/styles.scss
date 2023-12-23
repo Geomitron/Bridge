@@ -13,3 +13,7 @@ input[type='number'] {
   user-select: none;
   -webkit-user-drag: none;
 }
+
+.dropdown:not(:hover):not(:focus):not(:focus-within):not(.dropdown-open) .dropdown-content {
+	height: 0px;
+}

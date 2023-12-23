@@ -2,6 +2,8 @@ import _ from 'lodash'
 import sanitize from 'sanitize-filename'
 import { Difficulty, Instrument } from 'scan-chart'
 
+import { ChartData } from './interfaces/search.interface'
+
 // WARNING: do not import anything related to Electron; the code will not compile correctly.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,4 +167,26 @@ export function removeStyleTags(text: string) {
 		newText = newText.replace(new RegExp(`<\\s*\\/?\\s*(?:${tagPattern})[^>]*>`, 'gi'), '').trim()
 	} while (newText !== oldText)
 	return newText
+}
+
+export function hasIssues(chart: Pick<ChartData, 'metadataIssues' | 'folderIssues' | 'notesData'>) {
+	if (chart.metadataIssues.length > 0) { return true }
+	for (const folderIssue of chart.folderIssues) {
+		if (!['albumArtSize', 'invalidIni', 'multipleVideo', 'badIniLine'].includes(folderIssue.folderIssue)) { return true }
+	}
+	for (const chartIssue of chart.notesData?.chartIssues ?? []) {
+		if (chartIssue !== 'isDefaultBPM') { return true }
+	}
+	for (const trackIssue of chart.notesData?.trackIssues ?? []) {
+		for (const ti of trackIssue.trackIssues) {
+			if (ti !== 'noNotesOnNonemptyTrack') { return true }
+		}
+	}
+	for (const noteIssue of chart.notesData?.noteIssues ?? []) {
+		for (const ni of noteIssue.noteIssues) {
+			if (ni.issueType !== 'babySustain') { return true }
+		}
+	}
+
+	return false
 }
