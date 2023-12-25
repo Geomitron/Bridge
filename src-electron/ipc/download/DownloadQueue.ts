@@ -67,13 +67,17 @@ export class DownloadQueue {
 	}
 
 	remove(md5: string) {
-		if (this.downloadQueue[0]?.md5 === md5) {
-			this.downloadQueue[0].cancel()
+		const currentDownload = this.downloadQueue[0]
+		if (currentDownload?.md5 === md5) {
+			currentDownload.cancel()
 			this.downloadRunning = false
 		}
 		this.downloadQueue = this.downloadQueue.filter(cd => cd.md5 !== md5)
 		this.retryQueue = this.retryQueue.filter(cd => cd.md5 !== md5)
 		this.erroredQueue = this.erroredQueue.filter(cd => cd.md5 !== md5)
+		if (currentDownload) {
+			this.moveQueue()
+		}
 
 		emitIpcEvent('downloadQueueUpdate', {
 			md5,

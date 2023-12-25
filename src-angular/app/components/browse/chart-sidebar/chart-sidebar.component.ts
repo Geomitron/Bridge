@@ -44,7 +44,7 @@ export class ChartSidebarComponent implements OnInit {
 	) { }
 
 	ngOnInit() {
-		this.searchService.searchUpdated.subscribe(() => {
+		this.searchService.newSearch.subscribe(() => {
 			this.charts = null
 			this.selectedChart = null
 		})
@@ -280,8 +280,7 @@ export class ChartSidebarComponent implements OnInit {
 	 * Adds the selected chart to the download queue.
 	 */
 	onDownloadClicked() {
-		this.downloadService.addDownload(this.selectedChart!.md5, `${this.selectedChart!.artist ?? 'Unknown Artist'
-			} - ${this.selectedChart!.name ?? 'Unknown Name'} (${this.selectedChart!.charter ?? 'Unknown Charter'})`)
+		this.downloadService.addDownload(this.selectedChart!)
 	}
 
 	public showMenu() {

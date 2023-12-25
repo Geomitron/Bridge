@@ -13,7 +13,7 @@ export class ResultTableRowComponent implements OnInit {
 	constructor(private selectionService: SelectionService) { }
 
 	ngOnInit() {
-		this.selectionService.selections[this.groupId] = false
+		this.selectionService.selections[this.groupId] = this.selectionService.isAllSelected()
 	}
 
 	get groupId() {

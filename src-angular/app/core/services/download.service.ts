@@ -1,6 +1,8 @@
 import { EventEmitter, Injectable, NgZone } from '@angular/core'
 
 import { assign } from 'lodash'
+import { ChartData } from 'src-shared/interfaces/search.interface'
+import { removeStyleTags } from 'src-shared/UtilFunctions'
 
 import { DownloadProgress } from '../../../../src-shared/interfaces/download.interface'
 
@@ -16,7 +18,7 @@ export class DownloadService {
 		window.electron.on.downloadQueueUpdate(download => zone.run(() => {
 			const downloadIndex = this.downloads.findIndex(d => d.md5 === download.md5)
 			if (download.type === 'cancel') {
-				this.downloads = this.downloads.filter(d => d.md5 !== this.downloads[downloadIndex].md5)
+				this.downloads = this.downloads.filter(d => d.md5 !== this.downloads[downloadIndex]?.md5)
 			} else if (downloadIndex === -1) {
 				this.downloads.push(download)
 			} else {
@@ -50,13 +52,16 @@ export class DownloadService {
 		return this.downloads.find(download => download.type === 'error') ? true : false
 	}
 
-	addDownload(md5: string, chartName: string) {
-		if (!this.downloads.find(d => d.md5 === md5)) { // Don't download something twice
+	addDownload(chart: ChartData) {
+		if (!this.downloads.find(d => d.md5 === chart.md5)) { // Don't download something twice
 			if (this.downloads.every(d => d.type === 'done')) { // Reset overall progress bar if it finished
 				this.downloads.forEach(d => d.stale = true)
 			}
+			const chartName = `${removeStyleTags(chart.artist ?? 'Unknown Artist')
+				} - ${removeStyleTags(chart.name ?? 'Unknown Name')
+				} (${removeStyleTags(chart.charter ?? 'Unknown Charter')})`
 			this.downloads.push({
-				md5,
+				md5: chart.md5,
 				chartName,
 				header: 'Waiting for other downloads to finish...',
 				body: '',
@@ -64,7 +69,7 @@ export class DownloadService {
 				type: 'good',
 				isPath: false,
 			})
-			window.electron.emit.download({ action: 'add', md5, chartName })
+			window.electron.emit.download({ action: 'add', md5: chart.md5, chartName })
 		}
 		this.downloadCountChanges.emit(this.downloadCount)
 	}

@@ -2,7 +2,7 @@
 	<thead>
 		<tr>
 			<th class="collapsing" id="checkboxColumn">
-				<input #checkAllCheckbox type="checkbox" class="checkbox" (change)="checkAll(checkAllCheckbox.checked)" />
+				<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
 			</th>
 			<th [ngClass]="sortDirection" (click)="onColClicked('name')">
 				Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>

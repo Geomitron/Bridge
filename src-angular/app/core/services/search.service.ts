@@ -18,7 +18,8 @@ export class SearchService {
 	public searchLoading = false
 	public songsResponse: Partial<SearchResult>
 	public currentPage = 1
-	public searchUpdated = new EventEmitter<Partial<SearchResult>>()
+	public newSearch = new EventEmitter<Partial<SearchResult>>()
+	public updateSearch = new EventEmitter<Partial<SearchResult>>()
 	public isDefaultSearch = true
 
 	public groupedSongs: ChartData[][]
@@ -115,7 +116,11 @@ export class SearchService {
 						.value()
 				)
 
-				this.searchUpdated.emit(response)
+				if (nextPage) {
+					this.updateSearch.emit(response)
+				} else {
+					this.newSearch.emit(response)
+				}
 			})
 		)
 	}
@@ -154,7 +159,7 @@ export class SearchService {
 						.value()
 				)
 
-				this.searchUpdated.emit(response)
+				this.newSearch.emit(response)
 			})
 		)
 	}

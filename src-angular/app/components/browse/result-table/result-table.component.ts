@@ -32,8 +32,13 @@ export class ResultTableComponent implements OnInit {
 	) { }
 
 	ngOnInit() {
-		this.searchService.searchUpdated.subscribe(() => {
+		this.searchService.newSearch.subscribe(() => {
 			this.activeSong = null
+			this.sortDirection = 'ascending'
+			this.sortColumn = null
+			this.updateSort()
+		})
+		this.searchService.updateSearch.subscribe(() => {
 			this.updateSort()
 		})
 	}
@@ -65,18 +70,17 @@ export class ResultTableComponent implements OnInit {
 	private updateSort() {
 		const col = this.sortColumn
 		if (col !== null) {
-			const groupedSongs = sortBy(this.searchService.groupedSongs, song => song[0][col])
+			const groupedSongs = sortBy(this.searchService.groupedSongs, song => song[0][col]?.toLowerCase())
 			if (this.sortDirection === 'descending') { groupedSongs.reverse() }
 			this.searchService.groupedSongs = groupedSongs
 		}
 	}
 
-	/**
-	 * Called when the user checks the `checkboxColumn`.
-	 */
-	checkAll(isChecked: boolean) {
-		console.log(isChecked)
-		if (isChecked) {
+	get allSelected() {
+		return this.selectionService.isAllSelected()
+	}
+	set allSelected(value: boolean) {
+		if (value) {
 			this.selectionService.selectAll()
 		} else {
 			this.selectionService.deselectAll()
