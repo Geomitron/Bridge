@@ -114,7 +114,7 @@
 										@for (breadcrumb of getVersionBreadcrumbs(version); track $index) {
 											<li>
 												<ng-container *ngIf="breadcrumb.link">
-													<a [href]="breadcrumb.link" target="_blank">{{ breadcrumb.name }}</a>
+													<a (click)="openUrl(breadcrumb.link)" class="link link-hover">{{ breadcrumb.name }}</a>
 												</ng-container>
 												<ng-container *ngIf="!breadcrumb.link">{{ breadcrumb.name }}</ng-container>
 											</li>

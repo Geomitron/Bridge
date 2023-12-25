@@ -226,9 +226,6 @@ export class ChartSidebarComponent implements OnInit {
 		this.difficultyDropdown.setValue(this.defaultDifficulty)
 	}
 
-	/**
-	 * Opens the proxy link or source folder in the default browser.
-	 */
 	onSourceLinkClicked() {
 		window.electron.emit.openUrl(driveLink(this.selectedChart!.applicationDriveId))
 	}

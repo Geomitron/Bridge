@@ -63,6 +63,10 @@ export class ChartSidebarMenutComponent implements OnInit {
 		return breadcrumbs
 	}
 
+	openUrl(url: string) {
+		window.electron.emit.openUrl(url)
+	}
+
 	joinPaths(...args: string[]) {
 		return args.join('/')
 			.replace(/\/+/g, '/')
