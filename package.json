@@ -12,17 +12,17 @@
     "type": "git",
     "url": "https://github.com/Geomitron/Bridge.git"
   },
-  "main": "dist/electron/main.js",
+  "main": "dist/electron/src-electron/main.js",
   "private": true,
   "scripts": {
     "start": "concurrently \"npm run start:angular\" \"npm run start:electron\" -n angular,electron -c red,yellow",
     "start:angular": "ng serve",
     "start:electron": "nodemon --exec \"tsc -p src-electron/tsconfig.electron.json && electron ./dist/electron/src-electron/main.js --dev\" --watch src-electron/ -e ts",
     "clean": "rimraf dist release",
-    "build:windows": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --windows",
-    "build:mac": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --mac",
-    "build:linux": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build --linux",
-    "release": "ng build -c production && tsc -p tsconfig.electron.json && electron-builder build"
+    "build:windows": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && electron-builder build --windows",
+    "build:mac": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && electron-builder build --mac",
+    "build:linux": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && electron-builder build --linux",
+    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && electron-builder build"
   },
   "dependencies": {
     "@angular/animations": "^17.0.4",
@@ -37,7 +37,7 @@
     "bottleneck": "^2.19.5",
     "dayjs": "^1.11.10",
     "electron-unhandled": "^4.0.1",
-    "electron-updater": "^4.3.1",
+    "electron-updater": "^6.1.7",
     "electron-window-state": "^5.0.3",
     "lodash": "^4.17.21",
     "mkdirp": "^3.0.1",
@@ -69,7 +69,7 @@
     "concurrently": "^8.2.2",
     "daisyui": "^4.4.14",
     "electron": "^27.1.2",
-    "electron-builder": "^23.6.0",
+    "electron-builder": "^24.9.1",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",

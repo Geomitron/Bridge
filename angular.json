@@ -53,7 +53,6 @@
             ],
             "tsConfig": "src-angular/tsconfig.angular.json",
             "inlineStyleLanguage": "scss",
-            "watch": true,
             "assets": [
               "src-angular/assets"
             ],
@@ -69,7 +68,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
+                  "maximumWarning": "1000kb",
                   "maximumError": "1mb"
                 },
                 {

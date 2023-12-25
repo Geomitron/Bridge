@@ -127,7 +127,7 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 }
 
 async function loadWindow(retries = 0) {
-	if (retries > 10) { throw new Error('Angular frontend did not load') }
+	if (retries > 10) { throw new Error(`Angular frontend did not load.\nLoad URL: ${getLoadUrl()}`) }
 	try {
 		await mainWindow.loadURL(getLoadUrl())
 	} catch (err) {
@@ -142,7 +142,7 @@ async function loadWindow(retries = 0) {
 function getLoadUrl() {
 	return url.format({
 		protocol: isDevBuild ? 'http:' : 'file:',
-		pathname: isDevBuild ? '//localhost:4200/' : path.join(__dirname, '..', 'index.html'),
+		pathname: isDevBuild ? '//localhost:4200/' : path.join(__dirname, '..', '..', 'angular', 'index.html'),
 		slashes: true,
 	})
 }
