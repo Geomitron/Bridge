@@ -107,16 +107,6 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 		return dayjs().format('YYYY-MM-DD')
 	}
 
-	// TODO: run this when infinite scroll should happen
-	// @HostListener("window:scroll", [])
-	// onScroll(): void {
-	// 	if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-	// 		if (this.searchService.areMorePages && !this.searchService.searchLoading) {
-	// 			this.searchService.search(this.searchControl.value || '*', true).subscribe()
-	// 		}
-	// 	}
-	// }
-
 	initializeAdvancedSearchForm() {
 		this.advancedSearchForm = this.getAdvancedSearchForm() as ReturnType<this['getAdvancedSearchForm']>
 

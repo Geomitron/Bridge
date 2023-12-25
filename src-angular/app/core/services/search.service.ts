@@ -159,25 +159,3 @@ export class SearchService {
 		)
 	}
 }
-
-// TODO: maybe use this, or delete it
-/**
- * Orders `versionResults` by lastModified date, but prefer the
- * non-pack version if it's only a few days older.
- */
-// sortChart(versionResults: VersionResult[]) {
-// 	const dates: { [versionID: number]: number } = {}
-// 	versionResults.forEach(version => dates[version.versionID] = new Date(version.lastModified).getTime())
-// 	versionResults.sort((v1, v2) => {
-// 		const diff = dates[v2.versionID] - dates[v1.versionID]
-// 		if (Math.abs(diff) < 6.048e+8 && v1.driveData.inChartPack !== v2.driveData.inChartPack) {
-// 			if (v1.driveData.inChartPack) {
-// 				return 1 // prioritize v2
-// 			} else {
-// 				return -1 // prioritize v1
-// 			}
-// 		} else {
-// 			return diff
-// 		}
-// 	})
-// }

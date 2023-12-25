@@ -3,38 +3,25 @@
  * Represents a user's request to interact with the download system.
  */
 export interface Download {
-	action: 'add' | 'retry' | 'cancel'
-	versionID: number
-	data?: NewDownload // Should be defined if action === 'add'
-}
-
-/**
- * Contains the data required to start downloading a single chart.
- */
-export interface NewDownload {
-	chartName: string
-	artist: string
-	charter: string
-	// TODO
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	driveData: any
-	// driveData: DriveChart & { inChartPack: boolean }
+	action: 'add' | 'remove' | 'retry'
+	md5: string
+	chartName?: string // Should be defined if action === 'add'
 }
 
 /**
  * Represents the download progress of a single chart.
  */
 export interface DownloadProgress {
-	versionID: number
-	title: string
+	md5: string
+	chartName: string
 	header: string
-	description: string
-	percent: number
+	body: string
+	percent: number | null
 	type: ProgressType
-	/** If `description` contains a filepath that can be clicked */
-	isLink: boolean
+	/** If `body` contains a filepath that can be clicked */
+	isPath: boolean
 	/** If the download should not appear in the total download progress */
 	stale?: boolean
 }
 
-export type ProgressType = 'good' | 'error' | 'cancel' | 'done'
+export type ProgressType = 'good' | 'error' | 'done' | 'cancel'

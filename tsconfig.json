@@ -25,7 +25,6 @@
       "dom"
     ],
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
 		"typeRoots": ["./node_modules/@types"],
 		"noErrorTruncation": true,
   },

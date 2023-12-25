@@ -1,29 +1,28 @@
-import { EventEmitter, Injectable } from '@angular/core'
+import { EventEmitter, Injectable, NgZone } from '@angular/core'
 
-import { DownloadProgress, NewDownload } from '../../../../src-shared/interfaces/download.interface'
+import { assign } from 'lodash'
+
+import { DownloadProgress } from '../../../../src-shared/interfaces/download.interface'
 
 @Injectable({
 	providedIn: 'root',
 })
 export class DownloadService {
 
-	private downloadUpdatedEmitter = new EventEmitter<DownloadProgress>()
-	private downloads: DownloadProgress[] = []
+	public downloadCountChanges = new EventEmitter<number>()
+	public downloads: DownloadProgress[] = []
 
-	constructor() {
-		window.electron.on.downloadUpdated(result => {
-			// Update <this.downloads> with result
-			const thisDownloadIndex = this.downloads.findIndex(download => download.versionID === result.versionID)
-			if (result.type === 'cancel') {
-				this.downloads = this.downloads.filter(download => download.versionID !== result.versionID)
-			} else if (thisDownloadIndex === -1) {
-				this.downloads.push(result)
+	constructor(zone: NgZone) {
+		window.electron.on.downloadQueueUpdate(download => zone.run(() => {
+			const downloadIndex = this.downloads.findIndex(d => d.md5 === download.md5)
+			if (download.type === 'cancel') {
+				this.downloads = this.downloads.filter(d => d.md5 !== this.downloads[downloadIndex].md5)
+			} else if (downloadIndex === -1) {
+				this.downloads.push(download)
 			} else {
-				this.downloads[thisDownloadIndex] = result
+				assign(this.downloads[downloadIndex], download)
 			}
-
-			this.downloadUpdatedEmitter.emit(result)
-		})
+		}))
 	}
 
 	get downloadCount() {
@@ -39,50 +38,62 @@ export class DownloadService {
 		let count = 0
 		for (const download of this.downloads) {
 			if (!download.stale) {
-				total += download.percent
+				total += download.percent ?? 0
 				count++
 			}
 		}
-		return total / count
+		if (this.anyErrorsExist && total === 0) { return null }
+		return count ? total / count : 0
 	}
 
 	get anyErrorsExist() {
 		return this.downloads.find(download => download.type === 'error') ? true : false
 	}
 
-	addDownload(versionID: number, newDownload: NewDownload) {
-		if (!this.downloads.find(download => download.versionID === versionID)) { // Don't download something twice
-			if (this.downloads.every(download => download.type === 'done')) { // Reset overall progress bar if it finished
-				this.downloads.forEach(download => download.stale = true)
+	addDownload(md5: string, chartName: string) {
+		if (!this.downloads.find(d => d.md5 === md5)) { // Don't download something twice
+			if (this.downloads.every(d => d.type === 'done')) { // Reset overall progress bar if it finished
+				this.downloads.forEach(d => d.stale = true)
 			}
-			window.electron.emit.download({ action: 'add', versionID, data: newDownload })
+			this.downloads.push({
+				md5,
+				chartName,
+				header: 'Waiting for other downloads to finish...',
+				body: '',
+				percent: 0,
+				type: 'good',
+				isPath: false,
+			})
+			window.electron.emit.download({ action: 'add', md5, chartName })
 		}
+		this.downloadCountChanges.emit(this.downloadCount)
 	}
 
-	onDownloadUpdated(callback: (download: DownloadProgress) => void) {
-		this.downloadUpdatedEmitter.subscribe(callback)
+	cancelDownload(md5: string) {
+		window.electron.emit.download({ action: 'remove', md5 })
+		this.downloadCountChanges.emit(this.downloadCount - 1)
 	}
 
-	cancelDownload(versionID: number) {
-		const removedDownload = this.downloads.find(download => download.versionID === versionID)!
-		if (['error', 'done'].includes(removedDownload.type)) {
-			this.downloads = this.downloads.filter(download => download.versionID !== versionID)
-			removedDownload.type = 'cancel'
-			this.downloadUpdatedEmitter.emit(removedDownload)
-		} else {
-			window.electron.emit.download({ action: 'cancel', versionID })
-		}
-	}
-
-	cancelCompleted() {
+	cancelAllCompleted() {
 		for (const download of this.downloads) {
 			if (download.type === 'done') {
-				this.cancelDownload(download.versionID)
+				window.electron.emit.download({ action: 'remove', md5: download.md5 })
 			}
 		}
+		this.downloads = this.downloads.filter(d => d.type !== 'done')
+		this.downloadCountChanges.emit(this.downloadCount)
 	}
 
-	retryDownload(versionID: number) {
-		window.electron.emit.download({ action: 'retry', versionID })
+	retryDownload(md5: string) {
+		const chartDownload = this.downloads.find(d => d.md5 === md5)
+		if (chartDownload) {
+			chartDownload.type = 'good'
+			chartDownload.header = 'Waiting to retry...'
+			chartDownload.body = ''
+			chartDownload.isPath = false
+			chartDownload.percent = 0
+
+			window.electron.emit.download({ action: 'retry', md5 })
+		}
 	}
 }

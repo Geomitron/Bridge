@@ -70,7 +70,8 @@
 				"@angular-eslint/use-lifecycle-interface": "error",
 				"arrow-parens": ["error", "as-needed"],
 				"comma-dangle": ["error", "always-multiline"],
-				"prefer-arrow/prefer-arrow-functions": ["error", { "allowStandaloneDeclarations": true }]
+				"prefer-arrow/prefer-arrow-functions": ["error", { "allowStandaloneDeclarations": true }],
+				"no-fallthrough": ["error", { "commentPattern": "break[\\s\\w]*omitted" }]
 			}
 		},
 		{

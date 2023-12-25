@@ -1,24 +1,64 @@
-<div *ngIf="downloads.length > 0" class="ui segments">
-	<div *ngFor="let download of downloads; trackBy: trackByVersionID" class="ui segment" [style.background-color]="getBackgroundColor(download)">
-		<h3 id="downloadTitle">
-			<span style="flex-grow: 1">{{ download.title }}</span>
-			<i class="inside right close icon" (click)="cancelDownload(download.versionID)"></i>
-		</h3>
-
-		<div id="downloadText">
-			<span style="flex-grow: 1">{{ download.header }}</span>
-			<span *ngIf="!download.isLink" class="description">{{ download.description }}</span>
-			<span *ngIf="download.isLink" class="description">
-				<a (click)="showFile(download.description)">{{ download.description }}</a>
-			</span>
-		</div>
-
-		<div id="downloadProgressDiv">
-			<progress [value]="download.percent" max="100" class="progress w-96" [class.progress-error]="download.type === 'error'"></progress>
-			<button *ngIf="download.type === 'error'" class="ui right attached labeled compact icon button" (click)="retryDownload(download.versionID)">
-				<i class="redo icon"></i>
-				Retry
-			</button>
-		</div>
+<div class="flex flex-col gap-4 min-h-0">
+	<div
+		class="flex flex-col gap-1 p-1 overflow-y-auto max-h-[75vh] scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+		@for (download of downloadService.downloads; track download.md5) {
+			<div
+				class="card bg-neutral text-neutral-content shadow-xl"
+				[class.border-error]="download.type === 'error'"
+				[class.border-2]="download.type === 'error'">
+				<div class="card-body">
+					<div class="card-actions justify-end">
+						<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" (click)="downloadService.cancelDownload(download.md5)">
+							<i class="bi bi-x-lg text-lg"></i>
+						</button>
+					</div>
+					<h2 class="card-title">{{ download.chartName }}</h2>
+					<progress
+						[attr.value]="download.percent"
+						max="100"
+						class="progress progress-primary w-full"
+						[class.progress-error]="download.type === 'error'"></progress>
+					<div class="flex justify-between gap-4">
+						<div>
+							<p class="text-lg">
+								@if (download.type === 'done') {
+									<a class="link link-hover" (click)="showFile(download.body)">{{ download.header }}</a>
+								} @else {
+									{{ download.header }}
+								}
+							</p>
+							@if (download.type !== 'done') {
+								@if (download.isPath) {
+									<p>
+										<a (click)="showFile(download.body)" class="link">{{ download.body }}</a>
+									</p>
+								} @else {
+									<p>{{ download.body }}</p>
+								}
+							}
+						</div>
+						<div *ngIf="download.type === 'error'" class="flex flex-col justify-end">
+							<button class="btn btn-outline btn-error flex-nowrap" (click)="downloadService.retryDownload(download.md5)">
+								<i class="bi bi-arrow-repeat"></i>
+								Retry
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="downloadTitle">
+				<span style="flex-grow: 1"></span>
+				<i class="inside right close icon" (click)="downloadService.cancelDownload(download.md5)"></i>
+			</div>
+			<div id="downloadText">
+				<span style="flex-grow: 1"></span>
+				<span *ngIf="!download.isPath" class="description"></span>
+				<span *ngIf="download.isPath" class="description"> </span>
+			</div>
+			<div id="downloadProgressDiv"></div>
+		}
+	</div>
+	<div *ngIf="downloadService.completedCount > 1" class="flex justify-end">
+		<button class="btn btn-success btn-sm" (click)="downloadService.cancelAllCompleted()">Clear completed</button>
 	</div>
 </div>

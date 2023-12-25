@@ -45,7 +45,7 @@ const electronApi: ContextBridgeApi = {
 		updateAvailable: getListenerAdder('updateAvailable'),
 		updateProgress: getListenerAdder('updateProgress'),
 		updateDownloaded: getListenerAdder('updateDownloaded'),
-		downloadUpdated: getListenerAdder('downloadUpdated'),
+		downloadQueueUpdate: getListenerAdder('downloadQueueUpdate'),
 		queueUpdated: getListenerAdder('queueUpdated'),
 		maximized: getListenerAdder('maximized'),
 		minimized: getListenerAdder('minimized'),

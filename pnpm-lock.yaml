@@ -35,9 +35,6 @@ dependencies:
   bottleneck:
     specifier: ^2.19.5
     version: 2.19.5
-  comparators:
-    specifier: ^3.0.2
-    version: 3.0.5
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
@@ -59,6 +56,9 @@ dependencies:
   mv:
     specifier: ^2.1.1
     version: 2.1.1
+  parse-sng:
+    specifier: ^3.1.1
+    version: 3.1.1
   rimraf:
     specifier: ^5.0.5
     version: 5.0.5
@@ -4556,10 +4556,6 @@ packages:
     engines: {node: '>=4.0.0'}
     dev: true
 
-  /comparators@3.0.5:
-    resolution: {integrity: sha512-xWeNJYdL57+ySi53YVnHFFKBI7SF/o7xMHDXGVD5bX7lb4ECPmKWXwrOr65lZRvowqgb9VHFt+aPr4TjqvyyiQ==}
-    dev: false
-
   /compare-version@0.1.2:
     resolution: {integrity: sha512-pJDh5/4wrEnXX/VWRZvruAGHkzKdr46z11OlTPN+VrATlWWhSKewNCJ1futCO5C7eJB3nPMFZA1LeYtcFboZ2A==}
     engines: {node: '>=0.10.0'}
@@ -8438,8 +8434,8 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /parse-sng@3.1.0:
-    resolution: {integrity: sha512-cZerIg4Ds2BZ6eSp0mg0JNP0r104DId88kGDjvNeQqmuo8tYBZKRHDEzhTlG5JNVaRGcxec5YWqX2edVKLEgoA==}
+  /parse-sng@3.1.1:
+    resolution: {integrity: sha512-BOU9Y4LE5VsEc76lZonVXcbKrbGbetzdP28avnWvioNEhACzTEhtqDdtNmgsXiMO3lvkveRcM5wp6hEniSIQkA==}
     dependencies:
       binary-parser: 2.2.1
       events: 3.3.0
@@ -9260,7 +9256,7 @@ packages:
       lodash: 4.17.21
       midievents: 2.0.0
       midifile: 2.0.0
-      parse-sng: 3.1.0
+      parse-sng: 3.1.1
       sanitize-filename: 1.6.3
       sharp: 0.32.6
       stream-audio-fingerprint: github.com/Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d

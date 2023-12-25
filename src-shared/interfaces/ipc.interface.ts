@@ -80,7 +80,7 @@ export interface IpcFromMainEmitEvents {
 	updateAvailable: UpdateInfo | null
 	updateProgress: UpdateProgress
 	updateDownloaded: void
-	downloadUpdated: DownloadProgress
+	downloadQueueUpdate: DownloadProgress
 	queueUpdated: number[]
 	maximized: void
 	minimized: void

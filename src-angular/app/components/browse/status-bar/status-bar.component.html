@@ -7,18 +7,20 @@
 			Download {{ selectedGroupIds.length }} Results
 		</button>
 	</div>
-	<button *ngIf="downloading" (click)="showDownloads()" class="btn btn-sm btn-ghost w-[30vw]">
-		<progress [value]="percent" max="100" class="progress h-3 rounded-md" [class.progress-error]="error"></progress>
+	<button *ngIf="downloadService.downloadCount > 0" (click)="downloadsModal.showModal()" class="btn btn-sm btn-ghost w-[30vw]">
+		<progress
+			[attr.value]="downloadService.totalDownloadingPercent"
+			max="100"
+			class="progress h-3 rounded-md"
+			[class.progress-error]="downloadService.anyErrorsExist"></progress>
 	</button>
 
-	<div id="downloadsModal" class="ui modal">
-		<i class="inside close icon"></i>
-		<div class="header">
-			<span>Downloads</span>
-			<div *ngIf="multipleCompleted" class="ui positive compact button" (click)="clearCompleted()">Clear completed</div>
+	<dialog #downloadsModal class="modal whitespace-normal">
+		<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2 w-9/12 max-w-7xl min-h-0 overflow-y-clip">
+			<app-downloads-modal />
 		</div>
-		<div class="scrolling content">
-			<app-downloads-modal></app-downloads-modal>
-		</div>
-	</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
 </div>

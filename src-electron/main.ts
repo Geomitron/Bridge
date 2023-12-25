@@ -9,7 +9,7 @@ import { dataPath } from '../src-shared/Paths'
 import { retryUpdate } from './ipc/UpdateHandler.ipc'
 import { getIpcInvokeHandlers, getIpcToMainEmitHandlers } from './IpcHandler'
 
-electronUnhandled({ showDialog: true })
+electronUnhandled({ showDialog: true, logger: err => console.log('Error: Unhandled Rejection:', err) })
 
 export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -147,7 +147,6 @@ function getLoadUrl() {
 	})
 }
 
-// TODO: await mainWindow first
 export function emitIpcEvent<E extends keyof IpcFromMainEmitEvents>(event: E, data: IpcFromMainEmitEvents[E]) {
 	mainWindow.webContents.send(event, data)
 }

@@ -1,286 +1,305 @@
-import { parse } from 'path'
+import { randomUUID } from 'crypto'
+import EventEmitter from 'events'
+import { createWriteStream, WriteStream } from 'fs'
+import { access, constants } from 'fs/promises'
+import { round, throttle } from 'lodash'
+import { mkdirp } from 'mkdirp'
+import mv from 'mv'
+import { SngStream } from 'parse-sng'
+import { join } from 'path'
 import { rimraf } from 'rimraf'
+import { inspect } from 'util'
 
-import { NewDownload, ProgressType } from '../../../src-shared/interfaces/download.interface'
-import { sanitizeFilename } from '../../../src-shared/UtilFunctions'
-import { hasVideoExtension } from '../../ElectronUtilFunctions'
-import { emitIpcEvent } from '../../main'
-import { settings } from '../SettingsHandler.ipc'
-// import { FileDownloader, getDownloader } from './FileDownloader'
-import { FilesystemChecker } from './FilesystemChecker'
-import { FileTransfer } from './FileTransfer'
+import { tempPath } from '../../../src-shared/Paths'
+import { sanitizeFilename } from '../../ElectronUtilFunctions'
+import { getSettings } from '../SettingsHandler.ipc'
 
-interface EventCallback {
-	/** Note: this will not be the last event if `retry()` is called. */
-	'error': () => void
-	'complete': () => void
+export interface DownloadMessage {
+	header: string
+	body: string
+	isPath?: boolean
 }
-type Callbacks = { [E in keyof EventCallback]: EventCallback[E] }
 
-export interface DownloadError { header: string; body: string; isLink?: boolean }
+interface ChartDownloadEvents {
+	'progress': (message: DownloadMessage, percent: number | null) => void
+	'error': (err: DownloadMessage) => void
+	'end': (destinationPath: string) => void
+}
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export declare interface ChartDownload {
+	/**
+	 * Registers `listener` to be called when download progress has occured.
+	 * `percent` is a number between 0 and 100, or `null` if the progress is indeterminate.
+	 * Progress events are throttled to avoid performance issues with rapid updates.
+	 */
+	on(event: 'progress', listener: (message: DownloadMessage, percent: number | null) => void): void
+
+	/**
+	 * Registers `listener` to be called if the download process threw an exception. If this is called, the "end" event won't happen.
+	 */
+	on(event: 'error', listener: (err: DownloadMessage) => void): void
+
+	/**
+	 * Registers `listener` to be called when the chart has been fully downloaded. If this is called, the "error" event won't happen.
+	 */
+	on(event: 'end', listener: (destinationPath: string) => void): void
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class ChartDownload {
 
-	private retryFn: undefined | (() => void | Promise<void>)
-	private cancelFn: undefined | (() => void)
+	private _canceled = false
 
-	private callbacks = {} as Callbacks
-	// TODO
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private files: any[]
-	private percent = 0 // Needs to be stored here because errors won't know the exact percent
+	private eventEmitter = new EventEmitter()
+
+	private stepCompletedCount = 0
 	private tempPath: string
-	private wasCanceled = false
 
-	private readonly individualFileProgressPortion: number
-	private readonly destinationFolderName: string
+	private destinationName: string
+	private isSng: boolean
 
-	private _allFilesProgress = 0
-	get allFilesProgress() { return this._allFilesProgress }
-	private _hasFailed = false
-	/** If this chart download needs to be retried */
-	get hasFailed() { return this._hasFailed }
-	get isArchive() { return this.data.driveData.isArchive }
-	get hash() { return this.data.driveData.filesHash }
+	private showProgress = throttle((description: string, percent: number | null = null) => {
+		this.eventEmitter.emit('progress', { header: description, body: '' }, percent)
+	}, 10, { leading: true, trailing: true })
 
-	constructor(public versionID: number, private data: NewDownload) {
-		this.updateGUI('', 'Waiting for other downloads to finish...', 'good')
-		this.files = this.filterDownloadFiles(data.driveData.files)
-		this.individualFileProgressPortion = 80 / this.files.length
-		if (data.driveData.inChartPack) {
-			this.destinationFolderName = sanitizeFilename(parse(data.driveData.files[0].name).name)
-		} else {
-			this.destinationFolderName = sanitizeFilename(`${this.data.artist} - ${this.data.chartName} (${this.data.charter})`)
+	constructor(public readonly md5: string, private chartName: string) { }
+
+	on<T extends keyof ChartDownloadEvents>(event: T, listener: ChartDownloadEvents[T]) {
+		this.eventEmitter.on(event, listener)
+	}
+
+	/**
+	 * Checks the target directory to determine if it is accessible.
+	 *
+	 * Checks the target directory if the chart already exists.
+	 *
+	 * Downloads the chart to a temporary directory.
+	 *
+	 * Moves the chart to the target directory.
+	 */
+	async startOrRetry() {
+		try {
+			switch (this.stepCompletedCount) {
+				case 0: await this.checkFilesystem(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
+				case 1: await this.downloadChart(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
+				case 2: await this.transferChart(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
+			}
+		} catch (err) {
+			this.showProgress.cancel()
+			if (err.header && (err.body || err.body === '')) {
+				this.eventEmitter.emit('error', err)
+			} else {
+				this.eventEmitter.emit('error', { header: 'Unknown Error', body: inspect(err) })
+			}
 		}
-	}
-
-	/**
-	 * Calls `callback` when `event` fires. (no events will be fired after `this.cancel()` is called)
-	 */
-	on<E extends keyof EventCallback>(event: E, callback: EventCallback[E]) {
-		this.callbacks[event] = callback
-	}
-
-	// TODO
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	filterDownloadFiles(files: any[]) {
-		return files.filter(file => {
-			return (file.name !== 'ch.dat') && (settings.downloadVideos || !hasVideoExtension(file.name))
-		})
-	}
-
-	/**
-	 * Retries the last failed step if it is running.
-	 */
-	retry() { // Only allow it to be called once
-		if (this.retryFn !== undefined) {
-			this._hasFailed = false
-			const retryFn = this.retryFn
-			this.retryFn = undefined
-			retryFn()
-		}
-	}
-
-	/**
-	 * Updates the GUI to indicate that a retry will be attempted.
-	 */
-	displayRetrying() {
-		this.updateGUI('', 'Waiting for other downloads to finish to retry...', 'good')
 	}
 
 	/**
 	 * Cancels the download if it is running.
 	 */
-	cancel() { // Only allow it to be called once
-		if (this.cancelFn !== undefined) {
-			const cancelFn = this.cancelFn
-			this.cancelFn = undefined
-			cancelFn()
+	cancel() {
+		this.showProgress.cancel()
+		this._canceled = true
+		if (this.tempPath) {
 			rimraf(this.tempPath).catch(() => { /** Do nothing */ }) // Delete temp folder
 		}
-		this.updateGUI('', '', 'cancel')
-		this.wasCanceled = true
 	}
 
-	/**
-	 * Updates the GUI with new information about this chart download.
-	 */
-	private updateGUI(header: string, description: string, type: ProgressType, isLink = false) {
-		if (this.wasCanceled) { return }
-
-		emitIpcEvent('downloadUpdated', {
-			versionID: this.versionID,
-			title: `${this.data.chartName} - ${this.data.artist}`,
-			header: header,
-			description: description,
-			percent: this.percent,
-			type: type,
-			isLink,
-		})
-	}
-
-	/**
-	 * Save the retry function, update the GUI, and call the `error` callback.
-	 */
-	private handleError(err: DownloadError, retry: () => void) {
-		this._hasFailed = true
-		this.retryFn = retry
-		this.updateGUI(err.header, err.body, 'error', err.isLink === true)
-		this.callbacks.error()
-	}
-
-	/**
-	 * Starts the download process.
-	 */
-	async beginDownload() {
-		// CHECK FILESYSTEM ACCESS
-		const checker = new FilesystemChecker(this.destinationFolderName)
-		this.cancelFn = () => checker.cancelCheck()
-
-		const checkerComplete = this.addFilesystemCheckerEventListeners(checker)
-		checker.beginCheck()
-		await checkerComplete
-
-		// DOWNLOAD FILES
-		for (let i = 0; i < this.files.length; i++) {
-			let wasCanceled = false
-			this.cancelFn = () => { wasCanceled = true }
-			// const downloader = getDownloader(this.files[i].webContentLink, join(this.tempPath, this.files[i].name))
-			if (wasCanceled) { return }
-			// this.cancelFn = () => downloader.cancelDownload()
-
-			// const downloadComplete = this.addDownloadEventListeners(downloader, i)
-			// downloader.beginDownload()
-			// await downloadComplete
+	private async checkFilesystem() {
+		this.showProgress('Loading settings...')
+		const settings = await getSettings()
+		if (this._canceled) { return }
+		if (!settings.libraryPath) {
+			throw { header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }
 		}
 
-		// EXTRACT FILES
-		if (this.isArchive) {
-			// const extractor = new FileExtractor(this.tempPath)
-			// this.cancelFn = () => extractor.cancelExtract()
-
-			// const extractComplete = this.addExtractorEventListeners(extractor)
-			// extractor.beginExtract()
-			// await extractComplete
+		try {
+			this.showProgress('Checking library path...')
+			await access(settings.libraryPath, constants.W_OK)
+			if (this._canceled) { return }
+		} catch (err) {
+			throw { header: 'Failed to access library folder', body: inspect(err) }
 		}
 
-		// TRANSFER FILES
-		const transfer = new FileTransfer(this.tempPath, this.destinationFolderName)
-		this.cancelFn = () => transfer.cancelTransfer()
+		this.isSng = settings.isSng
+		this.destinationName = sanitizeFilename(this.isSng ? `${this.chartName}.sng` : this.chartName)
+		this.showProgress('Checking for any duplicate charts...')
+		const destinationPath = join(settings.libraryPath, this.destinationName)
+		const isDuplicate = await access(destinationPath, constants.F_OK).then(() => true).catch(() => false)
+		if (this._canceled) { return }
+		if (isDuplicate) {
+			throw { header: 'This chart already exists in your library folder', body: destinationPath, isPath: true }
+		}
 
-		const transferComplete = this.addTransferEventListeners(transfer)
-		transfer.beginTransfer()
-		await transferComplete
-
-		this.callbacks.complete()
+		this.tempPath = join(tempPath, randomUUID())
+		try {
+			this.showProgress('Creating temporary download folder...')
+			await mkdirp(this.tempPath)
+			if (this._canceled) { return }
+		} catch (err) {
+			throw { header: 'Failed to create temporary download folder', body: inspect(err) }
+		}
 	}
 
-	/**
-	 * Defines what happens in reponse to `FilesystemChecker` events.
-	 * @returns a `Promise` that resolves when the filesystem has been checked.
-	 */
-	private addFilesystemCheckerEventListeners(checker: FilesystemChecker) {
-		checker.on('start', () => {
-			this.updateGUI('Checking filesystem...', '', 'good')
-		})
+	private async downloadChart() {
+		const sngResponse = await fetch(`https://files.enchor.us/${this.md5}.sng`, { mode: 'cors', referrerPolicy: 'no-referrer' })
+		if (!sngResponse.ok || !sngResponse.body) {
+			throw { header: 'Failed to download the chart file', body: `Response code ${sngResponse.status}: ${sngResponse.statusText}` }
+		}
+		const fileSize = BigInt(sngResponse.headers.get('Content-Length')!)
 
-		checker.on('error', this.handleError.bind(this))
+		if (this.isSng) {
+			const writeStream = createWriteStream(join(this.tempPath, this.destinationName))
+			const reader = sngResponse.body.getReader()
+			let downloadedByteCount = BigInt(0)
 
-		return new Promise<void>(resolve => {
-			checker.on('complete', tempPath => {
-				this.tempPath = tempPath
-				resolve()
+			// eslint-disable-next-line no-constant-condition
+			while (true) {
+				let result: ReadableStreamReadResult<Uint8Array>
+				try {
+					result = await reader.read()
+				} catch (err) {
+					throw { header: 'Failed to download the chart file', body: inspect(err) }
+				}
+
+				if (this._canceled) {
+					await reader.cancel()
+					writeStream.end()
+					return
+				}
+
+				if (result.done) { writeStream.end(); return }
+
+				downloadedByteCount += BigInt(result.value.length)
+				const downloadPercent = round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
+				this.showProgress(`Downloading... (${downloadPercent}%)`, downloadPercent)
+
+				await new Promise<void>((resolve, reject) => {
+					writeStream.write(result.value, err => {
+						if (err) {
+							reject({ header: 'Failed to download the chart file', body: inspect(err) })
+						} else {
+							resolve()
+						}
+					})
+				})
+
+				if (writeStream.writableNeedDrain) {
+					await new Promise<void>((resolve, reject) => {
+						writeStream.once('drain', resolve)
+						writeStream.once('error', err => reject({ header: 'Failed to download the chart file', body: inspect(err) }))
+					})
+				}
+			}
+		} else {
+			const sngStream = new SngStream(() => sngResponse.body!, { generateSongIni: true })
+			let downloadedByteCount = BigInt(0)
+
+			await mkdirp(join(this.tempPath, this.destinationName))
+
+			await new Promise<void>((resolve, reject) => {
+				sngStream.on('file', async (fileName, fileStream) => {
+					let writeStream: WriteStream
+					let reader: ReadableStreamDefaultReader<Uint8Array>
+					try {
+						writeStream = createWriteStream(join(this.tempPath, this.destinationName, fileName))
+						writeStream.on('error', () => { /** Surpress unhandled promise rejection */ })
+						reader = fileStream.getReader()
+					} catch (err) {
+						reject(err)
+						return
+					}
+
+					try {
+						// eslint-disable-next-line no-constant-condition
+						while (true) {
+							let result: ReadableStreamReadResult<Uint8Array>
+							try {
+								result = await reader.read()
+							} catch (err) {
+								throw { header: 'Failed to download the chart file', body: inspect(err) }
+							}
+
+							if (this._canceled) {
+								await reader.cancel()
+								writeStream.end()
+								resolve()
+								return
+							}
+
+							if (result.done) { writeStream.end(); return }
+
+							downloadedByteCount += BigInt(result.value.length)
+							const downloadPercent =
+								round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
+							this.showProgress(`Downloading "${fileName}"... (${downloadPercent}%)`, downloadPercent)
+
+							await new Promise<void>((resolve, reject) => {
+								writeStream.write(result.value, err => {
+									if (err) {
+										reject({ header: 'Failed to download the chart file', body: inspect(err) })
+									} else {
+										resolve()
+									}
+								})
+							})
+
+							if (writeStream.writableNeedDrain) {
+								await new Promise<void>((resolve, reject) => {
+									writeStream.once('drain', resolve)
+									writeStream.once('error', err => reject({
+										header: 'Failed to download the chart file',
+										body: inspect(err),
+									}))
+								})
+							}
+						}
+					} catch (err) {
+						try {
+							await reader.cancel()
+						} catch (err) { /** ignore; error already reported */ }
+						writeStream.end()
+						reject(err)
+					}
+				})
+				sngStream.on('end', resolve)
+				sngStream.on('error', err => reject(err))
+
+				sngStream.start()
 			})
-		})
+		}
 	}
 
-	/**
-	 * Defines what happens in response to `FileDownloader` events.
-	 * @returns a `Promise` that resolves when the download finishes.
-	 */
-	// private addDownloadEventListeners(downloader: FileDownloader, fileIndex: number) {
-	// 	let downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
-	// 	let downloadStartPoint = 0 // How far into the individual file progress portion the download progress starts
-	// 	let fileProgress = 0
+	private async transferChart() {
+		const settings = await getSettings()
+		if (this._canceled) { return }
 
-	// 	downloader.on('waitProgress', (remainingSeconds: number, totalSeconds: number) => {
-	// 		downloadStartPoint = this.individualFileProgressPortion / 2
-	// 		this.percent =
-	// 			this._allFilesProgress + interpolate(remainingSeconds, totalSeconds, 0, 0, this.individualFileProgressPortion / 2)
-	// 		this.updateGUI(downloadHeader, `Waiting for Google rate limit... (${remainingSeconds}s)`, 'good')
-	// 	})
-
-	// 	downloader.on('requestSent', () => {
-	// 		fileProgress = downloadStartPoint
-	// 		this.percent = this._allFilesProgress + fileProgress
-	// 		this.updateGUI(downloadHeader, 'Sending request...', 'good')
-	// 	})
-
-	// 	downloader.on('downloadProgress', (bytesDownloaded: number) => {
-	// 		downloadHeader = `[${this.files[fileIndex].name}] (file ${fileIndex + 1}/${this.files.length})`
-	// 		const size = Number(this.files[fileIndex].size)
-	// 		fileProgress = interpolate(bytesDownloaded, 0, size, downloadStartPoint, this.individualFileProgressPortion)
-	// 		this.percent = this._allFilesProgress + fileProgress
-	// 		this.updateGUI(downloadHeader, `Downloading... (${Math.round(1000 * bytesDownloaded / size) / 10}%)`, 'good')
-	// 	})
-
-	// 	downloader.on('error', this.handleError.bind(this))
-
-	// 	return new Promise<void>(resolve => {
-	// 		downloader.on('complete', () => {
-	// 			this._allFilesProgress += this.individualFileProgressPortion
-	// 			resolve()
-	// 		})
-	// 	})
-	// }
-
-	/**
-	 * Defines what happens in response to `FileExtractor` events.
-	 * @returns a `Promise` that resolves when the extraction finishes.
-	 */
-	// private addExtractorEventListeners(extractor: FileExtractor) {
-	// 	let archive = ''
-
-	// 	extractor.on('start', filename => {
-	// 		archive = filename
-	// 		this.updateGUI(`[${archive}]`, 'Extracting...', 'good')
-	// 	})
-
-	// 	extractor.on('extractProgress', (percent, filecount) => {
-	// 		this.percent = interpolate(percent, 0, 100, 80, 95)
-	// 		this.updateGUI(`[${archive}] (${filecount} file${filecount === 1 ? '' : 's'} extracted)`, `Extracting... (${percent}%)`, 'good')
-	// 	})
-
-	// 	extractor.on('error', this.handleError.bind(this))
-
-	// 	return new Promise<void>(resolve => {
-	// 		extractor.on('complete', () => {
-	// 			this.percent = 95
-	// 			resolve()
-	// 		})
-	// 	})
-	// }
-
-	/**
-	 * Defines what happens in response to `FileTransfer` events.
-	 * @returns a `Promise` that resolves when the transfer finishes.
-	 */
-	private addTransferEventListeners(transfer: FileTransfer) {
-		let destinationFolder: string
-
-		transfer.on('start', _destinationFolder => {
-			destinationFolder = _destinationFolder
-			this.updateGUI('Moving files to library folder...', destinationFolder, 'good', true)
+		this.showProgress('Moving chart to library folder...', 100)
+		await new Promise<void>((resolve, reject) => {
+			if (settings.libraryPath) {
+				const destinationPath = join(settings.libraryPath, this.destinationName)
+				mv(join(this.tempPath, this.destinationName), destinationPath, { mkdirp: true }, err => {
+					if (err) {
+						reject({ header: 'Failed to move chart to library folder', body: inspect(err) })
+					} else {
+						resolve()
+					}
+				})
+			} else {
+				reject({ header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' })
+			}
 		})
 
-		transfer.on('error', this.handleError.bind(this))
+		this.showProgress('Deleting temporary folder...')
+		try {
+			await rimraf(this.tempPath)
+		} catch (err) {
+			throw { header: 'Failed to delete temporary folder', body: inspect(err) }
+		}
 
-		return new Promise<void>(resolve => {
-			transfer.on('complete', () => {
-				this.percent = 100
-				this.updateGUI('Download complete.', destinationFolder, 'done', true)
-				resolve()
-			})
-		})
+		const destinationPath = join(settings.libraryPath!, this.destinationName)
+		this.showProgress.cancel()
+		this.eventEmitter.emit('end', destinationPath)
 	}
 }

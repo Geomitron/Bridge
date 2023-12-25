@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import sanitize from 'sanitize-filename'
 import { Difficulty, Instrument } from 'scan-chart'
 
 import { ChartData } from './interfaces/search.interface'
@@ -22,29 +21,6 @@ export type RequireMatchingProps<T, K extends keyof T> = T & { [P in K]-?: NonNu
  */
 export function driveLink(fileId: string) {
 	return `https://drive.google.com/open?id=${fileId}`
-}
-
-/**
- * @returns `filename` with all invalid filename characters replaced.
- */
-export function sanitizeFilename(filename: string): string {
-	const newFilename = sanitize(filename, {
-		replacement: ((invalidChar: string) => {
-			switch (invalidChar) {
-				case '<': return '❮'
-				case '>': return '❯'
-				case ':': return '꞉'
-				case '"': return "'"
-				case '/': return '／'
-				case '\\': return '⧵'
-				case '|': return '⏐'
-				case '?': return '？'
-				case '*': return '⁎'
-				default: return '_'
-			}
-		}),
-	})
-	return (newFilename === '' ? 'TODO_MAKE_UNIQUE' : newFilename)
 }
 
 /**

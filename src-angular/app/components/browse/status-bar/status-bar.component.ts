@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core'
+import { Component, ElementRef, ViewChild } from '@angular/core'
 
 import { keys, pickBy } from 'lodash'
 
@@ -12,6 +12,8 @@ import { SelectionService } from '../../../core/services/selection.service'
 })
 export class StatusBarComponent {
 
+	@ViewChild('downloadsModal', { static: false }) downloadsModalComponent: ElementRef
+
 	multipleCompleted = false
 	downloading = false
 	error = false
@@ -23,29 +25,19 @@ export class StatusBarComponent {
 	chartGroups: any[][]
 
 	constructor(
-		private downloadService: DownloadService,
+		public downloadService: DownloadService,
 		public searchService: SearchService,
 		private selectionService: SelectionService,
-		ref: ChangeDetectorRef
 	) {
-		downloadService.onDownloadUpdated(() => {
-			setTimeout(() => { // Make sure this is the last callback executed to get the accurate downloadCount
-				this.downloading = downloadService.downloadCount > 0
-				this.multipleCompleted = downloadService.completedCount > 1
-				this.percent = downloadService.totalDownloadingPercent
-				this.error = downloadService.anyErrorsExist
-				ref.detectChanges()
-			}, 0)
+		this.downloadService.downloadCountChanges.subscribe(downloadCount => {
+			if (downloadCount === 0) {
+				this.downloadsModalComponent.nativeElement.close()
+			}
 		})
 	}
 
 	get selectedGroupIds() {
 		return keys(pickBy(this.selectionService.selections)).map(k => Number(k))
-	}
-
-	showDownloads() {
-		// TODO
-		// $('#downloadsModal').modal('show')
 	}
 
 	async downloadSelected() {
@@ -105,6 +97,6 @@ export class StatusBarComponent {
 	}
 
 	clearCompleted() {
-		this.downloadService.cancelCompleted()
+		this.downloadService.cancelAllCompleted()
 	}
 }

@@ -3,6 +3,7 @@ import { FormControl } from '@angular/forms'
 
 import { capitalize, chain, compact, flatMap, intersection, round, sortBy } from 'lodash'
 import { ChartIssueType, Difficulty, FolderIssueType, Instrument, MetadataIssueType, NoteIssueType, TrackIssueType } from 'scan-chart'
+import { DownloadService } from 'src-angular/app/core/services/download.service'
 import { SearchService } from 'src-angular/app/core/services/search.service'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
@@ -38,6 +39,7 @@ export class ChartSidebarComponent implements OnInit {
 	constructor(
 		private renderer: Renderer2,
 		private searchService: SearchService,
+		private downloadService: DownloadService,
 		public settingsService: SettingsService
 	) { }
 
@@ -278,17 +280,11 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	/**
-	 * Adds the selected version to the download queue.
+	 * Adds the selected chart to the download queue.
 	 */
 	onDownloadClicked() {
-		// TODO
-		// this.downloadService.addDownload(
-		// 	this.selectedChart.versionID, {
-		// 	chartName: this.selectedChart.chartName,
-		// 	artist: this.songResult!.artist,
-		// 	charter: this.selectedChart.charters,
-		// 	driveData: this.selectedChart.driveData,
-		// })
+		this.downloadService.addDownload(this.selectedChart!.md5, `${this.selectedChart!.artist ?? 'Unknown Artist'
+			} - ${this.selectedChart!.name ?? 'Unknown Name'} (${this.selectedChart!.charter ?? 'Unknown Charter'})`)
 	}
 
 	public showMenu() {
