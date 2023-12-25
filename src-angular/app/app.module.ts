@@ -16,7 +16,6 @@ import { DownloadsModalComponent } from './components/browse/status-bar/download
 import { StatusBarComponent } from './components/browse/status-bar/status-bar.component'
 import { SettingsComponent } from './components/settings/settings.component'
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
-import { CheckboxDirective } from './core/directives/checkbox.directive'
 import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 
 @NgModule({
@@ -32,7 +31,6 @@ import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 		ChartSidebarMenutComponent,
 		ResultTableRowComponent,
 		DownloadsModalComponent,
-		CheckboxDirective,
 		RemoveStyleTagsPipe,
 		SettingsComponent,
 	],

@@ -10,9 +10,9 @@
 				readonly
 				type="text"
 				placeholder="No directory selected!" />
-			<button *ngIf="settingsService.libraryDirectory !== undefined" (click)="openLibraryDirectory()" class="join-item btn btn-neutral">
-				Open Folder
-			</button>
+			@if (settingsService.libraryDirectory !== undefined) {
+				<button (click)="openLibraryDirectory()" class="join-item btn btn-neutral">Open Folder</button>
+			}
 			<button (click)="getLibraryDirectory()" class="join-item btn btn-primary">Choose</button>
 		</div>
 	</label>

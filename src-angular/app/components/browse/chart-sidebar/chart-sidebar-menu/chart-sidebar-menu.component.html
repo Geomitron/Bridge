@@ -113,10 +113,11 @@
 									<ul>
 										@for (breadcrumb of getVersionBreadcrumbs(version); track $index) {
 											<li>
-												<ng-container *ngIf="breadcrumb.link">
+												@if (breadcrumb.link) {
 													<a (click)="openUrl(breadcrumb.link)" class="link link-hover">{{ breadcrumb.name }}</a>
-												</ng-container>
-												<ng-container *ngIf="!breadcrumb.link">{{ breadcrumb.name }}</ng-container>
+												} @else {
+													{{ breadcrumb.name }}
+												}
 											</li>
 										}
 									</ul>

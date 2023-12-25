@@ -1,4 +1,6 @@
-<div *ngIf="settingsLoaded" class="flex flex-col h-screen">
-	<app-toolbar></app-toolbar>
-	<router-outlet></router-outlet>
-</div>
+@if (settingsLoaded) {
+	<div class="flex flex-col h-screen">
+		<app-toolbar></app-toolbar>
+		<router-outlet></router-outlet>
+	</div>
+}

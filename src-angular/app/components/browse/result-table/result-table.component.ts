@@ -1,10 +1,9 @@
-import { Component, EventEmitter, HostBinding, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
+import { Component, EventEmitter, HostBinding, OnInit, Output, QueryList, ViewChildren } from '@angular/core'
 
 import { sortBy } from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 
-import { CheckboxDirective } from '../../../core/directives/checkbox.directive'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
 import { ResultTableRowComponent } from './result-table-row/result-table-row.component'
@@ -18,7 +17,6 @@ export class ResultTableComponent implements OnInit {
 
 	@Output() rowClicked = new EventEmitter<ChartData[]>()
 
-	@ViewChild(CheckboxDirective, { static: true }) checkboxColumn: CheckboxDirective
 	@ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
 	activeSong: ChartData[] | null = null
