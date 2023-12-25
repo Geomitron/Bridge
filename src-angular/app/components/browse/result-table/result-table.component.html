@@ -1,35 +1,40 @@
-<table id="resultTable" class="table table-zebra table-pin-rows">
-	<thead>
-		<tr>
-			<th class="collapsing" id="checkboxColumn">
-				<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
-			</th>
-			<th [ngClass]="sortDirection" (click)="onColClicked('name')">
-				Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
-			</th>
-			<th [ngClass]="sortDirection" (click)="onColClicked('artist')">
-				Artist
-				<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
-			</th>
-			<th [ngClass]="sortDirection" (click)="onColClicked('album')">
-				Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
-			</th>
-			<th [ngClass]="sortDirection" (click)="onColClicked('genre')">
-				Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
-			</th>
-			<th [ngClass]="sortDirection" (click)="onColClicked('year')">
-				Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
-			</th>
-		</tr>
-	</thead>
-	<tbody>
-		@for (song of songs; track song) {
-			<tr
-				app-result-table-row
-				(click)="onRowClicked(song)"
-				[class.!bg-neutral]="activeSong === song"
-				[class.!text-neutral-content]="activeSong === song"
-				[song]="song"></tr>
-		}
-	</tbody>
-</table>
+<div
+	#resultTableDiv
+	class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
+	(scroll)="tableScrolled()">
+	<table id="resultTable" class="table table-zebra table-pin-rows" [class.table-xs]="settingsService.isCompactTable">
+		<thead>
+			<tr>
+				<th class="collapsing" id="checkboxColumn">
+					<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
+				</th>
+				<th [ngClass]="sortDirection" (click)="onColClicked('name')">
+					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" (click)="onColClicked('artist')">
+					Artist
+					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" (click)="onColClicked('album')">
+					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" (click)="onColClicked('genre')">
+					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" (click)="onColClicked('year')">
+					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			@for (song of songs; track song) {
+				<tr
+					app-result-table-row
+					(click)="onRowClicked(song)"
+					[class.!bg-neutral]="activeSong === song"
+					[class.!text-neutral-content]="activeSong === song"
+					[song]="song"></tr>
+			}
+		</tbody>
+	</table>
+</div>

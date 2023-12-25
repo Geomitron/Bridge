@@ -17,12 +17,14 @@ module.exports = {
 		themes: [
       'business',
       'dark',
-      'halloween',
+			'dim',
       'night',
+			'sunset',
       'synthwave',
       'aqua',
       'emerald',
       'lemonade',
+			'nord',
       'valentine',
       'winter',
 			{

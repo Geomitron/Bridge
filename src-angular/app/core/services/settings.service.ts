@@ -82,4 +82,12 @@ export class SettingsService {
 		this.settings.isSng = value
 		this.saveSettings()
 	}
+
+	get isCompactTable() {
+		return this.settings.isCompactTable
+	}
+	set isCompactTable(value: boolean) {
+		this.settings.isCompactTable = value
+		this.saveSettings()
+	}
 }

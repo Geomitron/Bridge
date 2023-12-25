@@ -29,8 +29,9 @@
 					<ul>
 						<li><a (click)="setTheme('business')">Business</a></li>
 						<li><a (click)="setTheme('dark')">Dark</a></li>
-						<li><a (click)="setTheme('halloween')">Halloween</a></li>
+						<li><a (click)="setTheme('dim')">Dim</a></li>
 						<li><a (click)="setTheme('night')">Night</a></li>
+						<li><a (click)="setTheme('sunset')">Sunset</a></li>
 						<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
 					</ul>
 				</li>
@@ -40,6 +41,7 @@
 						<li><a (click)="setTheme('aqua')">Aqua</a></li>
 						<li><a (click)="setTheme('emerald')">Emerald</a></li>
 						<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
+						<li><a (click)="setTheme('nord')">Nord</a></li>
 						<li><a (click)="setTheme('valentine')">Valentine</a></li>
 						<li><a (click)="setTheme('winter')">Winter</a></li>
 					</ul>
@@ -94,13 +96,30 @@
 		</div>
 		<div class="flex gap-2">
 			<label class="label cursor-pointer">
-				<input type="radio" class="radio radio-secondary mr-2" [value]="true" [formControl]="isSng" />
+				<input type="radio" name="isSng" class="radio radio-secondary mr-2" [value]="true" [formControl]="isSng" />
 				.sng
 			</label>
 
 			<label class="label cursor-pointer">
-				<input type="radio" class="radio radio-secondary mr-2" [value]="false" [formControl]="isSng" />
+				<input type="radio" name="isSng" class="radio radio-secondary mr-2" [value]="false" [formControl]="isSng" />
 				.zip
+			</label>
+		</div>
+	</div>
+
+	<div class="form-control">
+		<div class="label">
+			<span class="label-text">Table Layout</span>
+		</div>
+		<div class="flex gap-2">
+			<label class="label cursor-pointer">
+				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="false" [formControl]="isCompactTable" />
+				Default
+			</label>
+
+			<label class="label cursor-pointer">
+				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="true" [formControl]="isCompactTable" />
+				Compact
 			</label>
 		</div>
 	</div>

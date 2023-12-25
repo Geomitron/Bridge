@@ -13,6 +13,7 @@ export class SettingsComponent implements OnInit {
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 
 	public isSng: FormControl<boolean>
+	public isCompactTable: FormControl<boolean>
 
 	updateAvailable: boolean | null = false
 	loginClicked = false
@@ -29,6 +30,8 @@ export class SettingsComponent implements OnInit {
 	) {
 		this.isSng = new FormControl<boolean>(settingsService.isSng, { nonNullable: true })
 		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
+		this.isCompactTable = new FormControl<boolean>(settingsService.isCompactTable, { nonNullable: true })
+		this.isCompactTable.valueChanges.subscribe(value => settingsService.isCompactTable = value)
 	}
 
 	async ngOnInit() {

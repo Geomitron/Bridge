@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, OnInit, Output, QueryList, ViewChildren } from '@angular/core'
+import { Component, ElementRef, EventEmitter, HostBinding, HostListener, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
 
 import { sortBy } from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -17,6 +17,7 @@ export class ResultTableComponent implements OnInit {
 
 	@Output() rowClicked = new EventEmitter<ChartData[]>()
 
+	@ViewChild('resultTableDiv', { static: true }) resultTableDiv: ElementRef
 	@ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
 	activeSong: ChartData[] | null = null
@@ -31,13 +32,16 @@ export class ResultTableComponent implements OnInit {
 
 	ngOnInit() {
 		this.searchService.newSearch.subscribe(() => {
+			this.resultTableDiv.nativeElement.scrollTop = 0
 			this.activeSong = null
 			this.sortDirection = 'ascending'
 			this.sortColumn = null
 			this.updateSort()
+			setTimeout(() => this.tableScrolled(), 0)
 		})
 		this.searchService.updateSearch.subscribe(() => {
 			this.updateSort()
+			setTimeout(() => this.tableScrolled(), 0)
 		})
 	}
 
@@ -85,13 +89,16 @@ export class ResultTableComponent implements OnInit {
 		}
 	}
 
-	tableScrolled(event: Event): void {
-		if (event.target instanceof HTMLElement) {
-			if (event.target.scrollHeight - (event.target.scrollTop + event.target.clientHeight) < 100) {
-				// Scrolled near the bottom of the table
-				if (this.searchService.areMorePages && !this.searchService.searchLoading) {
-					this.searchService.search(this.searchService.searchControl.value || '*', true).subscribe()
-				}
+	@HostListener('window:resize', ['$event'])
+	onResize() {
+		this.tableScrolled()
+	}
+	tableScrolled(): void {
+		const table = this.resultTableDiv.nativeElement
+		if (table.scrollHeight - (table.scrollTop + table.clientHeight) < 100) {
+			// Scrolled near the bottom of the table
+			if (this.searchService.areMorePages && !this.searchService.searchLoading) {
+				this.searchService.search(this.searchService.searchControl.value || '*', true).subscribe()
 			}
 		}
 	}
