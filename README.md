@@ -1,44 +1,55 @@
 <p align="center">
-  <img src="./src/assets/images/bridge-animation.gif"/>
+  <img src="./src-angular/assets/images/bridge-animation.gif"/>
 </p>
-<h3 align="center">A Clone Hero library management tool with built in chart searching and downloading.</h3>
-<img align="center" style="border: 2px solid #E0E0E0" src="./src/assets/images/example.png"/>
+<h3 align="center">A rhythm game chart searching and downloading tool.</h3>
+<img align="center" src="./src-angular/assets/images/example.png"/>
 <hr>
 
-**Bridge** is a desktop application that helps CloneHero players browse, find, download, and extract new charts very quickly and eaisly.
+**Bridge** is a desktop application that allows you to search for and download charts that can be played in  games like Clone Hero, YARG, etc...
+
+This is the desktop version of [Chorus Encore](https://www.enchor.us/).
 
 ## Setup
 
-Head over to the [Releases](https://github.com/Geomitron/Bridge/releases/tag/v1.5.0) page to download the appropriate install wizard.
+Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page to download the install wizard. (Windows, Mac, and Linux versions are available)
 
 ## Features
 
-- ✅ Find all charts that can be found on Chorus.
-- ✅ Download and extract any chart directly into your chart library.
+- ✅ Find all charts that can be found on Chorus Encore.
+- ✅ Download any chart directly into your chart library as a chart folder or `.sng` file.
 - ✅ Multi-select songs to add to the download queue.
 - ✅ Cancel and retry downloads.
-- ✅ Google Authentication to avoid rate limited downloads.
 - ✅ In-app update checking and downloading.
-- ✅ Dark mode.
+- ✅ A variety of themes.
 - ✅ Advanced song search.
-- ❌ Scan and fix certain metadata problems in your chart library.
-- ❌ Easily download the most up-to-date versions of charts in your library.
 
-Key:
+### What's new in v2.0.0
 
-- ✅ Complete
-- ⚠️ In progress
-- ❌ Not yet started
+v.2.0.0
 
-### What's new in v1.5.0
+- Update to Angular 17
+- Update to Electron 27
+- Refreshed visual style, with 12 themes supported
+- Search results now update as you type
+- Improved search result accuracy in various cases
+- Added persistent instrument and difficulty filters
+- Reworked advanced search to include more options
+- Search result table now has a "compact" view option
+- Search result table now shows latest charts by default
+- Searches now display the total number of results
+- Added the charter or setlist icon on top of the album art
+- Reworked chart details display to include more chart information
+- Added button to report issues with charts
+- Fixed a variety of issues causing some charts to not download
+- Download speed and reliability has been significantly improved
+- Chart audio is automatically converted to .opus (older CH versions don't support this)
+- Added option to download charts as .sng files (a new format currently only supported by CH v1.1 and YARG)
+- The list of available charts will now update much more frequently and reliably
 
-v.1.5.0
+#### Known Issues:
+- Chart folders download more slowly than .sng files
+- There are rare cases where the download audio is heavily distorted (for now, redownload it from the Google Drive source folder manually)
 
-- Update to Angular 14
-- Update to Electron 23
-- Table header is now sticky
-- API Endpoints updated (older versions will no longer work)
-- Removed Google Authentication (it stopped working and can't be fixed; an alternative solution is in the works)
 
 ### Development
 
@@ -49,11 +60,10 @@ Learn how to install Node.js [here](https://nodejs.dev/en/download/)
 After installing Node.js and cloning the repository, install dependencies and run development with:
 
 ```
-$ npm install && npm start
+$ npm install -g pnpm
+$ pnpm install && pnpm start
 ```
 
 ### Socials
 
 To discuss the project and make suggestions, please join the [Discord](https://discord.gg/cqaUXGm)
-
-To see which features are currently in the works, please take a look at the [Trello](https://trello.com/b/lz8MvNhF/bridge)
