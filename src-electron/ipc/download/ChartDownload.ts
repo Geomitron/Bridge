@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import EventEmitter from 'events'
-import { createWriteStream, WriteStream } from 'fs'
+import { createWriteStream } from 'fs'
 import { access, constants } from 'fs/promises'
 import { round, throttle } from 'lodash'
 import { mkdirp } from 'mkdirp'
@@ -8,6 +8,8 @@ import mv from 'mv'
 import { SngStream } from 'parse-sng'
 import { join } from 'path'
 import { rimraf } from 'rimraf'
+import { Readable } from 'stream'
+import { ReadableStream } from 'stream/web'
 import { inspect } from 'util'
 
 import { tempPath } from '../../../src-shared/Paths'
@@ -150,48 +152,20 @@ export class ChartDownload {
 		const fileSize = BigInt(sngResponse.headers.get('Content-Length')!)
 
 		if (this.isSng) {
-			const writeStream = createWriteStream(join(this.tempPath, this.destinationName))
-			const reader = sngResponse.body.getReader()
-			let downloadedByteCount = BigInt(0)
+			const sngStream = Readable.fromWeb(sngResponse.body as ReadableStream<Uint8Array>, { highWaterMark: 2e+9 })
 
-			// eslint-disable-next-line no-constant-condition
-			while (true) {
-				let result: ReadableStreamReadResult<Uint8Array>
-				try {
-					result = await reader.read()
-				} catch (err) {
-					throw { header: 'Failed to download the chart file', body: inspect(err) }
-				}
+			sngStream.pipe(createWriteStream(join(this.tempPath, this.destinationName), { highWaterMark: 2e+9 }))
 
-				if (this._canceled) {
-					await reader.cancel()
-					writeStream.end()
-					return
-				}
-
-				if (result.done) { writeStream.end(); return }
-
-				downloadedByteCount += BigInt(result.value.length)
-				const downloadPercent = round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
-				this.showProgress(`Downloading... (${downloadPercent}%)`, downloadPercent)
-
-				await new Promise<void>((resolve, reject) => {
-					writeStream.write(result.value, err => {
-						if (err) {
-							reject({ header: 'Failed to download the chart file', body: inspect(err) })
-						} else {
-							resolve()
-						}
-					})
+			await new Promise<void>((resolve, reject) => {
+				let downloadedByteCount = BigInt(0)
+				sngStream.on('end', resolve)
+				sngStream.on('error', err => reject(err))
+				sngStream.on('data', data => {
+					downloadedByteCount += BigInt(data.length)
+					const downloadPercent = round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
+					this.showProgress(`Downloading... (${downloadPercent}%)`, downloadPercent)
 				})
-
-				if (writeStream.writableNeedDrain) {
-					await new Promise<void>((resolve, reject) => {
-						writeStream.once('drain', resolve)
-						writeStream.once('error', err => reject({ header: 'Failed to download the chart file', body: inspect(err) }))
-					})
-				}
-			}
+			})
 		} else {
 			const sngStream = new SngStream(() => sngResponse.body!, { generateSongIni: true })
 			let downloadedByteCount = BigInt(0)
@@ -200,68 +174,19 @@ export class ChartDownload {
 
 			await new Promise<void>((resolve, reject) => {
 				sngStream.on('file', async (fileName, fileStream) => {
-					let writeStream: WriteStream
-					let reader: ReadableStreamDefaultReader<Uint8Array>
-					try {
-						writeStream = createWriteStream(join(this.tempPath, this.destinationName, fileName))
-						writeStream.on('error', () => { /** Surpress unhandled promise rejection */ })
-						reader = fileStream.getReader()
-					} catch (err) {
-						reject(err)
-						return
-					}
+					const nodeFileStream = Readable.fromWeb(fileStream as ReadableStream<Uint8Array>, { highWaterMark: 2e+9 })
+					nodeFileStream.pipe(createWriteStream(join(this.tempPath, this.destinationName, fileName), { highWaterMark: 2e+9 }))
 
-					try {
-						// eslint-disable-next-line no-constant-condition
-						while (true) {
-							let result: ReadableStreamReadResult<Uint8Array>
-							try {
-								result = await reader.read()
-							} catch (err) {
-								throw { header: 'Failed to download the chart file', body: inspect(err) }
-							}
-
-							if (this._canceled) {
-								await reader.cancel()
-								writeStream.end()
-								resolve()
-								return
-							}
-
-							if (result.done) { writeStream.end(); return }
-
-							downloadedByteCount += BigInt(result.value.length)
+					await new Promise<void>((resolve, reject) => {
+						nodeFileStream.on('end', resolve)
+						nodeFileStream.on('error', err => reject(err))
+						nodeFileStream.on('data', data => {
+							downloadedByteCount += BigInt(data.length)
 							const downloadPercent =
 								round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
 							this.showProgress(`Downloading "${fileName}"... (${downloadPercent}%)`, downloadPercent)
-
-							await new Promise<void>((resolve, reject) => {
-								writeStream.write(result.value, err => {
-									if (err) {
-										reject({ header: 'Failed to download the chart file', body: inspect(err) })
-									} else {
-										resolve()
-									}
-								})
-							})
-
-							if (writeStream.writableNeedDrain) {
-								await new Promise<void>((resolve, reject) => {
-									writeStream.once('drain', resolve)
-									writeStream.once('error', err => reject({
-										header: 'Failed to download the chart file',
-										body: inspect(err),
-									}))
-								})
-							}
-						}
-					} catch (err) {
-						try {
-							await reader.cancel()
-						} catch (err) { /** ignore; error already reported */ }
-						writeStream.end()
-						reject(err)
-					}
+						})
+					})
 				})
 				sngStream.on('end', resolve)
 				sngStream.on('error', err => reject(err))

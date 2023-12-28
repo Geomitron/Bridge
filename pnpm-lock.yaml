@@ -57,8 +57,8 @@ dependencies:
     specifier: ^2.1.1
     version: 2.1.1
   parse-sng:
-    specifier: ^3.1.1
-    version: 3.1.1
+    specifier: ^3.1.2
+    version: 3.1.2
   rimraf:
     specifier: ^5.0.5
     version: 5.0.5
@@ -8370,8 +8370,8 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /parse-sng@3.1.1:
-    resolution: {integrity: sha512-BOU9Y4LE5VsEc76lZonVXcbKrbGbetzdP28avnWvioNEhACzTEhtqDdtNmgsXiMO3lvkveRcM5wp6hEniSIQkA==}
+  /parse-sng@3.1.2:
+    resolution: {integrity: sha512-gAFsAJ6yaU2uH8UeSRC+EYFAN/urm/ICRJSLSwP1sqVBEF/VhN0XAxNNFTeLGsgdv1V2gx6pLA8sS9M6YX/FCA==}
     dependencies:
       binary-parser: 2.2.1
       events: 3.3.0
@@ -9193,7 +9193,7 @@ packages:
       lodash: 4.17.21
       midievents: 2.0.0
       midifile: 2.0.0
-      parse-sng: 3.1.1
+      parse-sng: 3.1.2
       sanitize-filename: 1.6.3
       sharp: 0.32.6
       stream-audio-fingerprint: github.com/Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d

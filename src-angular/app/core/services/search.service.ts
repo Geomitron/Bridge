@@ -60,7 +60,7 @@ export class SearchService {
 		this.search().subscribe()
 	}
 
-	get areMorePages() { return this.songsResponse.page && this.groupedSongs.length === this.songsResponse.page * resultsPerPage }
+	get areMorePages() { return this.songsResponse?.page && this.groupedSongs.length === this.songsResponse.page * resultsPerPage }
 
 	/**
 	 * General search, uses the `/search?q=` endpoint.
