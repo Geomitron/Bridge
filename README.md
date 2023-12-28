@@ -47,7 +47,6 @@ v.2.0.0
 - The list of available charts will now update much more frequently and reliably
 
 #### Known Issues:
-- Chart folders download more slowly than .sng files
 - There are rare cases where the download audio is heavily distorted (for now, redownload it from the Google Drive source folder manually)
 
 
