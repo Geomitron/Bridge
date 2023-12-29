@@ -5,6 +5,7 @@ import { UpdateProgress } from '../../src-shared/interfaces/update.interface'
 import { emitIpcEvent } from '../main'
 
 let updateAvailable: boolean | null = false
+let downloading = false
 
 autoUpdater.autoDownload = false
 autoUpdater.logger = null
@@ -49,8 +50,8 @@ export async function getCurrentVersion() {
  * Begins the process of downloading the latest update.
  */
 export function downloadUpdate() {
-	if (this.downloading) { return }
-	this.downloading = true
+	if (downloading) { return }
+	downloading = true
 
 	autoUpdater.on('download-progress', (updateProgress: UpdateProgress) => {
 		emitIpcEvent('updateProgress', updateProgress)

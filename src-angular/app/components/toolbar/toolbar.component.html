@@ -1,10 +1,10 @@
 <div class="navbar p-0 min-h-0 bg-base-100" style="-webkit-app-region: drag">
 	<div style="-webkit-app-region: no-drag">
-		<button class="btn btn-square btn-ghost rounded-none px-10 cursor-default" routerLinkActive="btn-active" routerLink="/browse">Browse</button>
+		<button class="btn btn-square btn-ghost rounded-none px-11 cursor-default" routerLinkActive="btn-active" routerLink="/browse">Browse</button>
 		<!-- TODO <a class="btn btn-square btn-ghost rounded-none cursor-default" routerLinkActive="btn-active" routerLink="/library">Library</a> -->
-		<button class="btn btn-square btn-ghost rounded-none px-10 cursor-default" routerLinkActive="btn-active" routerLink="/settings">
-			<i *ngIf="updateAvailable" class="teal small circle icon"></i>
-			<i *ngIf="updateAvailable === null" class="small yellow exclamation triangle icon"></i>
+		<button class="btn btn-square btn-ghost rounded-none px-11 cursor-default flex flex-nowrap" routerLinkActive="btn-active" routerLink="/settings">
+			<div *ngIf="updateAvailable" class="badge badge-accent badge-xs"></div>
+			<i *ngIf="updateAvailable === null" class="bi bi-exclamation-triangle-fill text-warning"></i>
 			Settings
 		</button>
 	</div>
