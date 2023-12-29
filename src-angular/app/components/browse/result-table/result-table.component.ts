@@ -1,4 +1,5 @@
 import { Component, ElementRef, EventEmitter, HostBinding, HostListener, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
+import { Router } from '@angular/router'
 
 import { sortBy } from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -27,7 +28,8 @@ export class ResultTableComponent implements OnInit {
 	constructor(
 		public searchService: SearchService,
 		private selectionService: SelectionService,
-		public settingsService: SettingsService
+		public settingsService: SettingsService,
+		private router: Router,
 	) { }
 
 	ngOnInit() {
@@ -95,7 +97,7 @@ export class ResultTableComponent implements OnInit {
 	}
 	tableScrolled(): void {
 		const table = this.resultTableDiv.nativeElement
-		if (table.scrollHeight - (table.scrollTop + table.clientHeight) < 100) {
+		if (this.router.url === '/browse' && table.scrollHeight - (table.scrollTop + table.clientHeight) < 100) {
 			// Scrolled near the bottom of the table
 			if (this.searchService.areMorePages && !this.searchService.searchLoading) {
 				this.searchService.search(this.searchService.searchControl.value || '*', true).subscribe()
