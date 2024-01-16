@@ -25,7 +25,7 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 
 ### What's new in v2.0.0
 
-v.2.0.0
+v2.0.0
 
 - Update to Angular 17
 - Update to Electron 27
