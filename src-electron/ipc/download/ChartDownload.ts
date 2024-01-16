@@ -10,11 +10,14 @@ import { join } from 'path'
 import { rimraf } from 'rimraf'
 import { Readable } from 'stream'
 import { ReadableStream } from 'stream/web'
+import { Agent, fetch, setGlobalDispatcher } from 'undici'
 import { inspect } from 'util'
 
 import { tempPath } from '../../../src-shared/Paths'
 import { sanitizeFilename } from '../../ElectronUtilFunctions'
 import { getSettings } from '../SettingsHandler.ipc'
+
+setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }))
 
 export interface DownloadMessage {
 	header: string
@@ -167,7 +170,8 @@ export class ChartDownload {
 				})
 			})
 		} else {
-			const sngStream = new SngStream(() => sngResponse.body!, { generateSongIni: true })
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const sngStream = new SngStream(() => sngResponse.body! as any, { generateSongIni: true })
 			let downloadedByteCount = BigInt(0)
 
 			await mkdirp(join(this.tempPath, this.destinationName))
