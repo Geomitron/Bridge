@@ -87,22 +87,6 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	get logoType() {
-		switch (localStorage.getItem('theme')) {
-			case 'emerald': return 'emerald'
-			case 'halloween': return 'halloween'
-			case 'lemonade': return 'lemonade'
-			case 'night': return 'night'
-			case 'synthwave': return 'synthwave'
-			case 'aqua': return 'orange'
-			case 'valentine': return 'valentine'
-			case 'winter': return 'winter'
-			case 'aren': return 'aren'
-			case 'froogs': return 'froogs'
-			default: return 'default'
-		}
-	}
-
 	get todayDate() {
 		return dayjs().format('YYYY-MM-DD')
 	}

@@ -40,7 +40,17 @@
 								}
 							</div>
 							<div class="form-control">
-								<textarea class="textarea textarea-bordered h-24" placeholder="More details (optional)" [formControl]="reportExtraInfo"></textarea>
+								<div class="label">
+									<span class="label-text">More details <span class="text-error">*</span></span>
+								</div>
+								<textarea
+									required
+									class="textarea textarea-bordered h-24"
+									[class.border-error]="reportExtraInfo.invalid && reportExtraInfo.touched"
+									placeholder="Please be specific. Vague reports may be ignored if the problem is not obvious."
+									[formControl]="reportExtraInfo">
+								</textarea>
+								<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">Please provide more details.</span>
 							</div>
 							<div class="form-control flex-row justify-end">
 								<button class="btn btn-primary" (click)="report()">Submit</button>
@@ -65,11 +75,19 @@
 							<th></th>
 						}
 						<th class="text-neutral-content">Uploaded</th>
-						<th class="text-neutral-content">
-							<span class="label-text cursor-help underline decoration-dotted" title="The MD5 hash of the chart folder or .sng file.">Hash</span>
+						<th>
+							<span
+								class="label-text cursor-help underline decoration-dotted text-neutral-content"
+								title="The MD5 hash of the chart folder or .sng file.">
+								Hash
+							</span>
 						</th>
-						<th class="text-neutral-content">
-							<span class="label-text cursor-help underline decoration-dotted" title="The MD5 hash of just the .chart or .mid file.">Chart Hash</span>
+						<th>
+							<span
+								class="label-text cursor-help underline decoration-dotted text-neutral-content"
+								title="The MD5 hash of just the .chart or .mid file.">
+								Chart Hash
+							</span>
 						</th>
 						<th class="text-neutral-content">Google Drive Location</th>
 					</tr>

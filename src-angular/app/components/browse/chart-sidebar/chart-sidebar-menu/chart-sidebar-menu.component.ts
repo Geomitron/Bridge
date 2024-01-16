@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http'
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
-import { FormControl } from '@angular/forms'
+import { FormControl, Validators } from '@angular/forms'
 
 import { sortBy } from 'lodash'
 import { environment } from 'src-angular/environments/environment'
@@ -33,7 +33,7 @@ export class ChartSidebarMenutComponent implements OnInit {
 		this.selectedVersion.valueChanges.subscribe(v => this.selectedVersionChanges.emit(v))
 
 		this.reportOption = new FormControl<string>(this.reportOptions[0], { nonNullable: true })
-		this.reportExtraInfo = new FormControl<string>('', { nonNullable: true })
+		this.reportExtraInfo = new FormControl<string>('', { nonNullable: true, validators: [Validators.required] })
 	}
 
 	get displayVersions() {
@@ -78,13 +78,17 @@ export class ChartSidebarMenutComponent implements OnInit {
 	}
 
 	report() {
-		this.http.post(`${environment.apiUrl}/report`, {
-			chartId: this.selectedVersion.value.chartId,
-			reason: this.reportOption.value,
-			extraInfo: this.reportExtraInfo.value,
-		}).subscribe((response: { message: string }) => {
-			this.reportMessage = response.message
-			this.reportSent = true
-		})
+		if (this.reportExtraInfo.valid) {
+			this.http.post(`${environment.apiUrl}/report`, {
+				chartId: this.selectedVersion.value.chartId,
+				reason: this.reportOption.value,
+				extraInfo: this.reportExtraInfo.value,
+			}).subscribe((response: { message: string }) => {
+				this.reportMessage = response.message
+				this.reportSent = true
+			})
+		} else {
+			this.reportExtraInfo.markAsTouched()
+		}
 	}
 }

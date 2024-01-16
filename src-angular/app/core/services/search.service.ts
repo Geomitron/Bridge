@@ -101,7 +101,9 @@ export class SearchService {
 
 				if (!nextPage) {
 					// Don't reload results if they are the same
-					if (this.groupedSongs && xorBy(this.songsResponse.data, response.data, r => r.chartId).length === 0) {
+					if (this.groupedSongs
+						&& xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
+						&& this.songsResponse!.found === response.found) {
 						return
 					} else {
 						this.groupedSongs = []
@@ -130,7 +132,7 @@ export class SearchService {
 		this.isDefaultSearch = false
 
 		let retries = 10
-		return this.http.post<{ data: SearchResult['data'] }>(`${environment.apiUrl}/search/advanced`, search).pipe(
+		return this.http.post<{ data: SearchResult['data']; found: number }>(`${environment.apiUrl}/search/advanced`, search).pipe(
 			catchError((err, caught) => {
 				if (err.status === 400 || retries-- <= 0) {
 					this.searchLoading = false
@@ -144,7 +146,9 @@ export class SearchService {
 				this.searchLoading = false
 
 				// Don't reload results if they are the same
-				if (this.groupedSongs && xorBy(this.songsResponse.data, response.data, r => r.chartId).length === 0) {
+				if (this.groupedSongs
+					&& xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
+					&& this.songsResponse!.found === response.found) {
 					return
 				} else {
 					this.groupedSongs = []

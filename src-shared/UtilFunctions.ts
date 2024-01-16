@@ -118,9 +118,9 @@ export function instrumentToDiff(instrument: Instrument | 'vocals') {
  * @returns a string representation of `ms` that looks like HH:MM:SS
  */
 export function msToRoughTime(ms: number) {
-	const seconds = _.round((ms / 1000) % 60)
-	const minutes = Math.floor((ms / 1000 / 60) % 60)
-	const hours = Math.floor((ms / 1000 / 60 / 60) % 24)
+	const seconds = _.floor((ms / 1000) % 60)
+	const minutes = _.floor((ms / 1000 / 60) % 60)
+	const hours = _.floor((ms / 1000 / 60 / 60) % 24)
 	return `${hours ? `${hours}:` : ''}${minutes}:${_.padStart(String(seconds), 2, '0')}`
 }
 
@@ -129,7 +129,7 @@ const allowedTags = [
 	'gradient', 'i', 'indent', 'line-height', 'line-indent', 'link', 'lowercase',
 	'margin', 'mark', 'mspace', 'nobr', 'noparse', 'page', 'pos', 'rotate', 's',
 	'size', 'smallcaps', 'space', 'sprite', 'strikethrough', 'style', 'sub', 'sup',
-	'u', 'uppercase', 'voffset', 'width',
+	'u', 'uppercase', 'voffset', 'width', '#',
 ]
 const tagPattern = allowedTags.map(tag => `\\b${tag}\\b`).join('|')
 /**
