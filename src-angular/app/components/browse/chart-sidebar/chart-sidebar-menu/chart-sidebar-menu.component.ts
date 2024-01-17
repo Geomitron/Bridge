@@ -73,6 +73,9 @@ export class ChartSidebarMenutComponent implements OnInit {
 			.replace(/^\/|\/$/g, '')
 	}
 
+	copyLink(hash: string) {
+		navigator.clipboard.writeText(`https://enchor.us/?hash=${hash}`)
+	}
 	copyHash(hash: string) {
 		navigator.clipboard.writeText(hash)
 	}

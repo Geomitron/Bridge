@@ -172,6 +172,7 @@ export class ChartSidebarComponent implements OnInit {
 					.uniq()
 					.value(),
 			}))
+			.filter(g => g.issues.length > 0)
 			.value()
 	}
 
