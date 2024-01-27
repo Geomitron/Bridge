@@ -1,4 +1,4 @@
-import { EventType, FolderIssueType, MetadataIssueType, NotesData } from 'scan-chart'
+import { EventType, FolderIssueType, Instrument, MetadataIssueType, NotesData } from 'scan-chart'
 import { z } from 'zod'
 
 import { difficulties, instruments, Overwrite } from '../UtilFunctions'
@@ -14,7 +14,13 @@ export type GeneralSearch = z.infer<typeof GeneralSearchSchema>
 const md5Validator = z.string().regex(/^[a-f0-9]{32}$/, 'Invalid MD5 hash')
 
 export const AdvancedSearchSchema = z.object({
-	instrument: z.enum(instruments).nullable(),
+	instrument: z.string().refine(selectedInstruments => {
+		const values = selectedInstruments.split(',')
+		for (const value of values) {
+			if (!instruments.includes(value as Instrument)) { return false }
+		}
+		return true
+	}, { message: 'Invalid instrument list' }).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
 	name: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	artist: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
