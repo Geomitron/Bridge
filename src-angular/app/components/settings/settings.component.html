@@ -66,18 +66,18 @@
 						</form>
 						<div class="flex gap-6">
 							<div class="flex-1">
-								<span class="font-bold text-lg">.sng (new)</span>
-								<ul class="list-disc pl-5">
-									<li>Single chart file</li>
-									<li>Can be scanned in-game directly without extracting</li>
-									<li>Currently only supported by YARG and Clone Hero v1.1</li>
-								</ul>
-							</div>
-							<div class="flex-1">
 								<span class="font-bold text-lg">Chart Folder</span>
 								<ul class="list-disc pl-5">
 									<li>Chart files (such as audio and album art) are placed inside a folder</li>
 									<li>Supported across many games</li>
+								</ul>
+							</div>
+							<div class="flex-1">
+								<span class="font-bold text-lg">.sng (new)</span>
+								<ul class="list-disc pl-5">
+									<li>Single chart file</li>
+									<li>Can be scanned in-game directly without extracting</li>
+									<li>Currently only supported by Clone Hero's current test build and YARG</li>
 								</ul>
 							</div>
 						</div>
@@ -121,6 +121,20 @@
 				Compact
 			</label>
 		</div>
+	</div>
+
+	<div class="absolute bottom-8 left-8 flex">
+		<a class="btn btn-link" (click)="openUrl('https://github.com/Geomitron/Bridge')" ><i class="bi bi-github text-2xl"></i>Github</a>
+		<a class="btn btn-link" (click)="openUrl('https://discord.gg/cqaUXGm')" ><i class="bi bi-discord text-2xl"></i>Discord</a>
+		<a class="btn btn-link" (click)="openUrl('https://www.patreon.com/ChorusEncore701')">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="patreon">
+				<path
+					fill="currentColor"
+					fill-rule="evenodd"
+					d="M0 9.71C0 1.63 10.32-3.476 16.916 2.818c3.532 3.36 4.143 8.902 1.248 12.951-3.591 4.92-8.282 4.193-12.76 4.193v-9.588c.041-2.117.747-3.943 3.324-4.816 2.245-.664 4.863.581 5.653 2.947.832 2.533-.374 4.234-1.787 5.272-1.413 1.039-3.616 1.039-5.07.042v3.279c3.138 1.5 8.105-.303 9.684-4.4 1.08-2.864.332-6.185-1.912-8.26-2.701-2.2-5.653-2.74-8.811-1.204-2.204 1.12-3.741 3.404-4.116 5.894v10.834H.042L0 9.71z"></path>
+			</svg>
+			Patreon
+		</a>
 	</div>
 
 	<div class="absolute bottom-8 right-8 flex gap-6">

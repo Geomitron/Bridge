@@ -52,6 +52,7 @@
 								</textarea>
 								<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">Please provide more details.</span>
 							</div>
+							<span class="text-xs">Hint: if the chart isn't working at all, try updating your game and setting "Download Format" to "Chart Folder"</span>
 							<div class="form-control flex-row justify-end">
 								<button class="btn btn-primary" (click)="report()">Submit</button>
 							</div>
