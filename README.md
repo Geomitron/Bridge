@@ -66,3 +66,5 @@ $ pnpm install && pnpm start
 ### Socials
 
 To discuss the project and make suggestions, please join the [Discord](https://discord.gg/cqaUXGm)
+
+To help me pay for the server costs, please check out the [Patreon](https://www.patreon.com/ChorusEncore701)
