@@ -1,37 +1,43 @@
 {
-  "productName": "Bridge",
-  "directories": {
-    "output": "release/"
-  },
-  "files": [
-    "dist/**/*"
-  ],
-  "publish": {
-    "provider": "github",
-    "releaseType": "release"
-  },
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": true,
-    "shortcutName": "Bridge"
-  },
-  "win": {
-    "icon": "dist/angular/assets/images/system/icons/win/icon.ico",
-    "compression": "store"
-  },
-  "mac": {
-    "category": "public.app-category.utilities",
-    "target": [
-      "dmg"
-    ],
-    "icon": "dist/angular/assets/images/system/icons/mac/icon.icns"
-  },
-  "linux": {
-    "compression": "maximum",
-    "target": [
-      "AppImage"
-    ],
-    "category": "utility"
-  }
+	"productName": "Bridge",
+	"directories": {
+		"output": "release/"
+	},
+	"files": [
+		"dist/**/*"
+	],
+	"publish": {
+		"provider": "github",
+		"releaseType": "release"
+	},
+	"nsis": {
+		"oneClick": false,
+		"allowToChangeInstallationDirectory": true,
+		"deleteAppDataOnUninstall": true,
+		"shortcutName": "Bridge"
+	},
+	"win": {
+		"icon": "dist/angular/assets/images/system/icons/win/icon.ico",
+		"compression": "store"
+	},
+	"mac": {
+		"category": "public.app-category.utilities",
+		"target": [
+			{
+				"target": "dmg",
+				"arch": [
+					"x64",
+					"arm64"
+				]
+			}
+		],
+		"icon": "dist/angular/assets/images/system/icons/mac/icon.icns"
+	},
+	"linux": {
+		"compression": "maximum",
+		"target": [
+			"AppImage"
+		],
+		"category": "utility"
+	}
 }
