@@ -75,8 +75,8 @@ dependencies:
     specifier: ^2.0.0
     version: 2.6.2
   undici:
-    specifier: ^6.3.0
-    version: 6.3.0
+    specifier: ^6.6.1
+    version: 6.6.1
   zod:
     specifier: ^3.22.4
     version: 3.22.4
@@ -5213,6 +5213,7 @@ packages:
 
   /emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
+    requiresBuild: true
 
   /emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
@@ -6879,6 +6880,7 @@ packages:
   /is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
+    requiresBuild: true
 
   /is-glob@4.0.3:
     resolution: {integrity: sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg==}
@@ -7301,8 +7303,6 @@ packages:
       webpack: '*'
     peerDependenciesMeta:
       webpack:
-        optional: true
-      webpack-sources:
         optional: true
     dependencies:
       webpack: 5.89.0(esbuild@0.19.5)
@@ -9198,7 +9198,7 @@ packages:
       parse-sng: 3.1.2
       sanitize-filename: 1.6.3
       sharp: 0.32.6
-      stream-audio-fingerprint: github.com/Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d
+      stream-audio-fingerprint: git/github.com+Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d
       workerpool: 6.5.1
     dev: false
 
@@ -10301,8 +10301,8 @@ packages:
       '@fastify/busboy': 2.1.0
     dev: true
 
-  /undici@6.3.0:
-    resolution: {integrity: sha512-zkSMOXs2topAR1LF0PxAaNNvhdX4LYEcmRMJLMh3mjgfZpBtc/souXOp4aYiR5Q46HrBPA2/8DkEZhD3eNFE1Q==}
+  /undici@6.6.1:
+    resolution: {integrity: sha512-J0GaEp0ztu/grIE2Uq57AbK6TRb+bWbOlxu0POCzhFKA6LKbwSAev+hDQaQcgUUA9CPs8Ky+cauzTHnQrtAQEA==}
     engines: {node: '>=18.0'}
     dependencies:
       '@fastify/busboy': 2.1.0
@@ -10872,16 +10872,16 @@ packages:
     dependencies:
       tslib: 2.6.2
 
-  github.com/Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d:
-    resolution: {tarball: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d}
+  git/github.com+Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d:
+    resolution: {commit: 197e8a7ff60165b18bf1debc23dab4814996a20d, repo: git@github.com:Geomitron/stream-audio-fingerprint.git, type: git}
     name: stream-audio-fingerprint
     version: 1.0.4
     dependencies:
-      dsp.js: github.com/corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e
+      dsp.js: git/github.com+corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e
     dev: false
 
-  github.com/corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e:
-    resolution: {tarball: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e}
+  git/github.com+corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e:
+    resolution: {commit: 219600bb0346ee9a00686c9875c81123e2d8780e, repo: git@github.com:corbanbrook/dsp.js.git, type: git}
     name: dsp.js
     version: 1.0.0
     dev: false
