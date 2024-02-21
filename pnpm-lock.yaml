@@ -6776,8 +6776,8 @@ packages:
       side-channel: 1.0.4
     dev: true
 
-  /ip@2.0.0:
-    resolution: {integrity: sha512-WKa+XuLG1A1R0UWhl2+1XQSi+fZWMsYKffMZTTYsiZaUD8k2yDAj5atimTUD2TZkyCkNEeYE5NhFZmupOGtjYQ==}
+  /ip@2.0.1:
+    resolution: {integrity: sha512-lJUL9imLTNi1ZfXT+DU6rBBdbiKGBuay9B6xGSPVjUeQwaH1RIGqef8RZkUtHioLmSNpPR5M4HVKJGm1j8FWVQ==}
     dev: true
 
   /ipaddr.js@1.9.1:
@@ -7301,8 +7301,6 @@ packages:
       webpack: '*'
     peerDependenciesMeta:
       webpack:
-        optional: true
-      webpack-sources:
         optional: true
     dependencies:
       webpack: 5.89.0(esbuild@0.19.5)
@@ -9198,7 +9196,7 @@ packages:
       parse-sng: 3.1.2
       sanitize-filename: 1.6.3
       sharp: 0.32.6
-      stream-audio-fingerprint: github.com/Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d
+      stream-audio-fingerprint: git@github.com+Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d
       workerpool: 6.5.1
     dev: false
 
@@ -9588,7 +9586,7 @@ packages:
     resolution: {integrity: sha512-7maUZy1N7uo6+WVEX6psASxtNlKaNVMlGQKkG/63nEDdLOWNbiUMoLK7X4uYoLhQstau72mLgfEWcXcwsaHbYQ==}
     engines: {node: '>= 10.13.0', npm: '>= 3.0.0'}
     dependencies:
-      ip: 2.0.0
+      ip: 2.0.1
       smart-buffer: 4.2.0
     dev: true
 
@@ -10872,16 +10870,16 @@ packages:
     dependencies:
       tslib: 2.6.2
 
-  github.com/Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d:
-    resolution: {tarball: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d}
+  git@github.com+Geomitron/stream-audio-fingerprint/197e8a7ff60165b18bf1debc23dab4814996a20d:
+    resolution: {commit: 197e8a7ff60165b18bf1debc23dab4814996a20d, repo: git@github.com:Geomitron/stream-audio-fingerprint.git, type: git}
     name: stream-audio-fingerprint
     version: 1.0.4
     dependencies:
-      dsp.js: github.com/corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e
+      dsp.js: git@github.com+corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e
     dev: false
 
-  github.com/corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e:
-    resolution: {tarball: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e}
+  git@github.com+corbanbrook/dsp.js/219600bb0346ee9a00686c9875c81123e2d8780e:
+    resolution: {commit: 219600bb0346ee9a00686c9875c81123e2d8780e, repo: git@github.com:corbanbrook/dsp.js.git, type: git}
     name: dsp.js
     version: 1.0.0
     dev: false
