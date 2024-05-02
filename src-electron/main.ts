@@ -78,6 +78,15 @@ async function createBridgeWindow() {
 	// Don't use a system menu
 	mainWindow.setMenu(null)
 
+	mainWindow.webContents.on('before-input-event', (event, input) => {
+		if (input.control && (input.key === '+' || input.key === '-' || input.key === '=')) {
+			event.preventDefault()
+			const zoomFactor = mainWindow.webContents.getZoomFactor()
+			const newZoomFactor = input.key === '+' || input.key === '=' ? zoomFactor + 0.1 : zoomFactor - 0.1
+			mainWindow.webContents.setZoomFactor(newZoomFactor)
+		}
+	})
+
 	// IPC handlers
 	for (const [key, handler] of Object.entries(getIpcInvokeHandlers())) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
