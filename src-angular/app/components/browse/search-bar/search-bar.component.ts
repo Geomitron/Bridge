@@ -205,6 +205,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 			this.searchService.advancedSearch({
 				instrument: this.instrument,
 				difficulty: this.difficulty,
+				source: 'bridge' as const,
 				...this.advancedSearchForm.getRawValue(),
 			}).subscribe()
 		}

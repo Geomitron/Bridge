@@ -86,6 +86,7 @@ export class SearchService {
 			page: this.currentPage,
 			instrument: this.instrument.value,
 			difficulty: this.difficulty.value,
+			source: 'bridge',
 		}).pipe(
 			catchError((err, caught) => {
 				if (err.status === 400 || retries-- <= 0) {

@@ -3,11 +3,14 @@ import { z } from 'zod'
 
 import { difficulties, instruments, Overwrite } from '../UtilFunctions'
 
+export const sources = ['website', 'bridge'] as const
+
 export const GeneralSearchSchema = z.object({
 	search: z.string(),
 	page: z.number().positive(),
 	instrument: z.enum(instruments).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
+	source: z.enum(sources).optional(),
 })
 export type GeneralSearch = z.infer<typeof GeneralSearchSchema>
 
@@ -22,6 +25,7 @@ export const AdvancedSearchSchema = z.object({
 		return true
 	}, { message: 'Invalid instrument list' }).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
+	source: z.enum(sources).optional(),
 	name: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	artist: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	album: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
