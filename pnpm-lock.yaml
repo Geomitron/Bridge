@@ -87,7 +87,7 @@ dependencies:
 devDependencies:
   '@angular-devkit/build-angular':
     specifier: ^17.0.3
-    version: 17.0.3(@angular/compiler-cli@17.0.4)(@types/node@18.16.0)(tailwindcss@3.3.5)(typescript@5.2.2)
+    version: 17.0.3(@angular/compiler-cli@17.0.4)(@types/node@18.16.0)(tailwindcss@3.4.3)(typescript@5.2.2)
   '@angular-eslint/builder':
     specifier: 17.1.0
     version: 17.1.0(eslint@8.54.0)(typescript@5.2.2)
@@ -173,11 +173,11 @@ devDependencies:
     specifier: ^0.5.21
     version: 0.5.21
   tailwind-scrollbar:
-    specifier: ^3.0.5
-    version: 3.0.5(tailwindcss@3.3.5)
+    specifier: ^3.1.0
+    version: 3.1.0(tailwindcss@3.4.3)
   tailwindcss:
-    specifier: ^3.3.5
-    version: 3.3.5
+    specifier: ^3.4.3
+    version: 3.4.3
   typescript:
     specifier: ^5.2.2
     version: 5.2.2
@@ -216,7 +216,7 @@ packages:
       - chokidar
     dev: true
 
-  /@angular-devkit/build-angular@17.0.3(@angular/compiler-cli@17.0.4)(@types/node@18.16.0)(tailwindcss@3.3.5)(typescript@5.2.2):
+  /@angular-devkit/build-angular@17.0.3(@angular/compiler-cli@17.0.4)(@types/node@18.16.0)(tailwindcss@3.4.3)(typescript@5.2.2):
     resolution: {integrity: sha512-1lx0mERC1eTHX4vf8q7kUHZNHS0jwZxbwYHAISOplwHjkzRociX0W6rx04yMXn2NCSNhK+w3xbWyAIgyYbP9nA==}
     engines: {node: ^18.13.0 || >=20.9.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
@@ -306,7 +306,7 @@ packages:
       semver: 7.5.4
       source-map-loader: 4.0.1(webpack@5.89.0)
       source-map-support: 0.5.21
-      tailwindcss: 3.3.5
+      tailwindcss: 3.4.3
       terser: 5.24.0
       text-table: 0.2.0
       tree-kill: 1.2.2
@@ -9909,17 +9909,17 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /tailwind-scrollbar@3.0.5(tailwindcss@3.3.5):
-    resolution: {integrity: sha512-0ZwxTivevqq9BY9fRP9zDjHl7Tu+J5giBGbln+0O1R/7nHtBUKnjQcA1aTIhK7Oyjp6Uc/Dj6/dn8Dq58k5Uww==}
+  /tailwind-scrollbar@3.1.0(tailwindcss@3.4.3):
+    resolution: {integrity: sha512-pmrtDIZeHyu2idTejfV59SbaJyvp1VRjYxAjZBH0jnyrPRo6HL1kD5Glz8VPagasqr6oAx6M05+Tuw429Z8jxg==}
     engines: {node: '>=12.13.0'}
     peerDependencies:
       tailwindcss: 3.x
     dependencies:
-      tailwindcss: 3.3.5
+      tailwindcss: 3.4.3
     dev: true
 
-  /tailwindcss@3.3.5:
-    resolution: {integrity: sha512-5SEZU4J7pxZgSkv7FP1zY8i2TIAOooNZ1e/OGtxIEv6GltpoiXUqWvLy89+a10qYTB1N5Ifkuw9lqQkN9sscvA==}
+  /tailwindcss@3.4.3:
+    resolution: {integrity: sha512-U7sxQk/n397Bmx4JHbJx/iSOOv5G+II3f1kpLpY2QeUv5DcPdcTsYLlusZfq1NthHS1c1cZoyFmmkex1rzke0A==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:

@@ -6,7 +6,7 @@
 				<button class="btn btn-secondary btn-xs flex-nowrap uppercase" (click)="reportModal.showModal()">
 					<i class="bi bi-exclamation-triangle text-sm text-secondary-content"></i> Report issue
 				</button>
-				<dialog #reportModal id="report_modal" class="modal">
+				<dialog #reportModal class="modal">
 					@if (reportSent) {
 						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
 							<form method="dialog">
@@ -24,36 +24,53 @@
 								</button>
 							</form>
 							<h3 class="font-bold text-lg">Report Issue</h3>
-							<div>
-								@for (option of reportOptions; track $index) {
-									<div class="form-control">
-										<label class="label cursor-pointer justify-normal gap-2">
-											<input
-												type="radio"
-												name="selectedReportOption{{ selectedVersion.value.chartId }}"
-												class="radio checked:bg-red-500"
-												[value]="option"
-												[formControl]="reportOption" />
-											<span>{{ option }}</span>
-										</label>
-									</div>
-								}
-							</div>
-							<div class="form-control">
-								<div class="label">
-									<span class="label-text">More details <span class="text-error">*</span></span>
+							<form [formGroup]="reportForm">
+								<div
+									[class.border-error]="reportOption.invalid && reportOption.touched"
+									[class.border]="reportOption.invalid && reportOption.touched">
+									@for (option of reportOptions; track $index) {
+										<div class="form-control">
+											<label class="label cursor-pointer justify-normal gap-2">
+												<input type="radio" class="radio checked:bg-red-500" [value]="option" formControlName="reportOption" />
+												<span>{{ option }}</span>
+											</label>
+										</div>
+									}
 								</div>
-								<textarea
-									required
-									class="textarea textarea-bordered h-24"
-									[class.border-error]="reportExtraInfo.invalid && reportExtraInfo.touched"
-									placeholder="Please be specific. Vague reports may be ignored if the problem is not obvious."
-									[formControl]="reportExtraInfo">
-								</textarea>
-								<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">Please provide more details.</span>
-							</div>
-							<span class="text-xs">Hint: if the chart isn't working at all, try updating your game and setting "Download Format" to "Chart Folder"</span>
-							<div class="form-control flex-row justify-end">
+								<span *ngIf="reportOption.invalid && reportOption.touched" class="text-error">Please select an option.</span>
+								<div *ngIf="!isFalseReportOption()" class="form-control">
+									<div class="label">
+										<span class="label-text">More details <span class="text-error">*</span></span>
+									</div>
+									<textarea
+										required
+										class="textarea textarea-bordered h-24"
+										[class.border-error]="reportExtraInfo.invalid && reportExtraInfo.touched"
+										placeholder="Please be specific. Vague reports may be ignored if the problem is not obvious."
+										formControlName="reportExtraInfo">
+									</textarea>
+									<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">Please provide more details.</span>
+								</div>
+							</form>
+							<span *ngIf="isFalseReportOption()" class="text-lg text-warning text-wrap">
+								@if (reportOption.value === 'No notes / chart ends immediately') {
+									This is not a problem with the chart! To fix this, please update Clone Hero to the latest version. You can get the latest version at
+									<a class="link" (click)="openUrl('https://clonehero.net')">clonehero.net</a>.
+								} @else if (reportOption.value === "Download doesn't work") {
+									Please click the progress bar in the lower-right of the program to see the error message. If you need help getting it to work,
+									please ask in the <a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
+								} @else if (reportOption.value === "Doesn't appear in Clone Hero") {
+									This is not a problem with the chart! Here are the most common reasons for this:
+									<ul class="list-disc pl-5">
+										<li>.sng files will not work with the latest CH version. They only work on the test build for the next version.</li>
+										<li>Your chart library directory is not set as a song path in CH.</li>
+										<li>You need to rescan songs in CH's settings menu.</li>
+									</ul>
+									If you're still having issues, please ask in the
+									<a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
+								}
+							</span>
+							<div *ngIf="!isFalseReportOption()" class="form-control flex-row justify-end">
 								<button class="btn btn-primary" (click)="report()">Submit</button>
 							</div>
 						</div>

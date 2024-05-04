@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http'
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
-import { FormControl, Validators } from '@angular/forms'
+import { FormControl, NonNullableFormBuilder, Validators } from '@angular/forms'
 
 import { sortBy } from 'lodash'
 import { environment } from 'src-angular/environments/environment'
@@ -18,23 +18,39 @@ export class ChartSidebarMenutComponent implements OnInit {
 
 	public selectedVersion: FormControl<ChartData>
 
-	public reportOptions = [`Doesn't follow Chorus guidelines`, `Doesn't meet chart quality standards`, 'Other']
-	public reportOption: FormControl<string>
-	public reportExtraInfo: FormControl<string>
+	public reportOptions = [
+		`Doesn't follow Chorus guidelines`,
+		`Doesn't meet chart quality standards`,
+		'No notes / chart ends immediately',
+		`Download doesn't work`,
+		`Doesn't appear in Clone Hero`,
+		'Other',
+	] as const
+	public reportForm: ReturnType<this['getForm']>
 	public reportSent = false
 	public reportMessage = ''
 
 	constructor(
 		private http: HttpClient,
+		private fb: NonNullableFormBuilder,
 	) { }
 
 	ngOnInit(): void {
 		this.selectedVersion = new FormControl<ChartData>(this.displayVersions[0], { nonNullable: true })
 		this.selectedVersion.valueChanges.subscribe(v => this.selectedVersionChanges.emit(v))
-
-		this.reportOption = new FormControl<string>(this.reportOptions[0], { nonNullable: true })
-		this.reportExtraInfo = new FormControl<string>('', { nonNullable: true, validators: [Validators.required] })
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.reportForm = this.getForm() as any
 	}
+
+	getForm() {
+		return this.fb.group({
+			reportOption: this.fb.control(null as ChartSidebarMenutComponent['reportOptions'][number] | null, [Validators.required]),
+			reportExtraInfo: this.fb.control('', [Validators.required]),
+		})
+	}
+
+	get reportOption() { return this.reportForm.get('reportOption')! }
+	get reportExtraInfo() { return this.reportForm.get('reportExtraInfo')! }
 
 	get displayVersions() {
 		return sortBy(this.chartVersions, v => v.modifiedTime).reverse()
@@ -61,6 +77,15 @@ export class ChartSidebarMenutComponent implements OnInit {
 		}
 
 		return breadcrumbs
+	}
+
+	isFalseReportOption() {
+		switch (this.reportOption.value) {
+			case 'No notes / chart ends immediately': return true
+			case `Download doesn't work`: return true
+			case `Doesn't appear in Clone Hero`: return true
+			default: return false
+		}
 	}
 
 	openUrl(url: string) {
