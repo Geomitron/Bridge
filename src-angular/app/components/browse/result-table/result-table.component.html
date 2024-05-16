@@ -24,6 +24,9 @@
 				<th [ngClass]="sortDirection" (click)="onColClicked('year')">
 					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
 				</th>
+				<th [ngClass]="sortDirection" (click)="onColClicked('charter')">
+					Charter <i *ngIf="sortColumn === 'charter'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				</th>
 			</tr>
 		</thead>
 		<tbody>
