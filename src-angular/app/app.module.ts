@@ -1,4 +1,4 @@
-import { HttpClientModule } from '@angular/common/http'
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { NgModule } from '@angular/core'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { BrowserModule } from '@angular/platform-browser'
@@ -34,13 +34,11 @@ import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 		RemoveStyleTagsPipe,
 		SettingsComponent,
 	],
-	imports: [
+	bootstrap: [AppComponent], imports: [
 		BrowserModule,
 		AppRoutingModule,
 		FormsModule,
 		ReactiveFormsModule,
-		HttpClientModule,
-	],
-	bootstrap: [AppComponent],
+	], providers: [provideHttpClient(withInterceptorsFromDi())],
 })
 export class AppModule { }

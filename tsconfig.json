@@ -7,7 +7,6 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
     "sourceMap": true,
     "noImplicitOverride": true,
@@ -18,7 +17,6 @@
     "importHelpers": true,
     "useDefineForClassFields": false,
     "noImplicitAny": true,
-		"downlevelIteration": true,
     "strictBindCallApply": true,
     "lib": [
       "ES2022",
