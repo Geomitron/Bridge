@@ -156,7 +156,7 @@ async function loadWindow(retries = 0) {
 function getLoadUrl() {
 	return url.format({
 		protocol: isDevBuild ? 'http:' : 'file:',
-		pathname: isDevBuild ? '//localhost:4200/' : path.join(_dirname, '..', '..', 'angular', 'index.html'),
+		pathname: isDevBuild ? '//localhost:4200/' : path.join(_dirname, '..', '..', 'angular', 'browser', 'index.html'),
 		slashes: true,
 	})
 }

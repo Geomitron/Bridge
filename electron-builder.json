@@ -17,7 +17,7 @@
 		"shortcutName": "Bridge"
 	},
 	"win": {
-		"icon": "dist/angular/assets/images/system/icons/win/icon.ico",
+		"icon": "dist/angular/browser/assets/images/system/icons/win/icon.ico",
 		"compression": "store"
 	},
 	"mac": {
@@ -31,7 +31,7 @@
 				]
 			}
 		],
-		"icon": "dist/angular/assets/images/system/icons/mac/icon.icns"
+		"icon": "dist/angular/browser/assets/images/system/icons/mac/icon.icns"
 	},
 	"linux": {
 		"compression": "maximum",
