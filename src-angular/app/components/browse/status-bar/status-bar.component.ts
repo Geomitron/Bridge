@@ -1,6 +1,6 @@
 import { Component, ElementRef, ViewChild } from '@angular/core'
 
-import { keys, pickBy } from 'lodash'
+import _ from 'lodash'
 
 import { DownloadService } from '../../../core/services/download.service'
 import { SearchService } from '../../../core/services/search.service'
@@ -27,7 +27,7 @@ export class StatusBarComponent {
 	}
 
 	get selectedGroupIds() {
-		return keys(pickBy(this.selectionService.selections)).map(k => Number(k))
+		return _.keys(_.pickBy(this.selectionService.selections)).map(k => Number(k))
 	}
 
 	async downloadSelected() {

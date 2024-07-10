@@ -2,7 +2,9 @@ import { randomUUID } from 'crypto'
 import EventEmitter from 'events'
 import { createWriteStream } from 'fs'
 import { access, constants } from 'fs/promises'
-import { round, throttle } from 'lodash'
+import { IncomingMessage } from 'http'
+import https from 'https'
+import _ from 'lodash'
 import { mkdirp } from 'mkdirp'
 import mv from 'mv'
 import { SngStream } from 'parse-sng'
@@ -10,12 +12,12 @@ import { join } from 'path'
 import { rimraf } from 'rimraf'
 import { Readable } from 'stream'
 import { ReadableStream } from 'stream/web'
-import { Agent, fetch, setGlobalDispatcher } from 'undici'
+import { Agent, setGlobalDispatcher } from 'undici'
 import { inspect } from 'util'
 
-import { tempPath } from '../../../src-shared/Paths'
-import { sanitizeFilename } from '../../ElectronUtilFunctions'
-import { getSettings } from '../SettingsHandler.ipc'
+import { tempPath } from '../../../src-shared/Paths.js'
+import { sanitizeFilename } from '../../ElectronUtilFunctions.js'
+import { getSettings } from '../SettingsHandler.ipc.js'
 
 setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }))
 
@@ -64,7 +66,7 @@ export class ChartDownload {
 	private destinationName: string
 	private isSng: boolean
 
-	private showProgress = throttle((description: string, percent: number | null = null) => {
+	private showProgress = _.throttle((description: string, percent: number | null = null) => {
 		this.eventEmitter.emit('progress', { header: description, body: '' }, percent)
 	}, 10, { leading: true, trailing: true })
 
@@ -148,36 +150,34 @@ export class ChartDownload {
 	}
 
 	private async downloadChart() {
-		const sngResponse = await fetch(`https://files.enchor.us/${this.md5}.sng`, { mode: 'cors', referrerPolicy: 'no-referrer' })
-		if (!sngResponse.ok || !sngResponse.body) {
-			throw { header: 'Failed to download the chart file', body: `Response code ${sngResponse.status}: ${sngResponse.statusText}` }
-		}
-		const fileSize = BigInt(sngResponse.headers.get('Content-Length')!)
+		const { response, abortController } = await getDownloadStream(this.md5)
+		const fileSize = BigInt(response.headers['content-length']!)
 
 		if (this.isSng) {
-			const sngStream = Readable.fromWeb(sngResponse.body as ReadableStream<Uint8Array>, { highWaterMark: 2e+9 })
-
-			sngStream.pipe(createWriteStream(join(this.tempPath, this.destinationName), { highWaterMark: 2e+9 }))
+			response.pipe(createWriteStream(join(this.tempPath, this.destinationName), { highWaterMark: 2e+9 }))
 
 			await new Promise<void>((resolve, reject) => {
 				let downloadedByteCount = BigInt(0)
-				sngStream.on('end', resolve)
-				sngStream.on('error', err => reject(err))
-				sngStream.on('data', data => {
+				response.on('end', resolve)
+				response.on('error', err => reject(err))
+				response.on('data', data => {
 					downloadedByteCount += BigInt(data.length)
-					const downloadPercent = round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
+					const downloadPercent = _.round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
 					this.showProgress(`Downloading... (${downloadPercent}%)`, downloadPercent)
+					if (this._canceled) {
+						abortController.abort()
+					}
 				})
 			})
 		} else {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const sngStream = new SngStream(() => sngResponse.body! as any, { generateSongIni: true })
+			const sngStream = new SngStream(Readable.toWeb(response) as any, { generateSongIni: true })
 			let downloadedByteCount = BigInt(0)
 
 			await mkdirp(join(this.tempPath, this.destinationName))
 
 			await new Promise<void>((resolve, reject) => {
-				sngStream.on('file', async (fileName, fileStream) => {
+				sngStream.on('file', async (fileName, fileStream, nextFile) => {
 					const nodeFileStream = Readable.fromWeb(fileStream as ReadableStream<Uint8Array>, { highWaterMark: 2e+9 })
 					nodeFileStream.pipe(createWriteStream(join(this.tempPath, this.destinationName, fileName), { highWaterMark: 2e+9 }))
 
@@ -185,15 +185,32 @@ export class ChartDownload {
 						nodeFileStream.on('end', resolve)
 						nodeFileStream.on('error', err => reject(err))
 						nodeFileStream.on('data', data => {
-							downloadedByteCount += BigInt(data.length)
-							const downloadPercent =
-								round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
-							this.showProgress(`Downloading "${fileName}"... (${downloadPercent}%)`, downloadPercent)
+							if (this._canceled) {
+								abortController.abort()
+							} else {
+								downloadedByteCount += BigInt(data.length)
+								const downloadPercent =
+									_.round(100 * Number(downloadedByteCount / BigInt(1000)) / Number(fileSize / BigInt(1000)), 1)
+								this.showProgress(`Downloading "${fileName}"... (${downloadPercent}%)`, downloadPercent)
+							}
 						})
 					})
+
+					if (nextFile) {
+						nextFile()
+					} else {
+						resolve()
+					}
 				})
-				sngStream.on('end', resolve)
-				sngStream.on('error', err => reject(err))
+
+				sngStream.on('error', err => {
+					if (err instanceof Error && err.message === 'aborted') {
+						// Errors from cancelling downloads are intentional
+						resolve()
+					} else {
+						reject(err)
+					}
+				})
 
 				sngStream.start()
 			})
@@ -231,4 +248,31 @@ export class ChartDownload {
 		this.showProgress.cancel()
 		this.eventEmitter.emit('end', destinationPath)
 	}
+}
+
+function getDownloadStream(md5: string): Promise<{ response: IncomingMessage; abortController: AbortController }> {
+	const abortController = new AbortController()
+	return new Promise((resolve, reject) => {
+		const request = https.get(`https://files.enchor.us/${md5}.sng`, {
+			headers: {
+				'mode': 'cors',
+				// eslint-disable-next-line @typescript-eslint/naming-convention
+				'referrer-policy': 'no-referrer',
+			},
+			timeout: 20000,
+			signal: abortController.signal,
+		})
+
+		request.on('response', response => {
+			if (response.statusCode !== 200 || !response.headers['content-length']) {
+				reject({
+					header: 'Failed to download the chart file',
+					body: `Response code ${response.statusCode}: ${response.statusMessage}`,
+				})
+				return
+			}
+
+			resolve({ response, abortController })
+		})
+	})
 }

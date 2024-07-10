@@ -4,12 +4,17 @@ import windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
 
-import { IpcFromMainEmitEvents } from '../src-shared/interfaces/ipc.interface'
-import { dataPath } from '../src-shared/Paths'
-import { retryUpdate } from './ipc/UpdateHandler.ipc'
-import { getIpcInvokeHandlers, getIpcToMainEmitHandlers } from './IpcHandler'
+import { IpcFromMainEmitEvents } from '../src-shared/interfaces/ipc.interface.js'
+import { dataPath } from '../src-shared/Paths.js'
+import { retryUpdate } from './ipc/UpdateHandler.ipc.js'
+import { getIpcInvokeHandlers, getIpcToMainEmitHandlers } from './IpcHandler.js'
 
 electronUnhandled({ showDialog: true, logger: err => console.log('Error: Unhandled Rejection:', err) })
+
+import { dirname } from 'path'
+
+const _filename = url.fileURLToPath(import.meta.url)
+const _dirname = dirname(_filename)
 
 export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -119,7 +124,7 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 		frame: false,
 		title: 'Bridge',
 		webPreferences: {
-			preload: path.join(__dirname, 'preload.js'),
+			preload: path.join(_dirname, 'preload.mjs'),
 			allowRunningInsecureContent: (isDevBuild) ? true : false,
 			textAreasAreResizable: false,
 		},
@@ -129,7 +134,7 @@ function createBrowserWindow(windowState: windowStateKeeper.State) {
 	}
 
 	if (process.platform === 'linux' && !isDevBuild) {
-		options = Object.assign(options, { icon: path.join(__dirname, '..', 'assets', 'images', 'system', 'icons', 'png', '48x48.png') })
+		options = Object.assign(options, { icon: path.join(_dirname, '..', 'assets', 'images', 'system', 'icons', 'png', '48x48.png') })
 	}
 
 	return new BrowserWindow(options)
@@ -151,7 +156,7 @@ async function loadWindow(retries = 0) {
 function getLoadUrl() {
 	return url.format({
 		protocol: isDevBuild ? 'http:' : 'file:',
-		pathname: isDevBuild ? '//localhost:4200/' : path.join(__dirname, '..', '..', 'angular', 'index.html'),
+		pathname: isDevBuild ? '//localhost:4200/' : path.join(_dirname, '..', '..', 'angular', 'index.html'),
 		slashes: true,
 	})
 }

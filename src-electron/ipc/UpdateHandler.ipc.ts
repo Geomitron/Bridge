@@ -1,26 +1,26 @@
-import { autoUpdater, UpdateInfo } from 'electron-updater'
+import electronUpdater from 'electron-updater'
 import { inspect } from 'util'
 
-import { UpdateProgress } from '../../src-shared/interfaces/update.interface'
-import { emitIpcEvent } from '../main'
+import { UpdateProgress } from '../../src-shared/interfaces/update.interface.js'
+import { emitIpcEvent } from '../main.js'
 
 let updateAvailable: boolean | null = false
 let downloading = false
 
-autoUpdater.autoDownload = false
-autoUpdater.logger = null
+electronUpdater.autoUpdater.autoDownload = false
+electronUpdater.autoUpdater.logger = null
 
-autoUpdater.on('error', (err: Error) => {
+electronUpdater.autoUpdater.on('error', (err: Error) => {
 	updateAvailable = null
 	emitIpcEvent('updateError', inspect(err))
 })
 
-autoUpdater.on('update-available', (info: UpdateInfo) => {
+electronUpdater.autoUpdater.on('update-available', (info: electronUpdater.UpdateInfo) => {
 	updateAvailable = true
 	emitIpcEvent('updateAvailable', info)
 })
 
-autoUpdater.on('update-not-available', () => {
+electronUpdater.autoUpdater.on('update-not-available', () => {
 	updateAvailable = false
 	emitIpcEvent('updateAvailable', null)
 })
@@ -28,7 +28,7 @@ autoUpdater.on('update-not-available', () => {
 
 export async function retryUpdate() {
 	try {
-		await autoUpdater.checkForUpdates()
+		await electronUpdater.autoUpdater.checkForUpdates()
 	} catch (err) {
 		updateAvailable = null
 		emitIpcEvent('updateError', inspect(err))
@@ -43,7 +43,7 @@ export async function getUpdateAvailable() {
  * @returns the current version of Bridge.
  */
 export async function getCurrentVersion() {
-	return autoUpdater.currentVersion.raw
+	return electronUpdater.autoUpdater.currentVersion.raw
 }
 
 /**
@@ -53,20 +53,20 @@ export function downloadUpdate() {
 	if (downloading) { return }
 	downloading = true
 
-	autoUpdater.on('download-progress', (updateProgress: UpdateProgress) => {
+	electronUpdater.autoUpdater.on('download-progress', (updateProgress: UpdateProgress) => {
 		emitIpcEvent('updateProgress', updateProgress)
 	})
 
-	autoUpdater.on('update-downloaded', () => {
+	electronUpdater.autoUpdater.on('update-downloaded', () => {
 		emitIpcEvent('updateDownloaded', undefined)
 	})
 
-	autoUpdater.downloadUpdate()
+	electronUpdater.autoUpdater.downloadUpdate()
 }
 
 /**
  * Immediately closes the application and installs the update.
  */
 export function quitAndInstall() {
-	autoUpdater.quitAndInstall() // autoUpdater installs a downloaded update on the next program restart by default
+	electronUpdater.autoUpdater.quitAndInstall() // autoUpdater installs a downloaded update on the next program restart by default
 }

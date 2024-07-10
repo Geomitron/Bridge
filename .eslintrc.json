@@ -6,10 +6,12 @@
 			"files": ["*.ts"],
 			"parserOptions": {
 				"project": ["tsconfig.json"],
+				"sourceType": "module",
 				"createDefaultProgram": true
 			},
 			"plugins": [
-				"prefer-arrow"
+				"prefer-arrow",
+				"import"
 			],
 			"extends": [
         "eslint:recommended",
@@ -17,6 +19,7 @@
         "plugin:@angular-eslint/recommended"
 			],
 			"rules": {
+				"import/extensions": ["error", "ignorePackages"],
 				"semi": "off",
 				"@typescript-eslint/semi": ["error", "never"],
 				"@typescript-eslint/consistent-type-definitions": "error",

@@ -11,7 +11,7 @@ This is the desktop version of [Chorus Encore](https://www.enchor.us/).
 
 ## Setup
 
-Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page to download the install wizard. (Windows, Mac, and Linux versions are available)
+Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page to download the install wizard. (Windows 10/11, Mac, and Linux versions are available)
 
 ## Features
 

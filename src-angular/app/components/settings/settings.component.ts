@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
 import { FormControl } from '@angular/forms'
 
-import { capitalize } from 'lodash'
+import _ from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { themes } from 'src-shared/Settings'
 
@@ -91,7 +91,7 @@ export class SettingsComponent implements OnInit {
 	}
 
 	capitalize(text: string) {
-		return capitalize(text)
+		return _.capitalize(text)
 	}
 
 	downloadUpdate() {

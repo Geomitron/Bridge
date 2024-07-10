@@ -1,5 +1,5 @@
-import { emitIpcEvent } from '../../main'
-import { ChartDownload } from './ChartDownload'
+import { emitIpcEvent } from '../../main.js'
+import { ChartDownload } from './ChartDownload.js'
 
 export class DownloadQueue {
 

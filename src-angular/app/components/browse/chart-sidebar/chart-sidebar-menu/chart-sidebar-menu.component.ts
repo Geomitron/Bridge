@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http'
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
 import { FormControl, NonNullableFormBuilder, Validators } from '@angular/forms'
 
-import { sortBy } from 'lodash'
+import _ from 'lodash'
 import { environment } from 'src-angular/environments/environment'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { driveLink } from 'src-shared/UtilFunctions'
@@ -53,7 +53,7 @@ export class ChartSidebarMenutComponent implements OnInit {
 	get reportExtraInfo() { return this.reportForm.get('reportExtraInfo')! }
 
 	get displayVersions() {
-		return sortBy(this.chartVersions, v => v.modifiedTime).reverse()
+		return _.sortBy(this.chartVersions, v => v.modifiedTime).reverse()
 	}
 
 	getVersionBreadcrumbs(version: ChartData) {

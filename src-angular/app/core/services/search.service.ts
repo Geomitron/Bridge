@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http'
 import { EventEmitter, Injectable } from '@angular/core'
 import { FormControl } from '@angular/forms'
 
-import { chain, xorBy } from 'lodash'
+import _ from 'lodash'
 import { catchError, mergeMap, tap, throwError, timer } from 'rxjs'
 import { Difficulty, Instrument } from 'scan-chart'
 import { environment } from 'src-angular/environments/environment'
@@ -103,7 +103,7 @@ export class SearchService {
 				if (!nextPage) {
 					// Don't reload results if they are the same
 					if (this.groupedSongs
-						&& xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
+						&& _.xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
 						&& this.songsResponse!.found === response.found) {
 						return
 					} else {
@@ -113,7 +113,7 @@ export class SearchService {
 				this.songsResponse = response
 
 				this.groupedSongs.push(
-					...chain(response.data)
+					..._.chain(response.data)
 						.groupBy(c => c.songId ?? -1 * c.chartId)
 						.values()
 						.value()
@@ -148,7 +148,7 @@ export class SearchService {
 
 				// Don't reload results if they are the same
 				if (this.groupedSongs
-					&& xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
+					&& _.xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
 					&& this.songsResponse!.found === response.found) {
 					return
 				} else {
@@ -158,7 +158,7 @@ export class SearchService {
 				this.songsResponse = response
 
 				this.groupedSongs.push(
-					...chain(response.data)
+					..._.chain(response.data)
 						.groupBy(c => c.songId ?? -1 * c.chartId)
 						.values()
 						.value()

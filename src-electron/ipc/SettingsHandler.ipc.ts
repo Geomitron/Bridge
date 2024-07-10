@@ -1,26 +1,25 @@
 import { readFileSync } from 'fs'
 import { writeFile } from 'fs/promises'
-import { cloneDeep } from 'lodash'
+import _ from 'lodash'
 import { mkdirp } from 'mkdirp'
 import { inspect } from 'util'
 
-import { dataPath, settingsPath, tempPath, themesPath } from '../../src-shared/Paths'
-import { defaultSettings, Settings } from '../../src-shared/Settings'
-import { devLog } from '../ElectronUtilFunctions'
+import { dataPath, settingsPath, tempPath, themesPath } from '../../src-shared/Paths.js'
+import { defaultSettings, Settings } from '../../src-shared/Settings.js'
 
 export let settings = readSettings()
 
 function readSettings() {
 	try {
 		const settings = JSON.parse(readFileSync(settingsPath, 'utf8')) as Partial<Settings>
-		return Object.assign(cloneDeep(defaultSettings), settings)
+		return Object.assign(_.cloneDeep(defaultSettings), settings)
 	} catch (err) {
 		if (err?.code === 'ENOENT') {
-			saveSettings(cloneDeep(defaultSettings))
+			saveSettings(_.cloneDeep(defaultSettings))
 		} else {
-			devLog('Failed to load settings. Default settings will be used.\n' + inspect(err))
+			console.error('Failed to load settings. Default settings will be used.\n' + inspect(err))
 		}
-		return cloneDeep(defaultSettings)
+		return _.cloneDeep(defaultSettings)
 	}
 }
 
@@ -51,6 +50,6 @@ async function saveSettings(settings: Settings) {
 
 		await writeFile(settingsPath, JSON.stringify(settings, undefined, 2), 'utf8')
 	} catch (err) {
-		devLog('Failed to save settings.\n' + inspect(err))
+		console.error('Failed to save settings.\n' + inspect(err))
 	}
 }

@@ -8,8 +8,8 @@
     "./**/*.ts"
   ],
   "compilerOptions": {
-		"target": "ES5",
-		"module": "CommonJS",
+		"target": "ESNext",
+		"module": "ESNext",
     "outDir": "../dist/electron"
   }
 }

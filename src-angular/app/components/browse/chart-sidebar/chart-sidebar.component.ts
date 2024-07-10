@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostBinding, OnInit, Renderer2, ViewChild } from '@angular/core'
 import { FormControl } from '@angular/forms'
 
-import { capitalize, chain, compact, flatMap, intersection, round, sortBy } from 'lodash'
+import _ from 'lodash'
 import { ChartIssueType, Difficulty, FolderIssueType, Instrument, MetadataIssueType, NoteIssueType, TrackIssueType } from 'scan-chart'
 import { DownloadService } from 'src-angular/app/core/services/download.service'
 import { SearchService } from 'src-angular/app/core/services/search.service'
@@ -68,7 +68,7 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	public get albumArtMd5() {
-		return flatMap(this.charts ?? []).find(c => !!c.albumArtMd5)?.albumArtMd5 || null
+		return _.flatMap(this.charts ?? []).find(c => !!c.albumArtMd5)?.albumArtMd5 || null
 	}
 
 	public get hasIcons() { return !!this.searchService.availableIcons }
@@ -90,7 +90,7 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	public get extraLengthSeconds() {
-		return round((this.selectedChart!.notesData.length - this.selectedChart!.notesData.effectiveLength) / 1000, 1)
+		return _.round((this.selectedChart!.notesData.length - this.selectedChart!.notesData.effectiveLength) / 1000, 1)
 	}
 
 	public get hasIssues() {
@@ -116,7 +116,7 @@ export class ChartSidebarComponent implements OnInit {
 		}
 	}
 	public get folderIssues() {
-		return chain(this.selectedChart!.folderIssues)
+		return _.chain(this.selectedChart!.folderIssues)
 			.filter(i => !['albumArtSize', 'invalidIni', 'multipleVideo', 'badIniLine'].includes(i.folderIssue))
 			.map(i => i.folderIssue)
 			.uniq()
@@ -157,16 +157,16 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	public get trackIssuesGroups() {
-		return chain([
+		return _.chain([
 			...this.selectedChart!.notesData.trackIssues.map(i => ({ ...i, issues: i.trackIssues })),
 			...this.selectedChart!.notesData.noteIssues.map(i => ({ ...i, issues: i.noteIssues.map(ni => ni.issueType) })),
 		])
 			.sortBy(g => instruments.indexOf(g.instrument), g => difficulties.indexOf(g.difficulty))
-			.groupBy(g => `${capitalize(g.instrument)} - ${capitalize(g.difficulty)} Issues Found:`)
+			.groupBy(g => `${_.capitalize(g.instrument)} - ${_.capitalize(g.difficulty)} Issues Found:`)
 			.toPairs()
 			.map(([groupName, group]) => ({
 				groupName,
-				issues: chain(group)
+				issues: _.chain(group)
 					.flatMap(g => g.issues)
 					.filter(i => i !== 'babySustain' && i !== 'noNotesOnNonemptyTrack')
 					.uniq()
@@ -193,9 +193,9 @@ export class ChartSidebarComponent implements OnInit {
 
 	public get boolProperties(): ({ value: boolean; text: string })[] {
 		const notesData = this.selectedChart!.notesData
-		const showGuitarlikeProperties = intersection(this.instruments, this.guitarlikeInstruments).length > 0
-		const showDrumlikeProperties = intersection(this.instruments, ['drums']).length > 0
-		return compact([
+		const showGuitarlikeProperties = _.intersection(this.instruments, this.guitarlikeInstruments).length > 0
+		const showDrumlikeProperties = _.intersection(this.instruments, ['drums']).length > 0
+		return _.compact([
 			showGuitarlikeProperties ? { value: notesData.hasSoloSections, text: 'Solo Sections' } : null,
 			{ value: notesData.hasLyrics, text: 'Lyrics' },
 			showGuitarlikeProperties ? { value: notesData.hasForcedNotes, text: 'Forced Notes' } : null,
@@ -211,10 +211,10 @@ export class ChartSidebarComponent implements OnInit {
 	 * Displays the information for the selected song.
 	 */
 	async onRowClicked(song: ChartData[]) {
-		this.charts = chain(song)
+		this.charts = _.chain(song)
 			.groupBy(c => c.versionGroupId)
 			.values()
-			.map(versionGroup => sortBy(versionGroup, vg => vg.modifiedTime).reverse())
+			.map(versionGroup => _.sortBy(versionGroup, vg => vg.modifiedTime).reverse())
 			.value()
 		if (this.selectedChart?.albumArtMd5 !== this.charts[0][0].albumArtMd5) {
 			this.albumLoading = true
@@ -238,7 +238,7 @@ export class ChartSidebarComponent implements OnInit {
 	}
 	public get instruments(): Instrument[] {
 		if (!this.selectedChart) { return [] }
-		return chain(this.selectedChart.notesData.noteCounts)
+		return _.chain(this.selectedChart.notesData.noteCounts)
 			.map(nc => nc.instrument)
 			.uniq()
 			.sortBy(i => instruments.indexOf(i))
@@ -251,7 +251,7 @@ export class ChartSidebarComponent implements OnInit {
 	}
 	public get difficulties(): Difficulty[] {
 		if (!this.selectedChart) { return [] }
-		return chain(this.selectedChart.notesData.noteCounts)
+		return _.chain(this.selectedChart.notesData.noteCounts)
 			.filter(nc => nc.instrument === this.instrumentDropdown.value && nc.count > 0)
 			.map(nc => nc.difficulty)
 			.sortBy(d => difficulties.indexOf(d))
@@ -262,7 +262,7 @@ export class ChartSidebarComponent implements OnInit {
 		if (this.noteCount < 2) {
 			return 0
 		} else {
-			return round(this.noteCount / (this.selectedChart!.notesData.effectiveLength / 1000), 1)
+			return _.round(this.noteCount / (this.selectedChart!.notesData.effectiveLength / 1000), 1)
 		}
 	}
 

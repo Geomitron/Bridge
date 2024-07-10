@@ -1,18 +1,18 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import electron from 'electron'
 
-import { ContextBridgeApi, IpcFromMainEmitEvents, IpcInvokeEvents, IpcToMainEmitEvents } from '../src-shared/interfaces/ipc.interface'
+import { ContextBridgeApi, IpcFromMainEmitEvents, IpcInvokeEvents, IpcToMainEmitEvents } from '../src-shared/interfaces/ipc.interface.js'
 
 function getInvoker<K extends keyof IpcInvokeEvents>(key: K) {
-	return (data: IpcInvokeEvents[K]['input']) => ipcRenderer.invoke(key, data) as Promise<IpcInvokeEvents[K]['output']>
+	return (data: IpcInvokeEvents[K]['input']) => electron.ipcRenderer.invoke(key, data) as Promise<IpcInvokeEvents[K]['output']>
 }
 
 function getEmitter<K extends keyof IpcToMainEmitEvents>(key: K) {
-	return (data: IpcToMainEmitEvents[K]) => ipcRenderer.send(key, data)
+	return (data: IpcToMainEmitEvents[K]) => electron.ipcRenderer.send(key, data)
 }
 
 function getListenerAdder<K extends keyof IpcFromMainEmitEvents>(key: K) {
 	return (listener: (data: IpcFromMainEmitEvents[K]) => void) => {
-		ipcRenderer.on(key, (_event, ...results) => listener(results[0]))
+		electron.ipcRenderer.on(key, (_event, ...results) => listener(results[0]))
 	}
 }
 
@@ -52,4 +52,4 @@ const electronApi: ContextBridgeApi = {
 	},
 }
 
-contextBridge.exposeInMainWorld('electron', electronApi)
+electron.contextBridge.exposeInMainWorld('electron', electronApi)

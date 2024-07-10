@@ -1,6 +1,6 @@
 import { app, dialog, OpenDialogOptions, shell } from 'electron'
 
-import { mainWindow } from '../main'
+import { mainWindow } from '../main.js'
 
 /**
  * Opens `url` in the default browser.

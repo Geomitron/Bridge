@@ -3,9 +3,9 @@ import { basename, parse } from 'path'
 import sanitize from 'sanitize-filename'
 import { inspect } from 'util'
 
-import { lower } from '../src-shared/UtilFunctions'
-import { settings } from './ipc/SettingsHandler.ipc'
-import { emitIpcEvent } from './main'
+import { lower } from '../src-shared/UtilFunctions.js'
+import { settings } from './ipc/SettingsHandler.ipc.js'
+import { emitIpcEvent } from './main.js'
 
 /**
  * @returns The relative filepath from the library folder to `absoluteFilepath`.

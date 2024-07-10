@@ -1,5 +1,5 @@
-import { Download } from '../../src-shared/interfaces/download.interface'
-import { DownloadQueue } from './download/DownloadQueue'
+import { Download } from '../../src-shared/interfaces/download.interface.js'
+import { DownloadQueue } from './download/DownloadQueue.js'
 
 const downloadQueue: DownloadQueue = new DownloadQueue()
 

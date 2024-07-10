@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core'
 
-import { capitalize } from 'lodash'
+import _ from 'lodash'
 import { Instrument } from 'scan-chart'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { instrumentToDiff } from 'src-shared/UtilFunctions'
@@ -27,7 +27,7 @@ export class ChartSidebarInstrumentComponent {
 			.map(nc => nc.difficulty)
 
 		if (difficulties.length === 1) {
-			return capitalize(difficulties[0])
+			return _.capitalize(difficulties[0])
 		}
 
 		let str = ''

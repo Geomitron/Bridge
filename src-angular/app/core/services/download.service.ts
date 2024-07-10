@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable, NgZone } from '@angular/core'
 
-import { assign } from 'lodash'
+import _ from 'lodash'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { removeStyleTags } from 'src-shared/UtilFunctions'
 
@@ -22,7 +22,7 @@ export class DownloadService {
 			} else if (downloadIndex === -1) {
 				this.downloads.push(download)
 			} else {
-				assign(this.downloads[downloadIndex], download)
+				_.assign(this.downloads[downloadIndex], download)
 			}
 		}))
 	}

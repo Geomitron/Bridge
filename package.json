@@ -4,6 +4,7 @@
   "description": "A rhythm game chart searching and downloading tool.",
   "homepage": "https://github.com/Geomitron/Bridge",
   "license": "GPL-3.0",
+  "type": "module",
   "author": {
     "name": "Geo",
     "email": "geomitron@gmail.com"
@@ -17,7 +18,7 @@
   "scripts": {
     "start": "concurrently \"npm run start:angular\" \"npm run start:electron\" -n angular,electron -c red,yellow",
     "start:angular": "ng serve",
-    "start:electron": "nodemon --exec \"tsc -p src-electron/tsconfig.electron.json && electron ./dist/electron/src-electron/main.js --dev\" --watch src-electron/ -e ts",
+    "start:electron": "nodemon --exec \"tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron ./dist/electron/src-electron/main.js --dev\" --watch src-electron/ -e ts",
     "clean": "rimraf dist release",
     "build:windows": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && electron-builder build --windows",
     "build:mac": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && electron-builder build --mac",

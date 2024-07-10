@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, HostBinding, HostListener, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
 import { Router } from '@angular/router'
 
-import { sortBy } from 'lodash'
+import _ from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 
@@ -74,7 +74,7 @@ export class ResultTableComponent implements OnInit {
 	private updateSort() {
 		const col = this.sortColumn
 		if (col !== null) {
-			const groupedSongs = sortBy(this.searchService.groupedSongs, song => song[0][col]?.toLowerCase())
+			const groupedSongs = _.sortBy(this.searchService.groupedSongs, song => song[0][col]?.toLowerCase())
 			if (this.sortDirection === 'descending') { groupedSongs.reverse() }
 			this.searchService.groupedSongs = groupedSongs
 		}
