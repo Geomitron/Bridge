@@ -8,20 +8,20 @@
 				<th class="collapsing" id="checkboxColumn">
 					<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
 				</th>
-				<th [ngClass]="sortDirection" (click)="onColClicked('name')">
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('name')">
 					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" (click)="onColClicked('artist')">
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
 					Artist
 					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" (click)="onColClicked('album')">
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
 					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" (click)="onColClicked('genre')">
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
 					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" (click)="onColClicked('year')">
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
 					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
 				</th>
 			</tr>
