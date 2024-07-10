@@ -13,6 +13,8 @@ import { difficulties, difficultyDisplay, instrumentDisplay, instruments } from 
 })
 export class SearchBarComponent implements OnInit, AfterViewInit {
 
+	@ViewChild('searchInput') searchInput: ElementRef<HTMLInputElement>
+
 	@ViewChild('hasSoloSections') hasSoloSections: ElementRef<HTMLInputElement>
 	@ViewChild('hasForcedNotes') hasForcedNotes: ElementRef<HTMLInputElement>
 	@ViewChild('hasOpenNotes') hasOpenNotes: ElementRef<HTMLInputElement>
@@ -45,6 +47,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	}
 
 	ngAfterViewInit() {
+		this.searchInput.nativeElement.focus()
 		this.updateDisabledControls()
 		this.searchService.instrument.valueChanges.subscribe(() => {
 			this.updateDisabledControls()

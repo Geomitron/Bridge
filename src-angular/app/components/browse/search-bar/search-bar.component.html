@@ -5,7 +5,7 @@
 		<!-- Search Input -->
 		<div class="flex items-center flex-1 flex-grow-[2] min-w-[21rem]">
 			<div class="form-control w-full">
-				<input type="text" [formControl]="searchControl" placeholder="Search..." class="input input-bordered pr-14" />
+				<input #searchInput type="text" [formControl]="searchControl" placeholder="Search..." class="input input-bordered pr-14" />
 			</div>
 			@if (searchLoading) {
 				<span class="loading loading-spinner loading-sm self-center -ml-9"></span>
