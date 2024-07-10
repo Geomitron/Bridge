@@ -1,25 +1,20 @@
 import { randomUUID } from 'crypto'
 import EventEmitter from 'events'
 import { createWriteStream } from 'fs'
+import { ensureDir, move, remove } from 'fs-extra'
 import { access, constants } from 'fs/promises'
 import { IncomingMessage } from 'http'
 import https from 'https'
 import _ from 'lodash'
-import { mkdirp } from 'mkdirp'
-import mv from 'mv'
 import { SngStream } from 'parse-sng'
 import { join } from 'path'
-import { rimraf } from 'rimraf'
 import { Readable } from 'stream'
 import { ReadableStream } from 'stream/web'
-import { Agent, setGlobalDispatcher } from 'undici'
 import { inspect } from 'util'
 
 import { tempPath } from '../../../src-shared/Paths.js'
 import { sanitizeFilename } from '../../ElectronUtilFunctions.js'
 import { getSettings } from '../SettingsHandler.ipc.js'
-
-setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }))
 
 export interface DownloadMessage {
 	header: string
@@ -109,7 +104,7 @@ export class ChartDownload {
 		this.showProgress.cancel()
 		this._canceled = true
 		if (this.tempPath) {
-			rimraf(this.tempPath).catch(() => { /** Do nothing */ }) // Delete temp folder
+			remove(this.tempPath).catch(() => { /** Do nothing */ }) // Delete temp folder
 		}
 	}
 
@@ -142,7 +137,7 @@ export class ChartDownload {
 		this.tempPath = join(tempPath, randomUUID())
 		try {
 			this.showProgress('Creating temporary download folder...')
-			await mkdirp(this.tempPath)
+			await ensureDir(this.tempPath)
 			if (this._canceled) { return }
 		} catch (err) {
 			throw { header: 'Failed to create temporary download folder', body: inspect(err) }
@@ -174,7 +169,7 @@ export class ChartDownload {
 			const sngStream = new SngStream(Readable.toWeb(response) as any, { generateSongIni: true })
 			let downloadedByteCount = BigInt(0)
 
-			await mkdirp(join(this.tempPath, this.destinationName))
+			await ensureDir(join(this.tempPath, this.destinationName))
 
 			await new Promise<void>((resolve, reject) => {
 				sngStream.on('file', async (fileName, fileStream, nextFile) => {
@@ -222,10 +217,11 @@ export class ChartDownload {
 		if (this._canceled) { return }
 
 		this.showProgress('Moving chart to library folder...', 100)
+		await new Promise<void>(resolve => setTimeout(resolve, 200)) // Delay for OS file processing
 		await new Promise<void>((resolve, reject) => {
 			if (settings.libraryPath) {
 				const destinationPath = join(settings.libraryPath, this.destinationName)
-				mv(join(this.tempPath, this.destinationName), destinationPath, { mkdirp: true }, err => {
+				move(join(this.tempPath, this.destinationName), destinationPath, { overwrite: true }, err => {
 					if (err) {
 						reject({ header: 'Failed to move chart to library folder', body: inspect(err) })
 					} else {
@@ -239,7 +235,7 @@ export class ChartDownload {
 
 		this.showProgress('Deleting temporary folder...')
 		try {
-			await rimraf(this.tempPath)
+			await remove(this.tempPath)
 		} catch (err) {
 			throw { header: 'Failed to delete temporary folder', body: inspect(err) }
 		}
@@ -254,12 +250,13 @@ function getDownloadStream(md5: string): Promise<{ response: IncomingMessage; ab
 	const abortController = new AbortController()
 	return new Promise((resolve, reject) => {
 		const request = https.get(`https://files.enchor.us/${md5}.sng`, {
+			agent: new https.Agent({ timeout: 30000 }),
 			headers: {
 				'mode': 'cors',
 				// eslint-disable-next-line @typescript-eslint/naming-convention
 				'referrer-policy': 'no-referrer',
 			},
-			timeout: 20000,
+			timeout: 30000,
 			signal: abortController.signal,
 		})
 

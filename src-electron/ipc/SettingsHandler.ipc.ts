@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs'
-import { writeFile } from 'fs/promises'
+import { ensureDir, outputFile } from 'fs-extra'
 import _ from 'lodash'
-import { mkdirp } from 'mkdirp'
 import { inspect } from 'util'
 
 import { dataPath, settingsPath, tempPath, themesPath } from '../../src-shared/Paths.js'
@@ -43,12 +42,13 @@ export async function getSettings() {
  */
 async function saveSettings(settings: Settings) {
 	try {
-		// Create data directories if they don't exist
-		for (const path of [dataPath, tempPath, themesPath]) {
-			await mkdirp(path)
-		}
-
-		await writeFile(settingsPath, JSON.stringify(settings, undefined, 2), 'utf8')
+		await Promise.all([
+			// Create data directories if they don't exist
+			ensureDir(dataPath),
+			ensureDir(tempPath),
+			ensureDir(themesPath),
+			outputFile(settingsPath, JSON.stringify(settings, undefined, 2), { encoding: 'utf8' }),
+		])
 	} catch (err) {
 		console.error('Failed to save settings.\n' + inspect(err))
 	}
