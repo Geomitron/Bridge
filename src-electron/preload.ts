@@ -1,5 +1,5 @@
-import electron from 'electron'
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const electron = require('electron')
 import { ContextBridgeApi, IpcFromMainEmitEvents, IpcInvokeEvents, IpcToMainEmitEvents } from '../src-shared/interfaces/ipc.interface.js'
 
 function getInvoker<K extends keyof IpcInvokeEvents>(key: K) {
