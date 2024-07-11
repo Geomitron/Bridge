@@ -1,9 +1,9 @@
 import { OpenDialogOptions, OpenDialogReturnValue } from 'electron'
 import { UpdateInfo } from 'electron-updater'
 
-import { Settings } from '../Settings'
-import { Download, DownloadProgress } from './download.interface'
-import { UpdateProgress } from './update.interface'
+import { Settings } from '../Settings.js'
+import { Download, DownloadProgress } from './download.interface.js'
+import { UpdateProgress } from './update.interface.js'
 
 export interface ContextBridgeApi {
 	invoke: IpcInvokeHandlers
@@ -29,9 +29,13 @@ export interface IpcInvokeEvents {
 		input: void
 		output: string
 	}
+	getPlatform: {
+		input: void
+		output: NodeJS.Platform
+	}
 	getUpdateAvailable: {
 		input: void
-		output: boolean | null
+		output: 'yes' | 'no' | 'error'
 	}
 	isMaximized: {
 		input: void

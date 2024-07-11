@@ -4,24 +4,24 @@ import { inspect } from 'util'
 import { UpdateProgress } from '../../src-shared/interfaces/update.interface.js'
 import { emitIpcEvent } from '../main.js'
 
-let updateAvailable: boolean | null = false
+let updateAvailable: 'yes' | 'no' | 'error' = 'no'
 let downloading = false
 
 electronUpdater.autoUpdater.autoDownload = false
 electronUpdater.autoUpdater.logger = null
 
 electronUpdater.autoUpdater.on('error', (err: Error) => {
-	updateAvailable = null
+	updateAvailable = 'error'
 	emitIpcEvent('updateError', inspect(err))
 })
 
 electronUpdater.autoUpdater.on('update-available', (info: electronUpdater.UpdateInfo) => {
-	updateAvailable = true
+	updateAvailable = 'yes'
 	emitIpcEvent('updateAvailable', info)
 })
 
 electronUpdater.autoUpdater.on('update-not-available', () => {
-	updateAvailable = false
+	updateAvailable = 'no'
 	emitIpcEvent('updateAvailable', null)
 })
 
@@ -30,7 +30,7 @@ export async function retryUpdate() {
 	try {
 		await electronUpdater.autoUpdater.checkForUpdates()
 	} catch (err) {
-		updateAvailable = null
+		updateAvailable = 'error'
 		emitIpcEvent('updateError', inspect(err))
 	}
 }

@@ -20,6 +20,7 @@ const electronApi: ContextBridgeApi = {
 	invoke: {
 		getSettings: getInvoker('getSettings'),
 		getCurrentVersion: getInvoker('getCurrentVersion'),
+		getPlatform: getInvoker('getPlatform'),
 		getUpdateAvailable: getInvoker('getUpdateAvailable'),
 		isMaximized: getInvoker('isMaximized'),
 		showOpenDialog: getInvoker('showOpenDialog'),

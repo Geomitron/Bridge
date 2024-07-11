@@ -44,3 +44,7 @@ export function showFolder(folderPath: string) {
 export function showFile(filePath: string) {
 	shell.showItemInFolder(filePath)
 }
+
+export async function getPlatform() {
+	return process.platform
+}

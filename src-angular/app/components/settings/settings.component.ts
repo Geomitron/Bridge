@@ -15,9 +15,9 @@ export class SettingsComponent implements OnInit {
 	public isSng: FormControl<boolean>
 	public isCompactTable: FormControl<boolean>
 
-	updateAvailable: boolean | null = false
+	updateAvailable: 'yes' | 'no' | 'error' = 'no'
 	loginClicked = false
-	downloadUpdateText = 'Update available'
+	downloadUpdateText = 'Download Update'
 	retryUpdateText = 'Failed to check for update'
 	updateDownloading = false
 	updateDownloaded = false
@@ -36,18 +36,18 @@ export class SettingsComponent implements OnInit {
 
 	async ngOnInit() {
 		window.electron.on.updateAvailable(result => {
-			this.updateAvailable = result !== null
+			this.updateAvailable = result !== null ? 'yes' : 'no'
 			this.updateRetrying = false
 			if (result !== null) {
-				this.downloadUpdateText = `Update available (${result.version})`
+				this.downloadUpdateText = `Download Update (${result.version})`
 			}
 			this.ref.detectChanges()
 		})
 		window.electron.on.updateError(err => {
 			console.log(err)
-			this.updateAvailable = null
+			this.updateAvailable = 'error'
 			this.updateRetrying = false
-			this.retryUpdateText = `Failed to check for update: ${err}`
+			this.retryUpdateText = 'Failed to check for update'
 			this.ref.detectChanges()
 		})
 		window.electron.invoke.getCurrentVersion().then(version => {
@@ -94,22 +94,26 @@ export class SettingsComponent implements OnInit {
 		return _.capitalize(text)
 	}
 
-	downloadUpdate() {
+	async downloadUpdate() {
 		if (this.updateDownloaded) {
 			window.electron.emit.quitAndInstall()
 		} else if (!this.updateDownloading) {
-			this.updateDownloading = true
-			window.electron.emit.downloadUpdate()
-			this.downloadUpdateText = 'Downloading... (0%)'
-			window.electron.on.updateProgress(result => {
-				this.downloadUpdateText = `Downloading... (${result.percent.toFixed(0)}%)`
-				this.ref.detectChanges()
-			})
-			window.electron.on.updateDownloaded(() => {
-				this.downloadUpdateText = 'Quit and install update'
-				this.updateDownloaded = true
-				this.ref.detectChanges()
-			})
+			if (await window.electron.invoke.getPlatform() === 'darwin') { // Thanks Apple...
+				this.openUrl('https://github.com/Geomitron/Bridge/releases/latest')
+			} else {
+				this.updateDownloading = true
+				window.electron.emit.downloadUpdate()
+				this.downloadUpdateText = 'Downloading... (0%)'
+				window.electron.on.updateProgress(result => {
+					this.downloadUpdateText = `Downloading... (${result.percent.toFixed(0)}%)`
+					this.ref.detectChanges()
+				})
+				window.electron.on.updateDownloaded(() => {
+					this.downloadUpdateText = 'Quit and install update'
+					this.updateDownloaded = true
+					this.ref.detectChanges()
+				})
+			}
 		}
 	}
 

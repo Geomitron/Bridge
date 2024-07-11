@@ -7,7 +7,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core'
 export class ToolbarComponent implements OnInit {
 
 	isMaximized: boolean
-	updateAvailable: boolean | null = false
+	updateAvailable: 'yes' | 'no' | 'error' = 'no'
 
 	constructor(private ref: ChangeDetectorRef) { }
 
@@ -23,11 +23,11 @@ export class ToolbarComponent implements OnInit {
 		})
 
 		window.electron.on.updateAvailable(result => {
-			this.updateAvailable = result !== null
+			this.updateAvailable = result !== null ? 'yes' : 'no'
 			this.ref.detectChanges()
 		})
 		window.electron.on.updateError(() => {
-			this.updateAvailable = null
+			this.updateAvailable = 'error'
 			this.ref.detectChanges()
 		})
 		this.updateAvailable = await window.electron.invoke.getUpdateAvailable()
