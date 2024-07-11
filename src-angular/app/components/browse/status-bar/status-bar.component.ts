@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild } from '@angular/core'
 
 import _ from 'lodash'
 
+import { removeStyleTags } from '../../../../../src-shared/UtilFunctions.js'
 import { DownloadService } from '../../../core/services/download.service'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
@@ -32,7 +33,11 @@ export class StatusBarComponent {
 
 	async downloadSelected() {
 		const selectedGroupIds = this.selectedGroupIds
-		for (const chart of this.searchService.groupedSongs.filter(gs => selectedGroupIds.includes(gs[0].groupId))) {
+		const selectedCharts = this.searchService.groupedSongs.filter(gs => selectedGroupIds.includes(gs[0].groupId))
+
+		for (const chart of _.uniqBy(selectedCharts, gs => `${removeStyleTags(gs[0].artist ?? 'Unknown Artist')
+			} - ${removeStyleTags(gs[0].name ?? 'Unknown Name')
+			} (${removeStyleTags(gs[0].charter ?? 'Unknown Charter')})`)) {
 			this.downloadService.addDownload(chart[0])
 		}
 	}

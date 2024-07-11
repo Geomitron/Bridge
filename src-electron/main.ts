@@ -162,5 +162,9 @@ function getLoadUrl() {
 }
 
 export function emitIpcEvent<E extends keyof IpcFromMainEmitEvents>(event: E, data: IpcFromMainEmitEvents[E]) {
-	mainWindow.webContents.send(event, data)
+	try {
+		mainWindow.webContents.send(event, data)
+	} catch (err) {
+		// Ignore; happens when closing Bridge
+	}
 }
