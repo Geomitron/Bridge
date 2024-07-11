@@ -131,6 +131,20 @@
 				<i class="bi bi-three-dots text-2xl px-1 text-neutral-content"></i>
 				<app-chart-sidebar-menu [chartVersions]="charts![0]" (selectedVersionChanges)="selectedChart = $event" />
 			</div>
+			<dialog #libraryDirectoryErrorModal class="modal">
+				<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+					<form method="dialog">
+						<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+							<i class="bi bi-x-lg text-lg"></i>
+						</button>
+					</form>
+					<h3 class="text-lg font-bold">Chart can't be downloaded yet</h3>
+					<p class="py-4">Please select a chart library directory in the Settings tab before downloading.</p>
+				</div>
+				<form method="dialog" class="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
 		</div>
 	</div>
 }

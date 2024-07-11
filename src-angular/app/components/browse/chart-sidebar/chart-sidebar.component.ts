@@ -18,6 +18,7 @@ export class ChartSidebarComponent implements OnInit {
 	@HostBinding('class.contents') contents = true
 
 	@ViewChild('menu') menu: ElementRef
+	@ViewChild('libraryDirectoryErrorModal') libraryDirectoryErrorModal: ElementRef<HTMLDialogElement>
 
 	public shortInstrumentDisplay = shortInstrumentDisplay
 	public difficultyDisplay = difficultyDisplay
@@ -281,7 +282,11 @@ export class ChartSidebarComponent implements OnInit {
 	 * Adds the selected chart to the download queue.
 	 */
 	onDownloadClicked() {
-		this.downloadService.addDownload(this.selectedChart!)
+		if (this.settingsService.libraryDirectory) {
+			this.downloadService.addDownload(this.selectedChart!)
+		} else {
+			this.libraryDirectoryErrorModal.nativeElement.showModal()
+		}
 	}
 
 	public showMenu() {

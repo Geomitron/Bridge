@@ -48,6 +48,11 @@ export class DownloadService {
 		return count ? total / count : 0
 	}
 
+	get currentDownloadText() {
+		const download = this.downloads.find(d => !d.stale && d.type === 'good')
+		return download ? `Downloading: ${_.truncate(download.chartName, { length: 80 })}` : ''
+	}
+
 	get anyErrorsExist() {
 		return this.downloads.find(download => download.type === 'error') ? true : false
 	}
