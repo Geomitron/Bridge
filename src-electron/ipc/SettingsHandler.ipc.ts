@@ -5,6 +5,7 @@ import { inspect } from 'util'
 
 import { dataPath, settingsPath, tempPath, themesPath } from '../../src-shared/Paths.js'
 import { defaultSettings, Settings } from '../../src-shared/Settings.js'
+import { mainWindow } from '../main.js'
 
 export let settings = readSettings()
 
@@ -26,6 +27,9 @@ function readSettings() {
  * Updates Bridge's settings object to `newSettings` and saves them to Bridge's data directories.
  */
 export async function setSettings(newSettings: Settings) {
+	if (settings.zoomFactor !== newSettings.zoomFactor) {
+		mainWindow.webContents.setZoomFactor(newSettings.zoomFactor)
+	}
 	settings = newSettings
 	await saveSettings(newSettings)
 }

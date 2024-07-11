@@ -6,15 +6,14 @@ import * as url from 'url'
 
 import { IpcFromMainEmitEvents } from '../src-shared/interfaces/ipc.interface.js'
 import { dataPath } from '../src-shared/Paths.js'
+import { settings } from './ipc/SettingsHandler.ipc.js'
 import { retryUpdate } from './ipc/UpdateHandler.ipc.js'
 import { getIpcInvokeHandlers, getIpcToMainEmitHandlers } from './IpcHandler.js'
 
 electronUnhandled({ showDialog: true, logger: err => console.log('Error: Unhandled Rejection:', err) })
 
-import { dirname } from 'path'
-
 const _filename = url.fileURLToPath(import.meta.url)
-const _dirname = dirname(_filename)
+const _dirname = path.dirname(_filename)
 
 export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
@@ -83,14 +82,8 @@ async function createBridgeWindow() {
 	// Don't use a system menu
 	mainWindow.setMenu(null)
 
-	mainWindow.webContents.on('before-input-event', (event, input) => {
-		if (input.control && (input.key === '+' || input.key === '-' || input.key === '=')) {
-			event.preventDefault()
-			const zoomFactor = mainWindow.webContents.getZoomFactor()
-			const newZoomFactor = input.key === '+' || input.key === '=' ? zoomFactor + 0.1 : zoomFactor - 0.1
-			mainWindow.webContents.setZoomFactor(newZoomFactor)
-		}
-	})
+	// Set user-specified zoom level
+	mainWindow.webContents.setZoomFactor(settings.zoomFactor)
 
 	// IPC handlers
 	for (const [key, handler] of Object.entries(getIpcInvokeHandlers())) {

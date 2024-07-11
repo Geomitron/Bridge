@@ -26,6 +26,7 @@ export interface Settings {
 	libraryPath: string | undefined // The path to the user's library
 	isSng: boolean                  // If the chart should be downloaded as a .sng file or as a chart folder
 	isCompactTable: boolean         // If the search result table should have reduced padding
+	zoomFactor: number              // How much the display should be zoomed
 	instrument: Instrument | null   // The instrument selected by default, or `null` for "Any Instrument"
 	difficulty: Difficulty | null   // The difficulty selected by default, or `null` for "Any Difficulty"
 }
@@ -39,6 +40,7 @@ export const defaultSettings: Settings = {
 	libraryPath: undefined,
 	isSng: false,
 	isCompactTable: false,
+	zoomFactor: 1,
 	instrument: 'guitar',
 	difficulty: null,
 }

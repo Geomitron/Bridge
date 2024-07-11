@@ -1,9 +1,10 @@
 import { DOCUMENT } from '@angular/common'
 import { Inject, Injectable } from '@angular/core'
 
+import _ from 'lodash'
 import { Difficulty, Instrument } from 'scan-chart'
 
-import { Settings, themes } from '../../../../src-shared/Settings'
+import { Settings, themes } from '../../../../src-shared/Settings.js'
 
 @Injectable({
 	providedIn: 'root',
@@ -89,5 +90,21 @@ export class SettingsService {
 	set isCompactTable(value: boolean) {
 		this.settings.isCompactTable = value
 		this.saveSettings()
+	}
+
+	get zoomFactor() {
+		return this.settings.zoomFactor
+	}
+	set zoomFactor(value: number) {
+		this.settings.zoomFactor = value
+		this.saveSettings()
+	}
+	zoomIn() {
+		this.zoomFactor = _.round(this.zoomFactor + 0.1, 3)
+	}
+	zoomOut() {
+		if (_.round(this.zoomFactor - 0.1, 3) > 0) {
+			this.zoomFactor = _.round(this.zoomFactor - 0.1, 3)
+		}
 	}
 }

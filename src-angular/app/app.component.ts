@@ -14,5 +14,16 @@ export class AppComponent {
 	constructor(settingsService: SettingsService) {
 		// Ensure settings are loaded before rendering the application
 		settingsService.loadSettings().then(() => this.settingsLoaded = true)
+
+		document.addEventListener('keydown', event => {
+			if (event.ctrlKey && (event.key === '+' || event.key === '-' || event.key === '=')) {
+				event.preventDefault()
+				if (event.key === '+' || event.key === '=') {
+					settingsService.zoomIn()
+				} else {
+					settingsService.zoomOut()
+				}
+			}
+		})
 	}
 }
