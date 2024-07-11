@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core'
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
 
 import { ChartData } from '../../../../../../src-shared/interfaces/search.interface'
 import { SelectionService } from '../../../../core/services/selection.service'
@@ -9,6 +9,8 @@ import { SelectionService } from '../../../../core/services/selection.service'
 })
 export class ResultTableRowComponent implements OnInit {
 	@Input() song: ChartData[]
+
+	@Output() rowFocused: EventEmitter<string> = new EventEmitter()
 
 	constructor(private selectionService: SelectionService) { }
 
