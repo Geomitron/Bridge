@@ -16,12 +16,24 @@ export class AppComponent {
 		settingsService.loadSettings().then(() => this.settingsLoaded = true)
 
 		document.addEventListener('keydown', event => {
-			if (event.ctrlKey && (event.key === '+' || event.key === '-' || event.key === '=')) {
+			if (event.ctrlKey && (event.key === '+' || event.key === '-' || event.key === '=' || event.key === '0')) {
 				event.preventDefault()
 				if (event.key === '+' || event.key === '=') {
 					settingsService.zoomIn()
-				} else {
+				} else if (event.key === '-') {
 					settingsService.zoomOut()
+				} else {
+					settingsService.zoomFactor = 1
+				}
+			}
+		})
+
+		document.addEventListener('wheel', event => {
+			if (event.ctrlKey && event.deltaY !== 0) {
+				if (event.deltaY > 0) {
+					settingsService.zoomOut()
+				} else {
+					settingsService.zoomIn()
 				}
 			}
 		})
