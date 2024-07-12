@@ -17,38 +17,11 @@
 		</div>
 	</label>
 
-	<label class="form-control w-full max-w-xs">
+	<div class="form-control w-full max-w-xs">
 		<div class="label">
 			<span class="label-text">Appearance</span>
 		</div>
 		<div class="flex gap-3 items-center">
-			<div class="dropdown dropdown-hover">
-				<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
-				<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
-					<li>
-						<h2 class="menu-title text-neutral-content text-opacity-50">Dark</h2>
-						<ul>
-							<li><a (click)="setTheme('business')">Business</a></li>
-							<li><a (click)="setTheme('dark')">Dark</a></li>
-							<li><a (click)="setTheme('dim')">Dim</a></li>
-							<li><a (click)="setTheme('night')">Night</a></li>
-							<li><a (click)="setTheme('sunset')">Sunset</a></li>
-							<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
-						</ul>
-					</li>
-					<li>
-						<h2 class="menu-title text-neutral-content text-opacity-50">Light</h2>
-						<ul>
-							<li><a (click)="setTheme('aqua')">Aqua</a></li>
-							<li><a (click)="setTheme('emerald')">Emerald</a></li>
-							<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
-							<li><a (click)="setTheme('nord')">Nord</a></li>
-							<li><a (click)="setTheme('valentine')">Valentine</a></li>
-							<li><a (click)="setTheme('winter')">Winter</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div>
 			<div class="join join-vertical">
 				<div class="tooltip tooltip-right" data-tip="Zoom In (ctrl +)">
 					<button class="join-item btn btn-square btn-neutral btn-xs" (click)="settingsService.zoomIn()">
@@ -61,8 +34,40 @@
 					</button>
 				</div>
 			</div>
+			@if (!settingsService.customTheme) {
+				<div class="dropdown dropdown-hover">
+					<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
+					<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
+						<li>
+							<h2 class="menu-title text-neutral-content text-opacity-50">Dark</h2>
+							<ul>
+								<li><a (click)="setTheme('business')">Business</a></li>
+								<li><a (click)="setTheme('dark')">Dark</a></li>
+								<li><a (click)="setTheme('dim')">Dim</a></li>
+								<li><a (click)="setTheme('night')">Night</a></li>
+								<li><a (click)="setTheme('sunset')">Sunset</a></li>
+								<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
+							</ul>
+						</li>
+						<li>
+							<h2 class="menu-title text-neutral-content text-opacity-50">Light</h2>
+							<ul>
+								<li><a (click)="setTheme('aqua')">Aqua</a></li>
+								<li><a (click)="setTheme('emerald')">Emerald</a></li>
+								<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
+								<li><a (click)="setTheme('nord')">Nord</a></li>
+								<li><a (click)="setTheme('valentine')">Valentine</a></li>
+								<li><a (click)="setTheme('winter')">Winter</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+				<button (click)="getCustomTheme()" class="btn btn-primary">Use custom theme</button>
+			} @else {
+				<button (click)="clearCustomTheme()" class="btn btn-neutral">Clear custom theme</button>
+			}
 		</div>
-	</label>
+	</div>
 
 	<div class="form-control">
 		<div class="label">

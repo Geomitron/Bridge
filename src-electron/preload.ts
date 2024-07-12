@@ -24,6 +24,7 @@ const electronApi: ContextBridgeApi = {
 		getUpdateAvailable: getInvoker('getUpdateAvailable'),
 		isMaximized: getInvoker('isMaximized'),
 		showOpenDialog: getInvoker('showOpenDialog'),
+		getThemeColors: getInvoker('getThemeColors'),
 	},
 	emit: {
 		download: getEmitter('download'),

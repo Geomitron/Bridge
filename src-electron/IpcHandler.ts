@@ -2,7 +2,7 @@ import { IpcInvokeHandlers, IpcToMainEmitHandlers } from '../src-shared/interfac
 import { download } from './ipc/DownloadHandler.ipc.js'
 import { getSettings, setSettings } from './ipc/SettingsHandler.ipc.js'
 import { downloadUpdate, getCurrentVersion, getUpdateAvailable, quitAndInstall, retryUpdate } from './ipc/UpdateHandler.ipc.js'
-import { getPlatform, isMaximized, maximize, minimize, openUrl, quit, restore, showFile, showFolder, showOpenDialog, toggleDevTools } from './ipc/UtilHandlers.ipc.js'
+import { getPlatform, getThemeColors, isMaximized, maximize, minimize, openUrl, quit, restore, showFile, showFolder, showOpenDialog, toggleDevTools } from './ipc/UtilHandlers.ipc.js'
 
 export function getIpcInvokeHandlers(): IpcInvokeHandlers {
 	return {
@@ -12,6 +12,7 @@ export function getIpcInvokeHandlers(): IpcInvokeHandlers {
 		getUpdateAvailable,
 		isMaximized,
 		showOpenDialog,
+		getThemeColors,
 	}
 }
 

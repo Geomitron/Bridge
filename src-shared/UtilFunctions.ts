@@ -1,7 +1,9 @@
+import { interpolate as culoriInterpolate, oklch, wcagContrast } from 'culori'
 import _ from 'lodash'
 import { Difficulty, Instrument } from 'scan-chart'
 
 import { ChartData } from './interfaces/search.interface'
+import { ThemeColors } from './interfaces/theme.interface'
 
 // WARNING: do not import anything related to Electron; the code will not compile correctly.
 
@@ -165,4 +167,180 @@ export function hasIssues(chart: Pick<ChartData, 'metadataIssues' | 'folderIssue
 	}
 
 	return false
+}
+
+/* eslint-disable @typescript-eslint/naming-convention */
+export const colorNames = {
+	"primary": "--p",
+	"primary-content": "--pc",
+
+	"secondary": "--s",
+	"secondary-content": "--sc",
+
+	"accent": "--a",
+	"accent-content": "--ac",
+
+	"neutral": "--n",
+	"neutral-content": "--nc",
+
+	"base-100": "--b1",
+	"base-200": "--b2",
+	"base-300": "--b3",
+	"base-content": "--bc",
+
+	"info": "--in",
+	"info-content": "--inc",
+
+	"success": "--su",
+	"success-content": "--suc",
+
+	"warning": "--wa",
+	"warning-content": "--wac",
+
+	"error": "--er",
+	"error-content": "--erc",
+} as { [colorName: string]: string }
+const defaultVariables = {
+	"--rounded-box": "1rem",
+	"--rounded-btn": "0.5rem",
+	"--rounded-badge": "1.9rem",
+	"--animation-btn": "0.25s",
+	"--animation-input": ".2s",
+	"--btn-focus-scale": "0.95",
+	"--border-btn": "1px",
+	"--tab-border": "1px",
+	"--tab-radius": "0.5rem",
+}
+/* eslint-enable @typescript-eslint/naming-convention */
+
+export function convertColorFormat(input: ThemeColors) {
+	if (typeof input !== "object" || input === null) {
+		return input
+	}
+
+	const resultObj: { [cssKey: string]: string } = {}
+
+	for (const [rule, value] of Object.entries(input)) {
+		if (Object.hasOwn(colorNames, rule)) {
+			const colorObj = oklch(value)
+			resultObj[colorNames[rule]] = colorObjToString(colorObj!)
+		} else {
+			resultObj[rule] = value
+		}
+
+		// auto generate base colors
+		if (!Object.hasOwn(input, "base-100")) {
+			resultObj["--b1"] = "100% 0 0"
+		}
+		if (!Object.hasOwn(input, "base-200")) {
+			resultObj["--b2"] = generateDarkenColorFrom(input["base-100"], 0.07)
+		}
+		if (!Object.hasOwn(input, "base-300")) {
+			if (Object.hasOwn(input, "base-200")) {
+				resultObj["--b3"] = generateDarkenColorFrom(input["base-200"], 0.07)
+			} else {
+				resultObj["--b3"] = generateDarkenColorFrom(input["base-100"], 0.14)
+			}
+		}
+
+		// auto generate state colors
+		if (!Object.hasOwn(input, "info")) {
+			resultObj["--in"] = "72.06% 0.191 231.6"
+		}
+		if (!Object.hasOwn(input, "success")) {
+			resultObj["--su"] = "64.8% 0.150 160"
+		}
+		if (!Object.hasOwn(input, "warning")) {
+			resultObj["--wa"] = "84.71% 0.199 83.87"
+		}
+		if (!Object.hasOwn(input, "error")) {
+			resultObj["--er"] = "71.76% 0.221 22.18"
+		}
+
+		// auto generate content colors
+		if (!Object.hasOwn(input, "base-content")) {
+			resultObj["--bc"] = generateForegroundColorFrom(input["base-100"], 0.8)
+		}
+		if (!Object.hasOwn(input, "primary-content")) {
+			resultObj["--pc"] = generateForegroundColorFrom(input.primary, 0.8)
+		}
+		if (!Object.hasOwn(input, "secondary-content")) {
+			resultObj["--sc"] = generateForegroundColorFrom(input.secondary, 0.8)
+		}
+		if (!Object.hasOwn(input, "accent-content")) {
+			resultObj["--ac"] = generateForegroundColorFrom(input.accent, 0.8)
+		}
+		if (!Object.hasOwn(input, "neutral-content")) {
+			resultObj["--nc"] = generateForegroundColorFrom(input.neutral, 0.8)
+		}
+		if (!Object.hasOwn(input, "info-content")) {
+			if (Object.hasOwn(input, "info")) {
+				resultObj["--inc"] = generateForegroundColorFrom(input.info, 0.8)
+			} else {
+				resultObj["--inc"] = "0% 0 0"
+			}
+		}
+		if (!Object.hasOwn(input, "success-content")) {
+			if (Object.hasOwn(input, "success")) {
+				resultObj["--suc"] = generateForegroundColorFrom(input.success, 0.8)
+			} else {
+				resultObj["--suc"] = "0% 0 0"
+			}
+		}
+		if (!Object.hasOwn(input, "warning-content")) {
+			if (Object.hasOwn(input, "warning")) {
+				resultObj["--wac"] = generateForegroundColorFrom(input.warning, 0.8)
+			} else {
+				resultObj["--wac"] = "0% 0 0"
+			}
+		}
+		if (!Object.hasOwn(input, "error-content")) {
+			if (Object.hasOwn(input, "error")) {
+				resultObj["--erc"] = generateForegroundColorFrom(input.error, 0.8)
+			} else {
+				resultObj["--erc"] = "0% 0 0"
+			}
+		}
+
+		// add css variables if not exist
+		for (const item of Object.entries(defaultVariables)) {
+			const [variable, value] = item
+			if (!Object.hasOwn(input, variable)) {
+				resultObj[variable] = value
+			}
+		}
+
+		// add other custom styles
+		if (!Object.hasOwn(colorNames, rule)) {
+			resultObj[rule] = value
+		}
+	}
+
+	return resultObj
+}
+
+function generateForegroundColorFrom(input: string, percentage = 0.8) {
+	const result = culoriInterpolate([input, isDark(input) ? "white" : "black"], "oklch")(percentage)
+	return colorObjToString(result)
+}
+
+function generateDarkenColorFrom(input: string, percentage = 0.07) {
+	const result = culoriInterpolate([input, "black"], "oklch")(percentage)
+	return colorObjToString(result)
+}
+
+function colorObjToString(input: { l: number; c: number; h?: number }) {
+	const { l, c, h } = input
+	return `${Number.parseFloat((cutNumber(l) * 100).toFixed(6))}% ${cutNumber(c)} ${cutNumber(h ?? 0)}`
+}
+
+function cutNumber(number: number) {
+	if (number) {
+		return +number.toFixed(6)
+	}
+	return 0
+}
+
+function isDark(color: string) {
+	return wcagContrast(color, "black") < wcagContrast(color, "white")
 }

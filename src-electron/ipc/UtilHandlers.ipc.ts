@@ -1,5 +1,7 @@
 import { app, dialog, OpenDialogOptions, shell } from 'electron'
+import fsExtra from 'fs-extra'
 
+import { ThemeColors } from '../../src-shared/interfaces/theme.interface.js'
 import { mainWindow } from '../main.js'
 
 /**
@@ -47,4 +49,12 @@ export function showFile(filePath: string) {
 
 export async function getPlatform() {
 	return process.platform
+}
+
+export async function getThemeColors(path: string) {
+	try {
+		return await fsExtra.readJson(path) as ThemeColors
+	} catch (err) {
+		return null
+	}
 }

@@ -76,6 +76,31 @@ export class SettingsComponent implements OnInit {
 		}
 	}
 
+	async getCustomTheme() {
+		const result = await window.electron.invoke.showOpenDialog({
+			title: 'Choose custom theme',
+			defaultPath: this.settingsService.libraryDirectory || '',
+			properties: ['openFile'],
+			filters: [
+				{ name: "Themes", extensions: ["json"] },
+			],
+		})
+
+		if (result.canceled === false) {
+			const newThemeColors = await window.electron.invoke.getThemeColors(result.filePaths[0])
+
+			if (newThemeColors) {
+				this.settingsService.customTheme = newThemeColors
+			} else {
+				alert(`ERROR: ${result.filePaths[0]} was not a valid JSON file.`)
+			}
+		}
+	}
+
+	clearCustomTheme() {
+		this.settingsService.customTheme = null
+	}
+
 	openLibraryDirectory() {
 		if (this.settingsService.libraryDirectory) {
 			window.electron.emit.showFolder(this.settingsService.libraryDirectory)
