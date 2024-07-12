@@ -119,6 +119,17 @@ export class SettingsService {
 		this.settings.isCompactTable = value
 		this.saveSettings()
 	}
+	get visibleColumns() {
+		return this.settings.visibleColumns
+	}
+	addVisibleColumn(column: string) {
+		this.settings.visibleColumns.push(column)
+		this.saveSettings()
+	}
+	removeVisibleColumn(column: string) {
+		this.settings.visibleColumns = this.settings.visibleColumns.filter(c => c !== column)
+		this.saveSettings()
+	}
 
 	get zoomFactor() {
 		return this.settings.zoomFactor

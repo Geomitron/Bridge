@@ -15,6 +15,14 @@ export class SettingsComponent implements OnInit {
 	public isSng: FormControl<boolean>
 	public isCompactTable: FormControl<boolean>
 
+	public artistColumn: FormControl<boolean>
+	public albumColumn: FormControl<boolean>
+	public genreColumn: FormControl<boolean>
+	public yearColumn: FormControl<boolean>
+	public charterColumn: FormControl<boolean>
+	public lengthColumn: FormControl<boolean>
+	public difficultyColumn: FormControl<boolean>
+
 	updateAvailable: 'yes' | 'no' | 'error' = 'no'
 	loginClicked = false
 	downloadUpdateText = 'Download Update'
@@ -28,10 +36,28 @@ export class SettingsComponent implements OnInit {
 		public settingsService: SettingsService,
 		private ref: ChangeDetectorRef
 	) {
-		this.isSng = new FormControl<boolean>(settingsService.isSng, { nonNullable: true })
+		const ss = settingsService
+		this.isSng = new FormControl<boolean>(ss.isSng, { nonNullable: true })
 		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
 		this.isCompactTable = new FormControl<boolean>(settingsService.isCompactTable, { nonNullable: true })
-		this.isCompactTable.valueChanges.subscribe(value => settingsService.isCompactTable = value)
+		this.isCompactTable.valueChanges.subscribe(value => ss.isCompactTable = value)
+
+		this.artistColumn = new FormControl<boolean>(ss.visibleColumns.includes('artist'), { nonNullable: true })
+		this.albumColumn = new FormControl<boolean>(ss.visibleColumns.includes('album'), { nonNullable: true })
+		this.genreColumn = new FormControl<boolean>(ss.visibleColumns.includes('genre'), { nonNullable: true })
+		this.yearColumn = new FormControl<boolean>(ss.visibleColumns.includes('year'), { nonNullable: true })
+		this.charterColumn = new FormControl<boolean>(ss.visibleColumns.includes('charter'), { nonNullable: true })
+		this.lengthColumn = new FormControl<boolean>(ss.visibleColumns.includes('length'), { nonNullable: true })
+		this.difficultyColumn = new FormControl<boolean>(ss.visibleColumns.includes('difficulty'), { nonNullable: true })
+
+		this.artistColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('artist') : ss.removeVisibleColumn('artist'))
+		this.albumColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('album') : ss.removeVisibleColumn('album'))
+		this.genreColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('genre') : ss.removeVisibleColumn('genre'))
+		this.yearColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('year') : ss.removeVisibleColumn('year'))
+		this.charterColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('charter') : ss.removeVisibleColumn('charter'))
+		this.lengthColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('length') : ss.removeVisibleColumn('length'))
+		this.difficultyColumn.valueChanges
+			.subscribe(value => value ? ss.addVisibleColumn('difficulty') : ss.removeVisibleColumn('difficulty'))
 	}
 
 	async ngOnInit() {

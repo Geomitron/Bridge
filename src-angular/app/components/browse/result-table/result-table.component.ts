@@ -22,8 +22,8 @@ export class ResultTableComponent implements OnInit {
 	@ViewChildren('tableRow') tableRows: QueryList<ResultTableRowComponent>
 
 	activeSong: ChartData[] | null = null
-	sortDirection: 'ascending' | 'descending' = 'ascending'
-	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | null = null
+	sortDirection: 'asc' | 'desc' = 'asc'
+	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'difficulty' | null = null
 
 	constructor(
 		public searchService: SearchService,
@@ -36,7 +36,7 @@ export class ResultTableComponent implements OnInit {
 		this.searchService.newSearch.subscribe(() => {
 			this.resultTableDiv.nativeElement.scrollTop = 0
 			this.activeSong = null
-			this.sortDirection = 'ascending'
+			this.sortDirection = 'asc'
 			this.sortColumn = null
 			this.updateSort()
 			setTimeout(() => this.tableScrolled(), 0)
@@ -51,6 +51,10 @@ export class ResultTableComponent implements OnInit {
 		return this.searchService.groupedSongs
 	}
 
+	hasColumn(column: string) {
+		return this.settingsService.visibleColumns.includes(column)
+	}
+
 	onRowClicked(song: ChartData[]) {
 		if (this.activeSong !== song) {
 			this.activeSong = song
@@ -58,15 +62,15 @@ export class ResultTableComponent implements OnInit {
 		}
 	}
 
-	onColClicked(column: 'name' | 'artist' | 'album' | 'genre' | 'year') {
+	onColClicked(column: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'difficulty') {
 		if (this.songs.length === 0) { return }
 		if (this.sortColumn !== column) {
 			this.sortColumn = column
-			this.sortDirection = 'ascending'
-		} else if (this.sortDirection === 'descending') {
-			this.sortDirection = 'ascending'
+			this.sortDirection = 'asc'
+		} else if (this.sortDirection === 'desc') {
+			this.sortDirection = 'asc'
 		} else {
-			this.sortDirection = 'descending'
+			this.sortDirection = 'desc'
 		}
 		this.updateSort()
 	}
@@ -74,9 +78,30 @@ export class ResultTableComponent implements OnInit {
 	private updateSort() {
 		const col = this.sortColumn
 		if (col !== null) {
-			const groupedSongs = _.sortBy(this.searchService.groupedSongs, song => song[0][col]?.toLowerCase())
-			if (this.sortDirection === 'descending') { groupedSongs.reverse() }
+			console.log(this.getSortColumn())
+			const groupedSongs = _.orderBy(this.searchService.groupedSongs, s => _.get(s[0], this.getSortColumn()), this.sortDirection)
 			this.searchService.groupedSongs = groupedSongs
+		}
+	}
+	private getSortColumn(): keyof ChartData {
+		if (this.sortColumn === 'length') {
+			return 'notesData.effectiveLength' as keyof ChartData
+		} else if (this.sortColumn === 'difficulty') {
+			switch (this.searchService.instrument.value) {
+				case 'guitar': return 'diff_guitar'
+				case 'guitarcoop': return 'diff_guitar_coop'
+				case 'rhythm': return 'diff_rhythm'
+				case 'bass': return 'diff_bass'
+				case 'drums': return 'diff_drums'
+				case 'keys': return 'diff_keys'
+				case 'guitarghl': return 'diff_guitarghl'
+				case 'guitarcoopghl': return 'diff_guitar_coop_ghl'
+				case 'rhythmghl': return 'diff_rhythm_ghl'
+				case 'bassghl': return 'diff_bassghl'
+				default: throw 'Invalid instrument'
+			}
+		} else {
+			return this.sortColumn!
 		}
 	}
 

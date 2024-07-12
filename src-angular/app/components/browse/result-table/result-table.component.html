@@ -9,20 +9,29 @@
 					<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
 				</th>
 				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('name')">
-					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
+				<th *ngIf="hasColumn('artist')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
 					Artist
-					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
-					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				<th *ngIf="hasColumn('album')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
+					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
-					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				<th *ngIf="hasColumn('genre')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
+					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
-					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'ascending' ? 'down' : 'up' }}-fill"></i>
+				<th *ngIf="hasColumn('year')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
+					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th *ngIf="hasColumn('charter')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('charter')">
+					Charter <i *ngIf="sortColumn === 'charter'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th *ngIf="hasColumn('length')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('length')">
+					Length (min) <i *ngIf="sortColumn === 'length'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('difficulty')">
+					Difficulty <i *ngIf="sortColumn === 'difficulty'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
 			</tr>
 		</thead>

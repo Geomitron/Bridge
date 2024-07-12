@@ -4,8 +4,11 @@
 <td>
 	<span *ngIf="song.length > 1" class="rounded-sm bg-accent text-accent-content px-1 mr-1 font-bold">{{ song.length }}</span> {{ song[0].name }}
 </td>
-<td>{{ song[0].artist }}</td>
-<td>{{ song[0].album || 'Various' }}</td>
-<td>{{ song[0].genre || 'Various' }}</td>
-<td>{{ song[0].year || 'Various' }}</td>
+<td *ngIf="hasColumn('artist')">{{ song[0].artist }}</td>
+<td *ngIf="hasColumn('album')">{{ song[0].album || 'Various' }}</td>
+<td *ngIf="hasColumn('genre')">{{ song[0].genre || 'Various' }}</td>
+<td *ngIf="hasColumn('year')">{{ song[0].year || 'Various' }}</td>
+<td *ngIf="hasColumn('charter')">{{ song[0].charter || 'Various' }}</td>
+<td *ngIf="hasColumn('length')">{{ songLength }}</td>
+<td *ngIf="hasColumn('difficulty')">{{ songDifficulty }}</td>
 <!-- TODO: "Various" will never display -->
