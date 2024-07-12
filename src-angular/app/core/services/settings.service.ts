@@ -57,8 +57,15 @@ export class SettingsService {
 	get libraryDirectory() {
 		return this.settings.libraryPath
 	}
-	set libraryDirectory(newValue: string | undefined) {
-		this.settings.libraryPath = newValue
+	set libraryDirectory(value: string | undefined) {
+		this.settings.libraryPath = value
+		this.saveSettings()
+	}
+	get chartFolderName() {
+		return this.settings.chartFolderName
+	}
+	set chartFolderName(value: string) {
+		this.settings.chartFolderName = value
 		this.saveSettings()
 	}
 

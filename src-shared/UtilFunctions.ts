@@ -1,5 +1,6 @@
 import { interpolate as culoriInterpolate, oklch, wcagContrast } from 'culori'
 import _ from 'lodash'
+import sanitize from 'sanitize-filename'
 import { Difficulty, Instrument } from 'scan-chart'
 
 import { ChartData } from './interfaces/search.interface'
@@ -167,6 +168,63 @@ export function hasIssues(chart: Pick<ChartData, 'metadataIssues' | 'folderIssue
 	}
 
 	return false
+}
+
+export function resolveChartFolderName(
+	chartFolderName: string,
+	chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string },
+) {
+	if (_.sumBy(chartFolderName.split('/'), n => n.length) === 0) {
+		chartFolderName = '{artist} - {name} ({charter})'
+	}
+	const pathParts = chartFolderName.split('/')
+	const resolvedPathParts: string[] = []
+	for (const pathPart of pathParts) {
+		const resolvedPath = sanitizeNonemptyFilename(pathPart
+			.replace(/\{name\}/g, chart.name)
+			.replace(/\{artist\}/g, chart.artist)
+			.replace(/\{album\}/g, chart.album)
+			.replace(/\{genre\}/g, chart.genre)
+			.replace(/\{year\}/g, chart.year)
+			.replace(/\{charter\}/g, chart.charter))
+
+		if (resolvedPath.length > 0) {
+			resolvedPathParts.push(resolvedPath)
+		}
+	}
+	return resolvedPathParts.join('/')
+}
+
+/**
+ * @returns `filename` with all invalid filename characters replaced. Assumes `filename` has at least one valid filename character already.
+ */
+export function sanitizeNonemptyFilename(filename: string) {
+	return sanitize(filename, {
+		replacement: (invalidChar: string) => {
+			switch (invalidChar) {
+				case '<':
+					return '❮'
+				case '>':
+					return '❯'
+				case ':':
+					return '꞉'
+				case '"':
+					return "'"
+				case '/':
+					return '／'
+				case '\\':
+					return '⧵'
+				case '|':
+					return '⏐'
+				case '?':
+					return '？'
+				case '*':
+					return '⁎'
+				default:
+					return '_'
+			}
+		},
+	})
 }
 
 /* eslint-disable @typescript-eslint/naming-convention */

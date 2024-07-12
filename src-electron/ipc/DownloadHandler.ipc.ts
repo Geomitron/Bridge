@@ -5,7 +5,7 @@ const downloadQueue: DownloadQueue = new DownloadQueue()
 
 export async function download(data: Download) {
 	switch (data.action) {
-		case 'add': downloadQueue.add(data.md5, data.chartName!); break
+		case 'add': downloadQueue.add(data.md5, data.chart!); break
 		case 'retry': downloadQueue.retry(data.md5); break
 		case 'remove': downloadQueue.remove(data.md5); break
 	}

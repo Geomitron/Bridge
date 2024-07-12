@@ -2,9 +2,10 @@ import { EventEmitter, Injectable, NgZone } from '@angular/core'
 
 import _ from 'lodash'
 import { ChartData } from 'src-shared/interfaces/search.interface'
-import { removeStyleTags } from 'src-shared/UtilFunctions'
+import { resolveChartFolderName } from 'src-shared/UtilFunctions'
 
 import { DownloadProgress } from '../../../../src-shared/interfaces/download.interface'
+import { SettingsService } from './settings.service'
 
 @Injectable({
 	providedIn: 'root',
@@ -14,7 +15,7 @@ export class DownloadService {
 	public downloadCountChanges = new EventEmitter<number>()
 	public downloads: DownloadProgress[] = []
 
-	constructor(zone: NgZone) {
+	constructor(zone: NgZone, private settingsService: SettingsService) {
 		window.electron.on.downloadQueueUpdate(download => zone.run(() => {
 			const downloadIndex = this.downloads.findIndex(d => d.md5 === download.md5)
 			if (download.type === 'cancel') {
@@ -50,7 +51,12 @@ export class DownloadService {
 
 	get currentDownloadText() {
 		const download = this.downloads.find(d => !d.stale && d.type === 'good')
-		return download ? `Downloading: ${_.truncate(download.chartName, { length: 80 })}` : ''
+		if (download) {
+			return 'Downloading: '
+				+ _.truncate(resolveChartFolderName(this.settingsService.chartFolderName, download.chart), { length: 80 })
+		} else {
+			return ''
+		}
 	}
 
 	get anyErrorsExist() {
@@ -62,19 +68,24 @@ export class DownloadService {
 			if (this.downloads.every(d => d.type === 'done')) { // Reset overall progress bar if it finished
 				this.downloads.forEach(d => d.stale = true)
 			}
-			const chartName = `${removeStyleTags(chart.artist ?? 'Unknown Artist')
-				} - ${removeStyleTags(chart.name ?? 'Unknown Name')
-				} (${removeStyleTags(chart.charter ?? 'Unknown Charter')})`
+			const newChart = {
+				name: chart.name ?? 'Unknown Name',
+				artist: chart.artist ?? 'Unknown Artist',
+				album: chart.album ?? 'Unknown Album',
+				genre: chart.genre ?? 'Unknown Genre',
+				year: chart.year ?? 'Unknown Year',
+				charter: chart.charter ?? 'Unknown Charter',
+			}
 			this.downloads.push({
 				md5: chart.md5,
-				chartName,
+				chart: newChart,
 				header: 'Waiting for other downloads to finish...',
 				body: '',
 				percent: 0,
 				type: 'good',
 				isPath: false,
 			})
-			window.electron.emit.download({ action: 'add', md5: chart.md5, chartName })
+			window.electron.emit.download({ action: 'add', md5: chart.md5, chart: newChart })
 		}
 		this.downloadCountChanges.emit(this.downloadCount)
 	}

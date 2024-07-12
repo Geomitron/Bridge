@@ -1,19 +1,10 @@
 import { randomBytes } from 'crypto'
-import { basename, parse } from 'path'
+import { parse } from 'path'
 import sanitize from 'sanitize-filename'
 import { inspect } from 'util'
 
 import { lower } from '../src-shared/UtilFunctions.js'
-import { settings } from './ipc/SettingsHandler.ipc.js'
 import { emitIpcEvent } from './main.js'
-
-/**
- * @returns The relative filepath from the library folder to `absoluteFilepath`.
- */
-export async function getRelativeFilepath(absoluteFilepath: string) {
-	if (!settings.libraryPath) { throw 'getRelativeFilepath() failed; libraryPath is undefined' }
-	return basename(settings.libraryPath) + absoluteFilepath.substring(settings.libraryPath.length)
-}
 
 /**
  * @returns `true` if `name` has a valid video file extension.

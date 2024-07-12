@@ -1,5 +1,9 @@
 import { Component, HostBinding } from '@angular/core'
 
+import { SettingsService } from 'src-angular/app/core/services/settings.service'
+import { DownloadProgress } from 'src-shared/interfaces/download.interface'
+import { resolveChartFolderName } from 'src-shared/UtilFunctions'
+
 import { DownloadService } from '../../../../core/services/download.service'
 
 @Component({
@@ -9,9 +13,16 @@ import { DownloadService } from '../../../../core/services/download.service'
 export class DownloadsModalComponent {
 	@HostBinding('class.contents') contents = true
 
-	constructor(public downloadService: DownloadService) { }
+	constructor(
+		public downloadService: DownloadService,
+		public settingsService: SettingsService,
+	) { }
 
 	showFile(filepath: string) {
 		window.electron.emit.showFile(filepath)
+	}
+
+	getDownloadName(download: DownloadProgress) {
+		return resolveChartFolderName(this.settingsService.chartFolderName, download.chart)
 	}
 }

@@ -17,6 +17,41 @@
 		</div>
 	</label>
 
+	<label class="form-control w-full">
+		<div class="label">
+			<span class="label-text">
+				Chart folder name
+				<button class="btn btn-xs btn-circle btn-ghost" (click)="chartFolderNameModal.showModal()">
+					<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
+				</button>
+				<dialog #chartFolderNameModal class="modal whitespace-normal">
+					<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+						<form method="dialog">
+							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+								<i class="bi bi-x-lg text-lg"></i>
+							</button>
+						</form>
+						<div class="flex-1">
+							<span class="font-bold text-lg">Chart Folder Name</span>
+							<ul class="list-disc pl-5">
+								<li>Describes where Bridge will put the chart inside the chart library directory</li>
+								<li>Use "/" to describe subfolders</li>
+								<li>Use "{{ '{tag}' }}" as a placeholder for chart-specific properties</li>
+								<br />
+								Available tags:
+								<div class="text-xs">{{ '{name}, {artist}, {album}, {genre}, {year}, {charter}' }}</div>
+							</ul>
+						</div>
+					</div>
+					<form method="dialog" class="modal-backdrop">
+						<button>close</button>
+					</form>
+				</dialog>
+			</span>
+		</div>
+		<input [formControl]="chartFolderName" class="input input-bordered" type="text" placeholder="{artist} - {name} ({charter})" />
+	</label>
+
 	<div class="form-control w-full max-w-xs">
 		<div class="label">
 			<span class="label-text">Appearance</span>
@@ -76,7 +111,7 @@
 				<button class="btn btn-xs btn-circle btn-ghost" (click)="selectSngModal.showModal()">
 					<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
 				</button>
-				<dialog #selectSngModal id="report_modal" class="modal whitespace-normal">
+				<dialog #selectSngModal class="modal whitespace-normal">
 					<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
 						<form method="dialog">
 							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">

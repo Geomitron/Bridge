@@ -16,14 +16,14 @@ export class DownloadQueue {
 		return false
 	}
 
-	add(md5: string, chartName: string) {
+	add(md5: string, chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string }) {
 		if (!this.isChartInQueue(md5)) {
-			const chartDownload = new ChartDownload(md5, chartName)
+			const chartDownload = new ChartDownload(md5, chart)
 			this.downloadQueue.push(chartDownload)
 
 			chartDownload.on('progress', (message, percent) => emitIpcEvent('downloadQueueUpdate', {
 				md5,
-				chartName,
+				chart,
 				header: message.header,
 				body: message.body,
 				percent,
@@ -33,7 +33,7 @@ export class DownloadQueue {
 			chartDownload.on('error', err => {
 				emitIpcEvent('downloadQueueUpdate', {
 					md5,
-					chartName,
+					chart,
 					header: err.header,
 					body: err.body,
 					percent: null,
@@ -49,7 +49,7 @@ export class DownloadQueue {
 			chartDownload.on('end', destinationPath => {
 				emitIpcEvent('downloadQueueUpdate', {
 					md5,
-					chartName,
+					chart,
 					header: 'Download complete',
 					body: destinationPath,
 					percent: 100,
@@ -81,7 +81,7 @@ export class DownloadQueue {
 
 		emitIpcEvent('downloadQueueUpdate', {
 			md5,
-			chartName: 'Canceled',
+			chart: { name: '', artist: '', album: '', genre: '', year: '', charter: '' },
 			header: '',
 			body: '',
 			percent: null,

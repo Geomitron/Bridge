@@ -24,7 +24,7 @@
 							</button>
 						}
 					</div>
-					<h2 class="card-title">{{ download.chartName }}</h2>
+					<h2 class="card-title">{{ getDownloadName(download) }}</h2>
 					<progress
 						[attr.value]="download.percent"
 						max="100"

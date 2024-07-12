@@ -12,6 +12,7 @@ import { themes } from 'src-shared/Settings'
 export class SettingsComponent implements OnInit {
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 
+	public chartFolderName: FormControl<string>
 	public isSng: FormControl<boolean>
 	public isCompactTable: FormControl<boolean>
 
@@ -37,6 +38,10 @@ export class SettingsComponent implements OnInit {
 		private ref: ChangeDetectorRef
 	) {
 		const ss = settingsService
+
+		this.chartFolderName = new FormControl<string>(ss.chartFolderName, { nonNullable: true })
+		this.chartFolderName.valueChanges.subscribe(value => ss.chartFolderName = value)
+
 		this.isSng = new FormControl<boolean>(ss.isSng, { nonNullable: true })
 		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
 		this.isCompactTable = new FormControl<boolean>(settingsService.isCompactTable, { nonNullable: true })

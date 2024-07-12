@@ -5,7 +5,8 @@
 export interface Download {
 	action: 'add' | 'remove' | 'retry'
 	md5: string
-	chartName?: string // Should be defined if action === 'add'
+	// Should be defined if action === 'add'
+	chart?: { name: string; artist: string; album: string; genre: string; year: string; charter: string }
 }
 
 /**
@@ -13,7 +14,7 @@ export interface Download {
  */
 export interface DownloadProgress {
 	md5: string
-	chartName: string
+	chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string }
 	header: string
 	body: string
 	percent: number | null

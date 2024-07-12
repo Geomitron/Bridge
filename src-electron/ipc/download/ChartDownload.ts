@@ -13,7 +13,7 @@ import { ReadableStream } from 'stream/web'
 import { inspect } from 'util'
 
 import { tempPath } from '../../../src-shared/Paths.js'
-import { sanitizeFilename } from '../../ElectronUtilFunctions.js'
+import { resolveChartFolderName } from '../../../src-shared/UtilFunctions.js'
 import { getSettings } from '../SettingsHandler.ipc.js'
 
 export interface DownloadMessage {
@@ -58,14 +58,17 @@ export class ChartDownload {
 	private stepCompletedCount = 0
 	private tempPath: string
 
-	private destinationName: string
+	private chartFolderPath: string
 	private isSng: boolean
 
 	private showProgress = _.throttle((description: string, percent: number | null = null) => {
 		this.eventEmitter.emit('progress', { header: description, body: '' }, percent)
 	}, 10, { leading: true, trailing: true })
 
-	constructor(public readonly md5: string, private chartName: string) { }
+	constructor(
+		public readonly md5: string,
+		private chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string },
+	) { }
 
 	on<T extends keyof ChartDownloadEvents>(event: T, listener: ChartDownloadEvents[T]) {
 		this.eventEmitter.on(event, listener)
@@ -125,23 +128,16 @@ export class ChartDownload {
 		}
 
 		this.isSng = settings.isSng
-		this.destinationName = sanitizeFilename(this.isSng ? `${this.chartName}.sng` : this.chartName)
+		this.chartFolderPath = resolveChartFolderName(settings.chartFolderName, this.chart) + (this.isSng ? '.sng' : '')
 		this.showProgress('Checking for any duplicate charts...')
-		const destinationPath = join(settings.libraryPath, this.destinationName)
+		const destinationPath = join(settings.libraryPath, this.chartFolderPath)
 		const isDuplicate = await access(destinationPath, constants.F_OK).then(() => true).catch(() => false)
 		if (this._canceled) { return }
 		if (isDuplicate) {
 			throw { header: 'This chart already exists in your library folder', body: destinationPath, isPath: true }
 		}
 
-		this.tempPath = join(tempPath, randomUUID())
-		try {
-			this.showProgress('Creating temporary download folder...')
-			await ensureDir(this.tempPath)
-			if (this._canceled) { return }
-		} catch (err) {
-			throw { header: 'Failed to create temporary download folder', body: inspect(err) }
-		}
+		this.tempPath = join(tempPath, randomUUID()) + (this.isSng ? '.sng' : '')
 	}
 
 	private async downloadChart() {
@@ -149,7 +145,7 @@ export class ChartDownload {
 		const fileSize = BigInt(response.headers['content-length']!)
 
 		if (this.isSng) {
-			response.pipe(createWriteStream(join(this.tempPath, this.destinationName), { highWaterMark: 2e+9 }))
+			response.pipe(createWriteStream(this.tempPath, { highWaterMark: 2e+9 }))
 
 			await new Promise<void>((resolve, reject) => {
 				let downloadedByteCount = BigInt(0)
@@ -169,12 +165,12 @@ export class ChartDownload {
 			const sngStream = new SngStream(Readable.toWeb(response) as any, { generateSongIni: true })
 			let downloadedByteCount = BigInt(0)
 
-			await ensureDir(join(this.tempPath, this.destinationName))
+			await ensureDir(this.tempPath)
 
 			await new Promise<void>((resolve, reject) => {
 				sngStream.on('file', async (fileName, fileStream, nextFile) => {
 					const nodeFileStream = Readable.fromWeb(fileStream as ReadableStream<Uint8Array>, { highWaterMark: 2e+9 })
-					nodeFileStream.pipe(createWriteStream(join(this.tempPath, this.destinationName, fileName), { highWaterMark: 2e+9 }))
+					nodeFileStream.pipe(createWriteStream(join(this.tempPath, fileName), { highWaterMark: 2e+9 }))
 
 					await new Promise<void>((resolve, reject) => {
 						nodeFileStream.on('end', resolve)
@@ -220,8 +216,8 @@ export class ChartDownload {
 		await new Promise<void>(resolve => setTimeout(resolve, 200)) // Delay for OS file processing
 		await new Promise<void>((resolve, reject) => {
 			if (settings.libraryPath) {
-				const destinationPath = join(settings.libraryPath, this.destinationName)
-				move(join(this.tempPath, this.destinationName), destinationPath, { overwrite: true }, err => {
+				const destinationPath = join(settings.libraryPath, this.chartFolderPath)
+				move(this.tempPath, destinationPath, { overwrite: true }, err => {
 					if (err) {
 						reject({ header: 'Failed to move chart to library folder', body: inspect(err) })
 					} else {
@@ -240,9 +236,8 @@ export class ChartDownload {
 			throw { header: 'Failed to delete temporary folder', body: inspect(err) }
 		}
 
-		const destinationPath = join(settings.libraryPath!, this.destinationName)
 		this.showProgress.cancel()
-		this.eventEmitter.emit('end', destinationPath)
+		this.eventEmitter.emit('end', join(settings.libraryPath!, this.chartFolderPath))
 	}
 }
 

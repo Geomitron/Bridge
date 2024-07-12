@@ -28,6 +28,7 @@ export interface Settings {
 	customTheme: ThemeColors | null // The colors of a custom theme
 	customThemePath: string | null  // The last folder that contained the `customTheme`'s file
 	libraryPath: string | undefined // The path to the user's library
+	chartFolderName: string         // The relative path and name of the chart that is saved in `libraryPath`
 	isSng: boolean                  // If the chart should be downloaded as a .sng file or as a chart folder
 	isCompactTable: boolean         // If the search result table should have reduced padding
 	visibleColumns: string[]        // The search result columns to include
@@ -45,6 +46,7 @@ export const defaultSettings: Settings = {
 	customTheme: null,
 	customThemePath: null,
 	libraryPath: undefined,
+	chartFolderName: '{artist} - {name} ({charter})',
 	isSng: false,
 	isCompactTable: false,
 	visibleColumns: ['artist', 'album', 'genre', 'year'],
