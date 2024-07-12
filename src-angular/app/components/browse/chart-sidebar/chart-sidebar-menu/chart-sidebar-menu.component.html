@@ -7,7 +7,7 @@
 					<i class="bi bi-exclamation-triangle text-sm text-secondary-content"></i> Report issue
 				</button>
 				<dialog #reportModal class="modal">
-					@if (reportSent) {
+					@if (reportState === 'sent') {
 						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
 							<form method="dialog">
 								<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
@@ -15,6 +15,10 @@
 								</button>
 							</form>
 							<span class="text-xl text-center">{{ reportMessage }}</span>
+						</div>
+					} @else if (reportState === 'sending') {
+						<div class="modal-box flex flex-col gap-2 bg-base-100 text-base-content">
+							<span class="loading loading-spinner loading-sm self-center"></span>
 						</div>
 					} @else {
 						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
@@ -28,6 +32,14 @@
 								<div
 									[class.border-error]="reportOption.invalid && reportOption.touched"
 									[class.border]="reportOption.invalid && reportOption.touched">
+									<div class="form-control">
+										<label class="label cursor-pointer justify-normal gap-2">
+											<input type="radio" class="radio checked:bg-red-500" value="Doesn't follow Chorus guidelines" formControlName="reportOption" />
+											<span>
+												Doesn't follow <a class="link link-primary" (click)="openUrl('https://guidelines.enchor.us/')">Chorus guidelines</a>
+											</span>
+										</label>
+									</div>
 									@for (option of reportOptions; track $index) {
 										<div class="form-control">
 											<label class="label cursor-pointer justify-normal gap-2">
@@ -49,7 +61,13 @@
 										placeholder="Please be specific. Vague reports may be ignored if the problem is not obvious."
 										formControlName="reportExtraInfo">
 									</textarea>
-									<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">Please provide more details.</span>
+									<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">
+										@if (reportExtraInfo.value.length === 0) {
+											Please provide more details.
+										} @else {
+											Reports without a specific explanation will be ignored.
+										}
+									</span>
 								</div>
 							</form>
 							<span *ngIf="isFalseReportOption()" class="text-lg text-warning text-wrap">

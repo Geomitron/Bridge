@@ -1,6 +1,6 @@
 <div class="border-t border-t-neutral p-2 flex gap-2 items-center max-w-full">
 	<div *ngIf="searchService.songsResponse" class="text-nowrap">
-		{{ searchService.songsResponse.found }} Result{{ searchService.songsResponse.found === 1 ? '' : 's' }}
+		{{ searchService.songsResponse.found | number: '1.0-0' }} Result{{ searchService.songsResponse.found === 1 ? '' : 's' }}
 	</div>
 	<div class="flex-1">
 		<button *ngIf="selectedGroupIds.length > 1" (click)="downloadSelected()" class="btn btn-sm btn-primary text-nowrap">

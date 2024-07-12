@@ -19,7 +19,6 @@ export class ChartSidebarMenutComponent implements OnInit {
 	public selectedVersion: FormControl<ChartData>
 
 	public reportOptions = [
-		`Doesn't follow Chorus guidelines`,
 		`Doesn't meet chart quality standards`,
 		'No notes / chart ends immediately',
 		`Download doesn't work`,
@@ -27,7 +26,7 @@ export class ChartSidebarMenutComponent implements OnInit {
 		'Other',
 	] as const
 	public reportForm: ReturnType<this['getForm']>
-	public reportSent = false
+	public reportState: 'not-sent' | 'sending' | 'sent' = 'not-sent'
 	public reportMessage = ''
 
 	constructor(
@@ -45,7 +44,7 @@ export class ChartSidebarMenutComponent implements OnInit {
 	getForm() {
 		return this.fb.group({
 			reportOption: this.fb.control(null as ChartSidebarMenutComponent['reportOptions'][number] | null, [Validators.required]),
-			reportExtraInfo: this.fb.control('', [Validators.required]),
+			reportExtraInfo: this.fb.control('', [Validators.required, Validators.minLength(4)]),
 		})
 	}
 
@@ -106,16 +105,18 @@ export class ChartSidebarMenutComponent implements OnInit {
 	}
 
 	report() {
-		if (this.reportExtraInfo.valid) {
+		if (this.reportForm.valid && this.reportState === 'not-sent') {
+			this.reportState = 'sending'
 			this.http.post(`${environment.apiUrl}/report`, {
 				chartId: this.selectedVersion.value.chartId,
 				reason: this.reportOption.value,
 				extraInfo: this.reportExtraInfo.value,
 			}).subscribe((response: { message: string }) => {
 				this.reportMessage = response.message
-				this.reportSent = true
+				this.reportState = 'sent'
 			})
 		} else {
+			this.reportOption.markAsTouched()
 			this.reportExtraInfo.markAsTouched()
 		}
 	}
