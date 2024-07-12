@@ -96,6 +96,13 @@ export class SettingsService {
 		this.settings.customTheme = value
 		this.saveSettings()
 	}
+	get customThemePath() {
+		return this.settings.customThemePath
+	}
+	set customThemePath(value: string | null) {
+		this.settings.customThemePath = value
+		this.saveSettings()
+	}
 
 	get isSng() {
 		return this.settings.isSng

@@ -26,6 +26,7 @@ export interface Settings {
 	downloadVideos: boolean         // If background videos should be downloaded
 	theme: typeof themes[number]    // The name of the currently enabled UI theme
 	customTheme: ThemeColors | null // The colors of a custom theme
+	customThemePath: string | null  // The last folder that contained the `customTheme`'s file
 	libraryPath: string | undefined // The path to the user's library
 	isSng: boolean                  // If the chart should be downloaded as a .sng file or as a chart folder
 	isCompactTable: boolean         // If the search result table should have reduced padding
@@ -41,6 +42,7 @@ export const defaultSettings: Settings = {
 	downloadVideos: true,
 	theme: 'dark',
 	customTheme: null,
+	customThemePath: null,
 	libraryPath: undefined,
 	isSng: false,
 	isCompactTable: false,

@@ -79,7 +79,7 @@ export class SettingsComponent implements OnInit {
 	async getCustomTheme() {
 		const result = await window.electron.invoke.showOpenDialog({
 			title: 'Choose custom theme',
-			defaultPath: this.settingsService.libraryDirectory || '',
+			defaultPath: this.settingsService.customThemePath || '',
 			properties: ['openFile'],
 			filters: [
 				{ name: "Themes", extensions: ["json"] },
@@ -87,10 +87,12 @@ export class SettingsComponent implements OnInit {
 		})
 
 		if (result.canceled === false) {
-			const newThemeColors = await window.electron.invoke.getThemeColors(result.filePaths[0])
+			const path = result.filePaths[0].replace(/\\/g, '/')
+			const newThemeColors = await window.electron.invoke.getThemeColors(path)
 
 			if (newThemeColors) {
 				this.settingsService.customTheme = newThemeColors
+				this.settingsService.customThemePath = path.substring(0, path.lastIndexOf('/'))
 			} else {
 				alert(`ERROR: ${result.filePaths[0]} was not a valid JSON file.`)
 			}
