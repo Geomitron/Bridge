@@ -74,7 +74,7 @@ export class ChartSidebarComponent implements OnInit {
 
 	public get hasIcons() { return !!this.searchService.availableIcons }
 	public get icon() {
-		const iconName = this.selectedChart!.icon || removeStyleTags(this.selectedChart!.charter ?? 'N/A').toLowerCase() + '.'
+		const iconName = (this.selectedChart!.icon || removeStyleTags(this.selectedChart!.charter ?? 'N/A').toLowerCase()) + '.'
 		if (iconName === 'unknown charter') { return null }
 		return this.searchService.availableIcons?.find(i => i.toLowerCase().startsWith(iconName)) || null
 	}
