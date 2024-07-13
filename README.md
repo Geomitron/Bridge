@@ -23,32 +23,20 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 - ✅ A variety of themes.
 - ✅ Advanced song search.
 
-### What's new in v2.0.0
+### What's new in v2.2.0
 
-v2.0.0
+v2.2.0
 
-- Update to Angular 17
-- Update to Electron 27
-- Refreshed visual style, with 12 themes supported
-- Search results now update as you type
-- Improved search result accuracy in various cases
-- Added persistent instrument and difficulty filters
-- Reworked advanced search to include more options
-- Search result table now has a "compact" view option
-- Search result table now shows latest charts by default
-- Searches now display the total number of results
-- Added the charter or setlist icon on top of the album art
-- Reworked chart details display to include more chart information
-- Added button to report issues with charts
+- Update to Angular 18
+- Update to Electron 31 (and CommonJS to ESM)
+- Add zoom function
+- Add support for custom themes (https://daisyui.com/theme-generator/)
+- Add ability to configure the columns in the search result table
+- Add customization for the structure of the downloaded chart folders
 - Fixed a variety of issues causing some charts to not download
-- Download speed and reliability has been significantly improved
-- Chart audio is automatically converted to .opus (older CH versions don't support this)
-- Added option to download charts as .sng files (a new format currently only supported by CH v1.1 and YARG)
-- The list of available charts will now update much more frequently and reliably
-
-#### Known Issues:
-- There are rare cases where the download audio is heavily distorted (for now, redownload it from the Google Drive source folder manually)
-
+- Improved support for web-based keyboard shortcuts
+- Various UI improvements
+- Added Flatpak builds for Linux
 
 ### Development
 
