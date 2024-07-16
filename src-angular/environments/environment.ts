@@ -5,6 +5,7 @@
 export const environment = {
 	production: false,
 	apiUrl: 'https://api.enchor.us',
+	// apiUrl: 'http://localhost:3000',
 }
 
 /*

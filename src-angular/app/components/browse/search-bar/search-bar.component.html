@@ -18,7 +18,7 @@
 			<div class="dropdown">
 				<label tabindex="0" class="btn btn-neutral rounded-btn rounded-r-none uppercase">
 					@if (instrument) {
-						<img class="w-8 hidden sm:block" src="assets/images/instruments/{{ instrument }}.png" />
+						<img class="w-8 hidden sm:block" src="https://static.enchor.us/instrument-{{ instrument }}.png" />
 					}
 					{{ instrumentDisplay(instrument) }}
 				</label>
@@ -29,7 +29,7 @@
 					@for (instrument of instruments; track $index) {
 						<li>
 							<a (click)="setInstrument(instrument, $event)">
-								<img class="w-8" src="assets/images/instruments/{{ instrument }}.png" />
+								<img class="w-8" src="https://static.enchor.us/instrument-{{ instrument }}.png" />
 								{{ instrumentDisplay(instrument) }}
 							</a>
 						</li>
@@ -38,7 +38,9 @@
 			</div>
 			<!-- Difficulty Dropdown -->
 			<div class="dropdown">
-				<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none uppercase">{{ difficultyDisplay(difficulty) }}</label>
+				<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none uppercase" [class.rounded-r-none]="instrument === 'drums'">{{
+					difficultyDisplay(difficulty)
+				}}</label>
 				<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-40">
 					<li>
 						<a (click)="setDifficulty(null, $event)">{{ difficultyDisplay(null) }}</a>
@@ -50,6 +52,22 @@
 					}
 				</ul>
 			</div>
+			@if (instrument === 'drums') {
+				<!-- Drum Type Dropdown -->
+				<div class="dropdown">
+					<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none uppercase">{{ drumTypeDisplay(drumType) }}</label>
+					<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-40">
+						<li>
+							<a (click)="setDrumType(null, $event)">{{ drumTypeDisplay(null) }}</a>
+						</li>
+						@for (drumType of drumTypes; track $index) {
+							<li>
+								<a (click)="setDrumType(drumType, $event)">{{ drumTypeDisplay(drumType) }}</a>
+							</li>
+						}
+					</ul>
+				</div>
+			}
 		</div>
 		<div class="flex-1 flex-grow-[3] h-0"></div>
 		<!-- Advanced Search -->
@@ -125,88 +143,117 @@
 						</tbody>
 					</table>
 				</div>
-				<div class="flex flex-col gap-2 justify-end">
-					<table class="table table-xs">
-						<tbody>
-							<tr class="border-b-0">
-								<td class="text-sm">Length (minutes)</td>
-								<td>
-									<div class="join">
-										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minLength" />
-										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxLength" />
-									</div>
-								</td>
-							</tr>
-							<tr class="border-b-0">
-								<td class="text-sm">
-									<span
-										class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
-										data-tip="Also known as chart difficulty. Typically a number between 0 and 6.">
-										Intensity
-									</span>
-								</td>
-								<td>
-									<div class="join">
-										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minIntensity" />
-										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxIntensity" />
-									</div>
-								</td>
-							</tr>
-							<tr class="border-b-0">
-								<td class="text-sm">Average NPS</td>
-								<td>
-									<div class="join">
-										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minAverageNPS" />
-										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxAverageNPS" />
-									</div>
-								</td>
-							</tr>
-							<tr class="border-b-0">
-								<td class="text-sm">Max NPS</td>
-								<td>
-									<div class="join">
-										<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minMaxNPS" />
-										<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxMaxNPS" />
-									</div>
-								</td>
-							</tr>
-							<tr class="border-b-0">
-								<td class="text-sm">
-									<span
-										class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
-										data-tip="The date of the last time this chart was modified in Google Drive.">
-										Modified After
-									</span>
-								</td>
-								<td>
-									<input
-										type="date"
-										min="2012-01-01"
-										[max]="todayDate"
-										placeholder="YYYY/MM/DD"
-										class="input input-bordered join-item input-sm w-32"
-										formControlName="modifiedAfter"
-										(blur)="startValidation = true"
-										[class.input-error]="advancedSearchForm.invalid && startValidation" />
-								</td>
-							</tr>
-							<tr class="border-b-0">
-								<td class="text-sm">
-									<span
-										class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
-										data-tip="The MD5 hash of the chart folder or .sng file. You can enter multiple values if they are separated by commas.">
-										Hash
-									</span>
-								</td>
-								<td>
-									<input type="text" class="input input-bordered join-item input-sm w-32" formControlName="hash" />
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-				<div class="flex flex-col justify-between">
-					<div class="flex gap-2">
+				<div class="flex flex-col">
+					<div class="flex flex-wrap justify-center gap-5">
+						<div class="flex flex-col gap-2 justify-end">
+							<table class="table table-xs">
+								<tbody>
+									<tr class="border-b-0">
+										<td class="text-sm">Length (minutes)</td>
+										<td>
+											<div class="join">
+												<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minLength" />
+												<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxLength" />
+											</div>
+										</td>
+									</tr>
+									<tr class="border-b-0">
+										<td class="text-sm">
+											<span
+												class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
+												data-tip="Also known as chart difficulty. Typically a number between 0 and 6.">
+												Intensity
+											</span>
+										</td>
+										<td>
+											<div class="join">
+												<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minIntensity" />
+												<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxIntensity" />
+											</div>
+										</td>
+									</tr>
+									<tr class="border-b-0">
+										<td class="text-sm">Average NPS</td>
+										<td>
+											<div class="join">
+												<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minAverageNPS" />
+												<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxAverageNPS" />
+											</div>
+										</td>
+									</tr>
+									<tr class="border-b-0">
+										<td class="text-sm">Max NPS</td>
+										<td>
+											<div class="join">
+												<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minMaxNPS" />
+												<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxMaxNPS" />
+											</div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div class="flex flex-col gap-2 justify-end">
+							<table class="table table-xs">
+								<tbody>
+									<tr class="border-b-0">
+										<td class="text-sm">Year</td>
+										<td>
+											<div class="join">
+												<input type="number" placeholder="Min" class="input input-bordered join-item input-sm w-16" formControlName="minYear" />
+												<input type="number" placeholder="Max" class="input input-bordered join-item input-sm w-16" formControlName="maxYear" />
+											</div>
+										</td>
+									</tr>
+									<tr class="border-b-0">
+										<td class="text-sm">
+											<span
+												class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
+												data-tip="The date of the last time this chart was modified in Google Drive.">
+												Modified After
+											</span>
+										</td>
+										<td>
+											<input
+												type="date"
+												min="2012-01-01"
+												[max]="todayDate"
+												placeholder="YYYY/MM/DD"
+												class="input input-bordered join-item input-sm w-32"
+												formControlName="modifiedAfter"
+												(blur)="startValidation = true"
+												[class.input-error]="advancedSearchForm.invalid && startValidation" />
+										</td>
+									</tr>
+									<tr class="border-b-0">
+										<td class="text-sm">
+											<span
+												class="label-text underline decoration-dotted cursor-help tooltip [text-wrap:balance]"
+												data-tip="The MD5 hash of the chart folder or .sng file. You can enter multiple values if they are separated by commas.">
+												Hash
+											</span>
+										</td>
+										<td>
+											<input type="text" class="input input-bordered join-item input-sm w-32" formControlName="hash" />
+										</td>
+									</tr>
+									<tr class="border-b-0">
+										<td class="text-sm">
+											<span
+												class="label-text tooltip cursor-help underline decoration-dotted [text-wrap:balance]"
+												data-tip="The hash of only things that impact scoring on a specific track. You can enter multiple values if they are separated by commas. (this is used by leaderboards to distinguish charts)">
+												Track Hash
+											</span>
+										</td>
+										<td>
+											<input type="text" class="input join-item input-bordered input-sm w-32" formControlName="trackHash" />
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="flex flex-wrap justify-center gap-2">
 						<div class="flex flex-col">
 							<div class="form-control">
 								<label class="label cursor-pointer justify-normal gap-2">
@@ -247,6 +294,8 @@
 									</span>
 								</label>
 							</div>
+						</div>
+						<div class="flex flex-col">
 							<div class="form-control">
 								<label class="label cursor-pointer justify-normal gap-2">
 									<input
@@ -280,27 +329,6 @@
 						<div class="flex flex-col">
 							<div class="form-control">
 								<label class="label cursor-pointer justify-normal gap-2">
-									<input
-										#hasRollLanes
-										type="checkbox"
-										class="toggle toggle-sm"
-										[indeterminate]="true"
-										(click)="clickCheckbox('hasRollLanes', $event)" />
-									<span class="label-text" [class.text-opacity-70]="formValue('hasRollLanes') === null">
-										{{ formValue('hasRollLanes') === false ? 'No ' : '' }}Roll Lanes
-									</span>
-								</label>
-							</div>
-							<div class="form-control">
-								<label class="label cursor-pointer justify-normal gap-2">
-									<input #has2xKick type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('has2xKick', $event)" />
-									<span class="label-text" [class.text-opacity-70]="formValue('has2xKick') === null">
-										{{ formValue('has2xKick') === false ? 'No ' : '' }}2x Kick
-									</span>
-								</label>
-							</div>
-							<div class="form-control">
-								<label class="label cursor-pointer justify-normal gap-2">
 									<input type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('hasIssues', $event)" />
 									<span class="label-text" [class.text-opacity-70]="formValue('hasIssues') === null">
 										{{ formValue('hasIssues') === false ? 'No ' : '' }}Chart Issues
@@ -324,13 +352,36 @@
 								</label>
 							</div>
 						</div>
+						<div class="flex flex-col">
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input
+										#hasRollLanes
+										type="checkbox"
+										class="toggle toggle-sm"
+										[indeterminate]="true"
+										(click)="clickCheckbox('hasRollLanes', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('hasRollLanes') === null">
+										{{ formValue('hasRollLanes') === false ? 'No ' : '' }}Roll Lanes
+									</span>
+								</label>
+							</div>
+							<div class="form-control">
+								<label class="label cursor-pointer justify-normal gap-2">
+									<input #has2xKick type="checkbox" class="toggle toggle-sm" [indeterminate]="true" (click)="clickCheckbox('has2xKick', $event)" />
+									<span class="label-text" [class.text-opacity-70]="formValue('has2xKick') === null">
+										{{ formValue('has2xKick') === false ? 'No ' : '' }}2x Kick
+									</span>
+								</label>
+							</div>
+							<button
+								class="btn btn-sm btn-primary uppercase"
+								[class.btn-disabled]="advancedSearchForm.invalid && startValidation"
+								(click)="searchAdvanced()">
+								Search{{ advancedSearchForm.invalid && startValidation ? ' ("Modified After" is invalid)' : '' }}
+							</button>
+						</div>
 					</div>
-					<button
-						class="btn btn-sm btn-primary uppercase"
-						[class.btn-disabled]="advancedSearchForm.invalid && startValidation"
-						(click)="searchAdvanced()">
-						Search{{ advancedSearchForm.invalid && startValidation ? ' ("Modified After" is invalid)' : '' }}
-					</button>
 				</div>
 			</div>
 		</form>

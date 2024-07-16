@@ -71,11 +71,19 @@ export class ChartSidebarMenutComponent implements OnInit {
 			breadcrumbs.push({ name: version.driveFileName!, link: driveLink(version.driveFileId) })
 
 			if (version.driveChartIsPack) {
-				breadcrumbs.push({ name: this.joinPaths(version.archivePath!, version.chartFileName ?? ''), link: null })
+				breadcrumbs.push({ name: this.removeFirstPathSegment(version.internalPath), link: null })
 			}
 		}
 
 		return breadcrumbs
+	}
+
+	private removeFirstPathSegment(path: string) {
+		const segments = path.split('/').filter(p => p.length > 0)
+		if (segments.length > 1) {
+			return segments.slice(1).join('/')
+		}
+		return path
 	}
 
 	isFalseReportOption() {
@@ -89,12 +97,6 @@ export class ChartSidebarMenutComponent implements OnInit {
 
 	openUrl(url: string) {
 		window.electron.emit.openUrl(url)
-	}
-
-	joinPaths(...args: string[]) {
-		return args.join('/')
-			.replace(/\/+/g, '/')
-			.replace(/^\/|\/$/g, '')
 	}
 
 	copyLink(hash: string) {

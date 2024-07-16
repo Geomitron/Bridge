@@ -30,7 +30,7 @@
 						"accessibility": "explicit"
 					}
 				],
-				"@typescript-eslint/no-use-before-define": ["error", { "typedefs": false, "functions": false }],
+				"@typescript-eslint/no-use-before-define": ["error", { "typedefs": false, "functions": false, "classes": false }],
 				"@typescript-eslint/no-shadow": ["off"],
 				"@typescript-eslint/member-ordering": ["error", { "default": ["field", "public-constructor", "constructor", "method"] }],
 				"@typescript-eslint/member-delimiter-style": ["error", { "multiline": { "delimiter": "none", "requireLast": true } }],
@@ -43,7 +43,8 @@
 					"error",
 					{
 						"ignorePattern": "^import |^export \\{(.*?)\\}|^\\s*@inject\\(",
-						"code": 140
+						"tabWidth": 2,
+						"code": 150
 					}
 				],
 				"@typescript-eslint/naming-convention": [

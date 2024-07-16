@@ -5,7 +5,6 @@ import { BrowseComponent } from './components/browse/browse.component'
 import { SettingsComponent } from './components/settings/settings.component'
 import { TabPersistStrategy } from './core/tab-persist.strategy'
 
-// TODO: replace these with the correct components
 const routes: Routes = [
 	{ path: 'browse', component: BrowseComponent, data: { shouldReuse: true } },
 	{ path: 'library', redirectTo: '/browse' },

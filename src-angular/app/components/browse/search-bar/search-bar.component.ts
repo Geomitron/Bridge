@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { distinctUntilChanged, switchMap, throttleTime } from 'rxjs'
 import { Difficulty, Instrument } from 'scan-chart'
 import { SearchService } from 'src-angular/app/core/services/search.service'
-import { difficulties, difficultyDisplay, instrumentDisplay, instruments } from 'src-shared/UtilFunctions'
+import { difficulties, difficultyDisplay, drumTypeDisplay, DrumTypeName, drumTypeNames, instrumentDisplay, instruments } from 'src-shared/UtilFunctions'
 
 @Component({
 	selector: 'app-search-bar',
@@ -25,8 +25,10 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	public showAdvanced = false
 	public instruments = instruments
 	public difficulties = difficulties
+	public drumTypes = drumTypeNames
 	public instrumentDisplay = instrumentDisplay
 	public difficultyDisplay = difficultyDisplay
+	public drumTypeDisplay = drumTypeDisplay
 
 	public advancedSearchForm: ReturnType<this['getAdvancedSearchForm']>
 	public startValidation = false
@@ -85,6 +87,16 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	}
 	setDifficulty(difficulty: Difficulty | null, event: MouseEvent) {
 		this.searchService.difficulty.setValue(difficulty)
+		if (event.target instanceof HTMLElement) {
+			event.target.parentElement?.parentElement?.blur()
+		}
+	}
+
+	get drumType() {
+		return this.searchService.drumType.value
+	}
+	setDrumType(drumType: DrumTypeName | null, event: MouseEvent) {
+		this.searchService.drumType.setValue(drumType)
 		if (event.target instanceof HTMLElement) {
 			event.target.parentElement?.parentElement?.blur()
 		}
@@ -164,8 +176,11 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 			maxAverageNPS: null as number | null,
 			minMaxNPS: null as number | null,
 			maxMaxNPS: null as number | null,
+			minYear: null as number | null,
+			maxYear: null as number | null,
 			modifiedAfter: this.fb.nonNullable.control('', { validators: dateVaidator }),
 			hash: this.fb.nonNullable.control(''),
+			trackHash: this.fb.nonNullable.control(''),
 			hasSoloSections: null as boolean | null,
 			hasForcedNotes: null as boolean | null,
 			hasOpenNotes: null as boolean | null,
@@ -208,6 +223,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 			this.searchService.advancedSearch({
 				instrument: this.instrument,
 				difficulty: this.difficulty,
+				drumType: this.drumType,
 				source: 'bridge' as const,
 				...this.advancedSearchForm.getRawValue(),
 			}).subscribe()

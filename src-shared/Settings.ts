@@ -35,6 +35,7 @@ export interface Settings {
 	zoomFactor: number              // How much the display should be zoomed
 	instrument: Instrument | null   // The instrument selected by default, or `null` for "Any Instrument"
 	difficulty: Difficulty | null   // The difficulty selected by default, or `null` for "Any Difficulty"
+	volume: number                  // The volume of the chart preview (0-100)
 }
 
 /**
@@ -53,4 +54,5 @@ export const defaultSettings: Settings = {
 	zoomFactor: 1,
 	instrument: 'guitar',
 	difficulty: null,
+	volume: 50,
 }

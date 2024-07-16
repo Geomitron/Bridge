@@ -60,6 +60,7 @@ export class ChartDownload {
 
 	private chartFolderPath: string
 	private isSng: boolean
+	private downloadVideos: boolean
 
 	private showProgress = _.throttle((description: string, percent: number | null = null) => {
 		this.eventEmitter.emit('progress', { header: description, body: '' }, percent)
@@ -67,6 +68,7 @@ export class ChartDownload {
 
 	constructor(
 		public readonly md5: string,
+		public readonly hasVideoBackground: boolean,
 		private chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string },
 	) { }
 
@@ -128,6 +130,7 @@ export class ChartDownload {
 		}
 
 		this.isSng = settings.isSng
+		this.downloadVideos = settings.downloadVideos
 		this.chartFolderPath = resolveChartFolderName(settings.chartFolderName, this.chart) + (this.isSng ? '.sng' : '')
 		this.showProgress('Checking for any duplicate charts...')
 		const destinationPath = join(settings.libraryPath, this.chartFolderPath)
@@ -141,7 +144,8 @@ export class ChartDownload {
 	}
 
 	private async downloadChart() {
-		const { response, abortController } = await getDownloadStream(this.md5)
+		const downloadNovideoVersion = this.hasVideoBackground && !this.downloadVideos
+		const { response, abortController } = await getDownloadStream(this.md5, downloadNovideoVersion)
 		const fileSize = BigInt(response.headers['content-length']!)
 
 		if (this.isSng) {
@@ -241,10 +245,10 @@ export class ChartDownload {
 	}
 }
 
-function getDownloadStream(md5: string): Promise<{ response: IncomingMessage; abortController: AbortController }> {
+function getDownloadStream(md5: string, downloadNovideoVersion: boolean): Promise<{ response: IncomingMessage; abortController: AbortController }> {
 	const abortController = new AbortController()
 	return new Promise((resolve, reject) => {
-		const request = https.get(`https://files.enchor.us/${md5}.sng`, {
+		const request = https.get(`https://files.enchor.us/${md5 + (downloadNovideoVersion ? '_novideo' : '')}.sng`, {
 			agent: new https.Agent({ timeout: 30000 }),
 			headers: {
 				'mode': 'cors',

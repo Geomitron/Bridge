@@ -2,7 +2,7 @@ import { Component, ElementRef, HostBinding, OnInit, Renderer2, ViewChild } from
 import { FormControl } from '@angular/forms'
 
 import _ from 'lodash'
-import { ChartIssueType, Difficulty, FolderIssueType, Instrument, MetadataIssueType, NoteIssueType, TrackIssueType } from 'scan-chart'
+import { Difficulty, Instrument, NotesData } from 'scan-chart'
 import { DownloadService } from 'src-angular/app/core/services/download.service'
 import { SearchService } from 'src-angular/app/core/services/search.service'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -34,8 +34,8 @@ export class ChartSidebarComponent implements OnInit {
 	selectedChart: ChartData | null = null
 	charts: ChartData[][] | null = null
 
-	public instrumentDropdown: FormControl<Instrument | null>
-	public difficultyDropdown: FormControl<Difficulty | null>
+	public instrumentDropdown: FormControl<Instrument>
+	public difficultyDropdown: FormControl<Difficulty>
 
 	constructor(
 		private renderer: Renderer2,
@@ -49,21 +49,21 @@ export class ChartSidebarComponent implements OnInit {
 			this.charts = null
 			this.selectedChart = null
 		})
-		this.instrumentDropdown = new FormControl<Instrument | null>(this.defaultInstrument)
+		this.instrumentDropdown = new FormControl<Instrument>(this.defaultInstrument, { nonNullable: true })
 		this.searchService.instrument.valueChanges.subscribe(instrument => {
 			if (this.instruments.some(i => i === instrument)) {
-				this.instrumentDropdown.setValue(instrument)
+				this.instrumentDropdown.setValue(instrument!)
 			}
 		})
 		this.instrumentDropdown.valueChanges.subscribe(() => {
 			if (!this.difficulties.some(d => d === this.difficultyDropdown.value)) {
-				this.difficultyDropdown.setValue(this.defaultDifficulty)
+				this.difficultyDropdown.setValue(this.defaultDifficulty, { emitEvent: false })
 			}
 		})
-		this.difficultyDropdown = new FormControl<Difficulty | null>(this.defaultDifficulty)
+		this.difficultyDropdown = new FormControl<Difficulty>(this.defaultDifficulty, { nonNullable: true })
 		this.searchService.difficulty.valueChanges.subscribe(difficulty => {
 			if (this.difficulties.some(d => d === difficulty)) {
-				this.difficultyDropdown.setValue(difficulty)
+				this.difficultyDropdown.setValue(difficulty!)
 			}
 		})
 	}
@@ -91,7 +91,9 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	public get extraLengthSeconds() {
-		return _.round((this.selectedChart!.notesData.length - this.selectedChart!.notesData.effectiveLength) / 1000, 1)
+		return this.selectedChart!.song_length ?
+			_.round((this.selectedChart!.song_length - this.selectedChart!.notesData.effectiveLength) / 1000, 1)
+			: _.round(this.selectedChart!.notesData.effectiveLength / 1000, 1)
 	}
 
 	public get hasIssues() {
@@ -99,96 +101,68 @@ export class ChartSidebarComponent implements OnInit {
 	}
 
 	public get metadataIssues() {
-		return this.selectedChart!.metadataIssues
-	}
-	public getMetadataIssueText(issue: MetadataIssueType) {
-		switch (issue) {
-			case 'noName': return 'Chart has no name'
-			case 'noArtist': return 'Chart has no artist'
-			case 'noAlbum': return 'Chart has no album'
-			case 'noGenre': return 'Chart has no genre'
-			case 'noYear': return 'Chart has no year'
-			case 'noCharter': return 'Chart has no charter'
-			case 'missingInstrumentDiff': return 'Metadata is missing an instrument intensity rating'
-			case 'extraInstrumentDiff': return 'Metadata contains an instrument intensity rating for an uncharted instrument'
-			case 'nonzeroDelay': return 'Chart uses "delay" for the audio offset'
-			case 'drumsSetTo4And5Lane': return 'It is unclear if the drums chart is intended to be 4-lane or 5-lane'
-			case 'nonzeroOffset': return 'Chart uses "delay" for the audio offset'
-		}
+		return this.selectedChart!.metadataIssues.filter(i => !['extraValue'].includes(i.metadataIssue))
 	}
 	public get folderIssues() {
 		return _.chain(this.selectedChart!.folderIssues)
 			.filter(i => !['albumArtSize', 'invalidIni', 'multipleVideo', 'badIniLine'].includes(i.folderIssue))
-			.map(i => i.folderIssue)
-			.uniq()
+			.uniqBy(i => i.folderIssue)
 			.value()
 	}
-	public getFolderIssueText(folderIssue: FolderIssueType) {
-		switch (folderIssue) {
-			case 'noMetadata': return `Metadata file is missing`
-			case 'invalidMetadata': return `Metadata file is invalid`
-			case 'multipleIniFiles': return `Multiple metadata files`
-			case 'noAlbumArt': return `Album art is missing`
-			case 'badAlbumArt': return `Album art is invalid`
-			case 'multipleAlbumArt': return `Multiple album art files`
-			case 'noAudio': return `Audio file is missing`
-			case 'invalidAudio': return `Audio file is invalid`
-			case 'badAudio': return `Audio file is invalid`
-			case 'multipleAudio': return `Audio file is invalid`
-			case 'noChart': return `Notes file is missing`
-			case 'invalidChart': return `Notes file is invalid`
-			case 'badChart': return `Notes file is invalid`
-			case 'multipleChart': return `Multiple notes files`
-			case 'badVideo': return `Video background won't work on Linux`
-		}
-	}
 
-	public get chartIssues() {
-		return this.selectedChart!.notesData?.chartIssues.filter(i => i !== 'isDefaultBPM')
-	}
-	public getChartIssueText(issue: ChartIssueType) {
-		switch (issue) {
-			case 'noResolution': return 'No resolution in chart file'
-			case 'noSyncTrackSection': return 'No tempo map in chart file'
-			case 'noNotes': return 'No notes in chart file'
-			case 'noExpert': return 'Expert is not charted'
-			case 'misalignedTimeSignatures': return 'Broken time signatures'
-			case 'noSections': return 'No sections'
-		}
+	public get globalChartIssues() {
+		return _.chain(this.selectedChart!.notesData.chartIssues)
+			.filter(i => i.instrument === null)
+			.filter(i => i.noteIssue !== 'isDefaultBPM')
+			.value()
 	}
 
 	public get trackIssuesGroups() {
-		return _.chain([
-			...this.selectedChart!.notesData.trackIssues.map(i => ({ ...i, issues: i.trackIssues })),
-			...this.selectedChart!.notesData.noteIssues.map(i => ({ ...i, issues: i.noteIssues.map(ni => ni.issueType) })),
-		])
-			.sortBy(g => instruments.indexOf(g.instrument), g => difficulties.indexOf(g.difficulty))
-			.groupBy(g => `${_.capitalize(g.instrument)} - ${_.capitalize(g.difficulty)} Issues Found:`)
+		return _.chain(this.selectedChart!.notesData.chartIssues)
+			.filter(g => g.instrument !== null)
+			.sortBy(
+				g => instruments.indexOf(g.instrument!),
+				g => difficulties.indexOf(g.difficulty || '(all difficulties)' as Difficulty),
+			)
+			.groupBy(
+				g => `${_.capitalize(g.instrument!)
+					} - ${_.capitalize(g.difficulty || '(all difficulties)' as Difficulty)} Issues Found:`
+			)
 			.toPairs()
 			.map(([groupName, group]) => ({
 				groupName,
 				issues: _.chain(group)
-					.flatMap(g => g.issues)
-					.filter(i => i !== 'babySustain' && i !== 'noNotesOnNonemptyTrack')
-					.uniq()
+					.filter(
+						i => !['badEndEvent', 'emptyStarPower', 'emptySoloSection', 'emptyFlexLane', 'babySustain'].includes(i.noteIssue)
+					)
+					.groupBy(i => i.noteIssue)
+					.values()
+					.map(issueGroup => this.getTrackIssueText(issueGroup))
 					.value(),
 			}))
 			.filter(g => g.issues.length > 0)
 			.value()
 	}
-
-	public getTrackIssueText(issue: NoteIssueType | TrackIssueType) {
-		switch (issue) {
-			case 'babySustain': return 'Has baby sustains'
-			case 'badSustainGap': return 'Has sustain gaps that are too small'
-			case 'brokenNote': return 'Has broken notes'
-			case 'difficultyForbiddenNote': return 'Has notes not allowed on this difficulty'
-			case 'fiveNoteChord': return 'Has five-note chords'
-			case 'noDrumActivationLanes': return 'Has no activation lanes'
-			case 'has4And5LaneFeatures': return 'Has a mix of 4 and 5 lane features on the drum chart'
-			case 'noStarPower': return 'Has no star power'
-			case 'smallLeadingSilence': return 'Leading silence is too small'
-			case 'threeNoteDrumChord': return 'Has three-note drum chords'
+	private getTrackIssueText(issueGroup: NotesData['chartIssues']) {
+		const one = issueGroup.length === 1
+		const len = issueGroup.length
+		switch (issueGroup[0].noteIssue) {
+			case 'badStarPower':
+				return `There ${one ? 'is' : 'are'} ${len} ignored star power event${one ? '' : 's'
+					} due to the .ini "multiplier_note" setting.`
+			case 'difficultyForbiddenNote':
+				return `There ${one ? 'is' : 'are'} ${len} note${one ? '' : 's'
+					} that ${one ? 'is' : 'are'}n't allowed on this track's difficulty.`
+			case 'invalidChord':
+				return `There ${one ? 'is' : 'are'} ${len} chord${one ? '' : 's'
+					} that ${one ? 'is' : 'are'}n't allowed for this instrument type.`
+			case 'brokenNote':
+				return `There ${one ? 'is' : 'are'} ${len} broken note${one ? '' : 's'} on this track.`
+			case 'badSustainGap':
+				return one ? 'There is 1 note that has a sustain gap that is too small.' : `There are ${len
+					} notes that have sustain gaps that are too small.`
+			default:
+				return issueGroup[0].description
 		}
 	}
 
@@ -203,7 +177,7 @@ export class ChartSidebarComponent implements OnInit {
 			showGuitarlikeProperties ? { value: notesData.hasTapNotes, text: 'Tap Notes' } : null,
 			showGuitarlikeProperties ? { value: notesData.hasOpenNotes, text: 'Open Notes' } : null,
 			showDrumlikeProperties ? { value: notesData.has2xKick, text: '2x Kick' } : null,
-			showDrumlikeProperties ? { value: notesData.hasRollLanes, text: 'Roll Lanes' } : null,
+			showDrumlikeProperties ? { value: notesData.hasFlexLanes, text: 'Roll Lanes' } : null,
 			{ value: this.selectedChart!.hasVideoBackground, text: 'Video Background' },
 		])
 	}
@@ -267,7 +241,7 @@ export class ChartSidebarComponent implements OnInit {
 		}
 	}
 
-	private currentTrackFilter = (track: { instrument: Instrument; difficulty: Difficulty }) => {
+	private currentTrackFilter = (track: { instrument: Instrument | null; difficulty: Difficulty | null }) => {
 		return track.instrument === this.instrumentDropdown.value && track.difficulty === this.difficultyDropdown.value
 	}
 	public get maximumNps() {

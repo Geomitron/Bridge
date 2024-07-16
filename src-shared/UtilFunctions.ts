@@ -61,6 +61,8 @@ export const instruments = [
 	'guitar', 'guitarcoop', 'rhythm', 'bass', 'drums', 'keys', 'guitarghl', 'guitarcoopghl', 'rhythmghl', 'bassghl',
 ] as const satisfies Readonly<Instrument[]>
 export const difficulties = ['expert', 'hard', 'medium', 'easy'] as const satisfies Readonly<Difficulty[]>
+export const drumTypeNames = ['fourLane', 'fourLanePro', 'fiveLane'] as const
+export type DrumTypeName = typeof drumTypeNames[number]
 
 export function instrumentDisplay(instrument: Instrument | null) {
 	switch (instrument) {
@@ -99,6 +101,14 @@ export function difficultyDisplay(difficulty: Difficulty | null) {
 		case 'medium': return 'Medium'
 		case 'easy': return 'Easy'
 		case null: return 'Any Difficulty'
+	}
+}
+export function drumTypeDisplay(drumType: DrumTypeName | null) {
+	switch (drumType) {
+		case 'fourLane': return 'Four Lane'
+		case 'fourLanePro': return 'Four Lane Pro'
+		case 'fiveLane': return 'Five Lane'
+		case null: return 'Any Drum Type'
 	}
 }
 export function instrumentToDiff(instrument: Instrument | 'vocals') {
@@ -149,25 +159,91 @@ export function removeStyleTags(text: string) {
 }
 
 export function hasIssues(chart: Pick<ChartData, 'metadataIssues' | 'folderIssues' | 'notesData'>) {
-	if (chart.metadataIssues.length > 0) { return true }
-	for (const folderIssue of chart.folderIssues) {
-		if (!['albumArtSize', 'invalidIni', 'multipleVideo', 'badIniLine'].includes(folderIssue.folderIssue)) { return true }
-	}
-	for (const chartIssue of chart.notesData?.chartIssues ?? []) {
-		if (chartIssue !== 'isDefaultBPM') { return true }
-	}
-	for (const trackIssue of chart.notesData?.trackIssues ?? []) {
-		for (const ti of trackIssue.trackIssues) {
-			if (ti !== 'noNotesOnNonemptyTrack') { return true }
+	for (const metadataIssue of chart.metadataIssues) {
+		if (!['extraValue'].includes(metadataIssue.metadataIssue)) {
+			return true
 		}
 	}
-	for (const noteIssue of chart.notesData?.noteIssues ?? []) {
-		for (const ni of noteIssue.noteIssues) {
-			if (ni.issueType !== 'babySustain') { return true }
+	for (const folderIssue of chart.folderIssues) {
+		if (!['albumArtSize', 'invalidIni', 'multipleVideo', 'badIniLine'].includes(folderIssue.folderIssue)) {
+			return true
+		}
+	}
+	for (const chartIssue of chart.notesData?.chartIssues ?? []) {
+		if (!['isDefaultBPM', 'badEndEvent', 'emptyStarPower', 'emptySoloSection', 'emptyFlexLane', 'babySustain']
+			.includes(chartIssue.noteIssue)) {
+			return true
 		}
 	}
 
 	return false
+}
+
+/**
+ * @returns extension of a file, excluding the dot. (e.g. "song.ogg" -> "ogg")
+ */
+export function getExtension(fileName: string) {
+	return _.last(fileName.split('.')) ?? ''
+}
+
+/**
+ * @returns basename of a file, excluding the dot. (e.g. "song.ogg" -> "song")
+ */
+export function getBasename(fileName: string) {
+	const parts = fileName.split('.')
+	return parts.length > 1 ? parts.slice(0, -1).join('.') : fileName
+}
+/**
+ * @returns `true` if `fileName` is a valid video fileName.
+ */
+export function hasVideoName(fileName: string) {
+	return getBasename(fileName) === 'video' && ['mp4', 'avi', 'webm', 'vp8', 'ogv', 'mpeg'].includes(getExtension(fileName))
+}
+
+/**
+ * @returns `true` if `fileName` has a valid chart file extension.
+ */
+export function hasChartExtension(fileName: string) {
+	return ['chart', 'mid'].includes(getExtension(fileName).toLowerCase())
+}
+
+/**
+ * @returns `true` if `fileName` is a valid chart fileName.
+ */
+export function hasChartName(fileName: string) {
+	return ['notes.chart', 'notes.mid'].includes(fileName)
+}
+
+/**
+ * @returns `true` if `fileName` has a valid chart audio file extension.
+ */
+export function hasAudioExtension(fileName: string) {
+	return ['ogg', 'mp3', 'wav', 'opus'].includes(getExtension(fileName).toLowerCase())
+}
+
+/**
+ * @returns `true` if `fileName` has a valid chart audio fileName.
+ */
+export function hasAudioName(fileName: string) {
+	return (
+		[
+			'song',
+			'guitar',
+			'bass',
+			'rhythm',
+			'keys',
+			'vocals',
+			'vocals_1',
+			'vocals_2',
+			'drums',
+			'drums_1',
+			'drums_2',
+			'drums_3',
+			'drums_4',
+			'crowd',
+			'preview',
+		].includes(getBasename(fileName)) && ['ogg', 'mp3', 'wav', 'opus'].includes(getExtension(fileName))
+	)
 }
 
 export function resolveChartFolderName(

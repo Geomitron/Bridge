@@ -14,6 +14,7 @@ export class SettingsComponent implements OnInit {
 
 	public chartFolderName: FormControl<string>
 	public isSng: FormControl<boolean>
+	public downloadVideos: FormControl<boolean>
 	public isCompactTable: FormControl<boolean>
 
 	public artistColumn: FormControl<boolean>
@@ -44,6 +45,8 @@ export class SettingsComponent implements OnInit {
 
 		this.isSng = new FormControl<boolean>(ss.isSng, { nonNullable: true })
 		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
+		this.downloadVideos = new FormControl<boolean>(ss.downloadVideos, { nonNullable: true })
+		this.downloadVideos.valueChanges.subscribe(value => settingsService.downloadVideos = value)
 		this.isCompactTable = new FormControl<boolean>(settingsService.isCompactTable, { nonNullable: true })
 		this.isCompactTable.valueChanges.subscribe(value => ss.isCompactTable = value)
 
@@ -89,10 +92,6 @@ export class SettingsComponent implements OnInit {
 			this.updateAvailable = isAvailable
 			this.ref.detectChanges()
 		})
-	}
-
-	async downloadVideos(isChecked: boolean) {
-		this.settingsService.downloadVideos = isChecked
 	}
 
 	async getLibraryDirectory() {

@@ -6,6 +6,7 @@ export interface Download {
 	action: 'add' | 'remove' | 'retry'
 	md5: string
 	// Should be defined if action === 'add'
+	hasVideoBackground?: boolean
 	chart?: { name: string; artist: string; album: string; genre: string; year: string; charter: string }
 }
 

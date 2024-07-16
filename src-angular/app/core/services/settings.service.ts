@@ -153,6 +153,14 @@ export class SettingsService {
 			this.zoomFactor = _.round(this.zoomFactor - 0.1, 3)
 		}
 	}
+
+	get volume() {
+		return this.settings.volume
+	}
+	set volume(value: number) {
+		this.settings.volume = value
+		this.saveSettings()
+	}
 }
 
 function setThemeColors(themeColors: ThemeColors) {

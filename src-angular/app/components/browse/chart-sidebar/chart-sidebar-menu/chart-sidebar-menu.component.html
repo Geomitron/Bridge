@@ -162,9 +162,9 @@
 							</td>
 							<td>
 								<div class="flex flex-nowrap items-center">
-									{{ version.chartMd5.substring(0, 7) }}
+									{{ version.chartHash.substring(0, 7) }}
 									<div class="tooltip tooltip-accent" data-tip="Copy full hash">
-										<button class="btn btn-circle btn-ghost btn-xs" (click)="copyHash(version.chartMd5)">
+										<button class="btn btn-circle btn-ghost btn-xs" (click)="copyHash(version.chartHash)">
 											<i class="bi bi-copy text-xs"></i>
 										</button>
 									</div>

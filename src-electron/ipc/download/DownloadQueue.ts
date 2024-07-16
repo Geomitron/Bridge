@@ -16,9 +16,13 @@ export class DownloadQueue {
 		return false
 	}
 
-	add(md5: string, chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string }) {
+	add(
+		md5: string,
+		hasVideoBackground: boolean,
+		chart: { name: string; artist: string; album: string; genre: string; year: string; charter: string },
+	) {
 		if (!this.isChartInQueue(md5)) {
-			const chartDownload = new ChartDownload(md5, chart)
+			const chartDownload = new ChartDownload(md5, hasVideoBackground, chart)
 			this.downloadQueue.push(chartDownload)
 
 			chartDownload.on('progress', (message, percent) => emitIpcEvent('downloadQueueUpdate', {

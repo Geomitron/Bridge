@@ -85,7 +85,7 @@ export class DownloadService {
 				type: 'good',
 				isPath: false,
 			})
-			window.electron.emit.download({ action: 'add', md5: chart.md5, chart: newChart })
+			window.electron.emit.download({ action: 'add', md5: chart.md5, hasVideoBackground: chart.hasVideoBackground, chart: newChart })
 		}
 		this.downloadCountChanges.emit(this.downloadCount)
 	}

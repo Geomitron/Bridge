@@ -1,7 +1,7 @@
-import { EventType, FolderIssueType, Instrument, MetadataIssueType, NotesData } from 'scan-chart'
+import { FolderIssueType, Instrument, NotesData, ScannedChart } from 'scan-chart'
 import { z } from 'zod'
 
-import { difficulties, instruments, Overwrite } from '../UtilFunctions'
+import { difficulties, drumTypeNames, instruments } from '../UtilFunctions.js'
 
 export const sources = ['website', 'bridge'] as const
 
@@ -10,6 +10,7 @@ export const GeneralSearchSchema = z.object({
 	page: z.number().positive(),
 	instrument: z.enum(instruments).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
+	drumType: z.enum(drumTypeNames).nullable(),
 	source: z.enum(sources).optional(),
 })
 export type GeneralSearch = z.infer<typeof GeneralSearchSchema>
@@ -25,6 +26,7 @@ export const AdvancedSearchSchema = z.object({
 		return true
 	}, { message: 'Invalid instrument list' }).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
+	drumType: z.enum(drumTypeNames).nullable(),
 	source: z.enum(sources).optional(),
 	name: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	artist: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
@@ -99,14 +101,6 @@ export const ReportSchema = z.object({
 })
 export type Report = z.infer<typeof ReportSchema>
 
-export type NoteStringNotesData = Overwrite<NotesData, {
-	maxNps: {
-		notes: {
-			type: keyof typeof EventType
-		}[]
-	}[]
-}>
-
 export interface FolderIssue {
 	folderIssue: FolderIssueType
 	description: string
@@ -147,8 +141,11 @@ export interface SearchResult {
 		albumArtMd5: string | null
 		/** The MD5 hash of the chart folder or .sng file. */
 		md5: string
-		/** The MD5 hash of just the .chart or .mid file. */
-		chartMd5: string
+		/**
+		 * A blake3 hash of just the chart file and the .ini modifiers that impact chart parsing.
+		 * If this changes, the in-game score is reset.
+		 */
+		chartHash: string
 		/**
 		 * Different versions of the same chart have the same `versionGroupId`.
 		 * All charts in a version group have this set to the smallest `id` in the group.
@@ -207,6 +204,17 @@ export interface SearchResult {
 		/** Overrides the .mid note number for Star Power on 5-Fret Guitar. Valid values are 103 and 116. Only applies to .mid charts. */
 		multiplier_note: number | null
 		/**
+		 * For .mid charts, setting this causes any sustains not larger than the threshold (in number of ticks) to be reduced to length 0.
+		 * By default, this happens to .mid sustains shorter than 1/12 step.
+		 */
+		sustain_cutoff_threshold?: number
+		/**
+		 * Notes at or closer than this threshold (in number of ticks) will be merged into a chord.
+		 * All note and modifier ticks are set to the tick of the earliest merged note.
+		 * All note sustains are set to the length of the shortest merged note.
+		 */
+		chord_snap_threshold?: number
+		/**
 		 * The amount of time that should be skipped from the beginning of the video background in milliseconds.
 		 * A negative value will delay the start of the video by that many milliseconds.
 		 */
@@ -218,11 +226,11 @@ export interface SearchResult {
 		/** `true` if the chart's end events should be used to end the chart early. Only applies to .mid charts. */
 		end_events: boolean | null
 		/** Data describing properties of the .chart or .mid file. `undefined` if the .chart or .mid file couldn't be parsed. */
-		notesData: NoteStringNotesData
+		notesData: NotesData
 		/** Issues with the chart files. */
-		folderIssues: FolderIssue[]
+		folderIssues: ScannedChart['folderIssues']
 		/** Issues with the chart's metadata. */
-		metadataIssues: MetadataIssueType[]
+		metadataIssues: ScannedChart['metadataIssues']
 		/** `true` if the chart has a video background. */
 		hasVideoBackground: boolean
 		/** The date of the last time this chart was modified in Google Drive. */
@@ -249,16 +257,14 @@ export interface SearchResult {
 		/** If there is more than one chart contained inside this `DriveChart`. */
 		driveChartIsPack: boolean
 		/**
-		 * A string containing the relative path from the `DriveChart`'s archive to the chart inside the archive.
+		 * A string containing the relative path from the driveChart's root to the chart inside it.
 		 *
-		 * Doesn't contain the archive name, the chart file name (for file charts), or leading/trailing slashes.
+		 * This starts with the archive name if the driveChart is an archive.
 		 *
-		 * An empty string if the `DriveChart` is not an archive.
+		 * This ends with the name of the .sng file if this is an .sng file.
+		 *
+		 * This is an empty string if the driveChart is not an archive or an .sng file.
 		 */
-		archivePath: string
-		/**
-		 * The name of the .sng file. `null` if the chart is not a .sng file.
-		 */
-		chartFileName: string | null
+		internalPath: string
 	}[]
 }

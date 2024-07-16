@@ -7,6 +7,7 @@ import { catchError, mergeMap, tap, throwError, timer } from 'rxjs'
 import { Difficulty, Instrument } from 'scan-chart'
 import { environment } from 'src-angular/environments/environment'
 import { AdvancedSearch, ChartData, SearchResult } from 'src-shared/interfaces/search.interface'
+import { DrumTypeName } from 'src-shared/UtilFunctions'
 
 const resultsPerPage = 25
 
@@ -29,6 +30,7 @@ export class SearchService {
 	public searchControl = new FormControl('', { nonNullable: true })
 	public instrument: FormControl<Instrument | null>
 	public difficulty: FormControl<Difficulty | null>
+	public drumType: FormControl<DrumTypeName | null>
 
 	constructor(
 		private http: HttpClient,
@@ -48,6 +50,16 @@ export class SearchService {
 		)
 		this.difficulty.valueChanges.subscribe(difficulty => {
 			localStorage.setItem('difficulty', `${difficulty}`)
+			if (this.songsResponse.page) {
+				this.search(this.searchControl.value || '*').subscribe()
+			}
+		})
+
+		this.drumType = new FormControl<DrumTypeName>(
+			(localStorage.getItem('drumType') === 'null' ? null : localStorage.getItem('drumType')) as DrumTypeName
+		)
+		this.drumType.valueChanges.subscribe(drumType => {
+			localStorage.setItem('drumType', `${drumType}`)
 			if (this.songsResponse.page) {
 				this.search(this.searchControl.value || '*').subscribe()
 			}
@@ -86,6 +98,7 @@ export class SearchService {
 			page: this.currentPage,
 			instrument: this.instrument.value,
 			difficulty: this.difficulty.value,
+			drumType: this.drumType.value,
 			source: 'bridge',
 		}).pipe(
 			catchError((err, caught) => {
