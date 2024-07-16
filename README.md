@@ -23,20 +23,26 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 - ✅ A variety of themes.
 - ✅ Advanced song search.
 
-### What's new in v2.2.0
+### What's new in v3.0.0
 
-v2.2.0
+v3.0.0
 
 - Update to Angular 18
 - Update to Electron 31 (and CommonJS to ESM)
+- Add Chart Preview
+- Add Drum Type dropdown when the "drums" instrument is selected
+- Add Min/Max Year to advanced search
+- Add Track Hash to advanced search
+- Add "Download Video Backgrounds" setting
 - Add zoom function
 - Add support for custom themes (https://daisyui.com/theme-generator/)
 - Add ability to configure the columns in the search result table
 - Add customization for the structure of the downloaded chart folders
+- Add Flatpak builds for Linux
 - Fixed a variety of issues causing some charts to not download
 - Improved support for web-based keyboard shortcuts
+- Updated and improved detected chart issues
 - Various UI improvements
-- Added Flatpak builds for Linux
 
 ### Development
 
