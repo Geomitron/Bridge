@@ -61,7 +61,7 @@
 									@if (globalChartIssues.length > 0) {
 										<div class="menu-title">Chart Issues Found:</div>
 										<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
-											<li *ngFor="let issue of globalChartIssues" class="list-item">{{ issue.description }}</li>
+											<li *ngFor="let issue of globalChartIssues" class="list-item">{{ issue }}</li>
 										</ul>
 									}
 									@for (trackIssues of trackIssuesGroups; track $index) {

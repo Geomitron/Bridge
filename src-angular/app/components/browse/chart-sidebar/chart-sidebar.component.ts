@@ -114,7 +114,22 @@ export class ChartSidebarComponent implements OnInit {
 		return _.chain(this.selectedChart!.notesData.chartIssues)
 			.filter(i => i.instrument === null)
 			.filter(i => i.noteIssue !== 'isDefaultBPM')
+			.groupBy(i => i.noteIssue)
+			.values()
+			.map(issueGroup => this.getGlobalChartIssueText(issueGroup))
 			.value()
+	}
+	private getGlobalChartIssueText(issueGroup: NotesData['chartIssues']) {
+		const one = issueGroup.length === 1
+		const len = issueGroup.length
+		switch (issueGroup[0].noteIssue) {
+			case 'misalignedTimeSignature':
+				return `There ${one ? 'is' : 'are'} ${len} misaligned time signature marker${one ? '' : 's'} in this chart.`
+			case 'badEndEvent':
+				return `There ${one ? 'is' : 'are'} ${len} invalid "end" event${one ? '' : 's'} in this chart.`
+			default:
+				return issueGroup[0].description
+		}
 	}
 
 	public get trackIssuesGroups() {
