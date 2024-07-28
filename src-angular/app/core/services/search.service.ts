@@ -22,6 +22,7 @@ export class SearchService {
 	public newSearch = new EventEmitter<Partial<SearchResult>>()
 	public updateSearch = new EventEmitter<Partial<SearchResult>>()
 	public isDefaultSearch = true
+	public isAdvancedSearch = false
 	public lastAdvancedSearch: AdvancedSearch
 
 	public groupedSongs: ChartData[][]
@@ -85,6 +86,7 @@ export class SearchService {
 	public search(search = '*', nextPage = false) {
 		this.searchLoading = true
 		this.isDefaultSearch = search === '*'
+		this.isAdvancedSearch = false
 
 		if (nextPage) {
 			this.currentPage++
@@ -145,6 +147,7 @@ export class SearchService {
 	public advancedSearch(search: AdvancedSearch, nextPage = false) {
 		this.searchLoading = true
 		this.isDefaultSearch = false
+		this.isAdvancedSearch = true
 		this.lastAdvancedSearch = search
 
 		if (nextPage) {
@@ -202,10 +205,10 @@ export class SearchService {
 
 	public getNextSearchPage() {
 		if (this.areMorePages && !this.searchLoading) {
-			if (this.isDefaultSearch) {
-				this.search(this.searchControl.value || '*', true).subscribe()
-			} else {
+			if (this.isAdvancedSearch) {
 				this.advancedSearch(this.lastAdvancedSearch, true).subscribe()
+			} else {
+				this.search(this.searchControl.value || '*', true).subscribe()
 			}
 		}
 	}
