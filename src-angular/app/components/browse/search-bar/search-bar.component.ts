@@ -178,7 +178,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 			maxMaxNPS: null as number | null,
 			minYear: null as number | null,
 			maxYear: null as number | null,
-			modifiedAfter: this.fb.nonNullable.control('', { validators: dateVaidator }),
+			modifiedAfter: this.fb.nonNullable.control('', { validators: dateValidator }),
 			hash: this.fb.nonNullable.control(''),
 			trackHash: this.fb.nonNullable.control(''),
 			hasSoloSections: null as boolean | null,
@@ -231,9 +231,9 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	}
 }
 
-function dateVaidator(control: AbstractControl) {
+function dateValidator(control: AbstractControl) {
 	if (control.value && isNaN(Date.parse(control.value))) {
-		return { 'dateVaidator': true }
+		return { 'dateValidator': true }
 	}
 	return null
 }

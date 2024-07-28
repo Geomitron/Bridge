@@ -124,9 +124,7 @@ export class ResultTableComponent implements OnInit {
 		const table = this.resultTableDiv.nativeElement
 		if (this.router.url === '/browse' && table.scrollHeight - (table.scrollTop + table.clientHeight) < 100) {
 			// Scrolled near the bottom of the table
-			if (this.searchService.areMorePages && !this.searchService.searchLoading) {
-				this.searchService.search(this.searchService.searchControl.value || '*', true).subscribe()
-			}
+			this.searchService.getNextSearchPage()
 		}
 	}
 }

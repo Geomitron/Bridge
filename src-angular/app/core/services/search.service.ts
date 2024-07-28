@@ -22,6 +22,7 @@ export class SearchService {
 	public newSearch = new EventEmitter<Partial<SearchResult>>()
 	public updateSearch = new EventEmitter<Partial<SearchResult>>()
 	public isDefaultSearch = true
+	public lastAdvancedSearch: AdvancedSearch
 
 	public groupedSongs: ChartData[][]
 
@@ -141,12 +142,23 @@ export class SearchService {
 		)
 	}
 
-	public advancedSearch(search: AdvancedSearch) {
+	public advancedSearch(search: AdvancedSearch, nextPage = false) {
 		this.searchLoading = true
 		this.isDefaultSearch = false
+		this.lastAdvancedSearch = search
+
+		if (nextPage) {
+			this.currentPage++
+		} else {
+			this.currentPage = 1
+		}
 
 		let retries = 10
-		return this.http.post<{ data: SearchResult['data']; found: number }>(`${environment.apiUrl}/search/advanced`, search).pipe(
+		return this.http.post<{ data: SearchResult['data']; found: number }>(`${environment.apiUrl}/search/advanced`, {
+			per_page: resultsPerPage,
+			page: this.currentPage,
+			...search,
+		}).pipe(
 			catchError((err, caught) => {
 				if (err.status === 400 || retries-- <= 0) {
 					this.searchLoading = false
@@ -159,13 +171,15 @@ export class SearchService {
 			tap(response => {
 				this.searchLoading = false
 
-				// Don't reload results if they are the same
-				if (this.groupedSongs
-					&& _.xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
-					&& this.songsResponse!.found === response.found) {
-					return
-				} else {
-					this.groupedSongs = []
+				if (!nextPage) {
+					// Don't reload results if they are the same
+					if (this.groupedSongs
+						&& _.xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
+						&& this.songsResponse!.found === response.found) {
+						return
+					} else {
+						this.groupedSongs = []
+					}
 				}
 
 				this.songsResponse = response
@@ -177,8 +191,22 @@ export class SearchService {
 						.value()
 				)
 
-				this.newSearch.emit(response)
+				if (nextPage) {
+					this.updateSearch.emit(response)
+				} else {
+					this.newSearch.emit(response)
+				}
 			})
 		)
+	}
+
+	public getNextSearchPage() {
+		if (this.areMorePages && !this.searchLoading) {
+			if (this.isDefaultSearch) {
+				this.search(this.searchControl.value || '*', true).subscribe()
+			} else {
+				this.advancedSearch(this.lastAdvancedSearch, true).subscribe()
+			}
+		}
 	}
 }

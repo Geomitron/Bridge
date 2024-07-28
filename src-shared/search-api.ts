@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 import { difficulties, drumTypeNames, instruments } from './UtilFunctions.js'
 
+export const sources = ['api'] as const
+
 export const GeneralSearchSchema = z.object({
 	search: z.string(),
 	per_page: z.number().positive().lte(250, 'Getting more than 250 results at a time is not supported').optional(),
@@ -19,6 +21,9 @@ export const AdvancedSearchSchema = z.object({
 	instrument: z.enum(instruments).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
 	drumType: z.enum(drumTypeNames).nullable(),
+	source: z.enum(sources).optional(),
+	per_page: z.number().positive().lte(250, 'Getting more than 250 results at a time is not supported').optional(),
+	page: z.number().positive().optional(),
 	name: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	artist: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	album: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
