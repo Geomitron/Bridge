@@ -42,7 +42,10 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 		private settingsService: SettingsService,
 	) { }
 	ngOnInit() {
-		this.seekBar = new FormControl<number>(0, { nonNullable: true })
+		this.seekBar = new FormControl<number>(
+			(100 * (this.selectedChart.preview_start_time ?? 0)) / (this.selectedChart.song_length ?? 5 * 60 * 1000),
+			{ nonNullable: true },
+		)
 		this.seekBar.valueChanges
 			.pipe(
 				throttleTime(30, undefined, { leading: true, trailing: true }),
