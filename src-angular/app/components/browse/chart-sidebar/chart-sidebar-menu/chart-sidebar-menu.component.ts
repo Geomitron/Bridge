@@ -100,7 +100,7 @@ export class ChartSidebarMenutComponent implements OnInit {
 	}
 
 	copyLink(hash: string) {
-		navigator.clipboard.writeText(`https://enchor.us/?hash=${hash}`)
+		navigator.clipboard.writeText(`https://enchor.us/chart/${hash}`)
 	}
 	copyHash(hash: string) {
 		navigator.clipboard.writeText(hash)
