@@ -94,7 +94,7 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 				this.instrument,
 				this.difficulty,
 				(this.selectedChart.delay ?? 0) + (this.selectedChart.chart_offset ?? 0) * 1000,
-				this.selectedChart.song_length ?? 5 * 60 * 1000, // TODO: have a better way to detect the audio length?
+				this.selectedChart.song_length ?? 5 * 60 * 1000,
 				this.previewDiv.nativeElement,
 			)
 			this.chartPreview.on('progress', percentComplete => {

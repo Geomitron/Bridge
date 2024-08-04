@@ -80,7 +80,7 @@ export class ChartPreview {
 		chartPreview.camera = new ChartCamera(divContainer)
 		chartPreview.renderer = new ChartRenderer(divContainer)
 		chartPreview.audioManager = await (AudioContext ?
-			AudioManager.create(audioFiles, startDelayMs, audioLengthMs)
+			AudioManager.create(audioFiles, startDelayMs)
 			: SilentAudioManager.create(startDelayMs, audioLengthMs))
 		chartPreview.audioManager.on('end', () => chartPreview.eventEmitter.emit('end'))
 		chartPreview.notesManager = new NotesManager(parsedChart, instrument, difficulty, chartPreview.scene, textures.noteTextures)
@@ -258,11 +258,11 @@ class AudioManager {
 	private _volume = 0.5
 	private lastSeekChartTimeMs = 0
 	private lastAudioCtxCurrentTime = 0 // Necessary because audioCtx.currentTime doesn't reset to 0 on seek
+	private audioLengthMs: number
 
 	private constructor(
 		private audioFiles: Uint8Array[],
 		private startDelayMs: number,
-		private audioLengthMs: number,
 	) { }
 
 	/**
@@ -270,8 +270,8 @@ class AudioManager {
 	 * @param startDelayMs The amount of time to delay the start of the audio. (can be negative)
 	 * @param audioLengthMs The length of the longest audio file stem.
 	 */
-	static async create(audioFiles: Uint8Array[], startDelayMs: number, audioLengthMs: number) {
-		const audioManager = new AudioManager(audioFiles, startDelayMs, audioLengthMs)
+	static async create(audioFiles: Uint8Array[], startDelayMs: number) {
+		const audioManager = new AudioManager(audioFiles, startDelayMs)
 		await audioManager.initAudio()
 		return audioManager
 	}
@@ -339,6 +339,7 @@ class AudioManager {
 			// TODO: use audio-decode library instead if this fails
 			this.audioFiles.map(file => this.audioCtx.decodeAudioData(file.slice(0).buffer)),
 		)
+		this.audioLengthMs = Math.max(...audioBuffers.map(b => b.duration)) * 1000
 
 		this.gainNode = this.audioCtx.createGain()
 		this.gainNode.gain.value = this._volume
