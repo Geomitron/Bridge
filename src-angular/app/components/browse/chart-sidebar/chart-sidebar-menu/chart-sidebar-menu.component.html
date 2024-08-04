@@ -151,7 +151,7 @@
 							</td>
 							<td>{{ version.modifiedTime | date: 'y/MM/dd' }}</td>
 							<td>
-								<div class="flex flex-nowrap items-center">
+								<div class="flex flex-nowrap items-center whitespace-nowrap">
 									{{ version.md5.substring(0, 7) }}
 									<div class="tooltip tooltip-accent" data-tip="Copy full hash">
 										<button class="btn btn-circle btn-ghost btn-xs" (click)="copyHash(version.md5)">
@@ -161,7 +161,7 @@
 								</div>
 							</td>
 							<td>
-								<div class="flex flex-nowrap items-center">
+								<div class="flex flex-nowrap items-center whitespace-nowrap">
 									{{ version.chartHash.substring(0, 7) }}
 									<div class="tooltip tooltip-accent" data-tip="Copy full hash">
 										<button class="btn btn-circle btn-ghost btn-xs" (click)="copyHash(version.chartHash)">
