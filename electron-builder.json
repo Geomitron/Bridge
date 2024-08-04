@@ -18,7 +18,8 @@
 	},
 	"win": {
 		"icon": "dist/angular/browser/assets/images/system/icons/win/icon.ico",
-		"compression": "store"
+		"compression": "store",
+		"artifactName": "Bridge-Setup-${version}.${ext}"
 	},
 	"mac": {
 		"category": "public.app-category.utilities",
