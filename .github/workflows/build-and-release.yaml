@@ -1,0 +1,119 @@
+name: Build and Release
+on:
+  push:
+    tags:
+      - v**
+jobs:
+  build-and-upload-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: v18.19.0
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build the app (Windows)
+        shell: bash
+        run: |
+          npm install -g pnpm
+          pnpm install
+          pnpm build:windows -p never
+      - name: Compress binary
+        shell: powershell
+        run: |
+          cd release
+          $files = Get-ChildItem -Path . -Filter "*exe*"
+          $files += Get-ChildItem -Path . -Filter "latest.yml"
+          Compress-Archive $files -DestinationPath bridge-win.zip
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bridge-win
+          path: .\release\bridge-win.zip
+  build-and-upload-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: v18.19.0
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install builder dependencies
+        shell: bash
+        run: |
+          sudo apt install flatpak flatpak-builder elfutils -y
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+          git config --global --add protocol.file.allow always
+      - name: Build the app (Linux)
+        shell: bash
+        run: |
+          npm install -g pnpm
+          pnpm install
+          pnpm build:linux -p never
+      - name: Compress binaries
+        shell: bash
+        run: |
+          cd release
+          find . -type f \( -name "*.AppImage" -o -name "*.flatpak" -o -name "latest-linux.yml" \) -print0 | tar -czvf bridge-linux.tar.gz --null -T -
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bridge-linux
+          path: ./release/bridge-linux.tar.gz
+  build-and-upload-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: v18.19.0
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build the app (OSX)
+        shell: bash
+        run: |
+          npm install -g pnpm
+          pnpm install
+          pnpm build:mac -p never
+      - name: Compress binaries
+        shell: bash
+        run: |
+          cd release
+          find . -type f \( -name "*.dmg" -o -name "latest-mac.yml" \) -print0 | tar -czvf bridge-mac.tar.gz --null -T -
+      - uses: actions/upload-artifact@v2
+        with:
+          name: bridge-mac
+          path: ./release/bridge-mac.tar.gz
+  release-all:
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-upload-linux
+      - build-and-upload-macos
+      - build-and-upload-windows
+    steps:
+      - name: Download Windows binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: bridge-win
+      - name: Download Linux binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: bridge-linux
+      - name: Download OSX binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: bridge-mac
+      - name: Unpack all
+        shell: bash
+        run: |
+          mkdir releaseables
+          unzip bridge-win.zip -d ./releaseables
+          tar -xzf bridge-linux.tar.gz -C ./releaseables
+          tar -xzf bridge-mac.tar.gz -C ./releaseables
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "releaseables/*"
+          tag: ${{ github.ref.name  }}
+          replacesArtifacts: true
+          allowUpdates: true
