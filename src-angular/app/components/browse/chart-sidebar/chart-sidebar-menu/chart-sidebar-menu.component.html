@@ -73,7 +73,8 @@
 							<span *ngIf="isFalseReportOption()" class="text-lg text-warning text-wrap">
 								@if (reportOption.value === 'No notes / chart ends immediately') {
 									This is not a problem with the chart! To fix this, please update Clone Hero to the latest version. You can get the latest version at
-									<a class="link" (click)="openUrl('https://clonehero.net')">clonehero.net</a>.
+									<a class="link" (click)="openUrl('https://clonehero.net')">clonehero.net</a>. (If that's not the problem, double check that the
+									chart actually has the instrument that you're trying to play)
 								} @else if (reportOption.value === "Download doesn't work") {
 									Please click the progress bar in the lower-right of the program to see the error message. If you need help getting it to work,
 									please ask in the <a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
