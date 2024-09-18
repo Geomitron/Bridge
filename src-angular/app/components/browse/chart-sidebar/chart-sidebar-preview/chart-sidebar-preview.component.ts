@@ -93,7 +93,7 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 				this.audioFiles,
 				this.instrument,
 				this.difficulty,
-				(this.selectedChart.delay ?? 0) + (this.selectedChart.chart_offset ?? 0) * 1000,
+				this.selectedChart.delay ?? (this.selectedChart.chart_offset ?? 0) * 1000,
 				this.selectedChart.song_length ?? 5 * 60 * 1000,
 				this.previewDiv.nativeElement,
 			)
