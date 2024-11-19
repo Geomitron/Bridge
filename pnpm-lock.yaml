@@ -1598,6 +1598,7 @@ packages:
 
   boolean@3.2.0:
     resolution: {integrity: sha512-d0II/GO9uf9lfUHH2BQsjxzRJZBdsjgsBiW4BvhWk/3qoKwQFjIDVN19PfX8F2D/r9PCMTtLWjYVCFrpeYUzsw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   bootstrap-icons@1.11.3:
     resolution: {integrity: sha512-+3lpHrCw/it2/7lBL15VR0HEumaBss0+f/Lb6ZvHISn1mlK83jjFpooTLsMWbIjJMDjDjOExMsTxnXSIT4k4ww==}
@@ -1613,6 +1614,10 @@ packages:
 
   braces@3.0.2:
     resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
+    engines: {node: '>=8'}
+
+  braces@3.0.3:
+    resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
   browserslist@4.23.2:
@@ -1980,8 +1985,8 @@ packages:
     resolution: {integrity: sha512-I9OvvrHp4pIARv4+x9iuewrWycX6CcZtoAu1XrzPxc5UygMJXJZYmBsynku8IkrJwgypE5DGNjDPmPRhDCptUg==}
     engines: {node: '>=10'}
 
-  dsp.js@https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e:
-    resolution: {tarball: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e}
+  dsp.js@git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e:
+    resolution: {commit: 219600bb0346ee9a00686c9875c81123e2d8780e, repo: git@github.com:corbanbrook/dsp.js.git, type: git}
     version: 1.0.0
 
   duplexer@0.1.2:
@@ -2195,6 +2200,7 @@ packages:
   eslint@8.57.0:
     resolution: {integrity: sha512-dZ6+mexnaTIbSBZWgou51U6OmzIhYM2VcNdtiTtI7qPNZm35Akpr0f6vtw3w1Kmn5PYo+tZVfh13WrhpS6oLqQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -2285,6 +2291,10 @@ packages:
 
   fill-range@7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
+    engines: {node: '>=8'}
+
+  fill-range@7.1.1:
+    resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
 
   find-up@5.0.0:
@@ -2902,8 +2912,8 @@ packages:
   meshoptimizer@0.18.1:
     resolution: {integrity: sha512-ZhoIoL7TNV4s5B6+rx5mC//fw8/POGyNxS/DZyCJeiZ12ScLfVwRE/GfsxwiTkMYYD5DmK2/JXnEVXqL4rF+Sw==}
 
-  micromatch@4.0.5:
-    resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
+  micromatch@4.0.8:
+    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
   midi-file@1.2.4:
@@ -3670,8 +3680,8 @@ packages:
     resolution: {integrity: sha512-jH9EhtKIjuXZ2cWxmXS8ZP80XyC3iasQxMDV8jzhNJpfDb7VbQLVW4Wvsxz9QZvzV+G4YoSfBUVKDOyxLzi/sg==}
     engines: {node: '>= 6'}
 
-  stream-audio-fingerprint@https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d:
-    resolution: {tarball: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d}
+  stream-audio-fingerprint@git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d:
+    resolution: {commit: 197e8a7ff60165b18bf1debc23dab4814996a20d, repo: git@github.com:Geomitron/stream-audio-fingerprint.git, type: git}
     version: 1.0.4
 
   string-width@4.2.3:
@@ -5591,6 +5601,10 @@ snapshots:
     dependencies:
       fill-range: 7.0.1
 
+  braces@3.0.3:
+    dependencies:
+      fill-range: 7.1.1
+
   browserslist@4.23.2:
     dependencies:
       caniuse-lite: 1.0.30001640
@@ -6006,7 +6020,7 @@ snapshots:
 
   dotenv@9.0.2: {}
 
-  dsp.js@https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e: {}
+  dsp.js@git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e: {}
 
   duplexer@0.1.2: {}
 
@@ -6438,7 +6452,7 @@ snapshots:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
 
   fast-json-stable-stringify@2.1.0: {}
 
@@ -6469,6 +6483,10 @@ snapshots:
       minimatch: 5.1.6
 
   fill-range@7.0.1:
+    dependencies:
+      to-regex-range: 5.0.1
+
+  fill-range@7.1.1:
     dependencies:
       to-regex-range: 5.0.1
 
@@ -7111,9 +7129,9 @@ snapshots:
 
   meshoptimizer@0.18.1: {}
 
-  micromatch@4.0.5:
+  micromatch@4.0.8:
     dependencies:
-      braces: 3.0.2
+      braces: 3.0.3
       picomatch: 2.3.1
 
   midi-file@1.2.4: {}
@@ -7858,7 +7876,7 @@ snapshots:
       lodash: 4.17.21
       midi-file: 1.2.4
       rfc4648: 1.5.3
-      stream-audio-fingerprint: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d
+      stream-audio-fingerprint: git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d
       workerpool: 6.5.1
 
   semver-compare@1.0.0:
@@ -7994,9 +8012,9 @@ snapshots:
 
   stat-mode@1.0.0: {}
 
-  stream-audio-fingerprint@https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d:
+  stream-audio-fingerprint@git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d:
     dependencies:
-      dsp.js: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e
+      dsp.js: git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e
 
   string-width@4.2.3:
     dependencies:
@@ -8118,7 +8136,7 @@ snapshots:
       is-glob: 4.0.3
       jiti: 1.21.0
       lilconfig: 2.1.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       normalize-path: 3.0.0
       object-hash: 3.0.0
       picocolors: 1.0.1
