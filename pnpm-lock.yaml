@@ -66,8 +66,8 @@ importers:
         specifier: 4.17.21
         version: 4.17.21
       parse-sng:
-        specifier: 4.0.1
-        version: 4.0.1
+        specifier: 4.0.3
+        version: 4.0.3
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
@@ -3231,8 +3231,8 @@ packages:
     resolution: {integrity: sha512-TDT4HqzUiTMO1wJRwg/t/hYk8Wdp3iF/ToMIlAoVQfL1Xs/sTxq1dKWSMjMbQmIarfWKymOyly40+zmPHXMqCA==}
     engines: {node: '>= 18'}
 
-  parse-sng@4.0.1:
-    resolution: {integrity: sha512-AoHeWhylK0bhkn/8W8Mxd/xqSr9B4im8qlMbgv9+Vd6YmUelKQ2MBvo2K1Jyex000qfjH6Nv76eKPwGj/h3e2A==}
+  parse-sng@4.0.3:
+    resolution: {integrity: sha512-ARCpk5DRafRhbHjeLu0Zwsdh8vNm6/ltET7F/ZzZBJcJQT0Fu+YlzaoyWxMc4RPcHrvspyyVYO8MfSsf+Ou3AA==}
 
   parse5-html-rewriting-stream@7.0.0:
     resolution: {integrity: sha512-mazCyGWkmCRWDI15Zp+UiCqMp/0dgEmkZRvhlsqqKYr4SsVm/TvnSpD9fCvqCA2zoWJcfRym846ejWBBHRiYEg==}
@@ -7535,7 +7535,7 @@ snapshots:
       es-module-lexer: 1.5.4
       slashes: 3.0.12
 
-  parse-sng@4.0.1:
+  parse-sng@4.0.3:
     dependencies:
       binary-parser: 2.2.1
       eventemitter3: 5.0.1
