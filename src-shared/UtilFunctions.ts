@@ -208,6 +208,27 @@ export function hasChartExtension(fileName: string) {
 }
 
 /**
+ * @returns `true` if `fileName` is a valid album fileName.
+ */
+export function hasAlbumName(fileName: string) {
+	return ['album.jpg', 'album.jpeg', 'album.png'].includes(fileName)
+}
+
+/**
+ * @returns `true` if `name` has a valid sng file extension.
+ */
+export function hasSngExtension(name: string) {
+	return 'sng' === getExtension(name).toLowerCase()
+}
+
+/**
+ * @returns `true` if `fileName` has a valid ini file extension.
+ */
+export function hasIniExtension(fileName: string) {
+	return 'ini' === getExtension(fileName).toLowerCase()
+}
+
+/**
  * @returns `true` if `fileName` is a valid chart fileName.
  */
 export function hasChartName(fileName: string) {
@@ -244,6 +265,16 @@ export function hasAudioName(fileName: string) {
 			'preview',
 		].includes(getBasename(fileName)) && ['ogg', 'mp3', 'wav', 'opus'].includes(getExtension(fileName))
 	)
+}
+
+/**
+ * @returns true if the list of filename `extensions` appears to be intended as a chart folder.
+ */
+export function appearsToBeChartFolder(extensions: string[]) {
+	const ext = extensions.map(extension => extension.toLowerCase())
+	const containsNotes = ext.includes('chart') || ext.includes('mid')
+	const containsAudio = ext.includes('ogg') || ext.includes('mp3') || ext.includes('wav') || ext.includes('opus')
+	return containsNotes || containsAudio
 }
 
 export function resolveChartFolderName(

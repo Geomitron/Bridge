@@ -1,5 +1,6 @@
 import { IpcInvokeHandlers, IpcToMainEmitHandlers } from '../src-shared/interfaces/ipc.interface.js'
 import { download } from './ipc/DownloadHandler.ipc.js'
+import { scanIssues } from './ipc/issue-scan/IssueScanHandler.ipc.js'
 import { getSettings, setSettings } from './ipc/SettingsHandler.ipc.js'
 import { downloadUpdate, getCurrentVersion, getUpdateAvailable, quitAndInstall, retryUpdate } from './ipc/UpdateHandler.ipc.js'
 import { getPlatform, getThemeColors, isMaximized, maximize, minimize, openUrl, quit, restore, showFile, showFolder, showOpenDialog, toggleDevTools } from './ipc/UtilHandlers.ipc.js'
@@ -31,5 +32,6 @@ export function getIpcToMainEmitHandlers(): IpcToMainEmitHandlers {
 		quit,
 		showFile,
 		showFolder,
+		scanIssues,
 	}
 }

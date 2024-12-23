@@ -61,6 +61,20 @@ export class SettingsService {
 		this.settings.libraryPath = value
 		this.saveSettings()
 	}
+	get issueScanDirectory() {
+		return this.settings.issueScanPath
+	}
+	set issueScanDirectory(value: string | undefined) {
+		this.settings.issueScanPath = value
+		this.saveSettings()
+	}
+	get spreadsheetOutputDirectory() {
+		return this.settings.spreadsheetOutputPath
+	}
+	set spreadsheetOutputDirectory(value: string | undefined) {
+		this.settings.spreadsheetOutputPath = value
+		this.saveSettings()
+	}
 	get chartFolderName() {
 		return this.settings.chartFolderName
 	}

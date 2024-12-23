@@ -7,6 +7,7 @@ import { dataPath, settingsPath, tempPath, themesPath } from '../../src-shared/P
 import { defaultSettings, Settings } from '../../src-shared/Settings.js'
 import { mainWindow } from '../main.js'
 
+console.log(settingsPath)
 export let settings = readSettings()
 
 function readSettings() {

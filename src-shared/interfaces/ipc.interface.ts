@@ -74,6 +74,7 @@ export interface IpcToMainEmitEvents {
 	quit: void
 	showFolder: string
 	showFile: string
+	scanIssues: void
 }
 
 export type IpcToMainEmitHandlers = {
@@ -93,6 +94,7 @@ export interface IpcFromMainEmitEvents {
 	queueUpdated: number[]
 	maximized: void
 	minimized: void
+	updateIssueScan: { status: 'progress' | 'error' | 'done'; message: string }
 }
 
 export type IpcFromMainEmitHandlers = {
