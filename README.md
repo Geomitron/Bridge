@@ -26,8 +26,6 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 
 ### What's new in v3.1.0
 
-v3.0.0
-
 - Add "Tools" tab with chart issue scanner
 
 ### Development
