@@ -54,14 +54,16 @@ export async function scanIssues() {
 
 			limiter.on('idle', async () => {
 				const issues = getChartIssues(charts)
-				const xlsx = await getIssuesXLSX(issues)
-				const outputPath = [settings.spreadsheetOutputPath, `chart_issues_${dayjs().format('YYYY.MM.DD_HH.mm.ss')}.xlsx`].join('/')
-				await writeFile(outputPath, new Uint8Array(xlsx))
-				await new Promise<void>(resolve => setTimeout(resolve, 500)) // Delay for OS file processing
-				await shell.openPath(outputPath)
+				if (issues.length > 0) {
+					const xlsx = await getIssuesXLSX(issues)
+					const outputPath = [settings.spreadsheetOutputPath, `chart_issues_${dayjs().format('YYYY.MM.DD_HH.mm.ss')}.xlsx`].join('/')
+					await writeFile(outputPath, new Uint8Array(xlsx))
+					await new Promise<void>(resolve => setTimeout(resolve, 500)) // Delay for OS file processing
+					await shell.openPath(outputPath)
+				}
 				emitIpcEvent('updateIssueScan', {
 					status: 'done',
-					message: `${issues.length} issues found in ${charts.length} charts. Spreadsheet saved to ${outputPath}`,
+					message: `${issues.length} issues found in ${charts.length} charts.`,
 				})
 				resolve()
 			})

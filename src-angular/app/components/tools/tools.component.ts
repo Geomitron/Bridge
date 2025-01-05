@@ -27,7 +27,7 @@ export class ToolsComponent {
 				this.scanErrorModal.nativeElement.showModal()
 			} else if (status === 'done') {
 				this.scanning = false
-				this.buttonText = 'Complete! (click to scan again)'
+				this.buttonText = message + ' (click to scan again)'
 			}
 		}))
 	}
