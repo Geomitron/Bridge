@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { difficulties, drumTypeNames, instruments } from '../UtilFunctions.js'
 
+export const searchSortProperties = ['name', 'artist', 'album', 'genre', 'year', 'charter', 'length', 'modifiedTime'] as const
 export const sources = ['website', 'bridge'] as const
 
 export const GeneralSearchSchema = z.object({
@@ -11,6 +12,10 @@ export const GeneralSearchSchema = z.object({
 	instrument: z.enum(instruments).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
 	drumType: z.enum(drumTypeNames).nullable(),
+	sort: z
+		.object({ type: z.enum(searchSortProperties), direction: z.enum(['asc', 'desc']) })
+		.nullable()
+		.default(null),
 	source: z.enum(sources).optional(),
 })
 export type GeneralSearch = z.infer<typeof GeneralSearchSchema>
@@ -27,6 +32,10 @@ export const AdvancedSearchSchema = z.object({
 	}, { message: 'Invalid instrument list' }).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
 	drumType: z.enum(drumTypeNames).nullable(),
+	sort: z
+		.object({ type: z.enum(searchSortProperties), direction: z.enum(['asc', 'desc']) })
+		.nullable()
+		.default(null),
 	source: z.enum(sources).optional(),
 	name: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),
 	artist: z.object({ value: z.string(), exact: z.boolean(), exclude: z.boolean() }),

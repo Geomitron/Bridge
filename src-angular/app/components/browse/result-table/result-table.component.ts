@@ -1,7 +1,6 @@
 import { Component, ElementRef, EventEmitter, HostBinding, HostListener, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core'
 import { Router } from '@angular/router'
 
-import _ from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 
@@ -23,7 +22,7 @@ export class ResultTableComponent implements OnInit {
 
 	activeSong: ChartData[] | null = null
 	sortDirection: 'asc' | 'desc' = 'asc'
-	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'difficulty' | null = null
+	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | null = null
 
 	constructor(
 		public searchService: SearchService,
@@ -36,13 +35,9 @@ export class ResultTableComponent implements OnInit {
 		this.searchService.newSearch.subscribe(() => {
 			this.resultTableDiv.nativeElement.scrollTop = 0
 			this.activeSong = null
-			this.sortDirection = 'asc'
-			this.sortColumn = null
-			this.updateSort()
 			setTimeout(() => this.tableScrolled(), 0)
 		})
 		this.searchService.updateSearch.subscribe(() => {
-			this.updateSort()
 			setTimeout(() => this.tableScrolled(), 0)
 		})
 	}
@@ -62,47 +57,21 @@ export class ResultTableComponent implements OnInit {
 		}
 	}
 
-	onColClicked(column: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'difficulty') {
+	onColClicked(column: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length') {
 		if (this.songs.length === 0) { return }
 		if (this.sortColumn !== column) {
 			this.sortColumn = column
 			this.sortDirection = 'asc'
-		} else if (this.sortDirection === 'desc') {
-			this.sortDirection = 'asc'
-		} else {
+		} else if (this.sortDirection === 'asc') {
 			this.sortDirection = 'desc'
-		}
-		this.updateSort()
-	}
-
-	private updateSort() {
-		const col = this.sortColumn
-		if (col !== null) {
-			console.log(this.getSortColumn())
-			const groupedSongs = _.orderBy(this.searchService.groupedSongs, s => _.get(s[0], this.getSortColumn()), this.sortDirection)
-			this.searchService.groupedSongs = groupedSongs
-		}
-	}
-	private getSortColumn(): keyof ChartData {
-		if (this.sortColumn === 'length') {
-			return 'notesData.effectiveLength' as keyof ChartData
-		} else if (this.sortColumn === 'difficulty') {
-			switch (this.searchService.instrument.value) {
-				case 'guitar': return 'diff_guitar'
-				case 'guitarcoop': return 'diff_guitar_coop'
-				case 'rhythm': return 'diff_rhythm'
-				case 'bass': return 'diff_bass'
-				case 'drums': return 'diff_drums'
-				case 'keys': return 'diff_keys'
-				case 'guitarghl': return 'diff_guitarghl'
-				case 'guitarcoopghl': return 'diff_guitar_coop_ghl'
-				case 'rhythmghl': return 'diff_rhythm_ghl'
-				case 'bassghl': return 'diff_bassghl'
-				default: throw 'Invalid instrument'
-			}
 		} else {
-			return this.sortColumn!
+			this.sortDirection = 'asc'
+			this.sortColumn = null
 		}
+
+		this.searchService.sortColumn = this.sortColumn
+		this.searchService.sortDirection = this.sortDirection
+		this.searchService.reloadSearch()
 	}
 
 	get allSelected() {

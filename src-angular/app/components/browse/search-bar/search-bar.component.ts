@@ -224,6 +224,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 				instrument: this.instrument,
 				difficulty: this.difficulty,
 				drumType: this.drumType,
+				sort: this.searchService.sortColumn !== null ? { type: this.searchService.sortColumn, direction: this.searchService.sortDirection } : null,
 				source: 'bridge' as const,
 				...this.advancedSearchForm.getRawValue(),
 			}).subscribe()

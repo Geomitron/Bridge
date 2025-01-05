@@ -33,6 +33,8 @@ export class SearchService {
 	public instrument: FormControl<Instrument | null>
 	public difficulty: FormControl<Difficulty | null>
 	public drumType: FormControl<DrumTypeName | null>
+	public sortDirection: 'asc' | 'desc' = 'asc'
+	public sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | null = null
 
 	constructor(
 		private http: HttpClient,
@@ -102,6 +104,7 @@ export class SearchService {
 			instrument: this.instrument.value,
 			difficulty: this.difficulty.value,
 			drumType: this.drumType.value,
+			sort: this.sortColumn !== null ? { type: this.sortColumn, direction: this.sortDirection } : null,
 			source: 'bridge',
 		}).pipe(
 			catchError((err, caught) => {
@@ -210,6 +213,14 @@ export class SearchService {
 			} else {
 				this.search(this.searchControl.value || '*', true).subscribe()
 			}
+		}
+	}
+
+	public reloadSearch() {
+		if (this.isAdvancedSearch) {
+			this.advancedSearch(this.lastAdvancedSearch, false).subscribe()
+		} else {
+			this.search(this.searchControl.value || '*', false).subscribe()
 		}
 	}
 }

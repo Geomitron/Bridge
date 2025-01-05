@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { difficulties, drumTypeNames, instruments } from './UtilFunctions.js'
 
+export const searchSortProperties = ['name', 'artist', 'album', 'genre', 'year', 'charter', 'length', 'modifiedTime'] as const
 export const sources = ['api'] as const
 
 export const GeneralSearchSchema = z.object({
@@ -11,6 +12,10 @@ export const GeneralSearchSchema = z.object({
 	instrument: z.enum(instruments).nullable().default(null),
 	difficulty: z.enum(difficulties).nullable().default(null),
 	drumType: z.enum(drumTypeNames).nullable().default(null),
+	sort: z
+		.object({ type: z.enum(searchSortProperties), direction: z.enum(['asc', 'desc']) })
+		.nullable()
+		.default(null),
 	source: z.enum(sources).optional(),
 })
 export type GeneralSearch = z.infer<typeof GeneralSearchSchema>
@@ -22,6 +27,10 @@ export const AdvancedSearchSchema = z.object({
 	instrument: z.enum(instruments).nullable().default(null),
 	difficulty: z.enum(difficulties).nullable().default(null),
 	drumType: z.enum(drumTypeNames).nullable().default(null),
+	sort: z
+		.object({ type: z.enum(searchSortProperties), direction: z.enum(['asc', 'desc']) })
+		.nullable()
+		.default(null),
 	source: z.enum(sources).optional(),
 	per_page: z.number().positive().lte(250, 'Getting more than 250 results at a time is not supported').optional(),
 	page: z.number().positive().optional(),

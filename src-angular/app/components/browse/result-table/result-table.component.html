@@ -30,9 +30,7 @@
 				<th *ngIf="hasColumn('length')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('length')">
 					Length (min) <i *ngIf="sortColumn === 'length'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
-				<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('difficulty')">
-					Difficulty <i *ngIf="sortColumn === 'difficulty'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
+				<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer">Difficulty</th>
 			</tr>
 		</thead>
 		<tbody>
