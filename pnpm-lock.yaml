@@ -1620,6 +1620,7 @@ packages:
 
   boolean@3.2.0:
     resolution: {integrity: sha512-d0II/GO9uf9lfUHH2BQsjxzRJZBdsjgsBiW4BvhWk/3qoKwQFjIDVN19PfX8F2D/r9PCMTtLWjYVCFrpeYUzsw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   bootstrap-icons@1.11.3:
     resolution: {integrity: sha512-+3lpHrCw/it2/7lBL15VR0HEumaBss0+f/Lb6ZvHISn1mlK83jjFpooTLsMWbIjJMDjDjOExMsTxnXSIT4k4ww==}
@@ -1852,8 +1853,8 @@ packages:
   critters@0.0.22:
     resolution: {integrity: sha512-NU7DEcQZM2Dy8XTKFHxtdnIM/drE312j2T4PCVaSUcS0oBeyT/NImpRw/Ap0zOr/1SE7SgPK9tGPg1WK/sVakw==}
 
-  cross-spawn@7.0.3:
-    resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
+  cross-spawn@7.0.6:
+    resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
 
   css-select@5.1.0:
@@ -2013,8 +2014,8 @@ packages:
     resolution: {integrity: sha512-I9OvvrHp4pIARv4+x9iuewrWycX6CcZtoAu1XrzPxc5UygMJXJZYmBsynku8IkrJwgypE5DGNjDPmPRhDCptUg==}
     engines: {node: '>=10'}
 
-  dsp.js@https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e:
-    resolution: {tarball: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e}
+  dsp.js@git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e:
+    resolution: {commit: 219600bb0346ee9a00686c9875c81123e2d8780e, repo: git@github.com:corbanbrook/dsp.js.git, type: git}
     version: 1.0.0
 
   duplexer2@0.1.4:
@@ -2231,6 +2232,7 @@ packages:
   eslint@8.57.0:
     resolution: {integrity: sha512-dZ6+mexnaTIbSBZWgou51U6OmzIhYM2VcNdtiTtI7qPNZm35Akpr0f6vtw3w1Kmn5PYo+tZVfh13WrhpS6oLqQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -3764,8 +3766,8 @@ packages:
     resolution: {integrity: sha512-jH9EhtKIjuXZ2cWxmXS8ZP80XyC3iasQxMDV8jzhNJpfDb7VbQLVW4Wvsxz9QZvzV+G4YoSfBUVKDOyxLzi/sg==}
     engines: {node: '>= 6'}
 
-  stream-audio-fingerprint@https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d:
-    resolution: {tarball: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d}
+  stream-audio-fingerprint@git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d:
+    resolution: {commit: 197e8a7ff60165b18bf1debc23dab4814996a20d, repo: git@github.com:Geomitron/stream-audio-fingerprint.git, type: git}
     version: 1.0.4
 
   string-width@4.2.3:
@@ -4929,11 +4931,11 @@ snapshots:
 
   '@malept/cross-spawn-promise@1.1.1':
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
 
   '@malept/cross-spawn-promise@2.0.0':
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
 
   '@malept/flatpak-bundler@0.4.0':
     dependencies:
@@ -5765,7 +5767,7 @@ snapshots:
       bluebird-lst: 1.0.9
       builder-util-runtime: 9.2.4
       chalk: 4.1.2
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       debug: 4.3.5(supports-color@5.5.0)
       fs-extra: 10.1.0
       http-proxy-agent: 5.0.0
@@ -5982,7 +5984,7 @@ snapshots:
       postcss: 8.4.39
       postcss-media-query-parser: 0.2.3
 
-  cross-spawn@7.0.3:
+  cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
       shebang-command: 2.0.0
@@ -6151,7 +6153,7 @@ snapshots:
 
   dotenv@9.0.2: {}
 
-  dsp.js@https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e: {}
+  dsp.js@git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e: {}
 
   duplexer2@0.1.4:
     dependencies:
@@ -6499,7 +6501,7 @@ snapshots:
       '@ungap/structured-clone': 1.2.0
       ajv: 6.12.6
       chalk: 4.1.2
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       debug: 4.3.5(supports-color@5.5.0)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
@@ -6666,7 +6668,7 @@ snapshots:
 
   foreground-child@3.1.1:
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
   form-data@4.0.0:
@@ -8068,7 +8070,7 @@ snapshots:
       lodash: 4.17.21
       midi-file: 1.2.4
       rfc4648: 1.5.3
-      stream-audio-fingerprint: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d
+      stream-audio-fingerprint: git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d
       workerpool: 6.5.1
 
   semver-compare@1.0.0:
@@ -8206,9 +8208,9 @@ snapshots:
 
   stat-mode@1.0.0: {}
 
-  stream-audio-fingerprint@https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d:
+  stream-audio-fingerprint@git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d:
     dependencies:
-      dsp.js: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e
+      dsp.js: git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e
 
   string-width@4.2.3:
     dependencies:
