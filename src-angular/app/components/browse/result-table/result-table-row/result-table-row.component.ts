@@ -54,6 +54,10 @@ export class ResultTableRowComponent implements OnInit {
 		}
 	}
 
+	get uploaded() {
+		return this.song[0].modifiedTime
+	}
+
 	get selected() {
 		return this.selectionService.selections[this.groupId] ?? false
 	}

@@ -34,7 +34,7 @@ export class SearchService {
 	public difficulty: FormControl<Difficulty | null>
 	public drumType: FormControl<DrumTypeName | null>
 	public sortDirection: 'asc' | 'desc' = 'asc'
-	public sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | null = null
+	public sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null = null
 
 	constructor(
 		private http: HttpClient,

@@ -24,6 +24,7 @@ export class SettingsComponent implements OnInit {
 	public charterColumn: FormControl<boolean>
 	public lengthColumn: FormControl<boolean>
 	public difficultyColumn: FormControl<boolean>
+	public uploadedColumn: FormControl<boolean>
 
 	updateAvailable: 'yes' | 'no' | 'error' = 'no'
 	loginClicked = false
@@ -57,6 +58,7 @@ export class SettingsComponent implements OnInit {
 		this.charterColumn = new FormControl<boolean>(ss.visibleColumns.includes('charter'), { nonNullable: true })
 		this.lengthColumn = new FormControl<boolean>(ss.visibleColumns.includes('length'), { nonNullable: true })
 		this.difficultyColumn = new FormControl<boolean>(ss.visibleColumns.includes('difficulty'), { nonNullable: true })
+		this.uploadedColumn = new FormControl<boolean>(ss.visibleColumns.includes('uploaded'), { nonNullable: true })
 
 		this.artistColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('artist') : ss.removeVisibleColumn('artist'))
 		this.albumColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('album') : ss.removeVisibleColumn('album'))
@@ -66,6 +68,7 @@ export class SettingsComponent implements OnInit {
 		this.lengthColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('length') : ss.removeVisibleColumn('length'))
 		this.difficultyColumn.valueChanges
 			.subscribe(value => value ? ss.addVisibleColumn('difficulty') : ss.removeVisibleColumn('difficulty'))
+		this.uploadedColumn.valueChanges.subscribe(value => value ? ss.addVisibleColumn('uploaded') : ss.removeVisibleColumn('uploaded'))
 	}
 
 	async ngOnInit() {

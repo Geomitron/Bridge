@@ -31,6 +31,9 @@
 					Length (min) <i *ngIf="sortColumn === 'length'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
 				</th>
 				<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer">Difficulty</th>
+				<th *ngIf="hasColumn('uploaded')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('modifiedTime')">
+					Upload Date <i *ngIf="sortColumn === 'modifiedTime'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
 			</tr>
 		</thead>
 		<tbody>
