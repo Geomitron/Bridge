@@ -92,15 +92,15 @@ jobs:
       - build-and-upload-windows
     steps:
       - name: Download Windows binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bridge-win
       - name: Download Linux binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bridge-linux
       - name: Download OSX binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bridge-mac
       - name: Unpack all
