@@ -26,7 +26,7 @@ jobs:
           $files = Get-ChildItem -Path . -Filter "*exe*"
           $files += Get-ChildItem -Path . -Filter "latest.yml"
           Compress-Archive $files -DestinationPath bridge-win.zip
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: bridge-win
           path: .\release\bridge-win.zip
@@ -56,7 +56,7 @@ jobs:
         run: |
           cd release
           find . -type f \( -name "*.AppImage" -o -name "*.flatpak" -o -name "latest-linux.yml" \) -print0 | tar -czvf bridge-linux.tar.gz --null -T -
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: bridge-linux
           path: ./release/bridge-linux.tar.gz
@@ -80,7 +80,7 @@ jobs:
         run: |
           cd release
           find . -type f \( -name "*.dmg" -o -name "latest-mac.yml" \) -print0 | tar -czvf bridge-mac.tar.gz --null -T -
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: bridge-mac
           path: ./release/bridge-mac.tar.gz
