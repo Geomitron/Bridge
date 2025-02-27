@@ -116,8 +116,18 @@ export class SearchService {
 					return timer(2000).pipe(mergeMap(() => caught))
 				}
 			}),
-			tap(response => {
+			tap(async (response) => {
 				this.searchLoading = false
+
+				// TODO: Do this operation at the start of the app and when downloading new songs instead of at every search ?
+				const songs = await window.electron.invoke.readDirectory()
+
+				// TODO: Add a toggle in the option to show/hide downloaded songs
+				// ! Currently this only works if the user have "artist", "name" and "charter" in the chartFolderName setting
+				// ! Maybe add a way to make it work everytime ? Or make this option require the user to have those 3 in the setting
+				response.data = response.data.filter(c => {
+					return !songs.some(s => s.includes(c.artist!) && s.includes(c.name!) && s.includes(c.charter!))
+				})
 
 				if (!nextPage) {
 					// Don't reload results if they are the same
