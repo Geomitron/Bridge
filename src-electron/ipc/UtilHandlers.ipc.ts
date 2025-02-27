@@ -3,6 +3,7 @@ import fsExtra from 'fs-extra'
 
 import { ThemeColors } from '../../src-shared/interfaces/theme.interface.js'
 import { mainWindow } from '../main.js'
+import { settings } from './SettingsHandler.ipc.js'
 
 /**
  * Opens `url` in the default browser.
@@ -57,4 +58,8 @@ export async function getThemeColors(path: string) {
 	} catch (err) {
 		return null
 	}
+}
+
+export async function readDirectory() {
+	return await fsExtra.readdir(settings.libraryPath || '')
 }
