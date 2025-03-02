@@ -78,8 +78,8 @@ importers:
         specifier: 1.6.3
         version: 1.6.3
       scan-chart:
-        specifier: 4.1.4
-        version: 4.1.4
+        specifier: 6.1.0
+        version: 6.1.0
       three:
         specifier: 0.166.1
         version: 0.166.1
@@ -3631,8 +3631,8 @@ packages:
     resolution: {integrity: sha512-5LBh1Tls8c9xgGjw3QrMwETmTMVk0oFgvrFSvWx62llR2hcEInrKNZ2GZCCuuy2lvWrdl5jhbpeqc5hRYKFOcw==}
     engines: {node: '>=10'}
 
-  scan-chart@4.1.4:
-    resolution: {integrity: sha512-LzFMfPxLgT7X5TCYK5Xkags3XVu3V7JAoDg7Te0A5GkSivwKA4fnwMRpdtRLiThlnspIAO2L/+lrysz1pIagmg==}
+  scan-chart@6.1.0:
+    resolution: {integrity: sha512-dYOd9apw5SQZAP/nUahmhoMQQDUgsZTonVmic8N1g6Yfffsifxh11xvMgm/HiXV7Qfo9vvUB6aabDpZo5nPPkg==}
 
   semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
@@ -8058,7 +8058,7 @@ snapshots:
     dependencies:
       xmlchars: 2.2.0
 
-  scan-chart@4.1.4:
+  scan-chart@6.1.0:
     dependencies:
       '@noble/hashes': 1.4.0
       bottleneck: 2.19.5
