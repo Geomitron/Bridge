@@ -827,6 +827,28 @@ function adjustParsedChart(parsedChart: ParsedChart, instrument: Instrument, dif
 				noteGroup.push(removed[0])
 			}
 		}
+	} else if (getInstrumentType(instrument) === instrumentTypes.drums) {
+		for (const noteGroup of track.noteEventGroups) {
+			for (const note of noteGroup) {
+				if (note.flags & noteFlags.discoNoflip) {
+					note.flags &= ~noteFlags.discoNoflip
+				}
+				if (note.flags & noteFlags.disco) {
+					note.flags &= ~noteFlags.disco
+					switch (note.type) {
+						case noteTypes.redDrum:
+							note.type = noteTypes.yellowDrum
+							note.flags &= ~noteFlags.tom
+							note.flags |= noteFlags.cymbal
+							break
+						case noteTypes.yellowDrum:
+							note.type = noteTypes.redDrum
+							note.flags &= ~noteFlags.cymbal
+							note.flags |= noteFlags.tom
+					}
+				}
+			}
+		}
 	}
 
 	return parsedChart
