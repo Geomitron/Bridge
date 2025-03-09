@@ -13,6 +13,7 @@ import { difficulties, difficultyDisplay, driveLink, hasIssues, instruments, msT
 @Component({
 	selector: 'app-chart-sidebar',
 	templateUrl: './chart-sidebar.component.html',
+	standalone: false,
 })
 export class ChartSidebarComponent implements OnInit {
 	@HostBinding('class.contents') contents = true

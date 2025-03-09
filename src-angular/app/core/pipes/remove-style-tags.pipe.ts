@@ -4,6 +4,7 @@ import { removeStyleTags } from 'src-shared/UtilFunctions'
 
 @Pipe({
 	name: 'removeStyleTags',
+	standalone: false,
 })
 export class RemoveStyleTagsPipe implements PipeTransform {
 	transform(value: string | null): string {

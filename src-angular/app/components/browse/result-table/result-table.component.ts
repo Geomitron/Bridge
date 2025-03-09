@@ -11,6 +11,7 @@ import { ResultTableRowComponent } from './result-table-row/result-table-row.com
 @Component({
 	selector: 'app-result-table',
 	templateUrl: './result-table.component.html',
+	standalone: false,
 })
 export class ResultTableComponent implements OnInit {
 	@HostBinding('class.contents') contents = true

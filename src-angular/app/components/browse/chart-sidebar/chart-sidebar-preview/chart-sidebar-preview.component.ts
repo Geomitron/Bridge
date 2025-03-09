@@ -14,6 +14,7 @@ import { ChartPreview } from './render.js'
 @Component({
 	selector: 'app-chart-sidebar-preview',
 	templateUrl: './chart-sidebar-preview.component.html',
+	standalone: false,
 })
 export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 	@HostBinding('class.h-full') height = true

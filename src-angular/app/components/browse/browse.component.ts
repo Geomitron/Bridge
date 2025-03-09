@@ -3,6 +3,7 @@ import { AfterViewInit, Component, ElementRef, HostBinding, ViewChild } from '@a
 @Component({
 	selector: 'app-browse',
 	templateUrl: './browse.component.html',
+	standalone: false,
 })
 export class BrowseComponent implements AfterViewInit {
 	@HostBinding('class.contents') contents = true

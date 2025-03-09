@@ -5,6 +5,7 @@ import { SettingsService } from 'src-angular/app/core/services/settings.service'
 @Component({
 	selector: 'app-tools',
 	templateUrl: './tools.component.html',
+	standalone: false,
 })
 export class ToolsComponent {
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef

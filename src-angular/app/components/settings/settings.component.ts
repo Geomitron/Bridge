@@ -8,6 +8,7 @@ import { themes } from 'src-shared/Settings'
 @Component({
 	selector: 'app-settings',
 	templateUrl: './settings.component.html',
+	standalone: false,
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef

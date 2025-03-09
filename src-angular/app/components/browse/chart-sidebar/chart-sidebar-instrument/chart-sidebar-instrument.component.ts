@@ -8,6 +8,7 @@ import { instrumentToDiff } from 'src-shared/UtilFunctions'
 @Component({
 	selector: 'app-chart-sidebar-instrument',
 	templateUrl: './chart-sidebar-instrument.component.html',
+	standalone: false,
 })
 export class ChartSidebarInstrumentComponent {
 

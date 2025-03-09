@@ -6,6 +6,7 @@ import { SettingsService } from './core/services/settings.service'
 	selector: 'app-root',
 	templateUrl: './app.component.html',
 	styles: [],
+	standalone: false,
 })
 export class AppComponent {
 

@@ -10,6 +10,7 @@ import { SelectionService } from '../../../core/services/selection.service'
 @Component({
 	selector: 'app-status-bar',
 	templateUrl: './status-bar.component.html',
+	standalone: false,
 })
 export class StatusBarComponent {
 

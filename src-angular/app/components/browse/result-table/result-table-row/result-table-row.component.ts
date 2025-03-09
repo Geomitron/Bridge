@@ -10,6 +10,7 @@ import { SelectionService } from '../../../../core/services/selection.service.js
 @Component({
 	selector: 'tr[app-result-table-row]',
 	templateUrl: './result-table-row.component.html',
+	standalone: false,
 })
 export class ResultTableRowComponent implements OnInit {
 	@Input() song: ChartData[]

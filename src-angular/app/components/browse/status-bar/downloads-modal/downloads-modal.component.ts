@@ -9,6 +9,7 @@ import { DownloadService } from '../../../../core/services/download.service'
 @Component({
 	selector: 'app-downloads-modal',
 	templateUrl: './downloads-modal.component.html',
+	standalone: false,
 })
 export class DownloadsModalComponent {
 	@HostBinding('class.contents') contents = true

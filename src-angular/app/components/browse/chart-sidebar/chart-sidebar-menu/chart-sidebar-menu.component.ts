@@ -10,6 +10,7 @@ import { driveLink } from 'src-shared/UtilFunctions'
 @Component({
 	selector: 'app-chart-sidebar-menu',
 	templateUrl: './chart-sidebar-menu.component.html',
+	standalone: false,
 })
 export class ChartSidebarMenutComponent implements OnInit {
 
