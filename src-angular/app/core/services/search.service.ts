@@ -218,6 +218,7 @@ export class SearchService {
 
 	public reloadSearch() {
 		if (this.isAdvancedSearch) {
+			this.lastAdvancedSearch.sort = this.sortColumn !== null ? { type: this.sortColumn, direction: this.sortDirection } : null
 			this.advancedSearch(this.lastAdvancedSearch, false).subscribe()
 		} else {
 			this.search(this.searchControl.value || '*', false).subscribe()
