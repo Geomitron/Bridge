@@ -230,6 +230,7 @@ export class ChartSidebarComponent implements OnInit {
 	public get instruments(): Instrument[] {
 		if (!this.selectedChart) { return [] }
 		return _.chain(this.selectedChart.notesData.noteCounts)
+			.filter(nc => nc.count > 0)
 			.map(nc => nc.instrument)
 			.uniq()
 			.sortBy(i => instruments.indexOf(i))
