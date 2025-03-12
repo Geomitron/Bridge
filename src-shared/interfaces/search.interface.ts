@@ -12,6 +12,7 @@ export const GeneralSearchSchema = z.object({
 	instrument: z.enum(instruments).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
 	drumType: z.enum(drumTypeNames).nullable(),
+	drumsReviewed: z.boolean().optional().default(true),
 	sort: z
 		.object({ type: z.enum(searchSortProperties), direction: z.enum(['asc', 'desc']) })
 		.nullable()
@@ -32,6 +33,7 @@ export const AdvancedSearchSchema = z.object({
 	}, { message: 'Invalid instrument list' }).nullable(),
 	difficulty: z.enum(difficulties).nullable(),
 	drumType: z.enum(drumTypeNames).nullable(),
+	drumsReviewed: z.boolean().optional().default(true),
 	sort: z
 		.object({ type: z.enum(searchSortProperties), direction: z.enum(['asc', 'desc']) })
 		.nullable()

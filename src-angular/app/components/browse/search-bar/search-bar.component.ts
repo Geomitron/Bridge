@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { distinctUntilChanged, switchMap, throttleTime } from 'rxjs'
 import { Difficulty, Instrument } from 'scan-chart'
 import { SearchService } from 'src-angular/app/core/services/search.service'
-import { difficulties, difficultyDisplay, drumTypeDisplay, DrumTypeName, drumTypeNames, instrumentDisplay, instruments } from 'src-shared/UtilFunctions'
+import { difficulties, difficultyDisplay, drumsReviewedDisplay, drumTypeDisplay, DrumTypeName, drumTypeNames, instrumentDisplay, instruments } from 'src-shared/UtilFunctions'
 
 @Component({
 	selector: 'app-search-bar',
@@ -30,6 +30,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	public instrumentDisplay = instrumentDisplay
 	public difficultyDisplay = difficultyDisplay
 	public drumTypeDisplay = drumTypeDisplay
+	public drumsReviewedDisplay = drumsReviewedDisplay
 
 	public advancedSearchForm: ReturnType<this['getAdvancedSearchForm']>
 	public startValidation = false
@@ -98,6 +99,16 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	}
 	setDrumType(drumType: DrumTypeName | null, event: MouseEvent) {
 		this.searchService.drumType.setValue(drumType)
+		if (event.target instanceof HTMLElement) {
+			event.target.parentElement?.parentElement?.blur()
+		}
+	}
+
+	get drumsReviewed() {
+		return this.searchService.drumsReviewed.value
+	}
+	setDrumsReviewed(drumsReviewed: boolean, event: MouseEvent) {
+		this.searchService.drumsReviewed.setValue(drumsReviewed)
 		if (event.target instanceof HTMLElement) {
 			event.target.parentElement?.parentElement?.blur()
 		}
@@ -225,6 +236,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 				instrument: this.instrument,
 				difficulty: this.difficulty,
 				drumType: this.drumType,
+				drumsReviewed: this.drumsReviewed,
 				sort: this.searchService.sortColumn !== null ? { type: this.searchService.sortColumn, direction: this.searchService.sortDirection } : null,
 				source: 'bridge' as const,
 				...this.advancedSearchForm.getRawValue(),

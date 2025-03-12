@@ -111,6 +111,13 @@ export function drumTypeDisplay(drumType: DrumTypeName | null) {
 		case null: return 'Any Drum Type'
 	}
 }
+export function drumsReviewedDisplay(drumsReviewed: boolean) {
+	if (drumsReviewed) {
+		return 'Quality Reviewed'
+	} else {
+		return 'Any Quality'
+	}
+}
 export function instrumentToDiff(instrument: Instrument | 'vocals') {
 	switch (instrument) {
 		case 'guitar': return 'diff_guitar'

@@ -33,6 +33,7 @@ export class SearchService {
 	public instrument: FormControl<Instrument | null>
 	public difficulty: FormControl<Difficulty | null>
 	public drumType: FormControl<DrumTypeName | null>
+	public drumsReviewed: FormControl<boolean>
 	public sortDirection: 'asc' | 'desc' = 'asc'
 	public sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null = null
 
@@ -65,6 +66,14 @@ export class SearchService {
 		this.drumType.valueChanges.subscribe(drumType => {
 			localStorage.setItem('drumType', `${drumType}`)
 			if (this.songsResponse.page) {
+				this.search(this.searchControl.value || '*').subscribe()
+			}
+		})
+
+		this.drumsReviewed = new FormControl<boolean>((localStorage.getItem('drumsReviewed') ?? 'true') === 'true', { nonNullable: true })
+		this.drumsReviewed.valueChanges.subscribe(drumsReviewed => {
+			localStorage.setItem('drumsReviewed', `${drumsReviewed}`)
+			if (this.songsResponse?.page) {
 				this.search(this.searchControl.value || '*').subscribe()
 			}
 		})
@@ -104,6 +113,7 @@ export class SearchService {
 			instrument: this.instrument.value,
 			difficulty: this.difficulty.value,
 			drumType: this.drumType.value,
+			drumsReviewed: this.drumsReviewed.value,
 			sort: this.sortColumn !== null ? { type: this.sortColumn, direction: this.sortDirection } : null,
 			source: 'bridge',
 		}).pipe(

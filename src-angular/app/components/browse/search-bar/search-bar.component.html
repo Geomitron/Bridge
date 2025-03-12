@@ -55,7 +55,7 @@
 			@if (instrument === 'drums') {
 				<!-- Drum Type Dropdown -->
 				<div class="dropdown">
-					<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none uppercase">{{ drumTypeDisplay(drumType) }}</label>
+					<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none rounded-r-none uppercase">{{ drumTypeDisplay(drumType) }}</label>
 					<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-40">
 						<li>
 							<a (click)="setDrumType(null, $event)">{{ drumTypeDisplay(null) }}</a>
@@ -65,6 +65,18 @@
 								<a (click)="setDrumType(drumType, $event)">{{ drumTypeDisplay(drumType) }}</a>
 							</li>
 						}
+					</ul>
+				</div>
+				<!-- Drums Reviewed Dropdown -->
+				<div class="dropdown">
+					<label tabindex="0" class="btn btn-neutral rounded-btn rounded-l-none uppercase">{{ drumsReviewedDisplay(drumsReviewed) }}</label>
+					<ul tabindex="0" class="menu dropdown-content z-[2] w-40 rounded-box bg-neutral p-2 text-neutral-content shadow">
+						<li>
+							<a (click)="setDrumsReviewed(true, $event)">{{ drumsReviewedDisplay(true) }}</a>
+						</li>
+						<li>
+							<a (click)="setDrumsReviewed(false, $event)">{{ drumsReviewedDisplay(false) }}</a>
+						</li>
 					</ul>
 				</div>
 			}
