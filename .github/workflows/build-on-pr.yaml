@@ -30,7 +30,9 @@ jobs:
       - name: Install builder dependencies
         shell: bash
         run: |
-          sudo apt install flatpak flatpak-builder elfutils -y
+          sudo apt install flatpak -y
+          sudo apt install flatpak-builder -y
+          sudo apt install elfutils -y
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           git config --global --add protocol.file.allow always
       - name: Build the app
