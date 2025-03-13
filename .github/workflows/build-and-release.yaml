@@ -42,10 +42,7 @@ jobs:
       - name: Install builder dependencies
         shell: bash
         run: |
-          sudo apt install flatpak -y
-          sudo apt install flatpak-builder -y
           sudo apt install elfutils -y
-          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           git config --global --add protocol.file.allow always
       - name: Build the app (Linux)
         shell: bash
@@ -57,7 +54,7 @@ jobs:
         shell: bash
         run: |
           cd release
-          find . -type f \( -name "*.AppImage" -o -name "*.flatpak" -o -name "latest-linux.yml" \) -print0 | tar -czvf bridge-linux.tar.gz --null -T -
+          find . -type f \( -name "*.AppImage" -o -name "latest-linux.yml" \) -print0 | tar -czvf bridge-linux.tar.gz --null -T -
       - uses: actions/upload-artifact@v4
         with:
           name: bridge-linux
