@@ -24,9 +24,9 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 - ✅ Advanced song search.
 - ✅ Chart issue scanner (for people making charts).
 
-### What's new in v3.3.0
+### What's new in v3.4.0
 
-- Add "Upload Date" column
+- Add new "Quality Reviewed" filter for drum charts
 
 ### Development
 
