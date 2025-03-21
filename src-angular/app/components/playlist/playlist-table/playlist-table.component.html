@@ -1,0 +1,67 @@
+<div class="collapse navbar grid bg-base-100 overflow-visible rounded-none border-t-base-200 border-t">
+	<input
+		type="text"
+		placeholder="Search..."
+		class="input input-bordered pr-14 ng-pristine ng-valid ng-touched"
+		[(ngModel)]="searchTerm"
+		(keyup)="filterSongs()" />
+</div>
+<div
+	*ngIf="filteredSongs.length > 0"
+	class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full h-[calc(100vh-164px)]">
+	<table id="resultTable" class="table table-zebra table-pin-rows" [class.table-xs]="settingsService.isCompactTable">
+		<thead>
+			<tr>
+				<th class="collapsing" id="checkboxColumn">
+					<button type="button" class="btn btn-sm min-w-[108px] hover:btn-primary" (click)="toggleSelectAll()">
+						{{ allRowsSelected ? 'Deselect All' : 'Select All' }}
+					</button>
+				</th>
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('name')">
+					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
+					Artist
+					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
+					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
+					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
+					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let song of filteredSongs; trackBy: trackByFn">
+				<td>
+					<input
+						type="checkbox"
+						class="checkbox"
+						#inputBox
+						(change)="onCheckboxChange(song, $event.target!)"
+						[checked]="selectedSongs.includes(song)" />
+				</td>
+				<td>{{ song.name }}</td>
+				<td>{{ song.artist }}</td>
+				<td>{{ song.album || 'Various' }}</td>
+				<td>{{ song.genre || 'Various' }}</td>
+				<td>{{ song.year || 'Various' }}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<div
+	class="align-center h-[calc(100vh-169.5px)]"
+	*ngIf="songs.length > 1 && filteredSongs.length < 1"
+	style="display: flex; justify-content: center; align-items: center">
+	<p class="text-center" style="font-size: 1.5rem">No songs found!</p>
+</div>
+
+<div class="flex align-center justify-center items-center h-[calc(100vh-169.5px)]" *ngIf="songs.length < 1 && filteredSongs.length === 0">
+	<p class="text-center" style="font-size: 1.5rem">No songs added!</p>
+</div>

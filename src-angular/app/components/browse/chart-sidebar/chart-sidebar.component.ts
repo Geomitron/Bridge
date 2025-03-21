@@ -42,7 +42,7 @@ export class ChartSidebarComponent implements OnInit {
 		private renderer: Renderer2,
 		private searchService: SearchService,
 		private downloadService: DownloadService,
-		public settingsService: SettingsService
+		public settingsService: SettingsService,
 	) { }
 
 	ngOnInit() {
