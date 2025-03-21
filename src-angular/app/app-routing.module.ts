@@ -5,12 +5,14 @@ import { BrowseComponent } from './components/browse/browse.component'
 import { SettingsComponent } from './components/settings/settings.component'
 import { ToolsComponent } from './components/tools/tools.component'
 import { TabPersistStrategy } from './core/tab-persist.strategy'
+import { PlaylistComponent } from './components/playlist/playlist.component'
 
 const routes: Routes = [
 	{ path: 'browse', component: BrowseComponent, data: { shouldReuse: true } },
 	{ path: 'library', redirectTo: '/browse' },
 	{ path: 'tools', component: ToolsComponent, data: { shouldReuse: true } },
 	{ path: 'settings', component: SettingsComponent, data: { shouldReuse: true } },
+	{ path: 'playlist', component: PlaylistComponent, data: { shouldReuse: true } },
 	{ path: 'about', redirectTo: '/browse' },
 	{ path: '**', redirectTo: '/browse' },
 ]
