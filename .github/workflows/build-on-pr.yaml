@@ -27,11 +27,15 @@ jobs:
           node-version: v18.19.0
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Install builder dependencies
+      - name: Fix apt and install builder dependencies
         shell: bash
         run: |
+          sudo rm /var/lib/apt/lists/* || true
+          sudo apt update
+          sudo apt install flatpak -y
+          sudo apt install flatpak-builder -y
           sudo apt install elfutils -y
-          git config --global --add protocol.file.allow always
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
       - name: Build the app
         shell: bash
         run: |
