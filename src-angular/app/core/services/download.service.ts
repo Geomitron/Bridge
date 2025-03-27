@@ -6,7 +6,7 @@ import { resolveChartFolderName } from 'src-shared/UtilFunctions'
 
 import { DownloadProgress } from '../../../../src-shared/interfaces/download.interface'
 import { SettingsService } from './settings.service'
-import { PlaylistService } from './playlist.service'
+import { LibraryService } from './library.service'
 
 @Injectable({
 	providedIn: 'root',
@@ -16,7 +16,7 @@ export class DownloadService {
 	public downloadCountChanges = new EventEmitter<number>()
 	public downloads: DownloadProgress[] = []
 
-	constructor(zone: NgZone, private settingsService: SettingsService, private playlistService: PlaylistService) {
+	constructor(zone: NgZone, private settingsService: SettingsService, private libraryService: LibraryService) {
 		window.electron.on.downloadQueueUpdate(download => zone.run(() => {
 			const downloadIndex = this.downloads.findIndex(d => d.md5 === download.md5)
 			if (download.type === 'cancel') {
@@ -70,7 +70,7 @@ export class DownloadService {
 				this.downloads.forEach(d => d.stale = true)
 			}
 
-			this.playlistService.playlistAdd(chart)
+			this.libraryService.libraryAdd(chart)
 
 			const newChart = {
 				name: chart.name ?? 'Unknown Name',
