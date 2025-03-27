@@ -3,10 +3,12 @@ import { BehaviorSubject } from 'rxjs'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { DownloadService } from './download.service'
 
+const LibraryStorageIdentifyer: string = "library"
+
 @Injectable({
 	providedIn: 'root',
 })
-export class PlaylistService {
+export class LibraryService {
 	private _tracks = new BehaviorSubject<ChartData[]>([])
 	tracks$ = this._tracks.asObservable()
 
@@ -16,9 +18,10 @@ export class PlaylistService {
 	private _downloadService: DownloadService | null = null
 
 	constructor(private injector: Injector) {
-		const playlist = localStorage.getItem('playlist')
-		if (playlist) {
-			this._tracks.next(JSON.parse(playlist))
+		const library = localStorage.getItem(LibraryStorageIdentifyer)
+
+		if (library) {
+			this._tracks.next(JSON.parse(library))
 		}
 	}
 
@@ -33,13 +36,13 @@ export class PlaylistService {
 		return this._tracks.value
 	}
 
-	playlistAdd(chart: ChartData) {
+	libraryAdd(chart: ChartData) {
 		const updatedTracks = [...this._tracks.value, chart]
 		this._tracks.next(updatedTracks)
-		localStorage.setItem('playlist', JSON.stringify(updatedTracks))
+		localStorage.setItem(LibraryStorageIdentifyer, JSON.stringify(updatedTracks))
 	}
 
-	downloadPlaylist(songs: ChartData[]) {
+	downloadLibrary(songs: ChartData[]) {
 		songs.forEach(track => {
 			if (!this._tracks.value.includes(track)) {
 				this.downloadService.addDownload(track)
@@ -47,11 +50,11 @@ export class PlaylistService {
 		})
 	}
 
-	storePlaylist() {
+	storeLibrary() {
 		const fakeLink = document.createElement('a')
 		const file = new Blob([JSON.stringify(this._tracks.value)], { type: 'application/json' })
 		fakeLink.href = URL.createObjectURL(file)
-		fakeLink.download = 'songs.setlist'
+		fakeLink.download = 'songs.library'
 		fakeLink.click()
 	}
 
@@ -59,7 +62,7 @@ export class PlaylistService {
 		const fakeLink = document.createElement('a')
 		const file = new Blob([JSON.stringify(this._selectedSongs.value)], { type: 'application/json' })
 		fakeLink.href = URL.createObjectURL(file)
-		fakeLink.download = 'selected.setlist'
+		fakeLink.download = 'selected.library'
 		fakeLink.click()
 	}
 
@@ -81,12 +84,12 @@ export class PlaylistService {
 		this._selectedSongs.value.forEach(selectedSong => {
 			const updatedTracks = this._tracks.value.filter(track => track !== selectedSong)
 			this._tracks.next(updatedTracks)
-			localStorage.setItem('playlist', JSON.stringify(updatedTracks))
+			localStorage.setItem(LibraryStorageIdentifyer, JSON.stringify(updatedTracks))
 		})
 	}
 
 	clearPlaylist() {
 		this._tracks.next([])
-		localStorage.removeItem('playlist')
+		localStorage.removeItem(LibraryStorageIdentifyer)
 	}
 }

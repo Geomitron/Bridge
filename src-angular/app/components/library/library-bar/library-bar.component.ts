@@ -1,27 +1,27 @@
 import { Component, ElementRef, ViewChild } from '@angular/core'
-import { PlaylistService } from 'src-angular/app/core/services/playlist.service'
 import { DownloadService } from '../../../core/services/download.service'
+import { LibraryService } from 'src-angular/app/core/services/library.service'
 
 @Component({
-	selector: 'app-playlist-bar',
-	templateUrl: './playlist-bar.component.html',
+	selector: 'app-library-bar',
+	templateUrl: './library-bar.component.html',
 	standalone: false,
 })
-export class PlaylistBarComponent {
-	@ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>
+export class LibraryBarComponent {
+	@ViewChild('fileInput', { static: false }) libraryfileInput: ElementRef<HTMLInputElement>
 
-	constructor(public playlistService: PlaylistService, public downloadService: DownloadService) { }
+	constructor(public libraryService: LibraryService, public downloadService: DownloadService) { }
 
 	exportPlaylist() {
-		this.playlistService.storePlaylist()
+		this.libraryService.storeLibrary()
 	}
 
 	exportSelected() {
-		this.playlistService.storeSelectedSongs()
+		this.libraryService.storeSelectedSongs()
 	}
 
 	importPlaylist() {
-		this.fileInput.nativeElement.click()
+		this.libraryfileInput.nativeElement.click()
 	}
 
 	onFileSelected(event: Event) {
@@ -34,7 +34,7 @@ export class PlaylistBarComponent {
 				try {
 					const importedTracks = JSON.parse(reader.result as string)
 					if (Array.isArray(importedTracks)) {
-						this.playlistService.downloadPlaylist(importedTracks)
+						this.libraryService.downloadLibrary(importedTracks)
 					} else {
 						console.error('Invalid file format')
 					}

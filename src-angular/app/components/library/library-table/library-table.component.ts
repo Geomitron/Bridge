@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core'
-import { PlaylistService } from 'src-angular/app/core/services/playlist.service'
 import { SelectionService } from 'src-angular/app/core/services/selection.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { SettingsService } from '../../../core/services/settings.service'
 import { Subscription } from 'rxjs'
+import { LibraryService } from 'src-angular/app/core/services/library.service'
 
 type SortColumn = 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null
 
 @Component({
-	selector: 'app-playlist-table',
-	templateUrl: './playlist-table.component.html',
+	selector: 'app-library-table',
+	templateUrl: './library-table.component.html',
 	standalone: false,
 })
-export class PlaylistTableComponent implements OnInit, OnDestroy {
+export class LibraryTableComponent implements OnInit, OnDestroy {
 	songs: ChartData[] = []
 	sortDirection: 'asc' | 'desc' = 'asc'
 	sortColumn: SortColumn = null
@@ -23,7 +23,7 @@ export class PlaylistTableComponent implements OnInit, OnDestroy {
 	selectedSongs: ChartData[] = []
 
 	constructor(
-		public playlistService: PlaylistService,
+		public libraryService: LibraryService,
 		public settingsService: SettingsService,
 		private selectionService: SelectionService
 	) { }
@@ -42,7 +42,7 @@ export class PlaylistTableComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.subscriptions.push(
-			this.playlistService.tracks$
+			this.libraryService.tracks$
 				.subscribe(tracks => {
 					this.songs = tracks
 					this.filterSongs()
@@ -50,9 +50,10 @@ export class PlaylistTableComponent implements OnInit, OnDestroy {
 		)
 		this.filteredSongs = [...this.songs]
 		this.subscriptions.push(
-			this.playlistService.selectedSongs$.subscribe(songs =>
-				this.selectedSongs = songs
-			)
+			this.libraryService.selectedSongs$
+				.subscribe(songs =>
+					this.selectedSongs = songs
+				)
 		)
 	}
 
@@ -67,10 +68,6 @@ export class PlaylistTableComponent implements OnInit, OnDestroy {
 				song.year?.toLowerCase().includes(term) ||
 				song.charter?.toLowerCase().includes(term)
 		)
-	}
-
-	trackByFn(index: number): number {
-		return index
 	}
 
 	onColClicked(column: SortColumn) {
@@ -105,19 +102,23 @@ export class PlaylistTableComponent implements OnInit, OnDestroy {
 	onCheckboxChange(song: ChartData, target?: EventTarget): void {
 		const input = target as HTMLInputElement
 		if (input.checked) {
-			this.playlistService.addToSelectedSongs(song)
+			this.libraryService.addToSelectedSongs(song)
 		} else {
-			this.playlistService.removeFromSelectedSongs(song)
+			this.libraryService.removeFromSelectedSongs(song)
 		}
+	}
+
+	trackByFn(index: number): number {
+		return index
 	}
 
 	toggleSelectAll(): void {
 		this.allRowsSelected = !this.allRowsSelected
 
 		if (this.allRowsSelected) {
-			this.filteredSongs.forEach(song => this.playlistService.addToSelectedSongs(song))
+			this.filteredSongs.forEach(song => this.libraryService.addToSelectedSongs(song))
 		} else {
-			this.playlistService.clearSelectedSongs()
+			this.libraryService.clearSelectedSongs()
 		}
 	}
 

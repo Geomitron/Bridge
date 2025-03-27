@@ -18,9 +18,10 @@ import { StatusBarComponent } from './components/browse/status-bar/status-bar.co
 import { SettingsComponent } from './components/settings/settings.component'
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
 import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
-import { PlaylistTableComponent } from './components/playlist/playlist-table/playlist-table.component'
-import { PlaylistComponent } from './components/playlist/playlist.component'
-import { PlaylistBarComponent } from './components/playlist/playlist-bar/playlist-bar.component'
+import { LibraryTableComponent } from './components/library/library-table/library-table.component'
+import { LibraryComponent } from './components/library/library.component'
+import { LibraryBarComponent } from './components/library/library-bar/library-bar.component'
+
 
 @NgModule({
 	declarations: [
@@ -38,9 +39,9 @@ import { PlaylistBarComponent } from './components/playlist/playlist-bar/playlis
 		DownloadsModalComponent,
 		RemoveStyleTagsPipe,
 		SettingsComponent,
-		PlaylistTableComponent,
-		PlaylistComponent,
-		PlaylistBarComponent,
+		LibraryTableComponent,
+		LibraryComponent,
+		LibraryBarComponent,
 	],
 	bootstrap: [AppComponent], imports: [
 		BrowserModule,
