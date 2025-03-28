@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core'
 import { DownloadService } from '../../../core/services/download.service'
 import { LibraryService } from 'src-angular/app/core/services/library.service'
+import { ChartData } from 'src-shared/interfaces/search.interface'
 
 @Component({
 	selector: 'app-library-bar',
@@ -12,7 +13,7 @@ export class LibraryBarComponent {
 
 	constructor(public libraryService: LibraryService, public downloadService: DownloadService) { }
 
-	exportPlaylist() {
+	exportLibrary() {
 		this.libraryService.storeLibrary()
 	}
 
@@ -20,29 +21,24 @@ export class LibraryBarComponent {
 		this.libraryService.storeSelectedSongs()
 	}
 
-	importPlaylist() {
-		this.libraryfileInput.nativeElement.click()
-	}
-
-	onFileSelected(event: Event) {
+	async onFileSelected(event: Event) {
 		const input = event.target as HTMLInputElement
 
-		if (input.files && input.files.length > 0) {
-			const file = input.files[0]
-			const reader = new FileReader()
-			reader.onload = () => {
-				try {
-					const importedTracks = JSON.parse(reader.result as string)
-					if (Array.isArray(importedTracks)) {
-						this.libraryService.downloadLibrary(importedTracks)
-					} else {
-						console.error('Invalid file format')
-					}
-				} catch (error) {
-					console.error('Error parsing file:', error)
-				}
-			}
-			reader.readAsText(file)
+		if (!input.files?.length)
+			return
+
+		const file = input.files[0]
+
+		try {
+			const fileContent = await file.text()
+			const json = JSON.parse(fileContent)
+			const chartData = json as ChartData[]
+			this.libraryService.downloadLibrary(chartData)
+
+		} catch (error) {
+			console.error('Error reading or parsing the file:', error)
 		}
+
+		this.libraryfileInput.nativeElement.value = ''
 	}
 }

@@ -2,8 +2,7 @@ import { Injectable, Injector } from '@angular/core'
 import { BehaviorSubject } from 'rxjs'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { DownloadService } from './download.service'
-
-const LibraryStorageIdentifyer: string = "library"
+import { StorageService } from './storage.service'
 
 @Injectable({
 	providedIn: 'root',
@@ -17,42 +16,39 @@ export class LibraryService {
 
 	private _downloadService: DownloadService | null = null
 
-	constructor(private injector: Injector) {
-		const library = localStorage.getItem(LibraryStorageIdentifyer)
-
-		if (library) {
-			this._tracks.next(JSON.parse(library))
-		}
+	constructor(private injector: Injector, private storageService: StorageService) {
+		this.storageService.getChartsBySearchTerm().then(library => {
+			if (library) {
+				this._tracks.next(library)
+			}
+		})
 	}
 
 	private get downloadService(): DownloadService {
 		if (!this._downloadService) {
 			this._downloadService = this.injector.get(DownloadService)
 		}
-		return this._downloadService
-	}
 
-	getPlaylist() {
-		return this._tracks.value
+		return this._downloadService
 	}
 
 	libraryAdd(chart: ChartData) {
 		const updatedTracks = [...this._tracks.value, chart]
 		this._tracks.next(updatedTracks)
-		localStorage.setItem(LibraryStorageIdentifyer, JSON.stringify(updatedTracks))
+
+		this.storageService.addChart(chart)
 	}
 
 	downloadLibrary(songs: ChartData[]) {
 		songs.forEach(track => {
-			if (!this._tracks.value.includes(track)) {
-				this.downloadService.addDownload(track)
-			}
+			this.downloadService.addDownload(track)
 		})
 	}
 
 	storeLibrary() {
 		const fakeLink = document.createElement('a')
 		const file = new Blob([JSON.stringify(this._tracks.value)], { type: 'application/json' })
+
 		fakeLink.href = URL.createObjectURL(file)
 		fakeLink.download = 'songs.library'
 		fakeLink.click()
@@ -61,6 +57,7 @@ export class LibraryService {
 	storeSelectedSongs() {
 		const fakeLink = document.createElement('a')
 		const file = new Blob([JSON.stringify(this._selectedSongs.value)], { type: 'application/json' })
+
 		fakeLink.href = URL.createObjectURL(file)
 		fakeLink.download = 'selected.library'
 		fakeLink.click()
@@ -80,16 +77,28 @@ export class LibraryService {
 		this._selectedSongs.next([])
 	}
 
-	removeFromPlaylist() {
-		this._selectedSongs.value.forEach(selectedSong => {
-			const updatedTracks = this._tracks.value.filter(track => track !== selectedSong)
+	removeFromLibrary() {
+		this._selectedSongs.value.forEach((selectedSong: ChartData) => {
+			const updatedTracks = this._tracks.value.filter(track => track !== selectedSong) as ChartData[]
 			this._tracks.next(updatedTracks)
-			localStorage.setItem(LibraryStorageIdentifyer, JSON.stringify(updatedTracks))
+			this.storageService.removeChart(selectedSong.md5)
 		})
+
+		this.clearSelectedSongs()
 	}
 
-	clearPlaylist() {
-		this._tracks.next([])
-		localStorage.removeItem(LibraryStorageIdentifyer)
+	async clearLibrary() {
+		this.storageService.removeAllCharts()
+		this.clearSelectedSongs()
+
+		const library = await this.storageService.getChartsBySearchTerm()
+		this._tracks.next(library)
+	}
+
+	async getChartsBySearchTerm(searchTerm?: string): Promise<ChartData[]> {
+		const library = await this.storageService.getChartsBySearchTerm(searchTerm)
+
+		this._tracks.next(library)
+		return library
 	}
 }
