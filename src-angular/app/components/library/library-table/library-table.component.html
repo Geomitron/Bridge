@@ -7,7 +7,7 @@
 		(keyup)="filterSongs()" />
 </div>
 <div
-	*ngIf="filteredSongs.length > 0"
+	*ngIf="songs.length > 0"
 	class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full h-[calc(100vh-164px)]">
 	<table id="resultTable" class="table table-zebra table-pin-rows" [class.table-xs]="settingsService.isCompactTable">
 		<thead>
@@ -36,7 +36,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr *ngFor="let song of filteredSongs; trackBy: trackByFn">
+			<tr *ngFor="let song of songs; trackBy: trackByFn">
 				<td>
 					<input
 						type="checkbox"
@@ -55,13 +55,6 @@
 	</table>
 </div>
 
-<div
-	class="align-center h-[calc(100vh-169.5px)]"
-	*ngIf="songs.length > 1 && filteredSongs.length < 1"
-	style="display: flex; justify-content: center; align-items: center">
-	<p class="text-center" style="font-size: 1.5rem">No songs found!</p>
-</div>
-
-<div class="flex align-center justify-center items-center h-[calc(100vh-169.5px)]" *ngIf="songs.length < 1 && filteredSongs.length === 0">
+<div class="flex align-center justify-center items-center h-[calc(100vh-169.5px)]" *ngIf="songs.length < 1">
 	<p class="text-center" style="font-size: 1.5rem">No songs added!</p>
 </div>

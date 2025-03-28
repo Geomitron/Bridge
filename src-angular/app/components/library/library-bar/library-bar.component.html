@@ -1,22 +1,22 @@
 <div class="border-t border-t-neutral p-2 flex gap-2 items-center max-w-full justify-between">
 	<div class="flex items-center gap-[8px]">
 		{{ (this.libraryService.tracks$ | async)?.length ?? 0 }} Songs
-
+		<button class="btn btn-sm btn-primary" (click)="fileInput.click()">Import Setlist</button>
 		@if ((this.libraryService.selectedSongs$ | async)!.length > 0) {
-			<button class="btn btn-sm btn-primary" (click)="exportSelected()">Export Selected</button>
+			<button class="btn btn-sm btn-primary" (click)="exportSelected()">Export Selected Setlist</button>
 		} @else {
-			<button class="btn btn-sm btn-primary" (click)="exportPlaylist()">Export</button>
+			<button class="btn btn-sm btn-primary" (click)="exportLibrary()">Export Setlist</button>
 		}
-		<button class="btn btn-sm btn-primary" (click)="importPlaylist()">Import</button>
+
 		<input type="file" #fileInput accept=".library" class="hidden" (change)="onFileSelected($event)" />
 
 		@if ((this.libraryService.selectedSongs$ | async)!.length === 0) {
-			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="this.libraryService.clearPlaylist()">
+			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="this.libraryService.clearLibrary()">
 				<i class="bi bi-trash"></i>
 				Delete all
 			</button>
 		} @else {
-			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="this.libraryService.removeFromPlaylist()">
+			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="this.libraryService.removeFromLibrary()">
 				<i class="bi bi-trash"></i>
 				Delete selected
 			</button>

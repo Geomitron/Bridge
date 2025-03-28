@@ -16,7 +16,6 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 	songs: ChartData[] = []
 	sortDirection: 'asc' | 'desc' = 'asc'
 	sortColumn: SortColumn = null
-	filteredSongs: ChartData[] = []
 	searchTerm: string = ''
 	allRowsSelected: boolean = false
 	subscriptions: Subscription[] = []
@@ -45,10 +44,9 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 			this.libraryService.tracks$
 				.subscribe(tracks => {
 					this.songs = tracks
-					this.filterSongs()
 				})
 		)
-		this.filteredSongs = [...this.songs]
+
 		this.subscriptions.push(
 			this.libraryService.selectedSongs$
 				.subscribe(songs =>
@@ -58,20 +56,11 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 	}
 
 	filterSongs(): void {
-		const term = this.searchTerm.toLowerCase()
-		this.filteredSongs = this.songs.filter(
-			song =>
-				song.name?.toLowerCase().includes(term) ||
-				song.artist?.toLowerCase().includes(term) ||
-				song.album?.toLowerCase().includes(term) ||
-				song.genre?.toLowerCase().includes(term) ||
-				song.year?.toLowerCase().includes(term) ||
-				song.charter?.toLowerCase().includes(term)
-		)
+		this.libraryService.getChartsBySearchTerm(this.searchTerm)
 	}
 
 	onColClicked(column: SortColumn) {
-		if (this.filteredSongs.length === 0) { return }
+		if (this.songs.length === 0) { return }
 
 		if (this.sortColumn !== column) {
 			this.sortColumn = column
@@ -84,7 +73,7 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 		}
 
 		if (this.sortColumn) {
-			this.filteredSongs.sort((a, b) => {
+			this.songs.sort((a, b) => {
 				const valueA = a[this.sortColumn! as keyof ChartData]
 				const valueB = b[this.sortColumn! as keyof ChartData]
 
@@ -116,7 +105,7 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 		this.allRowsSelected = !this.allRowsSelected
 
 		if (this.allRowsSelected) {
-			this.filteredSongs.forEach(song => this.libraryService.addToSelectedSongs(song))
+			this.songs.forEach(song => this.libraryService.addToSelectedSongs(song))
 		} else {
 			this.libraryService.clearSelectedSongs()
 		}
