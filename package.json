@@ -22,8 +22,10 @@
     "build:windows": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --windows",
     "build:mac": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --mac",
     "build:linux": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --linux",
-    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build"
-  },
+    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build",
+		"typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+		"migration:add": "npx typeorm-ts-node-esm migration:generate ./src-electron/database/migrations/%npm_config_name% -d ./src-electron/database/dataSource.ts"
+	},
   "dependencies": {
     "@angular/animations": "19.2.1",
     "@angular/common": "19.2.1",
@@ -46,11 +48,14 @@
     "fs-extra": "11.2.0",
     "lodash": "4.17.21",
     "parse-sng": "4.0.3",
+    "reflect-metadata": "^0.2.2",
     "rxjs": "7.8.1",
     "sanitize-filename": "1.6.3",
     "scan-chart": "6.1.0",
+    "sqlite3": "5.1.6",
     "three": "0.166.1",
     "tslib": "2.6.3",
+    "typeorm": "^0.3.21",
     "zod": "3.23.8",
     "zone.js": "0.15.0"
   },
