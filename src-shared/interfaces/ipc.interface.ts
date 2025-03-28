@@ -50,6 +50,10 @@ export interface IpcInvokeEvents {
 		input: string
 		output: ThemeColors | null
 	}
+	readDirectory: {
+		input: void
+		output: string[]
+	}
 }
 
 export type IpcInvokeHandlers = {
