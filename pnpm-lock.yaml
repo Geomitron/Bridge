@@ -65,9 +65,15 @@ importers:
       fs-extra:
         specifier: 11.2.0
         version: 11.2.0
+      herochartio:
+        specifier: ^1.1.0
+        version: 1.1.0
       lodash:
         specifier: 4.17.21
         version: 4.17.21
+      midi-file:
+        specifier: ^1.2.4
+        version: 1.2.4
       parse-sng:
         specifier: 4.0.3
         version: 4.0.3
@@ -2782,6 +2788,9 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  herochartio@1.1.0:
+    resolution: {integrity: sha512-Dcq6T/+FpBYeVcUCbCuV6mZBmDyRhBmsI7ec216fPU/p4AEJCNWlT+dlXJVzxlFSTAkqzU9aqbbYx//S+ok9DA==}
 
   hosted-git-info@4.1.0:
     resolution: {integrity: sha512-kyCuEOWjJqZuDbRHzL8V93NzQhwIB71oFWSyzVo+KPZI+pnQPPxucdkrOZvkLRnrf5URsQM+IJ09Dw29cRALIA==}
@@ -7372,6 +7381,12 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  herochartio@1.1.0:
+    dependencies:
+      fs-extra: 8.1.0
+      lodash: 4.17.21
+      midi-file: 1.2.4
 
   hosted-git-info@4.1.0:
     dependencies:

@@ -75,6 +75,7 @@ export interface IpcToMainEmitEvents {
 	showFolder: string
 	showFile: string
 	scanIssues: void
+	generateDifficulties: void
 }
 
 export type IpcToMainEmitHandlers = {
@@ -95,6 +96,7 @@ export interface IpcFromMainEmitEvents {
 	maximized: void
 	minimized: void
 	updateIssueScan: { status: 'progress' | 'error' | 'done'; message: string }
+	updateChartsDifficultyGeneration: { status: 'progress' | 'error' | 'done'; message: string }
 }
 
 export type IpcFromMainEmitHandlers = {

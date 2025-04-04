@@ -1,62 +1,97 @@
-<div class="p-8 flex flex-col gap-3">
-	<div class="text-xl">Chart issue scanning</div>
-	<div class="flex gap-3">
-		<label class="form-control w-full">
-			<div class="label">
-				<span class="label-text">Issue scan directory</span>
-			</div>
-			<div class="join w-full">
-				<input
-					[value]="settingsService.issueScanDirectory || 'No folder selected'"
-					class="join-item input input-bordered cursor-default pointer-events-none flex-1"
-					readonly
-					type="text"
-					placeholder="No directory selected!" />
-				@if (settingsService.issueScanDirectory !== undefined) {
+<div class="p-8 flex flex-col gap-8">
+	<div class="flex flex-col gap-3">
+		<div class="text-xl">Chart issue scanning</div>
+		<div class="flex gap-3">
+			<label class="form-control w-full">
+				<div class="label">
+					<span class="label-text">Issue scan directory</span>
+				</div>
+				<div class="join w-full">
+					<input [value]="settingsService.issueScanDirectory || 'No folder selected'"
+						class="join-item input input-bordered cursor-default pointer-events-none flex-1" readonly type="text"
+						placeholder="No directory selected!" />
+					@if (settingsService.issueScanDirectory !== undefined) {
 					<button (click)="openIssueScanDirectory()" class="join-item btn btn-neutral">Open Folder</button>
-				}
-				<button (click)="getIssueScanDirectory()" class="join-item btn btn-primary">Choose</button>
-			</div>
-		</label>
-		<label class="form-control w-full">
-			<div class="label">
-				<span class="label-text">Spreadsheet output directory</span>
-			</div>
-			<div class="join w-full">
-				<input
-					[value]="settingsService.spreadsheetOutputDirectory || 'No folder selected'"
-					class="join-item input input-bordered cursor-default pointer-events-none flex-1"
-					readonly
-					type="text"
-					placeholder="No directory selected!" />
-				@if (settingsService.spreadsheetOutputDirectory !== undefined) {
+					}
+					<button (click)="getIssueScanDirectory()" class="join-item btn btn-primary">Choose</button>
+				</div>
+			</label>
+			<label class="form-control w-full">
+				<div class="label">
+					<span class="label-text">Spreadsheet output directory</span>
+				</div>
+				<div class="join w-full">
+					<input [value]="settingsService.spreadsheetOutputDirectory || 'No folder selected'"
+						class="join-item input input-bordered cursor-default pointer-events-none flex-1" readonly type="text"
+						placeholder="No directory selected!" />
+					@if (settingsService.spreadsheetOutputDirectory !== undefined) {
 					<button (click)="openSpreadsheetOutputDirectory()" class="join-item btn btn-neutral">Open Folder</button>
-				}
-				<button (click)="getSpreadsheetOutputDirectory()" class="join-item btn btn-primary">Choose</button>
-			</div>
-		</label>
-		<button
-			(click)="scanIssues()"
-			class="btn btn-primary self-end"
-			[attr.disabled]="
-				settingsService.issueScanDirectory === undefined || settingsService.spreadsheetOutputDirectory === undefined || scanning ? true : null
-			">
-			<i class="bi bi-gear-wide-connected text-lg"></i>
-			{{ buttonText }}
-		</button>
-		<dialog #scanErrorModal class="modal">
-			<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
-				<form method="dialog">
-					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-						<i class="bi bi-x-lg text-lg"></i>
-					</button>
+					}
+					<button (click)="getSpreadsheetOutputDirectory()" class="join-item btn btn-primary">Choose</button>
+				</div>
+			</label>
+			<button (click)="scanIssues()" class="btn btn-primary self-end" [attr.disabled]="
+					settingsService.issueScanDirectory === undefined || settingsService.spreadsheetOutputDirectory === undefined || scanning ? true : null
+				">
+				<i class="bi bi-gear-wide-connected text-lg"></i>
+				{{ issueScanButtonText }}
+			</button>
+			<dialog #scanErrorModal class="modal">
+				<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+					<form method="dialog">
+						<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+							<i class="bi bi-x-lg text-lg"></i>
+						</button>
+					</form>
+					<h3 class="text-lg font-bold">Error scanning charts for issues:</h3>
+					<p class="py-4">{{ scanErrorText }}</p>
+				</div>
+				<form method="dialog" class="modal-backdrop">
+					<button>close</button>
 				</form>
-				<h3 class="text-lg font-bold">Error scanning charts for issues:</h3>
-				<p class="py-4">{{ scanErrorText }}</p>
-			</div>
-			<form method="dialog" class="modal-backdrop">
-				<button>close</button>
-			</form>
-		</dialog>
+			</dialog>
+		</div>
+	</div>
+
+	<div class="flex flex-col gap-3">
+		<div class="text-xl">Missing chart difficulties generation (Experimental)</div>
+		<div class="flex gap-3">
+			<label class="form-control w-full">
+				<div class="label">
+					<span class="label-text">Charts directory</span>
+				</div>
+				<div class="join w-full">
+					<input [value]="settingsService.chartsDifficultyGenerationDirectory || 'No folder selected'"
+						class="join-item input input-bordered cursor-default pointer-events-none flex-1" readonly type="text"
+						placeholder="No directory selected!" />
+					@if (settingsService.chartsDifficultyGenerationDirectory !== undefined) {
+					<button (click)="openChartsDifficultyGenerationDirectory()" class="join-item btn btn-neutral">Open
+						Folder</button>
+					}
+					<button (click)="getChartsDifficultyGenerationDirectory()" class="join-item btn btn-primary">Choose</button>
+					<button (click)="setChartsDifficultyGenerationDirectoryToLibrary()" class="join-item btn btn-info">Use chart
+						library</button>
+				</div>
+			</label>
+			<button (click)="generateDifficulties()" class="btn btn-primary self-end"
+				[attr.disabled]="settingsService.chartsDifficultyGenerationDirectory === undefined || generatingDifficulties ? true : null">
+				<i class="bi bi-gear-wide-connected text-lg"></i>
+				{{ chartsDifficultyGenerationButtonText }}
+			</button>
+			<dialog #chartsDifficultyGenerationErrorModal class="modal">
+				<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+					<form method="dialog">
+						<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+							<i class="bi bi-x-lg text-lg"></i>
+						</button>
+					</form>
+					<h3 class="text-lg font-bold">Error generating difficulties:</h3>
+					<p class="py-4">{{ chartsDifficultyGenerationErrorText }}</p>
+				</div>
+				<form method="dialog" class="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
+		</div>
 	</div>
 </div>
