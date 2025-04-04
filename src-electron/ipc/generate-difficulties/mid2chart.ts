@@ -4,7 +4,7 @@
 	It did not include a license or original author.
 */
 
-import { parseMidi, type MidiEvent } from "midi-file"
+import { MidiEvent, parseMidi } from 'midi-file'
 
 const STANDARD_EVENTS = [
 	"[idle]",
@@ -64,6 +64,8 @@ export function mid2Chart(
 		...optionsIn,
 	}
 
+	const chartName = options.placeholderName
+
 	let XSingle = "[ExpertSingle]\n{\n"
 	let HSingle = "[HardSingle]\n{\n"
 	let MSingle = "[MediumSingle]\n{\n"
@@ -84,7 +86,6 @@ export function mid2Chart(
 	let EDrums = "[EasyDrums]\n{\n"
 	let Header = "[Song]\n{\n"
 	let scaler = 0
-	let chartName = options.placeholderName
 	let coop = "bass"
 	let valid = true
 	let hasEvents = false
@@ -190,9 +191,7 @@ export function mid2Chart(
 		for (let i = 0; i < track.length; i++) {
 			tick += Math.round(track[i].deltaTime * scaler)
 			event = track[i]
-			if (event.type === "trackName") {
-				chartName = '"' + event.text + '"'
-			} else if (event.type === "setTempo") {
+			if (event.type === "setTempo") {
 				const mpq = event.microsecondsPerBeat
 				const bpm = Math.floor((6.0e7 / mpq) * 1000.0)
 				Sync += "\t" + tick + " = B " + bpm + "\n"
