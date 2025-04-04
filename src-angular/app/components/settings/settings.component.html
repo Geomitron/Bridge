@@ -1,17 +1,14 @@
-<div class="p-8 flex flex-col gap-3">
+<div class="p-8 flex flex-col gap-3 overflow-y-auto h-full">
 	<label class="form-control w-full">
 		<div class="label">
 			<span class="label-text">Chart library directory</span>
 		</div>
 		<div class="join w-full">
-			<input
-				[value]="settingsService.libraryDirectory || 'No folder selected'"
-				class="join-item input input-bordered cursor-default pointer-events-none flex-1"
-				readonly
-				type="text"
+			<input [value]="settingsService.libraryDirectory || 'No folder selected'"
+				class="join-item input input-bordered cursor-default pointer-events-none flex-1" readonly type="text"
 				placeholder="No directory selected!" />
 			@if (settingsService.libraryDirectory !== undefined) {
-				<button (click)="openLibraryDirectory()" class="join-item btn btn-neutral">Open Folder</button>
+			<button (click)="openLibraryDirectory()" class="join-item btn btn-neutral">Open Folder</button>
 			}
 			<button (click)="getLibraryDirectory()" class="join-item btn btn-primary">Choose</button>
 		</div>
@@ -49,7 +46,8 @@
 				</dialog>
 			</span>
 		</div>
-		<input [formControl]="chartFolderName" class="input input-bordered" type="text" placeholder="{artist} - {name} ({charter})" />
+		<input [formControl]="chartFolderName" class="input input-bordered" type="text"
+			placeholder="{artist} - {name} ({charter})" />
 	</label>
 
 	<div class="form-control w-full max-w-xs">
@@ -70,37 +68,51 @@
 				</div>
 			</div>
 			@if (!settingsService.customTheme) {
-				<div class="dropdown dropdown-hover">
-					<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
-					<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
-						<li>
-							<h2 class="menu-title text-neutral-content text-opacity-50">Dark</h2>
-							<ul>
-								<li><a (click)="setTheme('business')">Business</a></li>
-								<li><a (click)="setTheme('dark')">Dark</a></li>
-								<li><a (click)="setTheme('dim')">Dim</a></li>
-								<li><a (click)="setTheme('night')">Night</a></li>
-								<li><a (click)="setTheme('sunset')">Sunset</a></li>
-								<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
-							</ul>
-						</li>
-						<li>
-							<h2 class="menu-title text-neutral-content text-opacity-50">Light</h2>
-							<ul>
-								<li><a (click)="setTheme('aqua')">Aqua</a></li>
-								<li><a (click)="setTheme('emerald')">Emerald</a></li>
-								<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
-								<li><a (click)="setTheme('nord')">Nord</a></li>
-								<li><a (click)="setTheme('valentine')">Valentine</a></li>
-								<li><a (click)="setTheme('winter')">Winter</a></li>
-							</ul>
-						</li>
-					</ul>
-				</div>
-				<button (click)="getCustomTheme()" class="btn btn-primary">Use custom theme</button>
+			<div class="dropdown dropdown-hover">
+				<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
+				<ul tabindex="0"
+					class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
+					<li>
+						<h2 class="menu-title text-neutral-content text-opacity-50">Dark</h2>
+						<ul>
+							<li><a (click)="setTheme('business')">Business</a></li>
+							<li><a (click)="setTheme('dark')">Dark</a></li>
+							<li><a (click)="setTheme('dim')">Dim</a></li>
+							<li><a (click)="setTheme('night')">Night</a></li>
+							<li><a (click)="setTheme('sunset')">Sunset</a></li>
+							<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
+						</ul>
+					</li>
+					<li>
+						<h2 class="menu-title text-neutral-content text-opacity-50">Light</h2>
+						<ul>
+							<li><a (click)="setTheme('aqua')">Aqua</a></li>
+							<li><a (click)="setTheme('emerald')">Emerald</a></li>
+							<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
+							<li><a (click)="setTheme('nord')">Nord</a></li>
+							<li><a (click)="setTheme('valentine')">Valentine</a></li>
+							<li><a (click)="setTheme('winter')">Winter</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			<button (click)="getCustomTheme()" class="btn btn-primary">Use custom theme</button>
 			} @else {
-				<button (click)="clearCustomTheme()" class="btn btn-neutral">Clear custom theme</button>
+			<button (click)="clearCustomTheme()" class="btn btn-neutral">Clear custom theme</button>
 			}
+		</div>
+	</div>
+
+	<div class="form-control">
+		<div class="label">
+			<span class="label-text">Chart Missing Difficulties (experimental)</span>
+		</div>
+		<div class="flex">
+			<label class="label cursor-pointer" for="generateMissingDifficulties">
+				<input id="generateMissingDifficulties" type="checkbox" checked="checked" class="checkbox mr-1"
+					[formControl]="generateMissingDifficulties" />
+				Auto generate missing difficulties
+			</label>
 		</div>
 	</div>
 
@@ -160,7 +172,8 @@
 		</div>
 		<div class="flex">
 			<label class="label cursor-pointer" for="downloadVideos">
-				<input id="downloadVideos" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="downloadVideos" />
+				<input id="downloadVideos" type="checkbox" checked="checked" class="checkbox mr-1"
+					[formControl]="downloadVideos" />
 				Download Video Backgrounds
 			</label>
 		</div>
@@ -172,12 +185,14 @@
 		</div>
 		<div class="flex gap-2">
 			<label class="label cursor-pointer">
-				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="false" [formControl]="isCompactTable" />
+				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="false"
+					[formControl]="isCompactTable" />
 				Default
 			</label>
 
 			<label class="label cursor-pointer">
-				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="true" [formControl]="isCompactTable" />
+				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="true"
+					[formControl]="isCompactTable" />
 				Compact
 			</label>
 		</div>
@@ -207,7 +222,8 @@
 		</div>
 		<div class="flex gap-2">
 			<label class="label cursor-pointer" for="charterColumn">
-				<input id="charterColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="charterColumn" />
+				<input id="charterColumn" type="checkbox" checked="checked" class="checkbox mr-1"
+					[formControl]="charterColumn" />
 				Charter
 			</label>
 			<label class="label cursor-pointer" for="lengthColumn">
@@ -215,45 +231,52 @@
 				Length
 			</label>
 			<label class="label cursor-pointer" for="difficultyColumn">
-				<input id="difficultyColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="difficultyColumn" />
+				<input id="difficultyColumn" type="checkbox" checked="checked" class="checkbox mr-1"
+					[formControl]="difficultyColumn" />
 				Difficulty
 			</label>
 			<label class="label cursor-pointer" for="uploadedColumn">
-				<input id="uploadedColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="uploadedColumn" />
+				<input id="uploadedColumn" type="checkbox" checked="checked" class="checkbox mr-1"
+					[formControl]="uploadedColumn" />
 				Upload Date
 			</label>
 		</div>
 	</div>
 
-	<div class="absolute bottom-8 left-8 flex">
-		<a class="btn btn-link" (click)="openUrl('https://github.com/Geomitron/Bridge')"><i class="bi bi-github text-2xl"></i>Github</a>
-		<a class="btn btn-link" (click)="openUrl('https://discord.gg/cqaUXGm')"><i class="bi bi-discord text-2xl"></i>Discord</a>
-		<a class="btn btn-link" (click)="openUrl('https://www.patreon.com/ChorusEncore701')">
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="patreon">
-				<path
-					fill="currentColor"
-					fill-rule="evenodd"
-					d="M0 9.71C0 1.63 10.32-3.476 16.916 2.818c3.532 3.36 4.143 8.902 1.248 12.951-3.591 4.92-8.282 4.193-12.76 4.193v-9.588c.041-2.117.747-3.943 3.324-4.816 2.245-.664 4.863.581 5.653 2.947.832 2.533-.374 4.234-1.787 5.272-1.413 1.039-3.616 1.039-5.07.042v3.279c3.138 1.5 8.105-.303 9.684-4.4 1.08-2.864.332-6.185-1.912-8.26-2.701-2.2-5.653-2.74-8.811-1.204-2.204 1.12-3.741 3.404-4.116 5.894v10.834H.042L0 9.71z"></path>
-			</svg>
-			Patreon
-		</a>
-	</div>
-
-	<div class="absolute bottom-8 right-8 flex gap-6">
-		<div class="join">
-			<button *ngIf="updateAvailable === 'yes'" class="join-item btn btn-primary" (click)="downloadUpdate()">
-				<i class="bi text-xl" [ngClass]="updateDownloaded ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>{{ downloadUpdateText }}
-			</button>
-			<button *ngIf="updateAvailable === 'error'" class="join-item btn btn-warning" [class.disabled]="updateRetrying" (click)="retryUpdate()">
-				<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying"></i>{{ retryUpdateText }}
-			</button>
-			<button class="join-item btn btn-outline btn-disabled">{{ currentVersion }}</button>
+	<div class="flex justify-between sticky bottom-0 bg-base-100 rounded-xl p-2 mt-2">
+		<div class="flex">
+			<a class="btn btn-link" (click)="openUrl('https://github.com/Geomitron/Bridge')"><i
+					class="bi bi-github text-2xl"></i>Github</a>
+			<a class="btn btn-link" (click)="openUrl('https://discord.gg/cqaUXGm')"><i
+					class="bi bi-discord text-2xl"></i>Discord</a>
+			<a class="btn btn-link" (click)="openUrl('https://www.patreon.com/ChorusEncore701')">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="patreon">
+					<path fill="currentColor" fill-rule="evenodd"
+						d="M0 9.71C0 1.63 10.32-3.476 16.916 2.818c3.532 3.36 4.143 8.902 1.248 12.951-3.591 4.92-8.282 4.193-12.76 4.193v-9.588c.041-2.117.747-3.943 3.324-4.816 2.245-.664 4.863.581 5.653 2.947.832 2.533-.374 4.234-1.787 5.272-1.413 1.039-3.616 1.039-5.07.042v3.279c3.138 1.5 8.105-.303 9.684-4.4 1.08-2.864.332-6.185-1.912-8.26-2.701-2.2-5.653-2.74-8.811-1.204-2.204 1.12-3.741 3.404-4.116 5.894v10.834H.042L0 9.71z">
+					</path>
+				</svg>
+				Patreon
+			</a>
 		</div>
 
-		<div class="tooltip tooltip-left" data-tip="Toggle developer tools">
-			<button class="btn btn-primary btn-square btn-neutral" (click)="toggleDevTools()">
-				<i class="bi bi-gear text-lg"></i>
-			</button>
+		<div class="flex gap-6">
+			<div class="join">
+				<button *ngIf="updateAvailable === 'yes'" class="join-item btn btn-primary" (click)="downloadUpdate()">
+					<i class="bi text-xl" [ngClass]="updateDownloaded ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>{{
+					downloadUpdateText }}
+				</button>
+				<button *ngIf="updateAvailable === 'error'" class="join-item btn btn-warning" [class.disabled]="updateRetrying"
+					(click)="retryUpdate()">
+					<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying"></i>{{ retryUpdateText }}
+				</button>
+				<button class="join-item btn btn-outline btn-disabled">{{ currentVersion }}</button>
+			</div>
+
+			<div class="tooltip tooltip-left" data-tip="Toggle developer tools">
+				<button class="btn btn-primary btn-square btn-neutral" (click)="toggleDevTools()">
+					<i class="bi bi-gear text-lg"></i>
+				</button>
+			</div>
 		</div>
 	</div>
 </div>

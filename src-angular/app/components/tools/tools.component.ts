@@ -116,10 +116,10 @@ export class ToolsComponent {
 		}
 	}
 
-	async generateDifficulties() {
+	async generateMissingDifficulties() {
 		if (this.settingsService.chartsDifficultyGenerationDirectory) {
 			this.generatingDifficulties = true
-			window.electron.emit.generateDifficulties()
+			window.electron.emit.generateMissingDifficulties()
 		}
 	}
 }

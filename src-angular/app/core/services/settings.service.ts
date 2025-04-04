@@ -102,6 +102,14 @@ export class SettingsService {
 		this.saveSettings()
 	}
 
+	get generateMissingDifficulties() {
+		return this.settings.generateMissingDifficulties
+	}
+	set generateMissingDifficulties(isChecked) {
+		this.settings.generateMissingDifficulties = isChecked
+		this.saveSettings()
+	}
+
 	get theme() {
 		return this.settings.theme
 	}

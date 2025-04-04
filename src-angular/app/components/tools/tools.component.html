@@ -73,7 +73,7 @@
 						library</button>
 				</div>
 			</label>
-			<button (click)="generateDifficulties()" class="btn btn-primary self-end"
+			<button (click)="generateMissingDifficulties()" class="btn btn-primary self-end"
 				[attr.disabled]="settingsService.chartsDifficultyGenerationDirectory === undefined || generatingDifficulties ? true : null">
 				<i class="bi bi-gear-wide-connected text-lg"></i>
 				{{ chartsDifficultyGenerationButtonText }}

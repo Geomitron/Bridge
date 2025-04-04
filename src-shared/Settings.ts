@@ -24,6 +24,7 @@ export const themes = [
  */
 export interface Settings {
 	downloadVideos: boolean                            // If background videos should be downloaded
+	generateMissingDifficulties: boolean               // If missing difficulties should be downloaded
 	theme: typeof themes[number]                       // The name of the currently enabled UI theme
 	customTheme: ThemeColors | null                    // The colors of a custom theme
 	customThemePath: string | null                     // The last folder that contained the `customTheme`'s file
@@ -46,6 +47,7 @@ export interface Settings {
  */
 export const defaultSettings: Settings = {
 	downloadVideos: true,
+	generateMissingDifficulties: false,
 	theme: 'dark',
 	customTheme: null,
 	customThemePath: null,

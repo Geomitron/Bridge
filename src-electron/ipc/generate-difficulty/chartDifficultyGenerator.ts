@@ -1,11 +1,5 @@
-import { exists, move } from 'fs-extra'
 import _ from 'lodash'
-import { difficulties, Difficulty, Instrument, parseChartFile } from 'scan-chart'
-
-import { hasChartExtension } from '../../../src-shared/UtilFunctions.js'
-
-type ParsedChart = ReturnType<typeof parseChartFile>
-
+import { Difficulty, Instrument } from 'scan-chart'
 
 interface TimeSignature {
 	ts: number
@@ -467,32 +461,3 @@ export function generateDifficulty({
 	return serializeSections({ sections: { ...sections, ...newSection } })
 }
 
-export const getChartMissingDifficultiesByInstrument = ({ chart }: { chart: ParsedChart }) => {
-	const missingDifficultiesByInstrument = new Map<Instrument, Difficulty[]>()
-
-	for (const track of chart.trackData) {
-		missingDifficultiesByInstrument.set(
-			track.instrument,
-			(missingDifficultiesByInstrument.get(track.instrument) || difficulties).filter(difficulty => difficulty !== track.difficulty)
-		)
-
-		if (missingDifficultiesByInstrument.get(track.instrument)?.length === 0) {
-			missingDifficultiesByInstrument.delete(track.instrument)
-		}
-	}
-
-	return missingDifficultiesByInstrument
-}
-
-export const createChartBackup = async ({ chartFileType, chartFilePath }: { chartFileType: string; chartFilePath: string }) => {
-	// Backup the original chart data
-	if (!hasChartExtension(chartFilePath)) {
-		throw new Error(`Unsupported chart type: ${chartFileType}`)
-	}
-
-	const backupPath = chartFilePath.replace(`.${chartFileType}`, `.${chartFileType}.original`)
-	const backupExists = await exists(backupPath)
-	if (!backupExists) {
-		await move(chartFilePath, backupPath)
-	}
-}

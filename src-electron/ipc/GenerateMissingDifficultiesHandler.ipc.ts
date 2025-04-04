@@ -1,21 +1,19 @@
 import Bottleneck from 'bottleneck'
-import { shell } from 'electron'
 import pkg from 'fs-extra'
 import _ from 'lodash'
-import { parseChartFile } from 'scan-chart'
+import { difficulties, Difficulty, Instrument, parseChartFile } from 'scan-chart'
 import { inspect } from 'util'
 
-import { appearsToBeChartFolder, getExtension, hasChartExtension, hasSngExtension } from '../../../src-shared/UtilFunctions.js'
-import { emitIpcEvent } from '../../main.js'
-import { getSettings } from '../SettingsHandler.ipc.js'
-import { createChartBackup, generateDifficulty, getChartMissingDifficultiesByInstrument } from './chartDifficultyGenerator.js'
-import { mid2Chart } from './mid2chart.js'
+import { appearsToBeChartFolder, getExtension, hasChartExtension, hasSngExtension } from '../../src-shared/UtilFunctions.js'
+import { emitIpcEvent } from '../main.js'
+import { generateDifficulty } from './GenerateDifficultyHandler.ipc.js'
+import { getSettings } from './SettingsHandler.ipc.js'
 
-const { readdir, readFile, writeFile } = pkg
+const { readdir, readFile } = pkg
 
 type ParsedChart = ReturnType<typeof parseChartFile>
 
-export async function generateDifficulties() {
+export async function generateMissingDifficulties() {
 	const settings = await getSettings()
 	if (!settings.chartsDifficultyGenerationPath) {
 		emitIpcEvent('updateChartsDifficultyGeneration', { status: 'error', message: 'Charts difficulty generation path was not properly defined.' })
@@ -26,7 +24,7 @@ export async function generateDifficulties() {
 		const chartFolders = await getChartFolders(settings.chartsDifficultyGenerationPath)
 		const limiter = new Bottleneck({ maxConcurrent: 20 }) // Ensures memory use stays bounded
 
-		const charts: { chart: ParsedChart; path: string; fileName: string; data: Uint8Array }[] = []
+		const charts: { chart: ParsedChart; path: string }[] = []
 		for (const chartFolder of chartFolders) {
 			limiter.schedule(async () => {
 				const isSng = chartFolder.files.length === 1 && hasSngExtension(chartFolder.files[0])
@@ -49,11 +47,9 @@ export async function generateDifficulties() {
 
 				const file = files[0]
 
-				const result: { chart: ParsedChart; path: string; fileName: string; data: Uint8Array } = {
+				const result: { chart: ParsedChart; path: string } = {
 					chart: parseChartFile(file.data, file.fileName.endsWith('.chart') ? 'chart' : 'mid'),
 					path: chartFolder.path,
-					fileName: file.fileName,
-					data: file.data,
 				}
 				charts.push(result)
 				emitIpcEvent('updateChartsDifficultyGeneration', { status: 'progress', message: `${charts.length}/${chartFolders.length} scanned...` })
@@ -70,16 +66,8 @@ export async function generateDifficulties() {
 			limiter.on('idle', async () => {
 				let chartsWithMissingDifficulties = 0
 
-				for (const { chart, data: chartData, fileName: chartFileName, path: chartPath } of charts) {
-					const chartFileType = getExtension(chartFileName)
+				for (const { chart, path: chartPath } of charts) {
 
-					const chartFilePath = [chartPath, chartFileName].join('/')
-					let newChartContent = chartFileType === 'chart'
-						? new TextDecoder('utf-8').decode(chartData)
-						: mid2Chart(chartData, {
-							placeholderName: chart.metadata.name ?? 'Chart',
-							omitEmptySections: true,
-						})
 					const missingDifficulties = getChartMissingDifficultiesByInstrument({ chart })
 
 					if (missingDifficulties.size === 0) {
@@ -90,25 +78,20 @@ export async function generateDifficulties() {
 
 					for (const [instrument, difficulties] of missingDifficulties) {
 						for (const difficulty of difficulties) {
-							newChartContent = generateDifficulty({
-								content: newChartContent,
+							generateDifficulty({
+								action: 'add',
+								chartFolderPath: chartPath,
 								instrument,
 								difficulty,
 							})
 						}
 					}
 
-					await createChartBackup({ chartFileType, chartFilePath })
-
-					const outputPath = [chartPath, 'notes.chart'].join('/')
-					await writeFile(outputPath, newChartContent)
-					await new Promise<void>(resolve => setTimeout(resolve, 500)) // Delay for OS file processing
-					await shell.openPath(outputPath)
 				}
 
 				emitIpcEvent('updateChartsDifficultyGeneration', {
 					status: 'done',
-					message: `${chartsWithMissingDifficulties} charts with missing difficulties generated.`,
+					message: `${chartsWithMissingDifficulties} charts with missing difficulties added to queue.`,
 				})
 				resolve()
 			})
@@ -161,4 +144,21 @@ async function getChartFilesFromFolder(chartFolder: { path: string; files: strin
 	}
 
 	return files
+}
+
+function getChartMissingDifficultiesByInstrument({ chart }: { chart: ParsedChart }) {
+	const missingDifficultiesByInstrument = new Map<Instrument, Difficulty[]>()
+
+	for (const track of chart.trackData) {
+		missingDifficultiesByInstrument.set(
+			track.instrument,
+			(missingDifficultiesByInstrument.get(track.instrument) || difficulties).filter(difficulty => difficulty !== track.difficulty)
+		)
+
+		if (missingDifficultiesByInstrument.get(track.instrument)?.length === 0) {
+			missingDifficultiesByInstrument.delete(track.instrument)
+		}
+	}
+
+	return missingDifficultiesByInstrument
 }
