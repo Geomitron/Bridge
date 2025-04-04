@@ -1,4 +1,5 @@
 import { exists, move } from 'fs-extra'
+import _ from 'lodash'
 import { difficulties, Difficulty, Instrument, parseChartFile } from 'scan-chart'
 
 import { hasChartExtension } from '../../../src-shared/UtilFunctions.js'
@@ -263,63 +264,53 @@ function notesToDiffDrums({
 	return ret
 }
 
-function parseExpertPart({
-	part,
-	partLines,
+function generateSectionFromExpert({
+	instrument,
 	difficulty,
+	expertSectionLines,
 	resolution,
 	bpmForMs,
 	tsForMs,
 }: {
-	part: string
-	partLines: string[]
+	instrument: Instrument
 	difficulty: Difficulty
+	expertSectionLines: string[]
 	resolution: number
 	bpmForMs: BPM[]
 	tsForMs: TimeSignature[]
 }
-): { newParts: { [key: string]: string[] } } {
-	const difficultyLines: { [key: string]: string[] } = {}
-	const notesByMs: { [key: number]: string[] } = {}
-	const newParts: { [key: string]: string[] } = {}
+): string[] {
+	const generatedLines: string[] = []
+	const notesByMs = new Map<number, string[]>()
 
-	for (const line of partLines) {
+	for (const line of expertSectionLines) {
 		if (!line.includes('=')) continue
 		const [ms, value] = line.split('=').map(s => s.trim())
 		const msNum = parseInt(ms)
-		notesByMs[msNum] = notesByMs[msNum] || []
-		notesByMs[msNum].push(value)
+		notesByMs.set(msNum, [...(notesByMs.get(msNum) || []), value])
 	}
 
-	const prevMsByDiff: { [key: string]: number } = {}
+	let prevMs = 0
 
-	for (const [ms, lines] of Object.entries(notesByMs)) {
+	for (const [ms, lines] of notesByMs) {
 		const notes = lines.filter(line => line.startsWith('N '))
-		const msNum = parseInt(ms)
 
-		prevMsByDiff[difficulty] = prevMsByDiff[difficulty] || 0
 		for (const nonNoteLine of lines) {
 			if (notes.includes(nonNoteLine)) continue
-			difficultyLines[difficulty] = difficultyLines[difficulty] || []
-			difficultyLines[difficulty].push(`${ms} = ${nonNoteLine}`)
+			generatedLines.push(`${ms} = ${nonNoteLine}`)
 		}
 
-		const generatedNotes = part.includes('Drums')
-			? notesToDiffDrums({ difficulty, ms: msNum, notes, resolution, msDeltaAround: msNum - prevMsByDiff[difficulty], tsForMs, bpmForMs })
-			: notesToDiffSingle({ difficulty, ms: msNum, notes, resolution, msDeltaAround: msNum - prevMsByDiff[difficulty], tsForMs })
+		const generatedNotes = instrument === 'drums'
+			? notesToDiffDrums({ difficulty, ms, notes, resolution, msDeltaAround: ms - prevMs, tsForMs, bpmForMs })
+			: notesToDiffSingle({ difficulty, ms, notes, resolution, msDeltaAround: ms - prevMs, tsForMs })
 
-		for (const easyNote of generatedNotes) {
-			prevMsByDiff[difficulty] = msNum
-			difficultyLines[difficulty] = difficultyLines[difficulty] || []
-			difficultyLines[difficulty].push(`${ms} = ${easyNote}`)
+		for (const generatedNote of generatedNotes) {
+			prevMs = ms
+			generatedLines.push(`${ms} = ${generatedNote}`)
 		}
 	}
 
-	const easyPart = part.replace('Expert', difficulty.charAt(0).toUpperCase() + difficulty.slice(1))
-
-	newParts[easyPart] = ['{', ...(difficultyLines[difficulty] || []), '}']
-
-	return { newParts }
+	return generatedLines
 }
 
 function parseSyncTrackPart({ partLines }: { partLines: string[] }): { bpmForMs: BPM[]; tsForMs: TimeSignature[] } {
@@ -344,156 +335,122 @@ function parseSongPart({ partLines }: { partLines: string[] }): { resolution: nu
 	return { resolution }
 }
 
-function parseFile({
-	content,
-	// instrument,
+function generateSection({
+	sections,
+	instrument,
 	difficulty,
 }: {
-	content: string
+	sections: { [key: string]: string[] }
 	instrument: Instrument
 	difficulty: Difficulty
 }): {
-	newParts: { [key: string]: string[] }
-	parsedLines: string[]
+	newSection: { [key: string]: string[] }
 } {
-	const originalLines = content.split('\n').map(line => line.trim().replace('\ufeff', ''))
-	const parsedLines: string[] = []
+	const { resolution } = parseSongPart({ partLines: sections['Song'] })
+	const { bpmForMs, tsForMs } = parseSyncTrackPart({ partLines: sections['SyncTrack'] })
 
-	let part: string | null = null
-	let partLines: string[] = []
-	let resolution = 0
-	let bpmForMs: BPM[] = []
-	let tsForMs: TimeSignature[] = []
-	let newParts: { [key: string]: string[] } = {}
+	const expertSection = sections[instrumentToSectionName({ instrument, difficulty: 'expert' })]
 
-	for (const line of originalLines) {
-		const trimmedLine = line.trim()
-		parsedLines.push(trimmedLine)
-
-		if (trimmedLine.includes('[Song]')) {
-			part = '[Song]'
-			continue
-		}
-		if (trimmedLine.includes('[SyncTrack]')) {
-			part = '[SyncTrack]'
-			continue
-		}
-		if (trimmedLine === '}') {
-			if (part) {
-				if (part === '[Song]') {
-					const songPart = parseSongPart({ partLines })
-					resolution = songPart.resolution
-				}
-				if (part === '[SyncTrack]') {
-					const syncTrack = parseSyncTrackPart({ partLines })
-					bpmForMs = syncTrack.bpmForMs
-					tsForMs = syncTrack.tsForMs
-				}
-				part = null
-				partLines = []
-			}
-		}
-
-		if (part) partLines.push(trimmedLine)
+	const newSection = {
+		[instrumentToSectionName({ instrument, difficulty })]: generateSectionFromExpert({
+			instrument,
+			difficulty,
+			expertSectionLines: expertSection,
+			resolution,
+			bpmForMs,
+			tsForMs,
+		}),
 	}
 
-	part = null
-	partLines = []
-
-	for (const line of parsedLines) {
-		const trimmedLine = line.trim()
-		if (/^\[\w*\]$/.test(trimmedLine)) {
-			part = trimmedLine
-			continue
-		}
-		if (trimmedLine === '}') {
-			if (part) {
-				if (part.includes('[Expert')) {
-					const expertPart = parseExpertPart({ part, partLines, difficulty, resolution, bpmForMs, tsForMs })
-					newParts = { ...newParts, ...expertPart.newParts }
-				}
-				part = null
-				partLines = []
-			}
-		}
-
-		if (part) partLines.push(trimmedLine)
-	}
-
-	return { newParts, parsedLines }
+	return { newSection }
 }
 
+function instrumentToSectionName({ instrument, difficulty }: { instrument: Instrument; difficulty: Difficulty }): string {
+	switch (instrument) {
+		case 'guitar':
+			return `${_.capitalize(difficulty)}Single`
+		case 'guitarcoop':
+			return `${_.capitalize(difficulty)}DoubleGuitar`
+		case 'rhythm':
+			return `${_.capitalize(difficulty)}DoubleRhythm`
+		case 'bass':
+			return `${_.capitalize(difficulty)}DoubleBass`
+		case 'drums':
+			return `${_.capitalize(difficulty)}Drums`
+		case 'keys':
+			return `${_.capitalize(difficulty)}Keyboard`
+		case 'guitarghl':
+			return `${_.capitalize(difficulty)}GHLGuitar`
+		case 'guitarcoopghl':
+			return `${_.capitalize(difficulty)}GHLCoop`
+		case 'rhythmghl':
+			return `${_.capitalize(difficulty)}GHLRhythm`
+		case 'bassghl':
+			return `${_.capitalize(difficulty)}GHLBass`
+		default:
+			throw new Error(`Unknown instrument: ${instrument}`)
+	}
+}
 
+function serializeSections({ sections }: { sections: { [key: string]: string[] } }): string {
+	return Object.entries(sections).flatMap(([key, lines]) => {
+		return [
+			`[${key}]`,
+			'{',
+			...lines,
+			'}',
+		]
+	}).join('\n')
+}
 
-function getGeneratedContent({ newParts, parsedLines }: { newParts: { [key: string]: string[] }; parsedLines: string[] }): string {
-	const newLines: string[] = []
-	const parts: { [key: string]: string[] } = {}
-	let part: string | null = null
-
-	for (const line of parsedLines) {
-		const trimmedLine = line.trim()
-		if (!line.includes('=') && /^.*\[.*\].*$/.test(trimmedLine)) {
-			part = trimmedLine
-			parts[part] = parts[part] || []
-			parts[part].push(trimmedLine)
-			continue
-		} else if (!part) {
-			continue
-		}
-
-		if (trimmedLine === '}') {
-			if (part) {
-				parts[part].push(trimmedLine)
-				part = null
-				continue
+function getChartSections(chartText: string) {
+	const sections: { [sectionName: string]: string[] } = {}
+	let skipLine = false
+	let readStartIndex = 0
+	let readingSection = false
+	let thisSection: string | null = null
+	for (let i = 0; i < chartText.length; i++) {
+		if (readingSection) {
+			if (chartText[i] === ']') {
+				readingSection = false
+				thisSection = chartText.slice(readStartIndex, i)
 			}
+			if (chartText[i] === '\n') {
+				throw `Invalid .chart file: unexpected new line when parsing section at index ${i}`
+			}
+			continue // Keep reading section until it ends
 		}
 
-		if (part) {
-			parts[part] = parts[part] || []
-			parts[part].push(trimmedLine)
+		if (chartText[i] === '=') {
+			skipLine = true
+		} // Skip all user-entered values
+		if (chartText[i] === '\n') {
+			skipLine = false
+		}
+		if (skipLine) {
+			continue
+		} // Keep skipping until '\n' is found
+
+		if (chartText[i] === '{') {
+			skipLine = true
+			readStartIndex = i + 1
+		} else if (chartText[i] === '}') {
+			if (!thisSection) {
+				throw `Invalid .chart file: end of section reached before a section name was found at index ${i}`
+			}
+			// Trim each line because of Windows \r\n shenanigans
+			sections[thisSection] = chartText
+				.slice(readStartIndex, i)
+				.split('\n')
+				.map(line => line.trim())
+				.filter(line => line.length)
+		} else if (chartText[i] === '[') {
+			readStartIndex = i + 1
+			readingSection = true
 		}
 	}
 
-	const addedParts: string[] = []
-	for (const [partName, lines] of Object.entries(parts)) {
-		addedParts.push(partName)
-		newLines.push(...lines)
-	}
-
-	for (const [partName, lines] of Object.entries(newParts)) {
-		if (partName in parts) continue
-		if (addedParts.includes(partName)) continue
-		addedParts.push(partName)
-		newLines.push(partName)
-		newLines.push(...lines)
-	}
-
-	const linesByMode = {
-		start: [] as string[],
-		middle: [] as string[],
-		end: [] as string[],
-	}
-
-	let mode: 'start' | 'middle' | 'end' = 'start'
-
-	for (const line of newLines) {
-		const startsWithNumber = /^\d+/.test(line.trim())
-		if (startsWithNumber) {
-			if (mode === 'start') mode = 'middle'
-		} else {
-			if (mode === 'middle') mode = 'end'
-		}
-		linesByMode[mode].push(line)
-	}
-
-	const sortedLines = [
-		...linesByMode.start,
-		...linesByMode.middle.sort((a, b) => parseInt(a.split(' ')[0]) - parseInt(b.split(' ')[0])),
-		...linesByMode.end,
-	]
-
-	return sortedLines.join('\n')
+	return { sections }
 }
 
 export function generateDifficulty({
@@ -505,8 +462,9 @@ export function generateDifficulty({
 	instrument: Instrument
 	difficulty: Difficulty
 }): string {
-	const { newParts, parsedLines } = parseFile({ content, difficulty, instrument })
-	return getGeneratedContent({ newParts, parsedLines })
+	const { sections } = getChartSections(content)
+	const { newSection } = generateSection({ sections, difficulty, instrument })
+	return serializeSections({ sections: { ...sections, ...newSection } })
 }
 
 export const getChartMissingDifficultiesByInstrument = ({ chart }: { chart: ParsedChart }) => {

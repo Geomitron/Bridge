@@ -80,7 +80,7 @@ export async function generateDifficulties() {
 							placeholderName: chart.metadata.name ?? 'Chart',
 							omitEmptySections: true,
 						})
-					const missingDifficulties = getChartMissingDifficultiesByInstrument({ chart: chart })
+					const missingDifficulties = getChartMissingDifficultiesByInstrument({ chart })
 
 					if (missingDifficulties.size === 0) {
 						continue
@@ -145,7 +145,7 @@ async function getChartFolders(path: string) {
 			path,
 			files: entries.filter(entry => !entry.isDirectory()).map(entry => entry.name),
 		})
-		emitIpcEvent('updateChartsDifficultyGeneration', { status: 'progress', message: `${chartFolders} charts found...` })
+		emitIpcEvent('updateChartsDifficultyGeneration', { status: 'progress', message: `${chartFolders.length} charts found...` })
 	}
 
 	return chartFolders
