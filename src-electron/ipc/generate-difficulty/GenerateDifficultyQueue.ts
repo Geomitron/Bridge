@@ -29,10 +29,10 @@ export class GenerateDifficultyQueue {
 		difficulty: Difficulty,
 	) {
 		if (!this.isChartInQueue(chartFolderPath, instrument, difficulty)) {
-			const chartDownload = new GenerateDifficulty(chartFolderPath, instrument, difficulty)
-			this.generateDifficultyQueue.push(chartDownload)
+			const chartGeneration = new GenerateDifficulty(chartFolderPath, instrument, difficulty)
+			this.generateDifficultyQueue.push(chartGeneration)
 
-			chartDownload.on('progress', (message, percent) => emitIpcEvent('generateDifficultyQueueUpdate', {
+			chartGeneration.on('progress', (message, percent) => emitIpcEvent('generateDifficultyQueueUpdate', {
 				chartFolderPath,
 				instrument,
 				difficulty,
@@ -42,7 +42,7 @@ export class GenerateDifficultyQueue {
 				type: 'good',
 				isPath: false,
 			}))
-			chartDownload.on('error', err => {
+			chartGeneration.on('error', err => {
 				emitIpcEvent('generateDifficultyQueueUpdate', {
 					chartFolderPath,
 					instrument,
@@ -54,24 +54,24 @@ export class GenerateDifficultyQueue {
 					isPath: err.isPath ?? false,
 				})
 
-				this.generateDifficultyQueue = this.generateDifficultyQueue.filter(cd => cd !== chartDownload)
-				this.erroredQueue.push(chartDownload)
+				this.generateDifficultyQueue = this.generateDifficultyQueue.filter(cd => cd !== chartGeneration)
+				this.erroredQueue.push(chartGeneration)
 				this.generateRunning = false
 				this.moveQueue()
 			})
-			chartDownload.on('end', destinationPath => {
+			chartGeneration.on('end', destinationPath => {
 				emitIpcEvent('generateDifficultyQueueUpdate', {
 					chartFolderPath,
 					instrument,
 					difficulty,
-					header: 'Download complete',
+					header: 'Generation complete',
 					body: destinationPath,
 					percent: 100,
 					type: 'done',
 					isPath: true,
 				})
 
-				this.generateDifficultyQueue = this.generateDifficultyQueue.filter(cd => cd !== chartDownload)
+				this.generateDifficultyQueue = this.generateDifficultyQueue.filter(cd => cd !== chartGeneration)
 				this.generateRunning = false
 				this.moveQueue()
 			})
@@ -81,9 +81,9 @@ export class GenerateDifficultyQueue {
 	}
 
 	remove(chartFolderPath: string, instrument: Instrument, difficulty: Difficulty) {
-		const currentDownload = this.generateDifficultyQueue[0]
-		if (currentDownload?.chartFolderPath === chartFolderPath) {
-			currentDownload.cancel()
+		const currentGeneration = this.generateDifficultyQueue[0]
+		if (currentGeneration?.chartFolderPath === chartFolderPath) {
+			currentGeneration.cancel()
 			this.generateRunning = false
 		}
 		const chartHash = this.getChartHash(chartFolderPath, instrument, difficulty)
@@ -92,7 +92,7 @@ export class GenerateDifficultyQueue {
 		)
 		this.retryQueue = this.retryQueue.filter(cd => this.getChartHash(cd.chartFolderPath, cd.instrument, cd.difficulty) !== chartHash)
 		this.erroredQueue = this.erroredQueue.filter(cd => this.getChartHash(cd.chartFolderPath, cd.instrument, cd.difficulty) !== chartHash)
-		if (currentDownload) {
+		if (currentGeneration) {
 			this.moveQueue()
 		}
 
@@ -110,11 +110,11 @@ export class GenerateDifficultyQueue {
 
 	retry(chartFolderPath: string, instrument: Instrument, difficulty: Difficulty) {
 		const chartHash = this.getChartHash(chartFolderPath, instrument, difficulty)
-		const erroredChartDownload = this.erroredQueue.find(cd => this.getChartHash(cd.chartFolderPath, cd.instrument, cd.difficulty) === chartHash)
+		const erroredChartGeneration = this.erroredQueue.find(cd => this.getChartHash(cd.chartFolderPath, cd.instrument, cd.difficulty) === chartHash)
 
-		if (erroredChartDownload) {
+		if (erroredChartGeneration) {
 			this.erroredQueue = this.erroredQueue.filter(cd => this.getChartHash(cd.chartFolderPath, cd.instrument, cd.difficulty) !== chartHash)
-			this.retryQueue.push(erroredChartDownload)
+			this.retryQueue.push(erroredChartGeneration)
 		}
 
 		this.moveQueue()

@@ -28,19 +28,19 @@ interface GenerateDifficultyEvents {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export declare interface GenerateDifficulty {
 	/**
-	 * Registers `listener` to be called when download progress has occured.
+	 * Registers `listener` to be called when generation progress has occured.
 	 * `percent` is a number between 0 and 100, or `null` if the progress is indeterminate.
 	 * Progress events are throttled to avoid performance issues with rapid updates.
 	 */
 	on(event: 'progress', listener: (message: GenerateDifficultyMessage, percent: number | null) => void): void
 
 	/**
-	 * Registers `listener` to be called if the download process threw an exception. If this is called, the "end" event won't happen.
+	 * Registers `listener` to be called if the generation process threw an exception. If this is called, the "end" event won't happen.
 	 */
 	on(event: 'error', listener: (err: GenerateDifficultyMessage) => void): void
 
 	/**
-	 * Registers `listener` to be called when the chart has been fully downloaded. If this is called, the "error" event won't happen.
+	 * Registers `listener` to be called when the chart has been fully generated. If this is called, the "error" event won't happen.
 	 */
 	on(event: 'end', listener: (destinationPath: string) => void): void
 }
@@ -53,7 +53,6 @@ export class GenerateDifficulty {
 	private eventEmitter = new EventEmitter()
 
 	private stepCompletedCount = 0
-	private tempPath: string
 
 	private chartFileType: 'chart' | 'mid'
 	private chartFilePath: string
@@ -74,13 +73,13 @@ export class GenerateDifficulty {
 	}
 
 	/**
-	 * Checks the target directory to determine if it is accessible.
+	 * Finds the chart file.
 	 *
-	 * Checks the target directory if the chart already exists.
+	 * Generates the difficulty.
 	 *
-	 * Downloads the chart to a temporary directory.
+	 * Creates a backup of the chart.
 	 *
-	 * Moves the chart to the target directory.
+	 * Saves the chart.
 	 */
 	async startOrRetry() {
 		try {
@@ -101,14 +100,11 @@ export class GenerateDifficulty {
 	}
 
 	/**
-	 * Cancels the download if it is running.
+	 * Cancels the generation if it is running.
 	 */
 	cancel() {
 		this.showProgress.cancel()
 		this._canceled = true
-		if (this.tempPath) {
-			remove(this.tempPath).catch(() => { /** Do nothing */ }) // Delete temp folder
-		}
 	}
 
 	private async getChartFilesFromFolder(): Promise<{ fileName: string; data: Uint8Array }[]> {
