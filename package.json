@@ -22,7 +22,8 @@
     "build:windows": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --windows",
     "build:mac": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --mac",
     "build:linux": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --linux",
-    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build"
+    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build",
+    "lint": "eslint . --ext .ts,.html"
   },
   "dependencies": {
     "@angular/animations": "19.2.1",
