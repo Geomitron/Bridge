@@ -391,9 +391,9 @@ function serializeSections({ sections }: { sections: { [key: string]: string[] }
 		return [
 			`[${key}]`,
 			'{',
-			...lines,
+			...lines.map(line => `  ${line}`),
 			'}',
-		]
+		].join('\n')
 	}).join('\n')
 }
 

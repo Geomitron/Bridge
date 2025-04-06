@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { distinctUntilChanged, switchMap, throttleTime } from 'rxjs'
 import { Difficulty, Instrument } from 'scan-chart'
 import { SearchService } from 'src-angular/app/core/services/search.service'
+import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { difficulties, difficultyDisplay, drumsReviewedDisplay, drumTypeDisplay, DrumTypeName, drumTypeNames, instrumentDisplay, instruments } from 'src-shared/UtilFunctions'
 
 @Component({
@@ -38,6 +39,7 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	constructor(
 		private searchService: SearchService,
 		private fb: FormBuilder,
+		public settingsService: SettingsService,
 	) { }
 
 	ngOnInit() {

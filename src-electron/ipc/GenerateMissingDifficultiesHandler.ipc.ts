@@ -23,90 +23,68 @@ export async function generateMissingDifficulties() {
 	try {
 		const chartFolders = await getChartFolders(settings.chartsDifficultyGenerationPath)
 		const limiter = new Bottleneck({ maxConcurrent: 20 }) // Ensures memory use stays bounded
+		let chartsWithMissingDifficulties = 0
 
-		const charts: { chart: ParsedChart; path: string }[] = []
-		for (const chartFolder of chartFolders) {
-			limiter.schedule(async () => {
-				const isSng = chartFolder.files.length === 1 && hasSngExtension(chartFolder.files[0])
+		await limiter.schedule(async () => {
+			return Promise.all(chartFolders.map(async chartFolderPath => {
+				const missingDifficulties = await getChartMissingDifficulties({ chartFolderPath })
 
-				if (isSng) {
-					console.info('SNG files are not supported yet.', chartFolder)
+				if (missingDifficulties.size === 0) {
 					return
 				}
 
-				const files = await getChartFilesFromFolder(chartFolder)
+				chartsWithMissingDifficulties++
 
-				if (files.length === 0) {
-					return
-				}
-
-				if (files.length > 1) {
-					console.info('Multiple charts found in folder.', chartFolder)
-					return
-				}
-
-				const file = files[0]
-
-				const result: { chart: ParsedChart; path: string } = {
-					chart: parseChartFile(file.data, file.fileName.endsWith('.chart') ? 'chart' : 'mid'),
-					path: chartFolder.path,
-				}
-				charts.push(result)
-				emitIpcEvent('updateChartsDifficultyGeneration', { status: 'progress', message: `${charts.length}/${chartFolders.length} scanned...` })
-			})
-		}
-
-
-		await new Promise<void>((resolve, reject) => {
-			limiter.on('error', err => {
-				reject(err)
-				limiter.stop()
-			})
-
-			limiter.on('idle', async () => {
-				let chartsWithMissingDifficulties = 0
-
-				for (const { chart, path: chartPath } of charts) {
-
-					const missingDifficulties = getChartMissingDifficultiesByInstrument({ chart })
-
-					if (missingDifficulties.size === 0) {
-						continue
+				for (const [instrument, difficulties] of missingDifficulties) {
+					for (const difficulty of difficulties) {
+						generateDifficulty({
+							action: 'add',
+							chartFolderPath,
+							instrument,
+							difficulty,
+						})
 					}
-
-					chartsWithMissingDifficulties++
-
-					for (const [instrument, difficulties] of missingDifficulties) {
-						for (const difficulty of difficulties) {
-							generateDifficulty({
-								action: 'add',
-								chartFolderPath: chartPath,
-								instrument,
-								difficulty,
-							})
-						}
-					}
-
 				}
 
-				emitIpcEvent('updateChartsDifficultyGeneration', {
-					status: 'done',
-					message: `${chartsWithMissingDifficulties} charts with missing difficulties added to queue.`,
-				})
-				resolve()
-			})
+			}))
 		})
 
+		emitIpcEvent('updateChartsDifficultyGeneration', {
+			status: 'done',
+			message: `${chartsWithMissingDifficulties} charts with missing difficulties added to queue.`,
+		})
 	} catch (err) {
 		emitIpcEvent('updateChartsDifficultyGeneration', { status: 'error', message: inspect(err) })
 	}
+}
+
+export async function getChartMissingDifficulties({ chartFolderPath }: { chartFolderPath: string }) {
+	const files = await getChartFilesFromFolder({ chartFolderPath })
+
+	if (files.length === 0) {
+		throw new Error('No chart files found in folder.')
+	}
+
+	if (files.length > 1) {
+		throw new Error('Multiple charts found in folder.')
+	}
+
+	const file = files[0]
+
+	if (hasSngExtension(file.fileName)) {
+		throw new Error('SNG files are not supported yet.')
+	}
+
+	const chart = parseChartFile(file.data, file.fileName.endsWith('.chart') ? 'chart' : 'mid')
+
+	return getChartMissingDifficultiesByInstrument({ chart })
 }
 
 /**
  * @returns valid chart folders in `path` and all its subdirectories.
  */
 async function getChartFolders(path: string) {
-	const chartFolders: { path: string; files: string[] }[] = []
+	const chartFolders: string[] = []
 
 	const entries = await readdir(path, { withFileTypes: true })
 
@@ -117,29 +95,24 @@ async function getChartFolders(path: string) {
 
 	chartFolders.push(..._.flatMap(await Promise.all(subfolders)))
 
-	const sngFiles = entries.filter(entry => !entry.isDirectory() && hasSngExtension(entry.name))
-	chartFolders.push(...sngFiles.map(sf => ({ path, files: [sf.name] })))
-
 	if (
 		subfolders.length === 0 && // Charts won't contain other charts
 		appearsToBeChartFolder(entries.map(entry => getExtension(entry.name)))
 	) {
-		chartFolders.push({
-			path,
-			files: entries.filter(entry => !entry.isDirectory()).map(entry => entry.name),
-		})
+		chartFolders.push(path)
 		emitIpcEvent('updateChartsDifficultyGeneration', { status: 'progress', message: `${chartFolders.length} charts found...` })
 	}
 
 	return chartFolders
 }
 
-async function getChartFilesFromFolder(chartFolder: { path: string; files: string[] }): Promise<{ fileName: string; data: Uint8Array }[]> {
+async function getChartFilesFromFolder({ chartFolderPath }: { chartFolderPath: string }): Promise<{ fileName: string; data: Uint8Array }[]> {
 	const files: { fileName: string; data: Uint8Array }[] = []
 
-	for (const fileName of chartFolder.files) {
+	const chartFolderFiles = await readdir(chartFolderPath)
+	for (const fileName of chartFolderFiles) {
 		if (hasChartExtension(fileName)) {
-			files.push({ fileName, data: await readFile(chartFolder.path + '/' + fileName) })
+			files.push({ fileName, data: await readFile(chartFolderPath + '/' + fileName) })
 		}
 	}
 

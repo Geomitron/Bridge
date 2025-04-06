@@ -170,8 +170,10 @@ export class GenerateDifficulty {
 
 	private async hasChartBackup() {
 		const chartFileBasename = getBasename(this.chartFilePath)
-		return exists(chartFileBasename + '.mid' + CHART_BACKUP_EXTENSION)
-			|| exists(chartFileBasename + '.chart' + CHART_BACKUP_EXTENSION)
+		const midBackupExists = await exists(chartFileBasename + '.mid' + CHART_BACKUP_EXTENSION)
+		const chartBackupExists = await exists(chartFileBasename + '.chart' + CHART_BACKUP_EXTENSION)
+
+		return midBackupExists || chartBackupExists
 	}
 
 	private async createChartBackup() {
@@ -196,6 +198,8 @@ export class GenerateDifficulty {
 
 		const outputPath = join(this.chartFolderPath, 'notes.chart')
 		await writeFile(outputPath, this.chartContent)
+
+		await new Promise(resolve => setTimeout(resolve, 1000))
 
 		this.showProgress.cancel()
 		this.eventEmitter.emit('end', outputPath)
