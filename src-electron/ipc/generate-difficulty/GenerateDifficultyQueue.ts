@@ -43,6 +43,7 @@ export class GenerateDifficultyQueue {
 				isPath: false,
 			}))
 			chartGeneration.on('error', err => {
+				console.error('Error generating difficulty for chart', chartFolderPath, instrument, difficulty, err)
 				emitIpcEvent('generateDifficultyQueueUpdate', {
 					chartFolderPath,
 					instrument,

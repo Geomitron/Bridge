@@ -345,6 +345,10 @@ function generateSection({
 
 	const expertSection = sections[instrumentToSectionName({ instrument, difficulty: 'expert' })]
 
+	if (!expertSection) {
+		throw new Error(`Expert section not found for instrument: ${instrument}`)
+	}
+
 	const newSection = {
 		[instrumentToSectionName({ instrument, difficulty })]: generateSectionFromExpert({
 			instrument,

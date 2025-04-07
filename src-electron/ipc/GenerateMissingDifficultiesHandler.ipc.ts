@@ -33,9 +33,17 @@ export async function generateMissingDifficulties() {
 					return
 				}
 
+				if (Array.from(missingDifficulties.values()).every(difficulties => difficulties.includes('expert'))) {
+					return
+				}
+
 				chartsWithMissingDifficulties++
 
 				for (const [instrument, difficulties] of missingDifficulties) {
+					if (difficulties.includes('expert')) {
+						continue
+					}
+
 					for (const difficulty of difficulties) {
 						generateDifficulty({
 							action: 'add',
@@ -100,7 +108,6 @@ async function getChartFolders(path: string) {
 		appearsToBeChartFolder(entries.map(entry => getExtension(entry.name)))
 	) {
 		chartFolders.push(path)
-		emitIpcEvent('updateChartsDifficultyGeneration', { status: 'progress', message: `${chartFolders.length} charts found...` })
 	}
 
 	return chartFolders
