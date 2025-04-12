@@ -18,6 +18,10 @@ import { StatusBarComponent } from './components/browse/status-bar/status-bar.co
 import { SettingsComponent } from './components/settings/settings.component'
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
 import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
+import { LibraryTableComponent } from './components/library/library-table/library-table.component'
+import { LibraryComponent } from './components/library/library.component'
+import { LibraryBarComponent } from './components/library/library-bar/library-bar.component'
+
 
 @NgModule({
 	declarations: [
@@ -35,6 +39,9 @@ import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 		DownloadsModalComponent,
 		RemoveStyleTagsPipe,
 		SettingsComponent,
+		LibraryTableComponent,
+		LibraryComponent,
+		LibraryBarComponent,
 	],
 	bootstrap: [AppComponent], imports: [
 		BrowserModule,

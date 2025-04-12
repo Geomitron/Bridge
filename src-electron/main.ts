@@ -3,12 +3,13 @@ import electronUnhandled from 'electron-unhandled'
 import windowStateKeeper from 'electron-window-state'
 import * as path from 'path'
 import * as url from 'url'
-
+import "reflect-metadata"
 import { IpcFromMainEmitEvents } from '../src-shared/interfaces/ipc.interface.js'
 import { dataPath } from '../src-shared/Paths.js'
 import { settings } from './ipc/SettingsHandler.ipc.js'
 import { retryUpdate } from './ipc/UpdateHandler.ipc.js'
 import { getIpcInvokeHandlers, getIpcToMainEmitHandlers } from './IpcHandler.js'
+import { dataSource } from './database/dataSource.js'
 
 electronUnhandled({ showDialog: true, logger: err => console.log('Error: Unhandled Rejection:', err) })
 
@@ -26,6 +27,14 @@ app.on('ready', async () => {
 	if (!isDevBuild) {
 		retryUpdate()
 	}
+
+	// Initialize the database
+	dataSource.initialize().then(() => {
+		console.log('Database initialized')
+	}
+	).catch(error => {
+		console.error('Error initializing database:', error)
+	})
 })
 
 /**
