@@ -1843,8 +1843,8 @@ packages:
   brace-expansion@2.0.1:
     resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
 
-  braces@3.0.2:
-    resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
+  braces@3.0.3:
+    resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
   braces@3.0.3:
@@ -2236,8 +2236,8 @@ packages:
     resolution: {integrity: sha512-I9OvvrHp4pIARv4+x9iuewrWycX6CcZtoAu1XrzPxc5UygMJXJZYmBsynku8IkrJwgypE5DGNjDPmPRhDCptUg==}
     engines: {node: '>=10'}
 
-  dsp.js@https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e:
-    resolution: {tarball: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e}
+  dsp.js@git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e:
+    resolution: {commit: 219600bb0346ee9a00686c9875c81123e2d8780e, repo: git@github.com:corbanbrook/dsp.js.git, type: git}
     version: 1.0.0
 
   duplexer2@0.1.4:
@@ -2564,8 +2564,8 @@ packages:
   filelist@1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
 
-  fill-range@7.0.1:
-    resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
+  fill-range@7.1.1:
+    resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
 
   fill-range@7.1.1:
@@ -4085,8 +4085,8 @@ packages:
     resolution: {integrity: sha512-jH9EhtKIjuXZ2cWxmXS8ZP80XyC3iasQxMDV8jzhNJpfDb7VbQLVW4Wvsxz9QZvzV+G4YoSfBUVKDOyxLzi/sg==}
     engines: {node: '>= 6'}
 
-  stream-audio-fingerprint@https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d:
-    resolution: {tarball: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d}
+  stream-audio-fingerprint@git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d:
+    resolution: {commit: 197e8a7ff60165b18bf1debc23dab4814996a20d, repo: git@github.com:Geomitron/stream-audio-fingerprint.git, type: git}
     version: 1.0.4
 
   string-width@4.2.3:
@@ -6225,9 +6225,9 @@ snapshots:
     dependencies:
       balanced-match: 1.0.2
 
-  braces@3.0.2:
+  braces@3.0.3:
     dependencies:
-      fill-range: 7.0.1
+      fill-range: 7.1.1
 
   braces@3.0.3:
     dependencies:
@@ -6346,7 +6346,7 @@ snapshots:
   chokidar@3.6.0:
     dependencies:
       anymatch: 3.1.3
-      braces: 3.0.2
+      braces: 3.0.3
       glob-parent: 5.1.2
       is-binary-path: 2.1.0
       is-glob: 4.0.3
@@ -6651,7 +6651,7 @@ snapshots:
 
   dotenv@9.0.2: {}
 
-  dsp.js@https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e: {}
+  dsp.js@git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e: {}
 
   duplexer2@0.1.4:
     dependencies:
@@ -7126,7 +7126,7 @@ snapshots:
     dependencies:
       minimatch: 5.1.6
 
-  fill-range@7.0.1:
+  fill-range@7.1.1:
     dependencies:
       to-regex-range: 5.0.1
 
@@ -7839,7 +7839,7 @@ snapshots:
 
   micromatch@4.0.5:
     dependencies:
-      braces: 3.0.2
+      braces: 3.0.3
       picomatch: 2.3.1
 
   micromatch@4.0.8:
@@ -8624,7 +8624,7 @@ snapshots:
       lodash: 4.17.21
       midi-file: 1.2.4
       rfc4648: 1.5.3
-      stream-audio-fingerprint: https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d
+      stream-audio-fingerprint: git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d
       workerpool: 6.5.1
 
   semver-compare@1.0.0:
@@ -8775,9 +8775,9 @@ snapshots:
 
   stat-mode@1.0.0: {}
 
-  stream-audio-fingerprint@https://codeload.github.com/Geomitron/stream-audio-fingerprint/tar.gz/197e8a7ff60165b18bf1debc23dab4814996a20d:
+  stream-audio-fingerprint@git+https://git@github.com:Geomitron/stream-audio-fingerprint.git#197e8a7ff60165b18bf1debc23dab4814996a20d:
     dependencies:
-      dsp.js: https://codeload.github.com/corbanbrook/dsp.js/tar.gz/219600bb0346ee9a00686c9875c81123e2d8780e
+      dsp.js: git+https://git@github.com:corbanbrook/dsp.js.git#219600bb0346ee9a00686c9875c81123e2d8780e
 
   string-width@4.2.3:
     dependencies:
