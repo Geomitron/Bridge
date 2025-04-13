@@ -70,7 +70,7 @@ export class SearchService {
 			}
 		})
 
-		this.drumsReviewed = new FormControl<boolean>((localStorage.getItem('drumsReviewed') ?? 'true') === 'true', { nonNullable: true })
+		this.drumsReviewed = new FormControl<boolean>((localStorage.getItem('drumsReviewed') ?? 'false') === 'true', { nonNullable: true })
 		this.drumsReviewed.valueChanges.subscribe(drumsReviewed => {
 			localStorage.setItem('drumsReviewed', `${drumsReviewed}`)
 			if (this.songsResponse?.page) {
