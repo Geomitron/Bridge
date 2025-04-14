@@ -14,6 +14,8 @@ import { inspect } from 'util'
 
 import { tempPath } from '../../../src-shared/Paths.js'
 import { resolveChartFolderName } from '../../../src-shared/UtilFunctions.js'
+import { generateDifficulty } from '../GenerateDifficultyHandler.ipc.js'
+import { getChartMissingDifficulties } from '../GenerateMissingDifficultiesHandler.ipc.js'
 import { getSettings } from '../SettingsHandler.ipc.js'
 
 export interface DownloadMessage {
@@ -91,6 +93,7 @@ export class ChartDownload {
 				case 0: await this.checkFilesystem(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
 				case 1: await this.downloadChart(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
 				case 2: await this.transferChart(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
+				case 3: await this.generateDifficulties(); this.stepCompletedCount++; if (this._canceled) { return } // break omitted
 			}
 		} catch (err) {
 			this.showProgress.cancel()
@@ -240,8 +243,44 @@ export class ChartDownload {
 			throw { header: 'Failed to delete temporary folder', body: inspect(err) }
 		}
 
-		this.showProgress.cancel()
-		this.eventEmitter.emit('end', join(settings.libraryPath!, this.chartFolderPath))
+		if (!settings.generateMissingDifficulties || this.isSng) {
+			this.showProgress.cancel()
+			this.eventEmitter.emit('end', join(settings.libraryPath!, this.chartFolderPath))
+		}
+	}
+
+	private async generateDifficulties() {
+		const settings = await getSettings()
+		if (this._canceled) { return }
+
+		if (settings.generateMissingDifficulties && !this.isSng) {
+			this.showProgress('Generating difficulties...')
+
+			try {
+				const chartFolderPath = join(settings.libraryPath!, this.chartFolderPath)
+				const missingDifficulties = await getChartMissingDifficulties({ chartFolderPath })
+
+				if (missingDifficulties.size === 0) {
+					return
+				}
+
+				for (const [instrument, difficulties] of missingDifficulties) {
+					for (const difficulty of difficulties) {
+						generateDifficulty({
+							action: 'add',
+							chartFolderPath,
+							instrument,
+							difficulty,
+						})
+					}
+				}
+
+				this.showProgress.cancel()
+				this.eventEmitter.emit('end', join(settings.libraryPath!, this.chartFolderPath))
+			} catch (err) {
+				throw { header: 'Failed to generate difficulties', body: inspect(err) }
+			}
+		}
 	}
 }
 

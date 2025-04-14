@@ -18,11 +18,12 @@
   "scripts": {
     "start": "concurrently \"npm run start:angular\" \"npm run start:electron\" -n angular,electron -c red,yellow",
     "start:angular": "ng serve",
-    "start:electron": "nodemon --exec \"tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron ./dist/electron/src-electron/main.js --dev\" --watch src-electron/ -e ts",
+    "start:electron": "nodemon --exec \"tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron ./dist/electron/src-electron/main.js --no-sandbox --dev\" --watch src-electron/ -e ts",
     "build:windows": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --windows",
     "build:mac": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --mac",
     "build:linux": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build --linux",
-    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build"
+    "release": "ng build -c production && tsc -p src-electron/tsconfig.electron.json && node src-electron/rename-to-mjs.js && electron-builder build",
+    "lint": "eslint . --ext .ts,.html"
   },
   "dependencies": {
     "@angular/animations": "19.2.1",
@@ -45,6 +46,7 @@
     "exceljs": "^4.4.0",
     "fs-extra": "11.2.0",
     "lodash": "4.17.21",
+    "midi-file": "^1.2.4",
     "parse-sng": "4.0.3",
     "rxjs": "7.8.1",
     "sanitize-filename": "1.6.3",
@@ -92,6 +94,7 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@parcel/watcher",
       "electron",
       "esbuild",
       "exifreader",

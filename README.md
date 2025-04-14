@@ -5,7 +5,7 @@
 <img align="center" src="./src-angular/assets/images/example.png"/>
 <hr>
 
-**Bridge** is a desktop application that allows you to search for and download charts that can be played in  games like Clone Hero, YARG, etc...
+**Bridge** is a desktop application that allows you to search for and download charts that can be played in games like Clone Hero, YARG, etc...
 
 This is the desktop version of [Chorus Encore](https://www.enchor.us/).
 
@@ -23,6 +23,7 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 - ✅ A variety of themes.
 - ✅ Advanced song search.
 - ✅ Chart issue scanner (for people making charts).
+- ✅ Auto generate difficulties for songs. (Experimental)
 
 ### What's new in v3.4.0
 

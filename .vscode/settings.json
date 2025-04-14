@@ -22,7 +22,7 @@
 		"files.trimTrailingWhitespace": false
 	},
 	"[html]": {
-		"editor.defaultFormatter": "vscode.html-language-features",
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.codeActionsOnSave": {
 			"source.fixAll.eslint": "explicit"
 		}

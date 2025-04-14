@@ -13,7 +13,7 @@
 				<i class="bi bi-search -ml-9"></i>
 			}
 		</div>
-		<div class="flex">
+		<div class="flex items-center">
 			<!-- Instrument Dropdown -->
 			<div class="dropdown">
 				<label tabindex="0" class="btn btn-neutral rounded-btn rounded-r-none uppercase">
@@ -52,6 +52,12 @@
 					}
 				</ul>
 			</div>
+			@if (settingsService.generateMissingDifficulties) {
+				<p class="ml-4 text-xs font-bold">
+					<i class="bi bi-lightbulb-fill text-sm hover:border-b-secondary-focus mr-1 text-yellow-500"></i>
+					Missing Difficulties Generation is enabled
+				</p>
+			}
 			@if (instrument === 'drums') {
 				<!-- Drum Type Dropdown -->
 				<div class="dropdown">
@@ -123,34 +129,70 @@
 						</thead>
 						<tbody>
 							<tr class="border-b-0" formGroupName="name">
-								<td><input type="text" placeholder="Name" class="input input-bordered input-sm" formControlName="value" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+								<td>
+									<input type="text" placeholder="Name" class="input input-bordered input-sm" formControlName="value" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exact" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exclude" />
+								</td>
 							</tr>
 							<tr class="border-b-0" formGroupName="artist">
-								<td><input type="text" placeholder="Artist" class="input input-bordered input-sm" formControlName="value" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+								<td>
+									<input type="text" placeholder="Artist" class="input input-bordered input-sm" formControlName="value" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exact" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exclude" />
+								</td>
 							</tr>
 							<tr class="border-b-0" formGroupName="album">
-								<td><input type="text" placeholder="Album" class="input input-bordered input-sm" formControlName="value" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+								<td>
+									<input type="text" placeholder="Album" class="input input-bordered input-sm" formControlName="value" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exact" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exclude" />
+								</td>
 							</tr>
 							<tr class="border-b-0" formGroupName="genre">
-								<td><input type="text" placeholder="Genre" class="input input-bordered input-sm" formControlName="value" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+								<td>
+									<input type="text" placeholder="Genre" class="input input-bordered input-sm" formControlName="value" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exact" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exclude" />
+								</td>
 							</tr>
 							<tr class="border-b-0" formGroupName="year">
-								<td><input type="text" placeholder="Year" class="input input-bordered input-sm" formControlName="value" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+								<td>
+									<input type="text" placeholder="Year" class="input input-bordered input-sm" formControlName="value" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exact" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exclude" />
+								</td>
 							</tr>
 							<tr class="border-b-0" formGroupName="charter">
-								<td><input type="text" placeholder="Charter" class="input input-bordered input-sm" formControlName="value" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exact" /></td>
-								<td><input type="checkbox" class="checkbox" formControlName="exclude" /></td>
+								<td>
+									<input type="text" placeholder="Charter" class="input input-bordered input-sm" formControlName="value" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exact" />
+								</td>
+								<td>
+									<input type="checkbox" class="checkbox" formControlName="exclude" />
+								</td>
 							</tr>
 						</tbody>
 					</table>
