@@ -1,5 +1,6 @@
+import { ChartData, LibrarySearch } from 'src-shared/interfaces/search.interface.js'
+
 import { databaseService } from '../database/databaseService.js'
-import { ChartData } from 'src-shared/interfaces/search.interface.js'
 
 export async function addChart(chartData: ChartData): Promise<ChartData> {
 	try {
@@ -37,9 +38,9 @@ export async function removeAllCharts(): Promise<void> {
 	}
 }
 
-export async function getChartsBySearchTerm(searchTerm?: string): Promise<ChartData[]> {
+export async function getChartsBySearchTerm(search: LibrarySearch): Promise<ChartData[]> {
 	try {
-		return await databaseService.getChartsBySearchTerm(searchTerm)
+		return await databaseService.getChartsBySearchTerm(search)
 	} catch (error) {
 		console.error('Error in getChartsHandler:', error)
 		throw error

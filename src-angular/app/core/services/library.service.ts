@@ -1,8 +1,12 @@
 import { Injectable, Injector } from '@angular/core'
+
 import { BehaviorSubject } from 'rxjs'
 import { ChartData } from 'src-shared/interfaces/search.interface'
+
 import { DownloadService } from './download.service'
 import { StorageService } from './storage.service'
+
+export const LIBRARY_TABLE_PAGESIZE = 50
 
 @Injectable({
 	providedIn: 'root',
@@ -15,9 +19,11 @@ export class LibraryService {
 	selectedSongs$ = this._selectedSongs.asObservable()
 
 	private _downloadService: DownloadService | null = null
+	private currentPage = 1
+	private isLastPage = false
 
 	constructor(private injector: Injector, private storageService: StorageService) {
-		this.storageService.getChartsBySearchTerm().then(library => {
+		this.storageService.getChartsBySearchTerm(undefined, 1, 50).then(library => {
 			if (library) {
 				this._tracks.next(library)
 			}
@@ -64,12 +70,14 @@ export class LibraryService {
 	}
 
 	addToSelectedSongs(song: ChartData) {
-		const updatedSelectedSongs = [...this._selectedSongs.value, song]
-		this._selectedSongs.next(updatedSelectedSongs)
+		if (!this._selectedSongs.value.some(selectedSong => selectedSong.md5 === song.md5)) {
+			const updatedSelectedSongs = [...this._selectedSongs.value, song]
+			this._selectedSongs.next(updatedSelectedSongs)
+		}
 	}
 
 	removeFromSelectedSongs(song: ChartData) {
-		const updatedSelectedSongs = this._selectedSongs.value.filter(selectedSong => selectedSong !== song)
+		const updatedSelectedSongs = this._selectedSongs.value.filter(selectedSong => selectedSong.md5 !== song.md5)
 		this._selectedSongs.next(updatedSelectedSongs)
 	}
 
@@ -95,10 +103,35 @@ export class LibraryService {
 		this._tracks.next(library)
 	}
 
-	async getChartsBySearchTerm(searchTerm?: string): Promise<ChartData[]> {
-		const library = await this.storageService.getChartsBySearchTerm(searchTerm)
+	async loadMoreSongs(): Promise<void> {
+		if (this.isLastPage)
+			return
 
-		this._tracks.next(library)
+		this.currentPage++
+		const moreSongs = await this.getChartsBySearchTerm()
+
+		if (moreSongs.length < LIBRARY_TABLE_PAGESIZE) {
+			this.isLastPage = true
+		}
+
+		const uniqueSongs = moreSongs.filter(
+			song => !this._tracks.value.some(track => track.md5 === song.md5)
+		)
+
+		this._tracks.next([...this._tracks.value, ...uniqueSongs])
+	}
+
+	async getChartsBySearchTerm(searchTerm?: string): Promise<ChartData[]> {
+		if (searchTerm !== undefined) {
+			this.currentPage = 1
+			this._tracks.next([])
+			this.isLastPage = false
+		}
+
+		const library = await this.storageService.getChartsBySearchTerm(searchTerm, this.currentPage, LIBRARY_TABLE_PAGESIZE)
+
+		this._tracks.next([...this._tracks.value, ...library])
+
 		return library
 	}
 }

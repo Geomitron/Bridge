@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core'
-import { SelectionService } from 'src-angular/app/core/services/selection.service'
-import { ChartData } from 'src-shared/interfaces/search.interface'
-import { SettingsService } from '../../../core/services/settings.service'
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core'
+
 import { Subscription } from 'rxjs'
 import { LibraryService } from 'src-angular/app/core/services/library.service'
+import { SelectionService } from 'src-angular/app/core/services/selection.service'
+import { ChartData } from 'src-shared/interfaces/search.interface'
+
+import { SettingsService } from '../../../core/services/settings.service'
 
 type SortColumn = 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null
 
@@ -20,6 +22,8 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 	allRowsSelected: boolean = false
 	subscriptions: Subscription[] = []
 	selectedSongs: ChartData[] = []
+	isLoading: boolean = false
+	hasSearched: boolean = false
 
 	constructor(
 		public libraryService: LibraryService,
@@ -56,6 +60,7 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 	}
 
 	filterSongs(): void {
+		this.hasSearched = true
 		this.libraryService.getChartsBySearchTerm(this.searchTerm)
 	}
 
@@ -97,6 +102,10 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	rowIsSelected(song: ChartData): boolean {
+		return this.selectedSongs.some(selectedSong => selectedSong.md5 === song.md5)
+	}
+
 	trackByFn(index: number): number {
 		return index
 	}
@@ -108,6 +117,22 @@ export class LibraryTableComponent implements OnInit, OnDestroy {
 			this.songs.forEach(song => this.libraryService.addToSelectedSongs(song))
 		} else {
 			this.libraryService.clearSelectedSongs()
+		}
+	}
+
+	async loadMoreSongs(): Promise<void> {
+		if (this.isLoading) return
+
+		this.isLoading = true
+		await this.libraryService.loadMoreSongs()
+		this.isLoading = false
+	}
+
+	@HostListener('scroll', ['$event'])
+	onScroll(event: Event): void {
+		const target = event.target as HTMLElement
+		if (target.scrollHeight - target.scrollTop - target.clientHeight < 100) {
+			this.loadMoreSongs()
 		}
 	}
 

@@ -1,6 +1,11 @@
 <div class="border-t border-t-neutral p-2 flex gap-2 items-center max-w-full justify-between">
 	<div class="flex items-center gap-[8px]">
-		{{ (this.libraryService.tracks$ | async)?.length ?? 0 }} Songs
+		<ng-container *ngIf="libraryService.selectedSongs$ | async as selectedSongs">
+			<ng-container *ngIf="libraryService.tracks$ | async as tracks">
+				{{ selectedSongs.length ? selectedSongs.length + '/' : '' }}{{ tracks.length }}
+			</ng-container>
+		</ng-container>
+
 		<button class="btn btn-sm btn-primary" (click)="fileInput.click()">Import Setlist</button>
 		@if ((this.libraryService.selectedSongs$ | async)!.length > 0) {
 			<button class="btn btn-sm btn-primary" (click)="exportSelected()">Export Selected Setlist</button>

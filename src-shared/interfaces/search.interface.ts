@@ -117,6 +117,12 @@ export interface FolderIssue {
 	description: string
 }
 
+export interface LibrarySearch {
+	searchTerm: string
+	page: number
+	pageSize: number
+}
+
 export type ChartData = SearchResult['data'][number]
 export interface SearchResult {
 	found: number

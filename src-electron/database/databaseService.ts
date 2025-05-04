@@ -1,7 +1,8 @@
-import { ChartData } from 'src-shared/interfaces/search.interface.js'
+import { ChartData, LibrarySearch } from 'src-shared/interfaces/search.interface.js'
+import { Like } from 'typeorm'
+
 import { dataSource } from './dataSource.js'
 import { Chart } from './entities/Chart.js'
-import { Like } from 'typeorm'
 
 export class DatabaseService {
 	async insertChart(chartData: ChartData): Promise<ChartData> {
@@ -12,7 +13,6 @@ export class DatabaseService {
 
 			const chartRepository = dataSource.getRepository(Chart)
 
-			// if one already exist dont create
 			const existingChart = await chartRepository.findOneBy({ md5: chartData.md5 })
 
 			if (existingChart) {
@@ -61,7 +61,6 @@ export class DatabaseService {
 
 			const chartRepository = dataSource.getRepository(Chart)
 
-			// delete the array of charts provided using querybulilder
 			charts.forEach(async chart => {
 				console.log('removing chart:', chart.name)
 				await chartRepository.delete({ md5: chart.md5 })
@@ -72,7 +71,7 @@ export class DatabaseService {
 		}
 	}
 
-	async getChartsBySearchTerm(searchTerm?: string): Promise<ChartData[]> {
+	async getChartsBySearchTerm(search: LibrarySearch): Promise<ChartData[]> {
 		try {
 			if (!dataSource.isInitialized) {
 				await dataSource.initialize()
@@ -82,22 +81,27 @@ export class DatabaseService {
 
 			let charts: Chart[]
 
-			if (searchTerm) {
-				const likeSearchTerm = `%${searchTerm}%`
+			if (search.searchTerm?.trim()) {
+				const likeSearchTerm = Like(`%${search.searchTerm}%`)
+
 				charts = await chartRepository.find({
 					where: [
-						{ name: Like(likeSearchTerm) },
-						{ album: Like(likeSearchTerm) },
-						{ artist: Like(likeSearchTerm) },
-						{ genre: Like(likeSearchTerm) },
-						{ year: Like(likeSearchTerm) },
-						{ charter: Like(likeSearchTerm) },
+						{ name: likeSearchTerm },
+						{ album: likeSearchTerm },
+						{ artist: likeSearchTerm },
+						{ genre: likeSearchTerm },
+						{ year: likeSearchTerm },
+						{ charter: likeSearchTerm },
 					],
+					skip: (search.page - 1) * search.pageSize,
+					take: search.pageSize,
 				})
 			} else {
-				charts = await chartRepository.find()
+				charts = await chartRepository.find({
+					skip: (search.page - 1) * search.pageSize,
+					take: search.pageSize,
+				})
 			}
-
 			return charts as unknown as ChartData[]
 		} catch (error) {
 			console.error('Error fetching charts by search term:', error)
@@ -119,7 +123,6 @@ export class DatabaseService {
 			throw error
 		}
 	}
-
 }
 
 export const databaseService = new DatabaseService()
