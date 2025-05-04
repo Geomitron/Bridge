@@ -3,9 +3,9 @@ import { UpdateInfo } from 'electron-updater'
 
 import { Settings } from '../Settings.js'
 import { Download, DownloadProgress } from './download.interface.js'
+import { ChartData, LibrarySearch } from './search.interface.js'
 import { ThemeColors } from './theme.interface.js'
 import { UpdateProgress } from './update.interface.js'
-import { ChartData } from './search.interface.js'
 
 export interface ContextBridgeApi {
 	invoke: IpcInvokeHandlers
@@ -64,7 +64,7 @@ export interface IpcInvokeEvents {
 		output: void
 	}
 	getChartsBySearchTerm: {
-		input?: string
+		input?: LibrarySearch
 		output: ChartData[]
 	}
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
-import { ChartData } from 'src-shared/interfaces/search.interface'
+
+import { ChartData, LibrarySearch } from 'src-shared/interfaces/search.interface'
 
 @Injectable({
 	providedIn: 'root',
@@ -17,8 +18,14 @@ export class StorageService {
 		return window.electron.invoke.removeCharts(charts)
 	}
 
-	async getChartsBySearchTerm(searchTerm?: string): Promise<ChartData[]> {
-		return window.electron.invoke.getChartsBySearchTerm(searchTerm)
+	async getChartsBySearchTerm(searchTerm?: string, page?: number, pageSize?: number): Promise<ChartData[]> {
+		const librarySearch = {
+			searchTerm: searchTerm,
+			page: page,
+			pageSize: pageSize,
+		} as LibrarySearch
+
+		return window.electron.invoke.getChartsBySearchTerm(librarySearch)
 	}
 
 	async removeAllCharts(): Promise<void> {
