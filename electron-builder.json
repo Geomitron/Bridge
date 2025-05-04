@@ -36,7 +36,8 @@
 	"linux": {
 		"compression": "maximum",
 		"target": [
-			"AppImage"
+			"AppImage",
+			"flatpak"
 		],
 		"category": "utility"
 	}

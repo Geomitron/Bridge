@@ -171,12 +171,12 @@ export function columnNumberToLetter(column: number) {
 }
 
 /**
- * @returns an string representation of `ms` that looks like HH:MM:SS.mm
+ * @returns a string representation of `ms` that looks like HH:MM:SS.mm
  */
 export function msToExactTime(ms: number) {
 	const seconds = _.round((ms / 1000) % 60, 2)
 	const minutes = Math.floor((ms / 1000 / 60) % 60)
-	const hours = Math.floor((ms / 1000 / 60 / 60) % 24)
+	const hours = Math.floor(ms / 1000 / 60 / 60)
 	return `${hours ? `${hours}:` : ''}${_.padStart(
 		minutes + '',
 		2,

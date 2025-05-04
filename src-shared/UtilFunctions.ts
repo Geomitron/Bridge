@@ -140,7 +140,7 @@ export function instrumentToDiff(instrument: Instrument | 'vocals') {
 export function msToRoughTime(ms: number) {
 	const seconds = _.floor((ms / 1000) % 60)
 	const minutes = _.floor((ms / 1000 / 60) % 60)
-	const hours = _.floor((ms / 1000 / 60 / 60) % 24)
+	const hours = _.floor(ms / 1000 / 60 / 60)
 	return `${hours ? `${hours}:` : ''}${minutes}:${_.padStart(String(seconds), 2, '0')}`
 }
 
