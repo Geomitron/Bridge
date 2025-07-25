@@ -23,6 +23,7 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 - ✅ A variety of themes.
 - ✅ Advanced song search.
 - ✅ Chart issue scanner (for people making charts).
+- ✅ Playlist import and export.
 
 ### What's new in v3.4.0
 

@@ -25,6 +25,10 @@ const electronApi: ContextBridgeApi = {
 		isMaximized: getInvoker('isMaximized'),
 		showOpenDialog: getInvoker('showOpenDialog'),
 		getThemeColors: getInvoker('getThemeColors'),
+		addChart: getInvoker('addChart'),
+		removeChart: getInvoker('removeChart'),
+		removeCharts: getInvoker('removeCharts'),
+		getChartsBySearchTerm: getInvoker('getChartsBySearchTerm'),
 	},
 	emit: {
 		download: getEmitter('download'),
@@ -41,6 +45,7 @@ const electronApi: ContextBridgeApi = {
 		showFolder: getEmitter('showFolder'),
 		showFile: getEmitter('showFile'),
 		scanIssues: getEmitter('scanIssues'),
+		removeAllCharts: getEmitter('removeAllCharts'),
 	},
 	on: {
 		errorLog: getListenerAdder('errorLog'),
