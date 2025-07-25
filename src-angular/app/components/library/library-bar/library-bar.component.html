@@ -2,7 +2,7 @@
 	<div class="flex items-center gap-[8px]">
 		<ng-container *ngIf="libraryService.selectedSongs$ | async as selectedSongs">
 			<ng-container *ngIf="libraryService.tracks$ | async as tracks">
-				{{ selectedSongs.length ? selectedSongs.length + '/' : '' }}{{ tracks.length }}
+				{{ selectedSongs.length ? selectedSongs.length + '/' : '' }}{{ tracks.length }} Songs
 			</ng-container>
 		</ng-container>
 
@@ -16,12 +16,12 @@
 		<input type="file" #fileInput accept=".library" class="hidden" (change)="onFileSelected($event)" />
 
 		@if ((this.libraryService.selectedSongs$ | async)!.length === 0) {
-			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="this.libraryService.clearLibrary()">
+			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="deleteAllModal.showModal()">
 				<i class="bi bi-trash"></i>
 				Delete all
 			</button>
 		} @else {
-			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="this.libraryService.removeFromLibrary()">
+			<button type="button" class="btn btn-sm min-w-[108px] hover:btn-error" (click)="deleteSelectedModal.showModal()">
 				<i class="bi bi-trash"></i>
 				Delete selected
 			</button>
@@ -47,6 +47,27 @@
 		</div>
 	</div>
 </div>
+
+<dialog #deleteAllModal class="modal whitespace-normal modal-backdrop">
+	<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2 w-9/12 max-w-7xl min-h-0 overflow-y-clip">
+		You are about to delete all songs from your library. This action cannot be undone. Are you sure you want to proceed?
+		<form method="dialog">
+			<button class="btn btn-sm btn-primary m-5" (click)="libraryService.clearLibrary()">Delete</button>
+			<button>close</button>
+		</form>
+	</div>
+</dialog>
+
+<dialog #deleteSelectedModal class="modal whitespace-normal modal-backdrop">
+	<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2 w-9/12 max-w-7xl min-h-0 overflow-y-clip">
+		You are about to delete selected songs from your library. This action cannot be undone. Are you sure you want to proceed?
+
+		<form method="dialog">
+			<button type="button" class="btn btn-sm btn-primary m-5" (click)="libraryService.removeFromLibrary()">Delete</button>
+			<button>close</button>
+		</form>
+	</div>
+</dialog>
 
 <dialog #downloadsModal class="modal whitespace-normal">
 	<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2 w-9/12 max-w-7xl min-h-0 overflow-y-clip">
