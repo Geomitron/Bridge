@@ -1,5 +1,5 @@
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling'
-import { Component, EventEmitter, HostBinding, HostListener, OnInit, Output, ViewChild } from '@angular/core'
+import { Component, EventEmitter, HostBinding, HostListener, OnDestroy, OnInit, Output, ViewChild } from '@angular/core'
 import { Router } from '@angular/router'
 
 import { Subscription } from 'rxjs'
@@ -14,7 +14,7 @@ import { SelectionService } from '../../../core/services/selection.service'
 	templateUrl: './result-table.component.html',
 	standalone: false,
 })
-export class ResultTableComponent implements OnInit {
+export class ResultTableComponent implements OnInit, OnDestroy {
 	@HostBinding('class.contents') contents = true
 
 	@Output() rowClicked = new EventEmitter<ChartData[]>()
@@ -124,5 +124,9 @@ export class ResultTableComponent implements OnInit {
 		if (this.viewport) {
 			this.viewport.checkViewportSize()
 		}
+	}
+
+	ngOnDestroy(): void {
+		this.subscription.forEach(sub => sub.unsubscribe())
 	}
 }
