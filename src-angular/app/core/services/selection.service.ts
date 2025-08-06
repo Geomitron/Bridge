@@ -12,7 +12,7 @@ export class SelectionService {
 
 	public selections: { [groupId: number]: boolean | undefined } = {}
 
-	constructor(searchService: SearchService) {
+	constructor(private searchService: SearchService) {
 		searchService.newSearch.subscribe(() => {
 			this.selections = {}
 			this.deselectAll()
@@ -33,8 +33,8 @@ export class SelectionService {
 
 	selectAll() {
 		this.allSelected = true
-		for (const groupId in this.selections) {
-			this.selections[groupId] = true
+		for (const song of this.searchService.groupedSongs) {
+			this.selections[song[0].groupId] = true
 		}
 		this.selectAllChangedEmitter.emit(true)
 	}

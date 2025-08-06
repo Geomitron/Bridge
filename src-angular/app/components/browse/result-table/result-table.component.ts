@@ -119,6 +119,15 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	public get tableHeaderPosition(): string {
+		if (!this.viewport) {
+			return '-0px'
+		}
+		const offset = this.viewport.getOffsetToRenderedContentStart()
+
+		return `-${offset}px`
+	}
+
 	@HostListener('window:resize', ['$event'])
 	onResize() {
 		if (this.viewport) {
