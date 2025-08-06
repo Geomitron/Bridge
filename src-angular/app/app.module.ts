@@ -1,3 +1,5 @@
+import { ScrollingModule } from '@angular/cdk/scrolling'
+import { CommonModule } from '@angular/common'
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { NgModule } from '@angular/core'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms'
@@ -38,9 +40,11 @@ import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 	],
 	bootstrap: [AppComponent], imports: [
 		BrowserModule,
+		CommonModule,
 		AppRoutingModule,
 		FormsModule,
 		ReactiveFormsModule,
+		ScrollingModule,
 	], providers: [provideHttpClient(withInterceptorsFromDi())],
 })
 export class AppModule { }
