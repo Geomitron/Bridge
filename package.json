@@ -73,7 +73,7 @@
     "@typescript-eslint/parser": "7.16.0",
     "concurrently": "8.2.2",
     "daisyui": "4.12.10",
-    "electron": "31.2.0",
+    "electron": "38.4.0",
     "electron-builder": "24.13.3",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
