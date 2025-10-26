@@ -34,12 +34,15 @@
 						<div class="flex-1">
 							<span class="font-bold text-lg">Chart Folder Name</span>
 							<ul class="list-disc pl-5">
-								<li>Describes where Bridge will put the chart inside the chart library directory</li>
+								<li>Describes where Bridge will put downloaded charts in the chart library directory</li>
 								<li>Use "/" to describe subfolders</li>
 								<li>Use "{{ '{tag}' }}" as a placeholder for chart-specific properties</li>
 								<br />
 								Available tags:
 								<div class="text-xs">{{ '{name}, {artist}, {album}, {genre}, {year}, {charter}' }}</div>
+								<br />
+								Example:
+								<div class="text-xs">"{artist}/{name} ({charter})" will create chart folders that look like "{name} ({charter})" inside subfolders that look like "{artist}"</div>
 							</ul>
 						</div>
 					</div>
