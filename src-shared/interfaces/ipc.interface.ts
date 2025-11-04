@@ -2,6 +2,7 @@ import { OpenDialogOptions, OpenDialogReturnValue } from 'electron'
 import { UpdateInfo } from 'electron-updater'
 
 import { Settings } from '../Settings.js'
+import { DifficultyGeneration, DifficultyGenerationProgress } from './difficulty-generation.interface.js'
 import { Download, DownloadProgress } from './download.interface.js'
 import { ThemeColors } from './theme.interface.js'
 import { UpdateProgress } from './update.interface.js'
@@ -75,6 +76,8 @@ export interface IpcToMainEmitEvents {
 	showFolder: string
 	showFile: string
 	scanIssues: void
+	generateMissingDifficulties: void
+	generateDifficulty: DifficultyGeneration
 }
 
 export type IpcToMainEmitHandlers = {
@@ -91,10 +94,12 @@ export interface IpcFromMainEmitEvents {
 	updateProgress: UpdateProgress
 	updateDownloaded: void
 	downloadQueueUpdate: DownloadProgress
+	generateDifficultyQueueUpdate: DifficultyGenerationProgress
 	queueUpdated: number[]
 	maximized: void
 	minimized: void
 	updateIssueScan: { status: 'progress' | 'error' | 'done'; message: string }
+	updateChartsDifficultyGeneration: { status: 'progress' | 'error' | 'done'; message: string }
 }
 
 export type IpcFromMainEmitHandlers = {

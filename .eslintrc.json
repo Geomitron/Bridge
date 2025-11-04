@@ -90,15 +90,7 @@
 			"plugins": ["prettier"],
 			"extends": ["plugin:prettier/recommended"],
 			"rules": {
-				"prettier/prettier": ["error", {
-					"parser": "angular",
-					"endOfLine": "auto",
-					"printWidth": 150,
-					"useTabs": true,
-					"singleQuote": true,
-					"htmlWhitespaceSensitivity": "css",
-					"bracketSameLine": true
-				}]
+				"prettier/prettier": ["error"]
 			}
 		},
 		{

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { ChangeDetectorRef, Component, ElementRef, HostBinding, OnInit, ViewChild } from '@angular/core'
 import { FormControl } from '@angular/forms'
 
 import _ from 'lodash'
@@ -11,12 +11,15 @@ import { themes } from 'src-shared/Settings'
 	standalone: false,
 })
 export class SettingsComponent implements OnInit {
+	@HostBinding('class.contents') contents = true
+
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 
 	public chartFolderName: FormControl<string>
 	public isSng: FormControl<boolean>
 	public downloadVideos: FormControl<boolean>
 	public isCompactTable: FormControl<boolean>
+	public generateMissingDifficulties: FormControl<boolean>
 
 	public artistColumn: FormControl<boolean>
 	public albumColumn: FormControl<boolean>
@@ -49,6 +52,8 @@ export class SettingsComponent implements OnInit {
 		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
 		this.downloadVideos = new FormControl<boolean>(ss.downloadVideos, { nonNullable: true })
 		this.downloadVideos.valueChanges.subscribe(value => settingsService.downloadVideos = value)
+		this.generateMissingDifficulties = new FormControl<boolean>(ss.generateMissingDifficulties, { nonNullable: true })
+		this.generateMissingDifficulties.valueChanges.subscribe(value => settingsService.generateMissingDifficulties = value)
 		this.isCompactTable = new FormControl<boolean>(settingsService.isCompactTable, { nonNullable: true })
 		this.isCompactTable.valueChanges.subscribe(value => ss.isCompactTable = value)
 

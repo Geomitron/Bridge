@@ -1,0 +1,9 @@
+{
+  "parser": "angular",
+  "endOfLine": "auto",
+  "printWidth": 150,
+  "useTabs": true,
+  "singleQuote": true,
+  "htmlWhitespaceSensitivity": "css",
+  "bracketSameLine": true
+}

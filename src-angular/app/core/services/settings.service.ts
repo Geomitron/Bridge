@@ -61,6 +61,15 @@ export class SettingsService {
 		this.settings.libraryPath = value
 		this.saveSettings()
 	}
+
+	get chartsDifficultyGenerationDirectory() {
+		return this.settings.chartsDifficultyGenerationPath
+	}
+	set chartsDifficultyGenerationDirectory(value: string | undefined) {
+		this.settings.chartsDifficultyGenerationPath = value
+		this.saveSettings()
+	}
+
 	get issueScanDirectory() {
 		return this.settings.issueScanPath
 	}
@@ -68,6 +77,7 @@ export class SettingsService {
 		this.settings.issueScanPath = value
 		this.saveSettings()
 	}
+
 	get spreadsheetOutputDirectory() {
 		return this.settings.spreadsheetOutputPath
 	}
@@ -75,6 +85,7 @@ export class SettingsService {
 		this.settings.spreadsheetOutputPath = value
 		this.saveSettings()
 	}
+
 	get chartFolderName() {
 		return this.settings.chartFolderName
 	}
@@ -88,6 +99,14 @@ export class SettingsService {
 	}
 	set downloadVideos(isChecked) {
 		this.settings.downloadVideos = isChecked
+		this.saveSettings()
+	}
+
+	get generateMissingDifficulties() {
+		return this.settings.generateMissingDifficulties
+	}
+	set generateMissingDifficulties(isChecked) {
+		this.settings.generateMissingDifficulties = isChecked
 		this.saveSettings()
 	}
 

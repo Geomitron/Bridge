@@ -41,6 +41,8 @@ const electronApi: ContextBridgeApi = {
 		showFolder: getEmitter('showFolder'),
 		showFile: getEmitter('showFile'),
 		scanIssues: getEmitter('scanIssues'),
+		generateMissingDifficulties: getEmitter('generateMissingDifficulties'),
+		generateDifficulty: getEmitter('generateDifficulty'),
 	},
 	on: {
 		errorLog: getListenerAdder('errorLog'),
@@ -49,10 +51,12 @@ const electronApi: ContextBridgeApi = {
 		updateProgress: getListenerAdder('updateProgress'),
 		updateDownloaded: getListenerAdder('updateDownloaded'),
 		downloadQueueUpdate: getListenerAdder('downloadQueueUpdate'),
+		generateDifficultyQueueUpdate: getListenerAdder('generateDifficultyQueueUpdate'),
 		queueUpdated: getListenerAdder('queueUpdated'),
 		maximized: getListenerAdder('maximized'),
 		minimized: getListenerAdder('minimized'),
 		updateIssueScan: getListenerAdder('updateIssueScan'),
+		updateChartsDifficultyGeneration: getListenerAdder('updateChartsDifficultyGeneration'),
 	},
 }
 
