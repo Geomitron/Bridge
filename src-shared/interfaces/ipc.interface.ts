@@ -3,6 +3,7 @@ import { UpdateInfo } from 'electron-updater'
 
 import { Settings } from '../Settings.js'
 import { Download, DownloadProgress } from './download.interface.js'
+import { ChartData, LibrarySearch } from './search.interface.js'
 import { ThemeColors } from './theme.interface.js'
 import { UpdateProgress } from './update.interface.js'
 
@@ -50,6 +51,22 @@ export interface IpcInvokeEvents {
 		input: string
 		output: ThemeColors | null
 	}
+	addChart: {
+		input: ChartData
+		output: ChartData
+	}
+	removeChart: {
+		input: string
+		output: void
+	}
+	removeCharts: {
+		input: ChartData[]
+		output: void
+	}
+	getChartsBySearchTerm: {
+		input?: LibrarySearch
+		output: ChartData[]
+	}
 }
 
 export type IpcInvokeHandlers = {
@@ -75,6 +92,7 @@ export interface IpcToMainEmitEvents {
 	showFolder: string
 	showFile: string
 	scanIssues: void
+	removeAllCharts: void
 }
 
 export type IpcToMainEmitHandlers = {
