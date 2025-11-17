@@ -1,51 +1,53 @@
-<div
-	#resultTableDiv
-	class="basis-2/3 flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
-	(scroll)="tableScrolled()">
-	<table id="resultTable" class="table table-zebra table-pin-rows" [class.table-xs]="settingsService.isCompactTable">
-		<thead>
-			<tr>
-				<th class="collapsing" id="checkboxColumn">
-					<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
-				</th>
-				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('name')">
-					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('artist')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
-					Artist
-					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('album')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
-					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('genre')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
-					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('year')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
-					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('charter')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('charter')">
-					Charter <i *ngIf="sortColumn === 'charter'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('length')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('length')">
-					Length (min) <i *ngIf="sortColumn === 'length'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer">Difficulty</th>
-				<th *ngIf="hasColumn('uploaded')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('modifiedTime')">
-					Upload Date <i *ngIf="sortColumn === 'modifiedTime'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			@for (song of songs; track song) {
+<div class="flex-1 flex flex-col overflow-hidden">
+	<cdk-virtual-scroll-viewport
+		#viewport
+		class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
+		[itemSize]="tableRowHeight"
+		(scroll)="onViewportScroll()">
+		<table class="table table-zebra w-full" [class.table-xs]="settingsService.isCompactTable">
+			<thead>
+				<tr [style.top]="tableHeaderPosition" class="sticky top-0 bg-base-100 z-10">
+					<th class="collapsing" id="checkboxColumn">
+						<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
+					</th>
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('name')">
+						Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('artist')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
+						Artist
+						<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('album')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
+						Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('genre')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
+						Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('year')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
+						Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('charter')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('charter')">
+						Charter <i *ngIf="sortColumn === 'charter'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('length')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('length')">
+						Length (min) <i *ngIf="sortColumn === 'length'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+					<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer">Difficulty</th>
+					<th *ngIf="hasColumn('uploaded')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('modifiedTime')">
+						Upload Date <i *ngIf="sortColumn === 'modifiedTime'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
 				<tr
+					*cdkVirtualFor="let song of songs; trackBy: trackByFn"
 					app-result-table-row
 					(click)="onRowClicked(song)"
 					(rowFocused)="onRowClicked(song)"
 					[class.!bg-neutral]="activeSong === song"
 					[class.!text-neutral-content]="activeSong === song"
 					[song]="song"></tr>
-			}
-		</tbody>
-	</table>
+			</tbody>
+		</table>
+	</cdk-virtual-scroll-viewport>
 </div>
