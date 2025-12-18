@@ -37,8 +37,12 @@
 		"compression": "maximum",
 		"target": [
 			"AppImage",
-			"flatpak"
+			"flatpak",
+			"deb"
 		],
 		"category": "utility"
-	}
+	},
+	"deb": {
+    "compression": "xz"
+  }
 }
