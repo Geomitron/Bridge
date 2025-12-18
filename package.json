@@ -52,7 +52,7 @@
     "rxjs": "7.8.1",
     "sanitize-filename": "1.6.3",
     "scan-chart": "6.1.0",
-    "sqlite3": "5.1.6",
+    "sql.js": "^1.13.0",
     "three": "0.166.1",
     "tslib": "2.6.3",
     "typeorm": "^0.3.21",
