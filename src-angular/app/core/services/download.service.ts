@@ -6,6 +6,7 @@ import { resolveChartFolderName } from 'src-shared/UtilFunctions'
 
 import { DownloadProgress } from '../../../../src-shared/interfaces/download.interface'
 import { SettingsService } from './settings.service'
+import { LibraryService } from './library.service'
 
 @Injectable({
 	providedIn: 'root',
@@ -15,7 +16,7 @@ export class DownloadService {
 	public downloadCountChanges = new EventEmitter<number>()
 	public downloads: DownloadProgress[] = []
 
-	constructor(zone: NgZone, private settingsService: SettingsService) {
+	constructor(zone: NgZone, private settingsService: SettingsService, private libraryService: LibraryService) {
 		window.electron.on.downloadQueueUpdate(download => zone.run(() => {
 			const downloadIndex = this.downloads.findIndex(d => d.md5 === download.md5)
 			if (download.type === 'cancel') {
@@ -68,6 +69,9 @@ export class DownloadService {
 			if (this.downloads.every(d => d.type === 'done')) { // Reset overall progress bar if it finished
 				this.downloads.forEach(d => d.stale = true)
 			}
+
+			this.libraryService.libraryAdd(chart)
+
 			const newChart = {
 				name: chart.name ?? 'Unknown Name',
 				artist: chart.artist ?? 'Unknown Artist',
