@@ -143,6 +143,12 @@
 		</div>
 		<div class="join">
 			<button class="btn rounded-md flex-1 join-item btn-primary capitalize" (click)="onDownloadClicked()">Download</button>
+			<button
+				class="btn rounded-md join-item btn-neutral tooltip tooltip-top"
+				data-tip="Add to List"
+				(click)="onAddToListClicked()">
+				<i class="bi bi-collection text-lg"></i>
+			</button>
 			<div
 				#menu
 				class="cursor-pointer bg-neutral rounded-md join-item dropdown dropdown-top dropdown-end p-1 flex items-center"
@@ -166,5 +172,6 @@
 				</form>
 			</dialog>
 		</div>
+		<app-add-to-list-modal #addToListModal />
 	</div>
 }

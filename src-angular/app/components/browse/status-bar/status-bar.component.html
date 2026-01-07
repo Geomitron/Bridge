@@ -2,9 +2,13 @@
 	<div *ngIf="searchService.songsResponse" class="text-nowrap">
 		{{ searchService.songsResponse.found | number: '1.0-0' }} Result{{ searchService.songsResponse.found === 1 ? '' : 's' }}
 	</div>
-	<div class="flex-1">
+	<div class="flex-1 flex gap-2">
 		<button *ngIf="selectedGroupIds.length > 1" (click)="downloadSelected()" class="btn btn-sm btn-primary text-nowrap">
 			Download {{ selectedGroupIds.length }} Results
+		</button>
+		<button *ngIf="selectedGroupIds.length > 1" (click)="addSelectedToList()" class="btn btn-sm btn-neutral text-nowrap">
+			<i class="bi bi-collection"></i>
+			Add to List
 		</button>
 	</div>
 	<div *ngIf="downloadService.downloadCount > 0" class="text-ellipsis text-nowrap overflow-hidden whitespace-nowrap max-w-full">
@@ -33,4 +37,6 @@
 			<button>close</button>
 		</form>
 	</dialog>
+
+	<app-add-to-list-modal #addToListModal />
 </div>

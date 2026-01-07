@@ -6,6 +6,7 @@ import { removeStyleTags } from '../../../../../src-shared/UtilFunctions.js'
 import { DownloadService } from '../../../core/services/download.service'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
+import { AddToListModalComponent } from '../../songlists/add-to-list-modal/add-to-list-modal.component'
 
 @Component({
 	selector: 'app-status-bar',
@@ -15,6 +16,7 @@ import { SelectionService } from '../../../core/services/selection.service'
 export class StatusBarComponent {
 
 	@ViewChild('downloadsModal', { static: false }) downloadsModalComponent: ElementRef
+	@ViewChild('addToListModal') addToListModal: AddToListModalComponent
 
 	constructor(
 		public downloadService: DownloadService,
@@ -45,5 +47,16 @@ export class StatusBarComponent {
 
 	clearCompleted() {
 		this.downloadService.cancelAllCompleted()
+	}
+
+	addSelectedToList() {
+		const selectedGroupIds = this.selectedGroupIds
+		const selectedCharts = this.searchService.groupedSongs.filter(gs => selectedGroupIds.includes(gs[0].groupId))
+
+		const uniqueCharts = _.uniqBy(selectedCharts, gs => `${removeStyleTags(gs[0].artist ?? 'Unknown Artist')
+			} - ${removeStyleTags(gs[0].name ?? 'Unknown Name')
+			} (${removeStyleTags(gs[0].charter ?? 'Unknown Charter')})`).map(gs => gs[0])
+
+		this.addToListModal.open(uniqueCharts)
 	}
 }

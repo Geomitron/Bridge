@@ -16,7 +16,11 @@ import { SearchBarComponent } from './components/browse/search-bar/search-bar.co
 import { DownloadsModalComponent } from './components/browse/status-bar/downloads-modal/downloads-modal.component'
 import { StatusBarComponent } from './components/browse/status-bar/status-bar.component'
 import { SettingsComponent } from './components/settings/settings.component'
+import { SongListsComponent } from './components/songlists/songlists.component'
+import { SongListDetailComponent } from './components/songlists/songlist-detail/songlist-detail.component'
+import { AddToListModalComponent } from './components/songlists/add-to-list-modal/add-to-list-modal.component'
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
+import { ToolsComponent } from './components/tools/tools.component'
 import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 
 @NgModule({
@@ -35,6 +39,10 @@ import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 		DownloadsModalComponent,
 		RemoveStyleTagsPipe,
 		SettingsComponent,
+		SongListsComponent,
+		SongListDetailComponent,
+		AddToListModalComponent,
+		ToolsComponent,
 	],
 	bootstrap: [AppComponent], imports: [
 		BrowserModule,

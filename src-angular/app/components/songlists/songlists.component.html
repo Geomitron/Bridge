@@ -1,0 +1,183 @@
+<div class="p-8 flex flex-col gap-4 h-full">
+	<div class="flex justify-between items-center">
+		<div class="text-xl">Song Lists</div>
+		<div class="flex gap-2">
+			<button class="btn btn-neutral" (click)="importList()">
+				<i class="bi bi-download"></i>
+				Import List
+			</button>
+			<button class="btn btn-primary" (click)="openCreateModal()">
+				<i class="bi bi-plus-lg"></i>
+				Create New List
+			</button>
+		</div>
+	</div>
+
+	@if (lists.length === 0) {
+		<div class="flex-1 flex flex-col items-center justify-center text-base-content/60">
+			<i class="bi bi-collection text-6xl mb-4"></i>
+			<p class="text-lg">No song lists yet</p>
+			<p class="text-sm">Create a new list or import one to get started</p>
+		</div>
+	} @else {
+		<div class="overflow-x-auto flex-1">
+			<table class="table table-zebra">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Description</th>
+						<th>Songs</th>
+						<th>Created</th>
+						<th>Modified</th>
+						<th class="w-32">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (list of lists; track list.id) {
+						<tr class="hover cursor-pointer" (click)="viewList(list)">
+							<td class="font-medium">{{ list.name }}</td>
+							<td class="text-base-content/70 max-w-xs truncate">{{ list.description || '-' }}</td>
+							<td>{{ list.entries.length }}</td>
+							<td>{{ formatDate(list.createdAt) }}</td>
+							<td>{{ formatDate(list.modifiedAt) }}</td>
+							<td>
+								<div class="flex gap-1">
+									<button
+										class="btn btn-ghost btn-square btn-sm tooltip"
+										data-tip="Export"
+										(click)="exportList(list, $event)">
+										<i class="bi bi-upload"></i>
+									</button>
+									<button
+										class="btn btn-ghost btn-square btn-sm tooltip text-error"
+										data-tip="Delete"
+										(click)="confirmDelete(list, $event)">
+										<i class="bi bi-trash"></i>
+									</button>
+								</div>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+
+	<!-- Create List Modal -->
+	<dialog #createListModal class="modal">
+		<div class="modal-box bg-base-100 text-base-content">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
+				</button>
+			</form>
+			<h3 class="text-lg font-bold mb-4">Create New Song List</h3>
+			<div class="form-control mb-4">
+				<label class="label">
+					<span class="label-text">Name</span>
+				</label>
+				<input
+					type="text"
+					[formControl]="newListName"
+					class="input input-bordered"
+					placeholder="My Song List"
+					(keydown.enter)="createList()" />
+			</div>
+			<div class="form-control mb-4">
+				<label class="label">
+					<span class="label-text">Description (optional)</span>
+				</label>
+				<textarea
+					[formControl]="newListDescription"
+					class="textarea textarea-bordered"
+					placeholder="A collection of my favorite songs..."
+					rows="2"></textarea>
+			</div>
+			<div class="modal-action">
+				<form method="dialog">
+					<button class="btn btn-ghost">Cancel</button>
+				</form>
+				<button class="btn btn-primary" [disabled]="!newListName.valid" (click)="createList()">Create</button>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+
+	<!-- Import Preview Modal -->
+	<dialog #importPreviewModal class="modal">
+		<div class="modal-box bg-base-100 text-base-content max-w-2xl">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
+				</button>
+			</form>
+			<h3 class="text-lg font-bold mb-4">Import Song List</h3>
+			@if (importedList) {
+				<div class="mb-4">
+					<p class="font-medium">{{ importedList.name }}</p>
+					<p class="text-sm text-base-content/70">{{ importedList.description || 'No description' }}</p>
+					<p class="text-sm text-base-content/60 mt-2">{{ importedList.entries.length }} songs</p>
+				</div>
+				<div class="max-h-64 overflow-y-auto">
+					<table class="table table-xs">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Artist</th>
+								<th>Charter</th>
+							</tr>
+						</thead>
+						<tbody>
+							@for (entry of importedList.entries; track entry.md5) {
+								<tr>
+									<td>{{ entry.cache.name || 'Unknown' }}</td>
+									<td>{{ entry.cache.artist || 'Unknown' }}</td>
+									<td>{{ entry.cache.charter || 'Unknown' }}</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			}
+			<div class="modal-action">
+				<form method="dialog">
+					<button class="btn btn-ghost">Cancel</button>
+				</form>
+				<button class="btn btn-primary" (click)="saveImportedList()">
+					<i class="bi bi-save"></i>
+					Save to My Lists
+				</button>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+
+	<!-- Delete Confirmation Modal -->
+	<dialog #deleteConfirmModal class="modal">
+		<div class="modal-box bg-base-100 text-base-content">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
+				</button>
+			</form>
+			<h3 class="text-lg font-bold mb-4">Delete Song List</h3>
+			@if (listToDelete) {
+				<p>Are you sure you want to delete "{{ listToDelete.name }}"?</p>
+				<p class="text-sm text-base-content/70 mt-2">This action cannot be undone.</p>
+			}
+			<div class="modal-action">
+				<form method="dialog">
+					<button class="btn btn-ghost">Cancel</button>
+				</form>
+				<button class="btn btn-error" (click)="deleteList()">Delete</button>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+</div>

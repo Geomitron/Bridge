@@ -1,8 +1,9 @@
-import { OpenDialogOptions, OpenDialogReturnValue } from 'electron'
+import { OpenDialogOptions, OpenDialogReturnValue, SaveDialogOptions, SaveDialogReturnValue } from 'electron'
 import { UpdateInfo } from 'electron-updater'
 
 import { Settings } from '../Settings.js'
 import { Download, DownloadProgress } from './download.interface.js'
+import { SongList, SongListEntry, SongListExportResult, SongListImportResult, SongListStorage } from './songlist.interface.js'
 import { ThemeColors } from './theme.interface.js'
 import { UpdateProgress } from './update.interface.js'
 
@@ -50,6 +51,27 @@ export interface IpcInvokeEvents {
 		input: string
 		output: ThemeColors | null
 	}
+	// Song list IPC events
+	getSongLists: {
+		input: void
+		output: SongListStorage
+	}
+	exportSongList: {
+		input: { listId: string; filePath: string }
+		output: SongListExportResult
+	}
+	importSongList: {
+		input: string
+		output: SongListImportResult
+	}
+	showSaveDialog: {
+		input: SaveDialogOptions
+		output: SaveDialogReturnValue
+	}
+	createSongList: {
+		input: { name: string; description: string }
+		output: SongList
+	}
 }
 
 export type IpcInvokeHandlers = {
@@ -75,6 +97,12 @@ export interface IpcToMainEmitEvents {
 	showFolder: string
 	showFile: string
 	scanIssues: void
+	// Song list emit events
+	updateSongList: SongList
+	deleteSongList: string
+	addToSongList: { listId: string; entries: SongListEntry[] }
+	removeFromSongList: { listId: string; md5s: string[] }
+	saveImportedSongList: SongList
 }
 
 export type IpcToMainEmitHandlers = {
