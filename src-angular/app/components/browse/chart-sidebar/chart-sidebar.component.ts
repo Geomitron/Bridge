@@ -9,6 +9,7 @@ import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { ChartData } from 'src-shared/interfaces/search.interface'
 import { setlistNames } from 'src-shared/setlist-names'
 import { difficulties, difficultyDisplay, driveLink, hasIssues, instruments, msToRoughTime, removeStyleTags, shortInstrumentDisplay } from 'src-shared/UtilFunctions'
+import { AddToListModalComponent } from '../../songlists/add-to-list-modal/add-to-list-modal.component'
 
 @Component({
 	selector: 'app-chart-sidebar',
@@ -20,6 +21,7 @@ export class ChartSidebarComponent implements OnInit {
 
 	@ViewChild('menu') menu: ElementRef
 	@ViewChild('libraryDirectoryErrorModal') libraryDirectoryErrorModal: ElementRef<HTMLDialogElement>
+	@ViewChild('addToListModal') addToListModal: AddToListModalComponent
 
 	public shortInstrumentDisplay = shortInstrumentDisplay
 	public difficultyDisplay = difficultyDisplay
@@ -291,5 +293,11 @@ export class ChartSidebarComponent implements OnInit {
 				}
 			}
 		})
+	}
+
+	onAddToListClicked() {
+		if (this.selectedChart) {
+			this.addToListModal.open([this.selectedChart])
+		}
 	}
 }

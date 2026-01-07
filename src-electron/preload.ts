@@ -25,6 +25,12 @@ const electronApi: ContextBridgeApi = {
 		isMaximized: getInvoker('isMaximized'),
 		showOpenDialog: getInvoker('showOpenDialog'),
 		getThemeColors: getInvoker('getThemeColors'),
+		// Song list handlers
+		getSongLists: getInvoker('getSongLists'),
+		exportSongList: getInvoker('exportSongList'),
+		importSongList: getInvoker('importSongList'),
+		showSaveDialog: getInvoker('showSaveDialog'),
+		createSongList: getInvoker('createSongList'),
 	},
 	emit: {
 		download: getEmitter('download'),
@@ -41,6 +47,12 @@ const electronApi: ContextBridgeApi = {
 		showFolder: getEmitter('showFolder'),
 		showFile: getEmitter('showFile'),
 		scanIssues: getEmitter('scanIssues'),
+		// Song list handlers
+		updateSongList: getEmitter('updateSongList'),
+		deleteSongList: getEmitter('deleteSongList'),
+		addToSongList: getEmitter('addToSongList'),
+		removeFromSongList: getEmitter('removeFromSongList'),
+		saveImportedSongList: getEmitter('saveImportedSongList'),
 	},
 	on: {
 		errorLog: getListenerAdder('errorLog'),

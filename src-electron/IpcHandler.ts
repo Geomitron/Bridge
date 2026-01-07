@@ -2,6 +2,18 @@ import { IpcInvokeHandlers, IpcToMainEmitHandlers } from '../src-shared/interfac
 import { download } from './ipc/DownloadHandler.ipc.js'
 import { scanIssues } from './ipc/issue-scan/IssueScanHandler.ipc.js'
 import { getSettings, setSettings } from './ipc/SettingsHandler.ipc.js'
+import {
+	addToSongList,
+	createSongList,
+	deleteSongList,
+	exportSongList,
+	getSongLists,
+	importSongList,
+	removeFromSongList,
+	saveImportedSongList,
+	showSaveDialog,
+	updateSongList,
+} from './ipc/SongListHandler.ipc.js'
 import { downloadUpdate, getCurrentVersion, getUpdateAvailable, quitAndInstall, retryUpdate } from './ipc/UpdateHandler.ipc.js'
 import { getPlatform, getThemeColors, isMaximized, maximize, minimize, openUrl, quit, restore, showFile, showFolder, showOpenDialog, toggleDevTools } from './ipc/UtilHandlers.ipc.js'
 
@@ -14,6 +26,12 @@ export function getIpcInvokeHandlers(): IpcInvokeHandlers {
 		isMaximized,
 		showOpenDialog,
 		getThemeColors,
+		// Song list handlers
+		getSongLists,
+		exportSongList,
+		importSongList,
+		showSaveDialog,
+		createSongList,
 	}
 }
 
@@ -33,5 +51,11 @@ export function getIpcToMainEmitHandlers(): IpcToMainEmitHandlers {
 		showFile,
 		showFolder,
 		scanIssues,
+		// Song list handlers
+		updateSongList,
+		deleteSongList,
+		addToSongList,
+		removeFromSongList,
+		saveImportedSongList,
 	}
 }

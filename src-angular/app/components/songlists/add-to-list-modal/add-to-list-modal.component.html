@@ -1,0 +1,96 @@
+<!-- Main Add to List Modal -->
+<dialog #addToListModal class="modal">
+	<div class="modal-box bg-base-100 text-base-content">
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+				<i class="bi bi-x-lg text-lg"></i>
+			</button>
+		</form>
+		<h3 class="text-lg font-bold mb-2">Add to List</h3>
+		<p class="text-sm text-base-content/70 mb-4">{{ chartDescription }}</p>
+
+		@if (lists.length === 0) {
+			<div class="text-center py-8 text-base-content/60">
+				<i class="bi bi-collection text-4xl mb-2"></i>
+				<p>No song lists yet</p>
+				<p class="text-sm">Create your first list to get started</p>
+			</div>
+		} @else {
+			<div class="max-h-64 overflow-y-auto">
+				@for (list of lists; track list.id) {
+					<label class="flex items-center gap-3 p-2 hover:bg-base-200 rounded cursor-pointer">
+						<input
+							type="checkbox"
+							class="checkbox"
+							[checked]="isSelected(list.id)"
+							[indeterminate]="isPartiallyInList(list) && !isSelected(list.id)"
+							(change)="toggleList(list.id)" />
+						<div class="flex-1 min-w-0">
+							<p class="font-medium truncate">{{ list.name }}</p>
+							<p class="text-xs text-base-content/60">{{ list.entries.length }} songs</p>
+						</div>
+					</label>
+				}
+			</div>
+		}
+
+		<div class="divider my-2"></div>
+
+		<button class="btn btn-ghost btn-sm w-full justify-start" (click)="openCreateNewList()">
+			<i class="bi bi-plus-lg"></i>
+			Create new list
+		</button>
+
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn btn-ghost">Cancel</button>
+			</form>
+			<button class="btn btn-primary" (click)="save()">Save</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<!-- Create New List Modal (nested) -->
+<dialog #createNewListModal class="modal">
+	<div class="modal-box bg-base-100 text-base-content">
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+				<i class="bi bi-x-lg text-lg"></i>
+			</button>
+		</form>
+		<h3 class="text-lg font-bold mb-4">Create New List</h3>
+		<div class="form-control mb-4">
+			<label class="label">
+				<span class="label-text">Name</span>
+			</label>
+			<input
+				type="text"
+				[formControl]="newListName"
+				class="input input-bordered"
+				placeholder="My Song List"
+				(keydown.enter)="createNewList()" />
+		</div>
+		<div class="form-control mb-4">
+			<label class="label">
+				<span class="label-text">Description (optional)</span>
+			</label>
+			<textarea
+				[formControl]="newListDescription"
+				class="textarea textarea-bordered"
+				placeholder="A collection of songs..."
+				rows="2"></textarea>
+		</div>
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn btn-ghost">Cancel</button>
+			</form>
+			<button class="btn btn-primary" [disabled]="!newListName.valid" (click)="createNewList()">Create</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>

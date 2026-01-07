@@ -1,0 +1,196 @@
+<div class="p-8 flex flex-col gap-4 h-full">
+	@if (!list) {
+		<div class="flex-1 flex flex-col items-center justify-center text-base-content/60">
+			<i class="bi bi-question-circle text-6xl mb-4"></i>
+			<p class="text-lg">Song list not found</p>
+			<button class="btn btn-primary mt-4" (click)="goBack()">Back to Lists</button>
+		</div>
+	} @else {
+		<!-- Header -->
+		<div class="flex justify-between items-start">
+			<div class="flex items-center gap-4">
+				<button class="btn btn-ghost btn-square" (click)="goBack()">
+					<i class="bi bi-arrow-left text-xl"></i>
+				</button>
+				<div>
+					<h1 class="text-2xl font-bold">{{ list.name }}</h1>
+					<p class="text-base-content/70">{{ list.description || 'No description' }}</p>
+					<p class="text-sm text-base-content/50 mt-1">
+						{{ list.entries.length }} songs | Created {{ formatDate(list.createdAt) }}
+					</p>
+				</div>
+			</div>
+			<div class="flex gap-2">
+				<button class="btn btn-ghost" (click)="openEditModal()">
+					<i class="bi bi-pencil"></i>
+					Edit
+				</button>
+				<button class="btn btn-neutral" (click)="exportList()">
+					<i class="bi bi-upload"></i>
+					Export
+				</button>
+			</div>
+		</div>
+
+		<!-- Actions Bar -->
+		@if (list.entries.length > 0) {
+			<div class="flex justify-between items-center bg-base-200 rounded-lg p-3">
+				<div class="flex items-center gap-4">
+					<label class="label cursor-pointer gap-2">
+						<input
+							type="checkbox"
+							class="checkbox"
+							[checked]="allSelected"
+							[indeterminate]="someSelected"
+							(change)="toggleSelectAll()" />
+						<span class="label-text">Select all</span>
+					</label>
+					@if (selectedEntries.size > 0) {
+						<span class="text-sm text-base-content/70">{{ selectedEntries.size }} selected</span>
+					}
+				</div>
+				<div class="flex gap-2">
+					@if (selectedEntries.size > 0) {
+						<button class="btn btn-error btn-sm" (click)="removeSelected()">
+							<i class="bi bi-trash"></i>
+							Remove Selected
+						</button>
+						<button class="btn btn-primary btn-sm" (click)="downloadSelected()">
+							<i class="bi bi-download"></i>
+							Download Selected
+						</button>
+					} @else {
+						<button class="btn btn-primary btn-sm" (click)="downloadAll()">
+							<i class="bi bi-download"></i>
+							Download All
+						</button>
+					}
+				</div>
+			</div>
+		}
+
+		<!-- Entries Table -->
+		@if (list.entries.length === 0) {
+			<div class="flex-1 flex flex-col items-center justify-center text-base-content/60">
+				<i class="bi bi-music-note-list text-6xl mb-4"></i>
+				<p class="text-lg">This list is empty</p>
+				<p class="text-sm">Add songs from the Browse tab to get started</p>
+			</div>
+		} @else {
+			<div class="overflow-x-auto flex-1">
+				<table class="table table-zebra">
+					<thead>
+						<tr>
+							<th class="w-12"></th>
+							<th>Name</th>
+							<th>Artist</th>
+							<th>Album</th>
+							<th>Charter</th>
+							<th>Added</th>
+							<th class="w-24">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						@for (entry of list.entries; track entry.md5) {
+							<tr class="hover">
+								<td>
+									<input
+										type="checkbox"
+										class="checkbox checkbox-sm"
+										[checked]="isSelected(entry.md5)"
+										(change)="toggleSelection(entry.md5)" />
+								</td>
+								<td class="font-medium">{{ entry.cache.name || 'Unknown' }}</td>
+								<td>{{ entry.cache.artist || 'Unknown' }}</td>
+								<td>{{ entry.cache.album || 'Unknown' }}</td>
+								<td>{{ entry.cache.charter || 'Unknown' }}</td>
+								<td class="text-base-content/70">{{ formatDate(entry.addedAt) }}</td>
+								<td>
+									<div class="flex gap-1">
+										<button
+											class="btn btn-ghost btn-square btn-sm tooltip"
+											data-tip="Download"
+											(click)="downloadEntry(entry)">
+											<i class="bi bi-download"></i>
+										</button>
+										<button
+											class="btn btn-ghost btn-square btn-sm tooltip text-error"
+											data-tip="Remove"
+											(click)="confirmRemove(entry, $event)">
+											<i class="bi bi-trash"></i>
+										</button>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	}
+
+	<!-- Edit List Modal -->
+	<dialog #editListModal class="modal">
+		<div class="modal-box bg-base-100 text-base-content">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
+				</button>
+			</form>
+			<h3 class="text-lg font-bold mb-4">Edit Song List</h3>
+			<div class="form-control mb-4">
+				<label class="label">
+					<span class="label-text">Name</span>
+				</label>
+				<input
+					type="text"
+					[formControl]="editName"
+					class="input input-bordered"
+					(keydown.enter)="saveEdit()" />
+			</div>
+			<div class="form-control mb-4">
+				<label class="label">
+					<span class="label-text">Description</span>
+				</label>
+				<textarea
+					[formControl]="editDescription"
+					class="textarea textarea-bordered"
+					rows="2"></textarea>
+			</div>
+			<div class="modal-action">
+				<form method="dialog">
+					<button class="btn btn-ghost">Cancel</button>
+				</form>
+				<button class="btn btn-primary" [disabled]="!editName.valid" (click)="saveEdit()">Save</button>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+
+	<!-- Remove Confirmation Modal -->
+	<dialog #removeConfirmModal class="modal">
+		<div class="modal-box bg-base-100 text-base-content">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
+				</button>
+			</form>
+			<h3 class="text-lg font-bold mb-4">Remove Song</h3>
+			@if (entryToRemove) {
+				<p>Remove "{{ entryToRemove.cache.name || 'Unknown' }}" from this list?</p>
+				<p class="text-sm text-base-content/70 mt-2">The song won't be deleted from your library.</p>
+			}
+			<div class="modal-action">
+				<form method="dialog">
+					<button class="btn btn-ghost">Cancel</button>
+				</form>
+				<button class="btn btn-error" (click)="removeEntry()">Remove</button>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+</div>
