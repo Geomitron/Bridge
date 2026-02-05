@@ -1,4 +1,4 @@
-import { enableProdMode, LOCALE_ID } from '@angular/core'
+import { enableProdMode, LOCALE_ID, provideZoneChangeDetection } from '@angular/core'
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic'
 
 import { AppModule } from './app/app.module.js'
@@ -11,7 +11,5 @@ if (environment.production) {
 }
 
 platformBrowserDynamic()
-	.bootstrapModule(AppModule, {
-		providers: [{ provide: LOCALE_ID, useValue: document.documentElement.lang || 'en-US' }],
-	})
+	.bootstrapModule(AppModule, { applicationProviders: [provideZoneChangeDetection()], providers: [object Map], })
 	.catch(err => console.error(err))
