@@ -1,0 +1,121 @@
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import angular from 'angular-eslint'
+import preferArrow from 'eslint-plugin-prefer-arrow'
+import importPlugin from 'eslint-plugin-import'
+import prettier from 'eslint-plugin-prettier/recommended'
+
+export default tseslint.config(
+	{
+		ignores: ['*.config.js', '*.config.mjs', 'dist/**', 'node_modules/**', 'src/assets/semantic/**'],
+	},
+	{
+		files: ['**/*.ts'],
+		extends: [
+			eslint.configs.recommended,
+			...tseslint.configs.recommended,
+			...angular.configs.tsRecommended,
+		],
+		languageOptions: {
+			parserOptions: {
+				project: ['tsconfig.json'],
+				sourceType: 'module',
+				createDefaultProgram: true,
+			},
+		},
+		plugins: {
+			'prefer-arrow': preferArrow,
+			'import': importPlugin,
+		},
+		processor: angular.processInlineTemplates,
+		rules: {
+			'import/extensions': ['error', 'ignorePackages'],
+			'semi': 'off',
+			'@typescript-eslint/semi': ['error', 'never'],
+			'@typescript-eslint/consistent-type-definitions': 'error',
+			'@typescript-eslint/dot-notation': 'off',
+			'@typescript-eslint/explicit-member-accessibility': [
+				'off',
+				{
+					accessibility: 'explicit',
+				},
+			],
+			'@typescript-eslint/no-use-before-define': ['error', { typedefs: false, functions: false, classes: false }],
+			'@typescript-eslint/no-shadow': ['off'],
+			'@typescript-eslint/member-ordering': ['error', { default: ['field', 'public-constructor', 'constructor', 'method'] }],
+			'@typescript-eslint/member-delimiter-style': ['error', { multiline: { delimiter: 'none', requireLast: true } }],
+			'@typescript-eslint/no-non-null-assertion': 'off',
+			'@typescript-eslint/no-empty-function': ['error', { allow: ['private-constructors'] }],
+			'brace-style': ['error', '1tbs', { allowSingleLine: true }],
+			'id-blacklist': 'off',
+			'id-match': 'off',
+			'max-len': [
+				'error',
+				{
+					ignorePattern: '^import |^export \\{(.*?)\\}|^\\s*@inject\\(',
+					tabWidth: 2,
+					code: 150,
+				},
+			],
+			'@typescript-eslint/naming-convention': [
+				'error',
+				{
+					selector: 'default',
+					format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+					leadingUnderscore: 'allow',
+				},
+				{
+					selector: ['property', 'parameter'],
+					format: null,
+					filter: {
+						regex: '(filter_single)|(_.*)|(@.*)|(<.*)|(\\+=)',
+						match: true,
+					},
+				},
+			],
+			'no-underscore-dangle': 'off',
+			'@angular-eslint/no-host-metadata-property': 'error',
+			'@angular-eslint/no-inputs-metadata-property': 'error',
+			'@angular-eslint/no-outputs-metadata-property': 'error',
+			'@angular-eslint/use-lifecycle-interface': 'error',
+			'arrow-parens': ['error', 'as-needed'],
+			'comma-dangle': ['error', 'always-multiline'],
+			'prefer-arrow/prefer-arrow-functions': ['error', { allowStandaloneDeclarations: true }],
+			'no-fallthrough': ['error', { commentPattern: 'break[\\s\\w]*omitted' }],
+		},
+	},
+	{
+		files: ['**/*.html'],
+		extends: [
+			...angular.configs.templateRecommended,
+		],
+		rules: {
+			'max-len': ['error', 150],
+		},
+	},
+	{
+		files: ['**/*.html'],
+		extends: [prettier],
+		rules: {
+			'prettier/prettier': [
+				'error',
+				{
+					parser: 'angular',
+					endOfLine: 'auto',
+					printWidth: 150,
+					useTabs: true,
+					singleQuote: true,
+					htmlWhitespaceSensitivity: 'css',
+					bracketSameLine: true,
+				},
+			],
+		},
+	},
+	{
+		files: ['**/*.test.ts', '**/*.spec.ts'],
+		rules: {
+			'no-unused-expressions': 'off',
+			'@typescript-eslint/no-unused-expressions': ['off'],
+		},
+	},
+)

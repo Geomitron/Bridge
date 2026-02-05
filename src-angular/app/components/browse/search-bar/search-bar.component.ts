@@ -11,6 +11,7 @@ import { difficulties, difficultyDisplay, drumsReviewedDisplay, drumTypeDisplay,
 	selector: 'app-search-bar',
 	templateUrl: './search-bar.component.html',
 	standalone: false,
+	host: { class: 'block relative z-10' },
 })
 export class SearchBarComponent implements OnInit, AfterViewInit {
 

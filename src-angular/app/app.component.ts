@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { ChangeDetectorRef, Component } from '@angular/core'
 
 import { SettingsService } from './core/services/settings.service'
 
@@ -12,9 +12,16 @@ export class AppComponent {
 
 	settingsLoaded = false
 
-	constructor(settingsService: SettingsService) {
+	constructor(settingsService: SettingsService, private cdr: ChangeDetectorRef) {
 		// Ensure settings are loaded before rendering the application
-		settingsService.loadSettings().then(() => this.settingsLoaded = true)
+		settingsService.loadSettings()
+			.then(() => {
+				console.log('[DEBUG] Setting settingsLoaded = true')
+				this.settingsLoaded = true
+				this.cdr.detectChanges()
+				console.log('[DEBUG] Change detection triggered, settingsLoaded:', this.settingsLoaded)
+			})
+			.catch(err => console.error('Failed to load settings:', err))
 
 		document.addEventListener('keydown', event => {
 			if (event.ctrlKey && (event.key === '+' || event.key === '-' || event.key === '=' || event.key === '0')) {

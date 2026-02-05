@@ -19,14 +19,20 @@ export class SettingsService {
 	) { }
 
 	async loadSettings() {
+		console.log('[DEBUG] loadSettings() called, invoking getSettings...')
 		this.settings = await window.electron.invoke.getSettings()
+		console.log('[DEBUG] getSettings returned:', this.settings)
 		if (this.settings.customTheme) {
+			console.log('[DEBUG] Setting custom theme colors')
 			setThemeColors(this.settings.customTheme)
 		} else if (!themes.includes(this.settings.theme)) {
+			console.log('[DEBUG] Theme not in themes list, defaulting to dark')
 			this.changeTheme('dark')
 		} else {
+			console.log('[DEBUG] Changing theme to:', this.settings.theme)
 			this.changeTheme(this.settings.theme)
 		}
+		console.log('[DEBUG] loadSettings() completed successfully')
 	}
 
 	private saveSettings() {

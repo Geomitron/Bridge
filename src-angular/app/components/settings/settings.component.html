@@ -80,7 +80,7 @@
 					<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
 					<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
 						<li>
-							<h2 class="menu-title text-neutral-content text-opacity-50">Dark</h2>
+							<h2 class="menu-title text-neutral-content/50">Dark</h2>
 							<ul>
 								<li><a (click)="setTheme('business')">Business</a></li>
 								<li><a (click)="setTheme('dark')">Dark</a></li>
@@ -91,7 +91,7 @@
 							</ul>
 						</li>
 						<li>
-							<h2 class="menu-title text-neutral-content text-opacity-50">Light</h2>
+							<h2 class="menu-title text-neutral-content/50">Light</h2>
 							<ul>
 								<li><a (click)="setTheme('aqua')">Aqua</a></li>
 								<li><a (click)="setTheme('emerald')">Emerald</a></li>
@@ -257,7 +257,7 @@
 					<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying"></i>{{ retryUpdateText }}
 				</button>
 			}
-			<button class="join-item btn btn-outline btn-disabled">{{ currentVersion }}</button>
+			<button class="join-item btn btn-outline" disabled>{{ currentVersion }}</button>
 		</div>
 
 		<div class="tooltip tooltip-left" data-tip="Toggle developer tools">

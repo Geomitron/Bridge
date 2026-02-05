@@ -1,12 +1,12 @@
-<div class="navbar p-0 min-h-0 bg-base-100" style="-webkit-app-region: drag">
-	<div style="-webkit-app-region: no-drag">
-		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/browse">Browse</button>
-		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/library">Library</button>
-		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/video-sync">Video</button>
-		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/art-studio">Art</button>
-		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/lyrics">Lyrics</button>
-		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/tools">Tools</button>
-		<button class="btn btn-ghost rounded-none flex flex-nowrap" routerLinkActive="btn-active" routerLink="/settings">
+<div class="navbar p-0 min-h-8 h-8 bg-base-100 flex-nowrap gap-0" style="-webkit-app-region: drag">
+	<div class="flex flex-nowrap gap-0" style="-webkit-app-region: no-drag">
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/browse">Browse</button>
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/library">Library</button>
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/video-sync">Video</button>
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/art-studio">Art</button>
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/lyrics">Lyrics</button>
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/tools">Tools</button>
+		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8 gap-2" routerLinkActive="btn-active" routerLink="/settings">
 			@if (updateAvailable === 'error') {
 				<i class="bi bi-exclamation-triangle-fill text-warning"></i>
 			}
@@ -17,12 +17,12 @@
 		</button>
 	</div>
 	<div class="flex-1"></div>
-	<div style="-webkit-app-region: no-drag">
-		<button class="btn btn-square btn-ghost rounded-none cursor-default" (click)="minimize()"><i class="bi bi-dash-lg"></i></button>
-		<button class="btn btn-square btn-ghost rounded-none cursor-default" (click)="toggleMaximized()">
+	<div class="flex flex-nowrap gap-0" style="-webkit-app-region: no-drag">
+		<button class="btn btn-square btn-ghost btn-sm rounded-none min-h-8 h-8 w-8 cursor-default" (click)="minimize()"><i class="bi bi-dash-lg"></i></button>
+		<button class="btn btn-square btn-ghost btn-sm rounded-none min-h-8 h-8 w-8 cursor-default" (click)="toggleMaximized()">
 			<i class="bi" [ngClass]="isMaximized ? 'bi-window-stack' : 'bi-window'"></i>
 		</button>
-		<button class="btn btn-square btn-ghost rounded-none hover:bg-red-600/20 cursor-default" (click)="close()">
+		<button class="btn btn-square btn-ghost btn-sm rounded-none min-h-8 h-8 w-8 hover:bg-red-600/20 cursor-default" (click)="close()">
 			<i class="bi bi-x-lg"></i>
 		</button>
 	</div>

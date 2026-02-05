@@ -151,14 +151,14 @@
 				}
 			</div>
 			<!-- Source tabs -->
-			<div class="tabs tabs-boxed mb-3 w-fit">
-				<button class="tab" [class.tab-active]="searchSource === 'youtube'" (click)="searchSource = 'youtube'">
+			<div class="tabs tabs-box mb-3 w-fit" role="tablist">
+				<button class="tab" role="tab" [class.tab-active]="searchSource === 'youtube'" (click)="searchSource = 'youtube'">
 					<i class="bi bi-youtube mr-1"></i> YouTube Search
 				</button>
-				<button class="tab" [class.tab-active]="searchSource === 'url'" (click)="searchSource = 'url'">
+				<button class="tab" role="tab" [class.tab-active]="searchSource === 'url'" (click)="searchSource = 'url'">
 					<i class="bi bi-link-45deg mr-1"></i> Paste URL
 				</button>
-				<button class="tab" [class.tab-active]="searchSource === 'local'" (click)="searchSource = 'local'">
+				<button class="tab" role="tab" [class.tab-active]="searchSource === 'local'" (click)="searchSource = 'local'">
 					<i class="bi bi-folder2-open mr-1"></i> Local File
 				</button>
 			</div>

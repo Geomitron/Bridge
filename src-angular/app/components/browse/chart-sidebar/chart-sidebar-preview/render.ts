@@ -167,7 +167,7 @@ export class ChartPreview {
 			transparent: true,
 			depthTest: false,
 		})
-		const aspectRatio = strikelineTexture.image.width / strikelineTexture.image.height
+		const aspectRatio = (strikelineTexture.image as HTMLImageElement).width / (strikelineTexture.image as HTMLImageElement).height
 		const scale = this.instrumentType === instrumentTypes.sixFret ? 0.141 : 0.19
 		const sprite = new THREE.Sprite(material)
 		if (aspectRatio > 1) {
@@ -546,7 +546,7 @@ class NotesManager {
 			const sprite = new THREE.Sprite(this.noteMaterials.get(note.type)!.get(note.flags)!)
 			noteGroup.add(sprite)
 			sprite.center = new THREE.Vector2(note.type === noteTypes.kick ? 0.62 : 0.5, note.type === noteTypes.kick ? -0.5 : 0)
-			const aspectRatio = sprite.material.map!.image.width / sprite.material.map!.image.height
+			const aspectRatio = (sprite.material.map!.image as HTMLImageElement).width / (sprite.material.map!.image as HTMLImageElement).height
 			sprite.scale.set(scale * aspectRatio, scale, scale)
 			noteGroup.position.x = calculateNoteXOffset(this.instrumentType, note.type)
 			noteGroup.position.y = interpolate(note.msTime, chartCurrentTimeMs, renderEndTimeMs, -1, 1)

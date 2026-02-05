@@ -35,7 +35,7 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 
 	public seekBar: FormControl<number>
 	public volumeBar: FormControl<number>
-	public timestampUpdateInterval: NodeJS.Timer
+	public timestampUpdateInterval: ReturnType<typeof setInterval>
 	public timestampText: string = ''
 
 	constructor(

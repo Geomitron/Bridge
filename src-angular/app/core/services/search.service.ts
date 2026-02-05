@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http'
-import { EventEmitter, Injectable } from '@angular/core'
+import { EventEmitter, Injectable, NgZone } from '@angular/core'
 import { FormControl } from '@angular/forms'
 
 import _ from 'lodash'
@@ -39,6 +39,7 @@ export class SearchService {
 
 	constructor(
 		private http: HttpClient,
+		private ngZone: NgZone,
 	) {
 		this.instrument = new FormControl<Instrument>(
 			(localStorage.getItem('instrument') === 'null' ? null : localStorage.getItem('instrument')) as Instrument
@@ -82,7 +83,13 @@ export class SearchService {
 			this.availableIcons = result.map(r => r.name)
 		})
 
-		this.search().subscribe()
+		// Ensure initial search runs inside Angular's zone for proper change detection
+		// Use setTimeout to defer until after the component tree is initialized
+		this.ngZone.run(() => {
+			setTimeout(() => {
+				this.search().subscribe()
+			}, 0)
+		})
 	}
 
 	get areMorePages() { return this.songsResponse?.page && this.groupedSongs.length === this.songsResponse.page * resultsPerPage }
@@ -126,7 +133,9 @@ export class SearchService {
 					return timer(2000).pipe(mergeMap(() => caught))
 				}
 			}),
-			tap(response => {
+		tap(response => {
+			// Ensure response handling runs inside Angular's zone for change detection
+			this.ngZone.run(() => {
 				this.searchLoading = false
 
 				if (!nextPage) {
@@ -154,6 +163,7 @@ export class SearchService {
 					this.newSearch.emit(response)
 				}
 			})
+		})
 		)
 	}
 
@@ -184,7 +194,9 @@ export class SearchService {
 					return timer(2000).pipe(mergeMap(() => caught))
 				}
 			}),
-			tap(response => {
+		tap(response => {
+			// Ensure response handling runs inside Angular's zone for change detection
+			this.ngZone.run(() => {
 				this.searchLoading = false
 
 				if (!nextPage) {
@@ -213,6 +225,7 @@ export class SearchService {
 					this.newSearch.emit(response)
 				}
 			})
+		})
 		)
 	}
 
