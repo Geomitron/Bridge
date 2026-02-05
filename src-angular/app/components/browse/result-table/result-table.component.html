@@ -9,31 +9,70 @@
 					<input type="checkbox" class="checkbox" [(ngModel)]="allSelected" />
 				</th>
 				<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('name')">
-					Name <i *ngIf="sortColumn === 'name'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					Name
+					@if (sortColumn === 'name') {
+						<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+					}
 				</th>
-				<th *ngIf="hasColumn('artist')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
-					Artist
-					<i *ngIf="sortColumn === 'artist'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('album')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
-					Album <i *ngIf="sortColumn === 'album'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('genre')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
-					Genre <i *ngIf="sortColumn === 'genre'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('year')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
-					Year <i *ngIf="sortColumn === 'year'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('charter')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('charter')">
-					Charter <i *ngIf="sortColumn === 'charter'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('length')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('length')">
-					Length (min) <i *ngIf="sortColumn === 'length'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
-				<th *ngIf="hasColumn('difficulty')" [ngClass]="sortDirection" class="cursor-pointer">Difficulty</th>
-				<th *ngIf="hasColumn('uploaded')" [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('modifiedTime')">
-					Upload Date <i *ngIf="sortColumn === 'modifiedTime'" class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
-				</th>
+				@if (hasColumn('artist')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('artist')">
+						Artist
+						@if (sortColumn === 'artist') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
+				@if (hasColumn('album')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('album')">
+						Album
+						@if (sortColumn === 'album') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
+				@if (hasColumn('genre')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('genre')">
+						Genre
+						@if (sortColumn === 'genre') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
+				@if (hasColumn('year')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('year')">
+						Year
+						@if (sortColumn === 'year') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
+				@if (hasColumn('charter')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('charter')">
+						Charter
+						@if (sortColumn === 'charter') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
+				@if (hasColumn('length')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('length')">
+						Length (min)
+						@if (sortColumn === 'length') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
+				@if (hasColumn('difficulty')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer">Difficulty</th>
+				}
+				@if (hasColumn('uploaded')) {
+					<th [ngClass]="sortDirection" class="cursor-pointer" (click)="onColClicked('modifiedTime')">
+						Upload Date
+						@if (sortColumn === 'modifiedTime') {
+							<i class="bi bi-caret-{{ sortDirection === 'asc' ? 'down' : 'up' }}-fill"></i>
+						}
+					</th>
+				}
 			</tr>
 		</thead>
 		<tbody>

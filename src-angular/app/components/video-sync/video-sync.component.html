@@ -3,9 +3,9 @@
 	<div class="flex justify-between items-center mb-4">
 		<div class="flex items-baseline gap-3">
 			<h2 class="text-xl font-semibold">Video Sync</h2>
-			<span class="text-sm text-base-content/60" *ngIf="filteredCharts.length > 0">
-				{{ filteredCharts.length }} of {{ chartsMissingVideo.length }} charts
-			</span>
+			@if (filteredCharts.length > 0) {
+				<span class="text-sm text-base-content/60"> {{ filteredCharts.length }} of {{ chartsMissingVideo.length }} charts </span>
+			}
 		</div>
 		<div class="flex gap-2">
 			<button class="btn btn-sm btn-ghost" (click)="refreshTools()" [disabled]="checkingTools">
@@ -20,264 +20,306 @@
 	</div>
 
 	<!-- Tool Status Warning -->
-	<div class="alert alert-warning mb-4" *ngIf="toolsAvailable && (!toolsAvailable.ytDlp || !toolsAvailable.ffmpeg)">
-		<i class="bi bi-exclamation-triangle"></i>
-		<div class="flex-1">
-			<div class="font-semibold">Required tools not found</div>
-			<div class="text-sm">
-				<span *ngIf="!toolsAvailable.ytDlp">
-					yt-dlp is required for downloading.
-					<a class="link" (click)="openYtDlpInstall()">Install yt-dlp</a>
-				</span>
-				<span *ngIf="!toolsAvailable.ytDlp && !toolsAvailable.ffmpeg"> | </span>
-				<span *ngIf="!toolsAvailable.ffmpeg">
-					ffmpeg is required for video processing.
-					<a class="link" (click)="openFfmpegInstall()">Install ffmpeg</a>
-				</span>
+	@if (toolsAvailable && (!toolsAvailable.ytDlp || !toolsAvailable.ffmpeg)) {
+		<div class="alert alert-warning mb-4">
+			<i class="bi bi-exclamation-triangle"></i>
+			<div class="flex-1">
+				<div class="font-semibold">Required tools not found</div>
+				<div class="text-sm">
+					@if (!toolsAvailable.ytDlp) {
+						<span>
+							yt-dlp is required for downloading.
+							<a class="link" (click)="openYtDlpInstall()">Install yt-dlp</a>
+						</span>
+					}
+					@if (!toolsAvailable.ytDlp && !toolsAvailable.ffmpeg) {
+						<span> | </span>
+					}
+					@if (!toolsAvailable.ffmpeg) {
+						<span>
+							ffmpeg is required for video processing.
+							<a class="link" (click)="openFfmpegInstall()">Install ffmpeg</a>
+						</span>
+					}
+				</div>
 			</div>
 		</div>
-	</div>
+	}
 
 	<!-- Tool Status OK -->
-	<div class="alert alert-success mb-3" *ngIf="toolsAvailable?.ytDlp && toolsAvailable?.ffmpeg">
-		<i class="bi bi-check-circle"></i>
-		<span>yt-dlp and ffmpeg are installed and ready</span>
-	</div>
+	@if (toolsAvailable?.ytDlp && toolsAvailable?.ffmpeg) {
+		<div class="alert alert-success mb-3">
+			<i class="bi bi-check-circle"></i>
+			<span>yt-dlp and ffmpeg are installed and ready</span>
+		</div>
+	}
 
 	<!-- Search and Filter Bar (List View) -->
-	<div class="flex gap-2 mb-3 items-center flex-wrap" *ngIf="viewMode === 'list' && chartsMissingVideo.length > 0">
-		<div class="join">
-			<input
-				type="text"
-				placeholder="Search artist or song..."
-				class="input input-sm input-bordered join-item w-48"
-				[(ngModel)]="filterQuery"
-				(input)="applyFilter()" />
-			<button class="btn btn-sm btn-ghost join-item" *ngIf="filterQuery" (click)="filterQuery = ''; applyFilter()">
-				<i class="bi bi-x"></i>
-			</button>
-		</div>
-
-		<select class="select select-sm select-bordered w-40" [(ngModel)]="filterArtist" (change)="applyFilter()">
-			<option value="">All Artists</option>
-			<option *ngFor="let artist of artistOptions" [value]="artist">{{ artist }}</option>
-		</select>
-
-		<select class="select select-sm select-bordered w-32" [(ngModel)]="sortField" (change)="applyFilter()">
-			<option value="artist">Sort: Artist</option>
-			<option value="name">Sort: Song</option>
-		</select>
-
-		<button class="btn btn-sm btn-ghost" (click)="toggleSortDirection()">
-			<i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'" [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
-		</button>
-
-		<button class="btn btn-sm btn-ghost" *ngIf="filterQuery || filterArtist" (click)="clearFilters()"><i class="bi bi-x-circle"></i> Clear</button>
-	</div>
-
-	<!-- List View -->
-	<div
-		class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
-		*ngIf="viewMode === 'list'">
-		<!-- Empty state -->
-		<div class="flex flex-col items-center justify-center h-full" *ngIf="chartsMissingVideo.length === 0 && !loadingCharts">
-			<i class="bi bi-camera-video text-6xl text-base-content/20 mb-4"></i>
-			<h3 class="text-lg font-semibold mb-2">All Charts Have Videos!</h3>
-			<p class="text-base-content/60 text-center max-w-md">Every chart in your library already has a background video. Nice!</p>
-		</div>
-
-		<!-- Loading -->
-		<div class="flex items-center justify-center h-full" *ngIf="loadingCharts">
-			<span class="loading loading-spinner loading-lg"></span>
-		</div>
-
-		<!-- No filter results -->
-		<div
-			class="flex flex-col items-center justify-center h-full"
-			*ngIf="chartsMissingVideo.length > 0 && filteredCharts.length === 0 && !loadingCharts">
-			<i class="bi bi-search text-4xl text-base-content/20 mb-4"></i>
-			<h3 class="text-lg font-semibold mb-2">No Matches</h3>
-			<p class="text-base-content/60 mb-4">No charts match your filter criteria.</p>
-			<button class="btn btn-sm btn-ghost" (click)="clearFilters()">Clear Filters</button>
-		</div>
-
-		<!-- Chart list -->
-		<div class="space-y-2" *ngIf="filteredCharts.length > 0">
-			<div *ngFor="let chart of filteredCharts" class="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300">
-				<div class="flex-1 min-w-0 cursor-pointer" (click)="selectChart(chart)">
-					<div class="font-medium truncate">{{ chart.chartName }}</div>
-					<div class="text-sm text-base-content/60 truncate">{{ chart.chartArtist }}</div>
-				</div>
-				<div class="text-sm text-base-content/50" *ngIf="chart.songLength">
-					{{ formatDuration(chart.songLength / 1000) }}
-				</div>
-				<button class="btn btn-sm btn-primary" (click)="selectChart(chart)"><i class="bi bi-search"></i> Find Video</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- Search View -->
-	<div class="flex-1 min-h-0 flex flex-col" *ngIf="viewMode === 'search'">
-		<!-- Back button and chart info -->
-		<div class="flex items-center gap-4 mb-4">
-			<button class="btn btn-sm btn-ghost" (click)="goBackToList()"><i class="bi bi-arrow-left"></i> Back</button>
-			<div class="flex-1" *ngIf="selectedChart">
-				<div class="font-medium">{{ selectedChart.chartName }}</div>
-				<div class="text-sm text-base-content/60">{{ selectedChart.chartArtist }}</div>
-			</div>
-		</div>
-
-		<!-- Source tabs -->
-		<div class="tabs tabs-boxed mb-3 w-fit">
-			<button class="tab" [class.tab-active]="searchSource === 'youtube'" (click)="searchSource = 'youtube'">
-				<i class="bi bi-youtube mr-1"></i> YouTube Search
-			</button>
-			<button class="tab" [class.tab-active]="searchSource === 'url'" (click)="searchSource = 'url'">
-				<i class="bi bi-link-45deg mr-1"></i> Paste URL
-			</button>
-			<button class="tab" [class.tab-active]="searchSource === 'local'" (click)="searchSource = 'local'">
-				<i class="bi bi-folder2-open mr-1"></i> Local File
-			</button>
-		</div>
-
-		<!-- Search bar (for YouTube) -->
-		<div class="join w-full mb-4" *ngIf="searchSource === 'youtube'">
-			<input
-				type="text"
-				class="input input-bordered join-item flex-1"
-				placeholder="Search YouTube..."
-				[(ngModel)]="searchQuery"
-				(keyup.enter)="search()"
-				[disabled]="isSearching || isDownloading" />
-			<button class="btn btn-primary join-item" (click)="search()" [disabled]="isSearching || isDownloading || !searchQuery.trim()">
-				<i class="bi bi-search" *ngIf="!isSearching"></i>
-				<span class="loading loading-spinner loading-sm" *ngIf="isSearching"></span>
-				Search
-			</button>
-		</div>
-
-		<!-- URL paste input -->
-		<div class="mb-4" *ngIf="searchSource === 'url'">
-			<div class="text-sm text-base-content/60 mb-2">
-				Paste a video URL from YouTube, Vimeo, Dailymotion, Archive.org, or any of 1000+ supported sites
-			</div>
-			<div class="join w-full">
+	@if (viewMode === 'list' && chartsMissingVideo.length > 0) {
+		<div class="flex gap-2 mb-3 items-center flex-wrap">
+			<div class="join">
 				<input
 					type="text"
-					class="input input-bordered join-item flex-1"
-					placeholder="https://www.youtube.com/watch?v=... or any video URL"
-					[(ngModel)]="pasteUrl"
-					(keyup.enter)="downloadFromUrl()"
-					[disabled]="isDownloading" />
-				<button class="btn btn-primary join-item" (click)="downloadFromUrl()" [disabled]="isDownloading || !pasteUrl.trim()">
-					<i class="bi bi-download" *ngIf="!isDownloading"></i>
-					<span class="loading loading-spinner loading-sm" *ngIf="isDownloading"></span>
-					Download
-				</button>
+					placeholder="Search artist or song..."
+					class="input input-sm input-bordered join-item w-48"
+					[(ngModel)]="filterQuery"
+					(input)="applyFilter()" />
+				@if (filterQuery) {
+					<button class="btn btn-sm btn-ghost join-item" (click)="filterQuery = ''; applyFilter()">
+						<i class="bi bi-x"></i>
+					</button>
+				}
 			</div>
-		</div>
-
-		<!-- Local file import -->
-		<div class="mb-4" *ngIf="searchSource === 'local'">
-			<div class="text-sm text-base-content/60 mb-2">Select a video file from your computer to copy into the chart folder</div>
-			<div class="flex gap-2">
-				<button class="btn btn-primary" (click)="selectLocalFile()" [disabled]="isDownloading">
-					<i class="bi bi-folder2-open"></i>
-					Choose Video File
-				</button>
-				<span class="text-sm text-base-content/60 self-center" *ngIf="selectedLocalFile">
-					{{ selectedLocalFile }}
-				</span>
-			</div>
-			<div class="mt-3" *ngIf="selectedLocalFile">
-				<button class="btn btn-success" (click)="importLocalFile()" [disabled]="isDownloading">
-					<i class="bi bi-check-lg"></i>
-					Import to Chart Folder
-				</button>
-			</div>
-		</div>
-
-		<!-- Search error -->
-		<div class="alert alert-error mb-4" *ngIf="searchError">
-			<i class="bi bi-exclamation-circle"></i>
-			<span>{{ searchError }}</span>
-		</div>
-
-		<!-- Download progress -->
-		<div class="mb-4" *ngIf="downloadProgress && isDownloading">
-			<div class="flex justify-between text-sm mb-1">
-				<span>{{ downloadProgress.message }}</span>
-				<span>{{ downloadProgress.percent | number: '1.0-0' }}%</span>
-			</div>
-			<progress class="progress progress-primary w-full" [value]="downloadProgress.percent" max="100"></progress>
-			<button class="btn btn-sm btn-ghost mt-2" (click)="cancelDownload()"><i class="bi bi-x"></i> Cancel</button>
-		</div>
-
-		<!-- Download error -->
-		<div class="alert alert-error mb-4" *ngIf="downloadError">
-			<i class="bi bi-exclamation-circle"></i>
-			<div class="flex-1">
-				<div class="font-semibold">Download Failed</div>
-				<div class="text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">{{ downloadError }}</div>
-			</div>
-			<button class="btn btn-sm btn-ghost" (click)="downloadError = null">
-				<i class="bi bi-x"></i>
+			<select class="select select-sm select-bordered w-40" [(ngModel)]="filterArtist" (change)="applyFilter()">
+				<option value="">All Artists</option>
+				@for (artist of artistOptions; track artist) {
+					<option [value]="artist">{{ artist }}</option>
+				}
+			</select>
+			<select class="select select-sm select-bordered w-32" [(ngModel)]="sortField" (change)="applyFilter()">
+				<option value="artist">Sort: Artist</option>
+				<option value="name">Sort: Song</option>
+			</select>
+			<button class="btn btn-sm btn-ghost" (click)="toggleSortDirection()">
+				<i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'" [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
 			</button>
+			@if (filterQuery || filterArtist) {
+				<button class="btn btn-sm btn-ghost" (click)="clearFilters()"><i class="bi bi-x-circle"></i> Clear</button>
+			}
 		</div>
+	}
 
-		<!-- Search results -->
+	<!-- List View -->
+	@if (viewMode === 'list') {
 		<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
-			<div class="space-y-2">
-				<div
-					*ngFor="let video of searchResults"
-					class="flex gap-3 p-3 rounded-lg cursor-pointer transition-colors"
-					[class.bg-base-200]="selectedVideo?.videoId !== video.videoId"
-					[class.bg-primary]="selectedVideo?.videoId === video.videoId"
-					[class.hover:bg-base-300]="selectedVideo?.videoId !== video.videoId"
-					(click)="selectVideo(video)">
-					<!-- Thumbnail -->
-					<img [src]="video.thumbnailUrl" class="w-32 h-20 object-cover rounded" alt="Video thumbnail" />
-
-					<!-- Info -->
-					<div class="flex-1 min-w-0">
-						<div class="font-medium line-clamp-2">{{ video.title }}</div>
-						<div class="text-sm text-base-content/60">{{ video.channel }}</div>
-						<div class="flex gap-3 text-sm text-base-content/50 mt-1">
-							<span><i class="bi bi-clock"></i> {{ video.duration }}</span>
-							<span *ngIf="video.viewCount"> <i class="bi bi-eye"></i> {{ video.viewCount | number }} </span>
+			<!-- Empty state -->
+			@if (chartsMissingVideo.length === 0 && !loadingCharts) {
+				<div class="flex flex-col items-center justify-center h-full">
+					<i class="bi bi-camera-video text-6xl text-base-content/20 mb-4"></i>
+					<h3 class="text-lg font-semibold mb-2">All Charts Have Videos!</h3>
+					<p class="text-base-content/60 text-center max-w-md">Every chart in your library already has a background video. Nice!</p>
+				</div>
+			}
+			<!-- Loading -->
+			@if (loadingCharts) {
+				<div class="flex items-center justify-center h-full">
+					<span class="loading loading-spinner loading-lg"></span>
+				</div>
+			}
+			<!-- No filter results -->
+			@if (chartsMissingVideo.length > 0 && filteredCharts.length === 0 && !loadingCharts) {
+				<div class="flex flex-col items-center justify-center h-full">
+					<i class="bi bi-search text-4xl text-base-content/20 mb-4"></i>
+					<h3 class="text-lg font-semibold mb-2">No Matches</h3>
+					<p class="text-base-content/60 mb-4">No charts match your filter criteria.</p>
+					<button class="btn btn-sm btn-ghost" (click)="clearFilters()">Clear Filters</button>
+				</div>
+			}
+			<!-- Chart list -->
+			@if (filteredCharts.length > 0) {
+				<div class="space-y-2">
+					@for (chart of filteredCharts; track chart) {
+						<div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300">
+							<div class="flex-1 min-w-0 cursor-pointer" (click)="selectChart(chart)">
+								<div class="font-medium truncate">{{ chart.chartName }}</div>
+								<div class="text-sm text-base-content/60 truncate">{{ chart.chartArtist }}</div>
+							</div>
+							@if (chart.songLength) {
+								<div class="text-sm text-base-content/50">
+									{{ formatDuration(chart.songLength / 1000) }}
+								</div>
+							}
+							<button class="btn btn-sm btn-primary" (click)="selectChart(chart)"><i class="bi bi-search"></i> Find Video</button>
 						</div>
-					</div>
+					}
+				</div>
+			}
+		</div>
+	}
 
-					<!-- Action buttons -->
-					<div class="flex flex-col gap-1 items-center justify-center">
-						<button class="btn btn-sm btn-ghost" (click)="$event.stopPropagation(); previewVideo(video)" title="Preview on YouTube">
-							<i class="bi bi-youtube text-red-500"></i>
-						</button>
-						<button
-							class="btn btn-sm"
-							[class.btn-primary]="selectedVideo?.videoId === video.videoId"
-							[class.btn-ghost]="selectedVideo?.videoId !== video.videoId"
-							(click)="$event.stopPropagation(); selectVideo(video); downloadVideo()"
-							[disabled]="isDownloading || !toolsAvailable?.ytDlp"
-							title="Download">
-							<i class="bi bi-download"></i>
+	<!-- Search View -->
+	@if (viewMode === 'search') {
+		<div class="flex-1 min-h-0 flex flex-col">
+			<!-- Back button and chart info -->
+			<div class="flex items-center gap-4 mb-4">
+				<button class="btn btn-sm btn-ghost" (click)="goBackToList()"><i class="bi bi-arrow-left"></i> Back</button>
+				@if (selectedChart) {
+					<div class="flex-1">
+						<div class="font-medium">{{ selectedChart.chartName }}</div>
+						<div class="text-sm text-base-content/60">{{ selectedChart.chartArtist }}</div>
+					</div>
+				}
+			</div>
+			<!-- Source tabs -->
+			<div class="tabs tabs-boxed mb-3 w-fit">
+				<button class="tab" [class.tab-active]="searchSource === 'youtube'" (click)="searchSource = 'youtube'">
+					<i class="bi bi-youtube mr-1"></i> YouTube Search
+				</button>
+				<button class="tab" [class.tab-active]="searchSource === 'url'" (click)="searchSource = 'url'">
+					<i class="bi bi-link-45deg mr-1"></i> Paste URL
+				</button>
+				<button class="tab" [class.tab-active]="searchSource === 'local'" (click)="searchSource = 'local'">
+					<i class="bi bi-folder2-open mr-1"></i> Local File
+				</button>
+			</div>
+			<!-- Search bar (for YouTube) -->
+			@if (searchSource === 'youtube') {
+				<div class="join w-full mb-4">
+					<input
+						type="text"
+						class="input input-bordered join-item flex-1"
+						placeholder="Search YouTube..."
+						[(ngModel)]="searchQuery"
+						(keyup.enter)="search()"
+						[disabled]="isSearching || isDownloading" />
+					<button class="btn btn-primary join-item" (click)="search()" [disabled]="isSearching || isDownloading || !searchQuery.trim()">
+						@if (!isSearching) {
+							<i class="bi bi-search"></i>
+						}
+						@if (isSearching) {
+							<span class="loading loading-spinner loading-sm"></span>
+						}
+						Search
+					</button>
+				</div>
+			}
+			<!-- URL paste input -->
+			@if (searchSource === 'url') {
+				<div class="mb-4">
+					<div class="text-sm text-base-content/60 mb-2">
+						Paste a video URL from YouTube, Vimeo, Dailymotion, Archive.org, or any of 1000+ supported sites
+					</div>
+					<div class="join w-full">
+						<input
+							type="text"
+							class="input input-bordered join-item flex-1"
+							placeholder="https://www.youtube.com/watch?v=... or any video URL"
+							[(ngModel)]="pasteUrl"
+							(keyup.enter)="downloadFromUrl()"
+							[disabled]="isDownloading" />
+						<button class="btn btn-primary join-item" (click)="downloadFromUrl()" [disabled]="isDownloading || !pasteUrl.trim()">
+							@if (!isDownloading) {
+								<i class="bi bi-download"></i>
+							}
+							@if (isDownloading) {
+								<span class="loading loading-spinner loading-sm"></span>
+							}
+							Download
 						</button>
 					</div>
 				</div>
-
-				<!-- No results -->
-				<div class="text-center text-base-content/50 py-8" *ngIf="searchResults.length === 0 && !isSearching && searchQuery">
-					No videos found. Try a different search query.
+			}
+			<!-- Local file import -->
+			@if (searchSource === 'local') {
+				<div class="mb-4">
+					<div class="text-sm text-base-content/60 mb-2">Select a video file from your computer to copy into the chart folder</div>
+					<div class="flex gap-2">
+						<button class="btn btn-primary" (click)="selectLocalFile()" [disabled]="isDownloading">
+							<i class="bi bi-folder2-open"></i>
+							Choose Video File
+						</button>
+						@if (selectedLocalFile) {
+							<span class="text-sm text-base-content/60 self-center">
+								{{ selectedLocalFile }}
+							</span>
+						}
+					</div>
+					@if (selectedLocalFile) {
+						<div class="mt-3">
+							<button class="btn btn-success" (click)="importLocalFile()" [disabled]="isDownloading">
+								<i class="bi bi-check-lg"></i>
+								Import to Chart Folder
+							</button>
+						</div>
+					}
+				</div>
+			}
+			<!-- Search error -->
+			@if (searchError) {
+				<div class="alert alert-error mb-4">
+					<i class="bi bi-exclamation-circle"></i>
+					<span>{{ searchError }}</span>
+				</div>
+			}
+			<!-- Download progress -->
+			@if (downloadProgress && isDownloading) {
+				<div class="mb-4">
+					<div class="flex justify-between text-sm mb-1">
+						<span>{{ downloadProgress.message }}</span>
+						<span>{{ downloadProgress.percent | number: '1.0-0' }}%</span>
+					</div>
+					<progress class="progress progress-primary w-full" [value]="downloadProgress.percent" max="100"></progress>
+					<button class="btn btn-sm btn-ghost mt-2" (click)="cancelDownload()"><i class="bi bi-x"></i> Cancel</button>
+				</div>
+			}
+			<!-- Download error -->
+			@if (downloadError) {
+				<div class="alert alert-error mb-4">
+					<i class="bi bi-exclamation-circle"></i>
+					<div class="flex-1">
+						<div class="font-semibold">Download Failed</div>
+						<div class="text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">{{ downloadError }}</div>
+					</div>
+					<button class="btn btn-sm btn-ghost" (click)="downloadError = null">
+						<i class="bi bi-x"></i>
+					</button>
+				</div>
+			}
+			<!-- Search results -->
+			<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+				<div class="space-y-2">
+					@for (video of searchResults; track video) {
+						<div
+							class="flex gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+							[class.bg-base-200]="selectedVideo?.videoId !== video.videoId"
+							[class.bg-primary]="selectedVideo?.videoId === video.videoId"
+							[class.hover:bg-base-300]="selectedVideo?.videoId !== video.videoId"
+							(click)="selectVideo(video)">
+							<!-- Thumbnail -->
+							<img [src]="video.thumbnailUrl" class="w-32 h-20 object-cover rounded" alt="Video thumbnail" />
+							<!-- Info -->
+							<div class="flex-1 min-w-0">
+								<div class="font-medium line-clamp-2">{{ video.title }}</div>
+								<div class="text-sm text-base-content/60">{{ video.channel }}</div>
+								<div class="flex gap-3 text-sm text-base-content/50 mt-1">
+									<span><i class="bi bi-clock"></i> {{ video.duration }}</span>
+									@if (video.viewCount) {
+										<span> <i class="bi bi-eye"></i> {{ video.viewCount | number }} </span>
+									}
+								</div>
+							</div>
+							<!-- Action buttons -->
+							<div class="flex flex-col gap-1 items-center justify-center">
+								<button class="btn btn-sm btn-ghost" (click)="$event.stopPropagation(); previewVideo(video)" title="Preview on YouTube">
+									<i class="bi bi-youtube text-red-500"></i>
+								</button>
+								<button
+									class="btn btn-sm"
+									[class.btn-primary]="selectedVideo?.videoId === video.videoId"
+									[class.btn-ghost]="selectedVideo?.videoId !== video.videoId"
+									(click)="$event.stopPropagation(); selectVideo(video); downloadVideo()"
+									[disabled]="isDownloading || !toolsAvailable?.ytDlp"
+									title="Download">
+									<i class="bi bi-download"></i>
+								</button>
+							</div>
+						</div>
+					}
+					<!-- No results -->
+					@if (searchResults.length === 0 && !isSearching && searchQuery) {
+						<div class="text-center text-base-content/50 py-8">No videos found. Try a different search query.</div>
+					}
 				</div>
 			</div>
+			<!-- Selected video download button -->
+			@if (selectedVideo && !isDownloading) {
+				<div class="mt-4 flex justify-end">
+					<button class="btn btn-primary" (click)="downloadVideo()" [disabled]="!toolsAvailable?.ytDlp">
+						<i class="bi bi-download"></i>
+						Download "{{ selectedVideo.title | slice: 0 : 40 }}{{ selectedVideo.title.length > 40 ? '...' : '' }}"
+					</button>
+				</div>
+			}
 		</div>
-
-		<!-- Selected video download button -->
-		<div class="mt-4 flex justify-end" *ngIf="selectedVideo && !isDownloading">
-			<button class="btn btn-primary" (click)="downloadVideo()" [disabled]="!toolsAvailable?.ytDlp">
-				<i class="bi bi-download"></i>
-				Download "{{ selectedVideo.title | slice: 0 : 40 }}{{ selectedVideo.title.length > 40 ? '...' : '' }}"
-			</button>
-		</div>
-	</div>
+	}
 </div>

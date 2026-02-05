@@ -7,9 +7,13 @@
 		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/lyrics">Lyrics</button>
 		<button class="btn btn-ghost rounded-none" routerLinkActive="btn-active" routerLink="/tools">Tools</button>
 		<button class="btn btn-ghost rounded-none flex flex-nowrap" routerLinkActive="btn-active" routerLink="/settings">
-			<i *ngIf="updateAvailable === 'error'" class="bi bi-exclamation-triangle-fill text-warning"></i>
+			@if (updateAvailable === 'error') {
+				<i class="bi bi-exclamation-triangle-fill text-warning"></i>
+			}
 			Settings
-			<div *ngIf="updateAvailable === 'yes'" class="badge badge-accent badge-sm">Update Available</div>
+			@if (updateAvailable === 'yes') {
+				<div class="badge badge-accent badge-sm">Update Available</div>
+			}
 		</button>
 	</div>
 	<div class="flex-1"></div>

@@ -49,49 +49,60 @@
 										</div>
 									}
 								</div>
-								<span *ngIf="reportOption.invalid && reportOption.touched" class="text-error">Please select an option.</span>
-								<div *ngIf="!isFalseReportOption()" class="form-control">
-									<div class="label">
-										<span class="label-text">More details <span class="text-error">*</span></span>
-									</div>
-									<textarea
-										required
-										class="textarea textarea-bordered h-24"
-										[class.border-error]="reportExtraInfo.invalid && reportExtraInfo.touched"
-										placeholder="Please be specific. Vague reports may be ignored if the problem is not obvious."
-										formControlName="reportExtraInfo">
-									</textarea>
-									<span *ngIf="reportExtraInfo.invalid && reportExtraInfo.touched" class="text-error">
-										@if (reportExtraInfo.value.length === 0) {
-											Please provide more details.
-										} @else {
-											Reports without a specific explanation will be ignored.
-										}
-									</span>
-								</div>
-							</form>
-							<span *ngIf="isFalseReportOption()" class="text-lg text-warning text-wrap">
-								@if (reportOption.value === 'No notes / chart ends immediately') {
-									This is not a problem with the chart! To fix this, please update Clone Hero to the latest version. You can get the latest version at
-									<a class="link" (click)="openUrl('https://clonehero.net')">clonehero.net</a>. (If that's not the problem, double check that the
-									chart actually has the instrument that you're trying to play)
-								} @else if (reportOption.value === "Download doesn't work") {
-									Please click the progress bar in the lower-right of the program to see the error message. If you need help getting it to work,
-									please ask in the <a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
-								} @else if (reportOption.value === "Doesn't appear in Clone Hero") {
-									This is not a problem with the chart! Here are the most common reasons for this:
-									<ul class="list-disc pl-5">
-										<li>.sng files will not work with the latest CH version. They only work on the test build for the next version.</li>
-										<li>Your chart library directory is not set as a song path in CH.</li>
-										<li>You need to rescan songs in CH's settings menu.</li>
-									</ul>
-									If you're still having issues, please ask in the
-									<a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
+								@if (reportOption.invalid && reportOption.touched) {
+									<span class="text-error">Please select an option.</span>
 								}
-							</span>
-							<div *ngIf="!isFalseReportOption()" class="form-control flex-row justify-end">
-								<button class="btn btn-primary" (click)="report()">Submit</button>
-							</div>
+								@if (!isFalseReportOption()) {
+									<div class="form-control">
+										<div class="label">
+											<span class="label-text">More details <span class="text-error">*</span></span>
+										</div>
+										<textarea
+											required
+											class="textarea textarea-bordered h-24"
+											[class.border-error]="reportExtraInfo.invalid && reportExtraInfo.touched"
+											placeholder="Please be specific. Vague reports may be ignored if the problem is not obvious."
+											formControlName="reportExtraInfo">
+										</textarea>
+										@if (reportExtraInfo.invalid && reportExtraInfo.touched) {
+											<span class="text-error">
+												@if (reportExtraInfo.value.length === 0) {
+													Please provide more details.
+												} @else {
+													Reports without a specific explanation will be ignored.
+												}
+											</span>
+										}
+									</div>
+								}
+							</form>
+							@if (isFalseReportOption()) {
+								<span class="text-lg text-warning text-wrap">
+									@if (reportOption.value === 'No notes / chart ends immediately') {
+										This is not a problem with the chart! To fix this, please update Clone Hero to the latest version. You can get the latest version
+										at
+										<a class="link" (click)="openUrl('https://clonehero.net')">clonehero.net</a>. (If that's not the problem, double check that the
+										chart actually has the instrument that you're trying to play)
+									} @else if (reportOption.value === "Download doesn't work") {
+										Please click the progress bar in the lower-right of the program to see the error message. If you need help getting it to work,
+										please ask in the <a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
+									} @else if (reportOption.value === "Doesn't appear in Clone Hero") {
+										This is not a problem with the chart! Here are the most common reasons for this:
+										<ul class="list-disc pl-5">
+											<li>.sng files will not work with the latest CH version. They only work on the test build for the next version.</li>
+											<li>Your chart library directory is not set as a song path in CH.</li>
+											<li>You need to rescan songs in CH's settings menu.</li>
+										</ul>
+										If you're still having issues, please ask in the
+										<a class="link" (click)="openUrl('https://discord.gg/cqaUXGm')">Chorus Encore Discord server</a>.
+									}
+								</span>
+							}
+							@if (!isFalseReportOption()) {
+								<div class="form-control flex-row justify-end">
+									<button class="btn btn-primary" (click)="report()">Submit</button>
+								</div>
+							}
 						</div>
 					}
 					<form method="dialog" class="modal-backdrop">

@@ -1,29 +1,35 @@
 <div class="border-t border-t-neutral p-2 flex gap-2 items-center max-w-full">
-	<div *ngIf="searchService.songsResponse" class="text-nowrap">
-		{{ searchService.songsResponse.found | number: '1.0-0' }} Result{{ searchService.songsResponse.found === 1 ? '' : 's' }}
-	</div>
+	@if (searchService.songsResponse) {
+		<div class="text-nowrap">
+			{{ searchService.songsResponse.found | number: '1.0-0' }} Result{{ searchService.songsResponse.found === 1 ? '' : 's' }}
+		</div>
+	}
 	<div class="flex-1">
-		<button *ngIf="selectedGroupIds.length > 1" (click)="downloadSelected()" class="btn btn-sm btn-primary text-nowrap">
-			Download {{ selectedGroupIds.length }} Results
-		</button>
+		@if (selectedGroupIds.length > 1) {
+			<button (click)="downloadSelected()" class="btn btn-sm btn-primary text-nowrap">Download {{ selectedGroupIds.length }} Results</button>
+		}
 	</div>
-	<div *ngIf="downloadService.downloadCount > 0" class="text-ellipsis text-nowrap overflow-hidden whitespace-nowrap max-w-full">
-		{{ downloadService.currentDownloadText }}
-	</div>
-	<div *ngIf="downloadService.downloadCount > 0" class="flex gap-2 items-center">
-		<button (click)="downloadsModal.showModal()" class="btn btn-sm btn-ghost w-[30vw] flex gap-2">
-			<div class="flex-1">
-				<progress
-					[attr.value]="downloadService.totalDownloadingPercent"
-					max="100"
-					class="progress h-3 rounded-md"
-					[class.progress-error]="downloadService.anyErrorsExist"></progress>
-			</div>
-			<div>
-				<i class="bi bi-info-circle text-xs"></i>
-			</div>
-		</button>
-	</div>
+	@if (downloadService.downloadCount > 0) {
+		<div class="text-ellipsis text-nowrap overflow-hidden whitespace-nowrap max-w-full">
+			{{ downloadService.currentDownloadText }}
+		</div>
+	}
+	@if (downloadService.downloadCount > 0) {
+		<div class="flex gap-2 items-center">
+			<button (click)="downloadsModal.showModal()" class="btn btn-sm btn-ghost w-[30vw] flex gap-2">
+				<div class="flex-1">
+					<progress
+						[attr.value]="downloadService.totalDownloadingPercent"
+						max="100"
+						class="progress h-3 rounded-md"
+						[class.progress-error]="downloadService.anyErrorsExist"></progress>
+				</div>
+				<div>
+					<i class="bi bi-info-circle text-xs"></i>
+				</div>
+			</button>
+		</div>
+	}
 
 	<dialog #downloadsModal class="modal whitespace-normal">
 		<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2 w-9/12 max-w-7xl min-h-0 overflow-y-clip">

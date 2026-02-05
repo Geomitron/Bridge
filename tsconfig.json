@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "module": "ES2022",
-		"moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "target": "ES2022",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-		"esModuleInterop": true,
+    "esModuleInterop": true,
     "sourceMap": true,
     "noImplicitOverride": true,
     "baseUrl": ".",
@@ -23,8 +23,10 @@
       "dom"
     ],
     "forceConsistentCasingInFileNames": true,
-		"typeRoots": ["./node_modules/@types"],
-		"noErrorTruncation": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "noErrorTruncation": true
   },
 	"angularCompilerOptions": {
     "strictTemplates": true

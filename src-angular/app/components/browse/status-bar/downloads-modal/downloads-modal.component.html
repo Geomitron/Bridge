@@ -49,18 +49,22 @@
 								}
 							}
 						</div>
-						<div *ngIf="download.type === 'error'" class="flex flex-col justify-end">
-							<button class="btn btn-outline btn-error flex-nowrap" (click)="downloadService.retryDownload(download.md5)">
-								<i class="bi bi-arrow-repeat"></i>
-								Retry
-							</button>
-						</div>
+						@if (download.type === 'error') {
+							<div class="flex flex-col justify-end">
+								<button class="btn btn-outline btn-error flex-nowrap" (click)="downloadService.retryDownload(download.md5)">
+									<i class="bi bi-arrow-repeat"></i>
+									Retry
+								</button>
+							</div>
+						}
 					</div>
 				</div>
 			</div>
 		}
 	</div>
-	<div *ngIf="downloadService.completedCount > 1" class="flex justify-end">
-		<button class="btn btn-success btn-sm" (click)="downloadService.cancelAllCompleted()">Clear completed</button>
-	</div>
+	@if (downloadService.completedCount > 1) {
+		<div class="flex justify-end">
+			<button class="btn btn-success btn-sm" (click)="downloadService.cancelAllCompleted()">Clear completed</button>
+		</div>
+	}
 </div>
