@@ -83,6 +83,61 @@ input[type='number'] {
 	-webkit-user-drag: none;
 }
 
+/* Dropdown animation fixes - fade in/out smoothly */
+.dropdown {
+	/* Ensure dropdown creates a positioning context */
+	position: relative;
+}
+
+.dropdown .dropdown-content {
+	opacity: 1;
+	transform: scale(1);
+	transform-origin: top;
+	/* Ensure dropdowns appear above other content */
+	z-index: 50;
+	/* When opening: fade and scale in */
+	transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
 .dropdown:not(:hover):not(:focus):not(:focus-within):not(.dropdown-open) .dropdown-content {
-	height: 0px;
+	opacity: 0;
+	transform: scale(0.95);
+	pointer-events: none;
+	/* When closing: fade and scale out */
+	transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+/* For dropdowns that open upward */
+.dropdown-top .dropdown-content {
+	transform-origin: bottom;
+}
+
+/* For dropdowns on the right side */
+.dropdown-end .dropdown-content {
+	transform-origin: top right;
+}
+
+.dropdown-top.dropdown-end .dropdown-content {
+	transform-origin: bottom right;
+}
+
+/* Collapse animation - ensure smooth height transition */
+.collapse {
+	transition: grid-template-rows 300ms ease-out;
+}
+
+/* For collapses that need dropdowns to overflow (using overflow-visible class) */
+.collapse.overflow-visible {
+	overflow: visible !important;
+}
+
+/* Ensure collapse-content clips during animation */
+.collapse-content {
+	overflow: hidden !important;
+	min-height: 0;
+}
+
+/* Inner wrapper for proper clipping during slide animation */
+.collapse.overflow-visible .collapse-content {
+	/* The collapse-content grid cell animates, content inside is clipped */
 }

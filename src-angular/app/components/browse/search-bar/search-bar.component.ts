@@ -13,7 +13,7 @@ import { difficulties, difficultyDisplay, drumsReviewedDisplay, drumTypeDisplay,
 	standalone: true,
 	imports: [ReactiveFormsModule, FormsModule, NgClass],
 	templateUrl: './search-bar.component.html',
-	host: { class: 'block relative z-10' },
+	host: { class: 'block relative z-20' },
 })
 export class SearchBarComponent implements OnInit, AfterViewInit {
 	private searchService = inject(SearchService)

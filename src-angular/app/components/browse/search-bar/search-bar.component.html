@@ -1,5 +1,5 @@
 <div
-	class="collapse bg-base-100 overflow-visible rounded-none border-t border-t-base-200 py-1"
+	class="collapse bg-base-100 rounded-none border-t border-t-base-200 py-1 px-3 overflow-visible"
 	[ngClass]="showAdvanced() ? 'collapse-open' : 'collapse-close'">
 	<div class="flex flex-wrap justify-end gap-1 collapse-title p-0 min-h-0">
 		<!-- Search Input -->
@@ -97,7 +97,7 @@
 		<form [formGroup]="advancedSearchForm">
 			<div class="flex flex-wrap gap-5 justify-center">
 				<div>
-					<table class="table table-xs">
+					<table class="table table-xs [&_th]:border-0 [&_td]:border-0">
 						<thead>
 							<tr>
 								<th>
@@ -156,9 +156,9 @@
 					</table>
 				</div>
 				<div class="flex flex-col">
-					<div class="flex flex-wrap justify-center gap-5">
+					<div class="flex flex-wrap justify-between gap-0">
 						<div class="flex flex-col gap-2 justify-end">
-							<table class="table table-xs">
+							<table class="table table-xs [&_th]:border-0 [&_td]:border-0">
 								<tbody>
 									<tr class="border-b-0">
 										<td class="text-sm">Length (minutes)</td>
@@ -206,7 +206,7 @@
 							</table>
 						</div>
 						<div class="flex flex-col gap-2 justify-end">
-							<table class="table table-xs">
+							<table class="table table-xs [&_th]:border-0 [&_td]:border-0">
 								<tbody>
 									<tr class="border-b-0">
 										<td class="text-sm">Year</td>
