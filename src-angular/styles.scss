@@ -141,3 +141,18 @@ input[type='number'] {
 .collapse.overflow-visible .collapse-content {
 	/* The collapse-content grid cell animates, content inside is clipped */
 }
+
+/* "Already in Library" row indicator for browse results */
+.in-library-row {
+	opacity: 0.55;
+}
+
+/* Apply left border to first cell in the row */
+.in-library-row td:first-child {
+	border-left: 3px solid oklch(var(--color-success));
+}
+
+/* Restore opacity on hover for better readability */
+.in-library-row:hover {
+	opacity: 0.8;
+}

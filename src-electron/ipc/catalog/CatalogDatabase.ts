@@ -124,6 +124,9 @@ class CatalogDatabase {
       CREATE INDEX IF NOT EXISTS idx_charts_hasVideo ON charts(hasVideo);
       CREATE INDEX IF NOT EXISTS idx_charts_hasBackground ON charts(hasBackground);
 
+      -- Composite index for efficient library existence checks (used by browse tab)
+      CREATE INDEX IF NOT EXISTS idx_charts_existence ON charts(artist COLLATE NOCASE, name COLLATE NOCASE, charter COLLATE NOCASE);
+
       -- Full-text search virtual table
       CREATE VIRTUAL TABLE IF NOT EXISTS charts_fts USING fts5(
         name, artist, album, charter, genre,

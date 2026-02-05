@@ -3,8 +3,9 @@
 </td>
 <td>
 	@if (isInLibrary()) {
-		<span class="badge badge-success badge-sm mr-2" title="Already in your library">
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 mr-2 rounded text-xs font-semibold bg-success/25 text-success" title="Already in your library">
 			<i class="bi bi-check-circle-fill"></i>
+			In Library
 		</span>
 	}
 	@if (song().length > 1) {

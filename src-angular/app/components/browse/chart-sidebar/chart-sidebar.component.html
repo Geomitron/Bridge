@@ -149,6 +149,12 @@
 				</div>
 			</div>
 		</div>
+		@if (isInLibrary()) {
+			<div class="flex items-center justify-center gap-2 py-2 px-3 bg-success/15 border-t border-success/30">
+				<i class="bi bi-check-circle-fill text-success"></i>
+				<span class="text-sm font-medium text-success">Already in your library</span>
+			</div>
+		}
 		<div class="join">
 			<button class="btn rounded-md flex-1 join-item btn-primary capitalize" (click)="onDownloadClicked()">Download</button>
 			<div

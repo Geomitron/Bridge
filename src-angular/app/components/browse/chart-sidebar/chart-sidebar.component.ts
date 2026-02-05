@@ -4,6 +4,7 @@ import { NgClass, NgStyle } from '@angular/common'
 
 import _ from 'lodash'
 import { Difficulty, Instrument, NotesData } from 'scan-chart'
+import { CatalogService } from 'src-angular/app/core/services/catalog.service'
 import { DownloadService } from 'src-angular/app/core/services/download.service'
 import { SearchService } from 'src-angular/app/core/services/search.service'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -32,6 +33,7 @@ import { ChartSidebarPreviewComponent } from './chart-sidebar-preview/chart-side
 })
 export class ChartSidebarComponent implements OnInit {
 	private renderer = inject(Renderer2)
+	private catalogService = inject(CatalogService)
 	private searchService = inject(SearchService)
 	private downloadService = inject(DownloadService)
 	settingsService = inject(SettingsService)
@@ -51,6 +53,7 @@ export class ChartSidebarComponent implements OnInit {
 	albumLoading = signal(true)
 	iconLoading = signal(true)
 	menuVisible = signal(false)
+	isInLibrary = signal(false)
 
 	selectedChart = signal<ChartData | null>(null)
 	charts = signal<ChartData[][] | null>(null)
@@ -229,6 +232,7 @@ export class ChartSidebarComponent implements OnInit {
 			if (event?.type === 'new') {
 				this.charts.set(null)
 				this.selectedChart.set(null)
+				this.isInLibrary.set(false)
 			}
 		}, { allowSignalWrites: true })
 	}
@@ -300,6 +304,28 @@ export class ChartSidebarComponent implements OnInit {
 		this.selectedChart.set(newCharts[0][0])
 		this.instrumentDropdown.setValue(this.getDefaultInstrument())
 		this.difficultyDropdown.setValue(this.getDefaultDifficulty())
+		this.checkIfInLibrary(newCharts[0][0])
+	}
+
+	/**
+	 * Check if the selected chart is already in the user's library
+	 */
+	private async checkIfInLibrary(chart: ChartData): Promise<void> {
+		try {
+			const result = await this.catalogService.checkChartsExist([{
+				artist: chart.artist || '',
+				name: chart.name || '',
+				charter: chart.charter || '',
+			}])
+			const key = this.catalogService.getChartExistenceKey(
+				chart.artist || '',
+				chart.name || '',
+				chart.charter || ''
+			)
+			this.isInLibrary.set(result[key] === true)
+		} catch {
+			this.isInLibrary.set(false)
+		}
 	}
 
 	onSourceLinkClicked() {
@@ -354,5 +380,6 @@ export class ChartSidebarComponent implements OnInit {
 
 	setSelectedChart(chart: ChartData) {
 		this.selectedChart.set(chart)
+		this.checkIfInLibrary(chart)
 	}
 }
