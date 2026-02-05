@@ -37,8 +37,7 @@ Learn how to install Node.js [here](https://nodejs.dev/en/download/)
 After installing Node.js and cloning the repository, install dependencies and run development with:
 
 ```
-$ npm install -g pnpm
-$ pnpm install && pnpm start
+$ npm install && npm start
 ```
 
 ### Socials
