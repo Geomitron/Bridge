@@ -1,0 +1,341 @@
+<div class="flex flex-col flex-1 overflow-hidden p-4" style="height: calc(100vh - 48px)">
+	<div class="flex justify-between items-center mb-3">
+		<div class="flex items-baseline gap-3">
+			<h2 class="text-xl font-semibold">Lyrics</h2>
+			<span class="text-sm text-base-content/60"> {{ filteredCharts.length }} of {{ chartsMissingLyrics.length }} charts missing lyrics </span>
+		</div>
+		<div class="flex gap-2">
+			<button class="btn btn-sm btn-primary" (click)="loadChartsMissingLyrics()" [disabled]="isLoading">
+				<i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoading"></i>
+				Refresh
+			</button>
+		</div>
+	</div>
+
+	<!-- Info banner -->
+	<div class="alert alert-info mb-4">
+		<i class="bi bi-info-circle"></i>
+		<div>
+			<div class="font-semibold">Download synced lyrics from LRCLIB</div>
+			<div class="text-sm">Select a chart, search for lyrics, then download to inject them into your chart files.</div>
+		</div>
+	</div>
+
+	<!-- Error alert -->
+	<div class="alert alert-error mb-3" *ngIf="error">
+		<i class="bi bi-exclamation-triangle"></i>
+		<span>{{ error }}</span>
+		<button class="btn btn-sm btn-ghost" (click)="dismissError()">
+			<i class="bi bi-x"></i>
+		</button>
+	</div>
+
+	<!-- Success alert -->
+	<div class="alert alert-success mb-3" *ngIf="successMessage">
+		<i class="bi bi-check-circle"></i>
+		<span>{{ successMessage }}</span>
+		<button class="btn btn-sm btn-ghost" (click)="dismissSuccess()">
+			<i class="bi bi-x"></i>
+		</button>
+	</div>
+
+	<div class="flex gap-4 flex-1 overflow-hidden">
+		<!-- Left: Chart list -->
+		<div class="w-1/2 flex flex-col overflow-hidden">
+			<!-- Filters -->
+			<div class="flex gap-2 mb-3 items-center flex-wrap">
+				<div class="join">
+					<input
+						type="text"
+						placeholder="Search..."
+						class="input input-sm input-bordered join-item w-40"
+						[(ngModel)]="filterQuery"
+						(input)="applyFilter()" />
+					<button class="btn btn-sm btn-ghost join-item" *ngIf="filterQuery" (click)="filterQuery = ''; applyFilter()">
+						<i class="bi bi-x"></i>
+					</button>
+				</div>
+				<select class="select select-sm select-bordered w-40" [(ngModel)]="filterArtist" (change)="applyFilter()">
+					<option value="">All Artists</option>
+					<option *ngFor="let artist of artistOptions" [value]="artist">{{ artist }}</option>
+				</select>
+				<select class="select select-sm select-bordered w-28" [(ngModel)]="sortField" (change)="applyFilter()">
+					<option value="artist">Sort: Artist</option>
+					<option value="name">Sort: Song</option>
+				</select>
+				<button class="btn btn-sm btn-ghost" (click)="toggleSortDirection()">
+					<i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'" [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
+				</button>
+				<button class="btn btn-sm btn-ghost" *ngIf="filterQuery || filterArtist" (click)="clearFilters()">
+					<i class="bi bi-x-circle"></i> Clear
+				</button>
+			</div>
+
+			<!-- Loading -->
+			<div class="flex-1 flex items-center justify-center" *ngIf="isLoading">
+				<span class="loading loading-spinner loading-lg"></span>
+			</div>
+
+			<!-- Empty state -->
+			<div class="flex-1 flex flex-col items-center justify-center" *ngIf="!isLoading && chartsMissingLyrics.length === 0">
+				<i class="bi bi-music-note-beamed text-6xl text-base-content/20 mb-4"></i>
+				<h3 class="text-lg font-semibold mb-2">All Charts Have Lyrics!</h3>
+				<p class="text-base-content/60">No charts are missing lyrics, or your library hasn't been scanned yet.</p>
+			</div>
+
+			<!-- No results -->
+			<div
+				class="flex-1 flex flex-col items-center justify-center"
+				*ngIf="!isLoading && chartsMissingLyrics.length > 0 && filteredCharts.length === 0">
+				<i class="bi bi-search text-4xl text-base-content/20 mb-4"></i>
+				<p class="text-base-content/60 mb-2">No charts match your filters</p>
+				<button class="btn btn-sm btn-ghost" (click)="clearFilters()">Clear Filters</button>
+			</div>
+
+			<!-- Chart list -->
+			<div
+				class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
+				*ngIf="!isLoading && filteredCharts.length > 0">
+				<div
+					*ngFor="let chart of filteredCharts"
+					class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors mb-1"
+					[class.bg-base-200]="selectedChart?.chartId !== chart.chartId"
+					[class.bg-primary]="selectedChart?.chartId === chart.chartId"
+					[class.hover:bg-base-300]="selectedChart?.chartId !== chart.chartId"
+					(click)="selectChart(chart)">
+					<div class="flex-1 min-w-0">
+						<div class="font-medium truncate">{{ chart.chartName }}</div>
+						<div class="text-sm text-base-content/60 truncate">{{ chart.chartArtist }}</div>
+					</div>
+					<div class="text-xs text-base-content/50">
+						{{ formatDuration(chart.songLength) }}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Right: Search and results -->
+		<div class="w-1/2 flex flex-col overflow-hidden border-l border-base-300 pl-4">
+			<!-- No chart selected -->
+			<div class="flex-1 flex flex-col items-center justify-center" *ngIf="!selectedChart">
+				<i class="bi bi-arrow-left text-4xl text-base-content/20 mb-4"></i>
+				<p class="text-base-content/60">Select a chart to search for lyrics</p>
+			</div>
+
+			<!-- Chart selected -->
+			<div class="flex flex-col flex-1 overflow-hidden" *ngIf="selectedChart">
+				<!-- Selected chart info -->
+				<div class="bg-base-200 rounded-lg p-3 mb-4">
+					<div class="flex justify-between items-start">
+						<div>
+							<div class="font-semibold">{{ selectedChart.chartName }}</div>
+							<div class="text-sm text-base-content/60">{{ selectedChart.chartArtist }}</div>
+							<div class="text-xs text-base-content/50 mt-1" *ngIf="selectedChart.chartAlbum">{{ selectedChart.chartAlbum }}</div>
+						</div>
+						<button class="btn btn-sm btn-ghost" (click)="clearSelection()">
+							<i class="bi bi-x"></i>
+						</button>
+					</div>
+				</div>
+
+				<!-- Search form -->
+				<div class="flex gap-2 mb-4">
+					<input
+						type="text"
+						placeholder="Artist"
+						class="input input-sm input-bordered flex-1"
+						[(ngModel)]="searchArtist"
+						(keyup.enter)="searchLyrics()" />
+					<input
+						type="text"
+						placeholder="Title"
+						class="input input-sm input-bordered flex-1"
+						[(ngModel)]="searchTitle"
+						(keyup.enter)="searchLyrics()" />
+					<button class="btn btn-sm btn-primary" (click)="searchLyrics()" [disabled]="isSearching">
+						<i class="bi bi-search" *ngIf="!isSearching"></i>
+						<span class="loading loading-spinner loading-xs" *ngIf="isSearching"></span>
+						Search
+					</button>
+				</div>
+
+				<!-- Search results -->
+				<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
+					<!-- No results message -->
+					<div class="text-center text-base-content/60 py-8" *ngIf="searchResults.length === 0 && !isSearching">
+						<i class="bi bi-search text-3xl mb-2"></i>
+						<p>Search LRCLIB for synced lyrics</p>
+					</div>
+
+					<!-- Results list -->
+					<div
+						*ngFor="let lyrics of searchResults"
+						class="p-3 rounded-lg mb-2 cursor-pointer transition-colors"
+						[class.bg-base-200]="selectedLyrics?.id !== lyrics.id"
+						[class.bg-primary]="selectedLyrics?.id === lyrics.id"
+						[class.hover:bg-base-300]="selectedLyrics?.id !== lyrics.id"
+						(click)="selectLyrics(lyrics)">
+						<div class="flex justify-between items-start mb-1">
+							<div class="font-medium">{{ lyrics.trackName }}</div>
+							<span class="badge badge-sm badge-success" *ngIf="lyrics.syncedLyrics">Synced</span>
+						</div>
+						<div class="text-sm text-base-content/60">{{ lyrics.artistName }}</div>
+						<div class="text-xs text-base-content/50" *ngIf="lyrics.albumName">{{ lyrics.albumName }}</div>
+						<div class="flex gap-3 text-xs text-base-content/50 mt-2">
+							<span><i class="bi bi-clock"></i> {{ formatLyricsDuration(lyrics.duration) }}</span>
+						</div>
+						<div class="text-xs text-base-content/40 mt-2 truncate" *ngIf="lyrics.syncedLyrics">
+							{{ getLyricsPreview(lyrics.syncedLyrics) }}
+						</div>
+					</div>
+				</div>
+
+				<!-- Download button -->
+				<div class="pt-4 border-t border-base-300 mt-4" *ngIf="selectedLyrics">
+					<!-- Sync Tool -->
+					<div class="mb-4 p-3 bg-base-200 rounded-lg" *ngIf="!showSyncTool && !offsetConfirmed">
+						<button class="btn btn-sm btn-outline w-full" (click)="openSyncTool()">
+							<i class="bi bi-music-note-beamed"></i>
+							Open Sync Tool (Recommended)
+						</button>
+						<div class="text-xs text-base-content/50 mt-1 text-center">Sync lyrics timing with the audio before adding</div>
+					</div>
+
+					<!-- Sync Tool Panel -->
+					<div class="mb-4 p-3 bg-base-200 rounded-lg" *ngIf="showSyncTool">
+						<div class="flex justify-between items-center mb-3">
+							<span class="font-medium text-sm">Sync Tool</span>
+							<button class="btn btn-xs btn-ghost" (click)="closeSyncTool()">
+								<i class="bi bi-x"></i>
+							</button>
+						</div>
+
+						<!-- Vocals track badge -->
+						<div class="mb-3" *ngIf="hasVocalsTrack">
+							<span class="badge badge-success gap-1">
+								<i class="bi bi-mic-fill"></i>
+								Vocals track detected
+							</span>
+							<span class="text-xs text-base-content/60 ml-2" *ngIf="detectedVocalStartMs !== null">
+								Audio starts at {{ (detectedVocalStartMs / 1000).toFixed(1) }}s
+							</span>
+						</div>
+
+						<!-- Auto-calculated offset notice -->
+						<div class="alert alert-info py-2 mb-3" *ngIf="detectedVocalStartMs !== null">
+							<i class="bi bi-magic"></i>
+							<div class="text-sm">
+								<strong>Auto-detected: First lyric at {{ (syncTargetTime / 1000).toFixed(1) }}s</strong>
+								<div class="text-xs">Use the slider below to fine-tune, then preview to verify.</div>
+							</div>
+						</div>
+
+						<div class="alert alert-warning text-sm py-2 mb-3" *ngIf="!audioSrc">
+							<i class="bi bi-exclamation-triangle"></i>
+							<span>No audio file found in chart folder</span>
+						</div>
+
+						<!-- Audio Player (hidden) -->
+						<audio
+							#audioPlayer
+							[src]="audioSrc"
+							class="hidden"
+							(error)="onAudioError($event)"
+							(loadeddata)="onAudioLoaded()"
+							*ngIf="audioSrc"></audio>
+
+						<div *ngIf="audioSrc">
+							<!-- First lyrics preview -->
+							<div class="mb-3" *ngIf="lyricsPreviewLines.length > 0">
+								<div class="text-xs text-base-content/60 mb-1">First lyric: "{{ lyricsPreviewLines[0].text }}"</div>
+								<div class="text-xs text-base-content/50">LRC timestamp: {{ formatTime(lyricsPreviewLines[0].time / 1000) }}</div>
+							</div>
+
+							<!-- Sync Target Slider -->
+							<div class="mb-4">
+								<div class="flex justify-between items-center mb-1">
+									<label class="text-sm font-medium">When should this lyric appear?</label>
+									<span class="text-sm font-mono text-primary">{{ formatTime(syncTargetTime / 1000) }}</span>
+								</div>
+								<input
+									type="range"
+									[min]="0"
+									[max]="maxSyncTime"
+									step="100"
+									class="range range-sm range-primary"
+									[(ngModel)]="syncTargetTime"
+									(input)="onSyncTargetChange()" />
+								<div class="flex justify-between text-xs text-base-content/50 mt-1">
+									<span>0:00</span>
+									<span>{{ formatTime(maxSyncTime / 1000) }}</span>
+								</div>
+							</div>
+
+							<!-- Preview Controls -->
+							<div class="flex gap-2 mb-3">
+								<button class="btn btn-sm btn-primary flex-1" (click)="previewFromTarget()" [disabled]="!audioLoaded">
+									<i class="bi bi-play-fill"></i>
+									Preview from {{ formatTime(syncTargetTime / 1000) }}
+								</button>
+								<button class="btn btn-sm btn-secondary" (click)="stopPreview()" [disabled]="!isPlaying">
+									<i class="bi bi-stop-fill"></i>
+								</button>
+							</div>
+
+							<!-- Current playback position -->
+							<div class="text-center text-sm font-mono mb-3" *ngIf="isPlaying || currentTime > 0">Playing: {{ formatTime(currentTime) }}</div>
+
+							<div class="text-xs text-base-content/50 mt-1" *ngIf="!audioLoaded && !audioError">Loading audio...</div>
+							<div class="text-xs text-error mt-1" *ngIf="audioError">
+								{{ audioError }}
+							</div>
+
+							<!-- Calculated Offset Display -->
+							<div class="bg-base-300 rounded-lg p-3 mb-3">
+								<div class="text-center">
+									<div class="text-xs text-base-content/60">First lyric will appear at</div>
+									<div class="text-2xl font-bold text-primary">{{ formatTime(syncTargetTime / 1000) }}</div>
+									<div class="text-xs text-base-content/50 mt-1" *ngIf="lyricsPreviewLines.length > 0">
+										LRC original: {{ formatTime(lyricsPreviewLines[0].time / 1000) }} → Adjusted: {{ formatTime(syncTargetTime / 1000) }}
+									</div>
+								</div>
+							</div>
+
+							<!-- Accept Button -->
+							<button class="btn btn-accent w-full" (click)="acceptSyncTiming()">
+								<i class="bi bi-check-lg"></i>
+								Accept This Timing
+							</button>
+						</div>
+					</div>
+
+					<!-- After accepting, show confirmed offset -->
+					<div class="mb-4 p-3 bg-base-200 rounded-lg" *ngIf="!showSyncTool && offsetConfirmed">
+						<div class="flex justify-between items-center">
+							<div>
+								<div class="text-sm font-medium">Timing Confirmed</div>
+								<div class="text-xs text-base-content/60">First lyric at {{ formatTime(syncTargetTime / 1000) }}</div>
+							</div>
+							<button class="btn btn-sm btn-ghost" (click)="openSyncTool()"><i class="bi bi-pencil"></i> Adjust</button>
+						</div>
+					</div>
+
+					<div class="flex gap-2">
+						<button class="btn btn-primary flex-1" (click)="downloadLyrics()" [disabled]="isDownloading">
+							<i class="bi bi-download" *ngIf="!isDownloading"></i>
+							<span class="loading loading-spinner loading-sm" *ngIf="isDownloading"></span>
+							{{ isDownloading ? 'Adding Lyrics...' : 'Add Lyrics to Chart' }}
+						</button>
+					</div>
+					<div class="text-xs text-base-content/50 mt-2 text-center">This will add lyric events to the chart file</div>
+				</div>
+
+				<!-- Progress -->
+				<div class="mt-4" *ngIf="progress && progress.phase !== 'complete'">
+					<progress class="progress progress-primary w-full" [value]="progress.percent" max="100"></progress>
+					<div class="text-xs text-base-content/60 mt-1">{{ progress.message }}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

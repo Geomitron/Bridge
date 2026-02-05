@@ -15,9 +15,8 @@ jobs:
       - name: Build the app
         shell: bash
         run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm build:windows
+          npm ci
+          npm run build:windows
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -39,9 +38,8 @@ jobs:
       - name: Build the app
         shell: bash
         run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm build:linux
+          npm ci
+          npm run build:linux
   build-mac:
     runs-on: macos-latest
     steps:
@@ -54,6 +52,5 @@ jobs:
       - name: Build the app
         shell: bash
         run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm build:mac
+          npm ci
+          npm run build:mac

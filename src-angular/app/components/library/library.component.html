@@ -1,0 +1,485 @@
+<div class="flex flex-col flex-1 overflow-hidden p-4" style="height: calc(100vh - 48px)">
+	<div class="flex justify-between items-center mb-3">
+		<div class="flex items-baseline gap-3">
+			<h2 class="text-xl font-semibold">Library</h2>
+			<span class="text-sm text-base-content/60" *ngIf="stats">
+				{{ displayedCharts.length }} of {{ stats.totalCharts }} charts
+				<span *ngIf="showDuplicatesOnly" class="text-warning">(showing duplicates)</span>
+			</span>
+		</div>
+		<div class="flex gap-2">
+			<button class="btn btn-sm btn-ghost" (click)="manageFolders()">
+				<i class="bi bi-folder2-open"></i>
+				<span>Folders</span>
+			</button>
+			<button class="btn btn-sm btn-primary" (click)="scanLibrary()" [disabled]="isScanning">
+				<i class="bi bi-arrow-clockwise" [class.animate-spin]="isScanning"></i>
+				<span *ngIf="isScanning">Scanning...</span>
+				<span *ngIf="!isScanning">Scan</span>
+			</button>
+		</div>
+	</div>
+
+	<div class="text-xs text-base-content/50 mb-3 truncate" *ngIf="libraryPaths.length > 0">
+		<i class="bi bi-folder"></i> {{ libraryPaths.length }} folder(s) configured
+	</div>
+
+	<div class="mb-3" *ngIf="scanProgress && isScanning">
+		<progress class="progress progress-primary w-full" [value]="scanProgressPercent" max="100"></progress>
+		<div class="flex justify-between text-xs text-base-content/60 mt-1">
+			<span>{{ scanProgress.message }}</span>
+			<span>{{ scanProgress.current }} / {{ scanProgress.total }}</span>
+		</div>
+	</div>
+
+	<div class="grid grid-cols-6 gap-3 mb-4" *ngIf="stats && stats.totalCharts > 0">
+		<div class="stats shadow bg-base-200 cursor-pointer hover:bg-base-300" (click)="clearFilters()">
+			<div class="stat py-2 px-4">
+				<div class="stat-value text-lg">{{ stats.totalCharts }}</div>
+				<div class="stat-title text-xs">Total</div>
+			</div>
+		</div>
+		<div
+			class="stats shadow cursor-pointer hover:bg-base-300"
+			[class.bg-primary]="filter.hasVideo === false"
+			[class.bg-base-200]="filter.hasVideo !== false"
+			(click)="filterByAsset('video', filter.hasVideo === false ? undefined : false)">
+			<div class="stat py-2 px-4">
+				<div class="stat-value text-lg text-warning">{{ missingVideoCount }}</div>
+				<div class="stat-title text-xs">No Video</div>
+			</div>
+		</div>
+		<div
+			class="stats shadow cursor-pointer hover:bg-base-300"
+			[class.bg-primary]="filter.hasBackground === false"
+			[class.bg-base-200]="filter.hasBackground !== false"
+			(click)="filterByAsset('background', filter.hasBackground === false ? undefined : false)">
+			<div class="stat py-2 px-4">
+				<div class="stat-value text-lg text-warning">{{ missingBackgroundCount }}</div>
+				<div class="stat-title text-xs">No BG</div>
+			</div>
+		</div>
+		<div
+			class="stats shadow cursor-pointer hover:bg-base-300"
+			[class.bg-primary]="filter.hasAlbumArt === false"
+			[class.bg-base-200]="filter.hasAlbumArt !== false"
+			(click)="filterByAsset('albumArt', filter.hasAlbumArt === false ? undefined : false)">
+			<div class="stat py-2 px-4">
+				<div class="stat-value text-lg text-warning">{{ missingAlbumArtCount }}</div>
+				<div class="stat-title text-xs">No Art</div>
+			</div>
+		</div>
+		<div
+			class="stats shadow cursor-pointer hover:bg-base-300"
+			[class.bg-primary]="filter.hasLyrics === false"
+			[class.bg-base-200]="filter.hasLyrics !== false"
+			(click)="filterByAsset('lyrics', filter.hasLyrics === false ? undefined : false)">
+			<div class="stat py-2 px-4">
+				<div class="stat-value text-lg text-warning">{{ missingLyricsCount }}</div>
+				<div class="stat-title text-xs">No Lyrics</div>
+			</div>
+		</div>
+		<div
+			class="stats shadow cursor-pointer hover:bg-base-300"
+			[class.bg-primary]="showDuplicatesOnly"
+			[class.bg-base-200]="!showDuplicatesOnly"
+			(click)="toggleDuplicatesFilter()">
+			<div class="stat py-2 px-4">
+				<div class="stat-value text-lg text-info">{{ duplicateCount }}</div>
+				<div class="stat-title text-xs">Duplicates</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Error Alert -->
+	<div class="alert alert-error mb-3" *ngIf="removalError">
+		<i class="bi bi-exclamation-triangle"></i>
+		<div class="flex-1">
+			<div class="font-semibold">Error</div>
+			<div class="text-sm whitespace-pre-wrap">{{ removalError }}</div>
+		</div>
+		<button class="btn btn-sm btn-ghost" (click)="dismissError()">
+			<i class="bi bi-x"></i>
+		</button>
+	</div>
+
+	<!-- Search and basic filters row -->
+	<div class="flex gap-2 mb-2 items-center flex-wrap">
+		<div class="join">
+			<input
+				type="text"
+				placeholder="Search..."
+				class="input input-sm input-bordered join-item w-48"
+				[value]="searchQuery"
+				(input)="onSearchInput($event)" />
+			<button class="btn btn-sm btn-ghost join-item" *ngIf="searchQuery" (click)="clearSearch()">
+				<i class="bi bi-x"></i>
+			</button>
+		</div>
+		<select class="select select-sm select-bordered w-36" [value]="filter.artist || ''" (change)="filterByArtist($any($event.target).value)">
+			<option value="">All Artists</option>
+			<option *ngFor="let artist of artistOptions" [value]="artist">{{ artist }}</option>
+		</select>
+		<select class="select select-sm select-bordered w-36" [value]="filter.charter || ''" (change)="filterByCharter($any($event.target).value)">
+			<option value="">All Charters</option>
+			<option *ngFor="let charter of charterOptions" [value]="charter">{{ stripHtmlTags(charter) }}</option>
+		</select>
+		<select class="select select-sm select-bordered w-28" [value]="filter.chartType || ''" (change)="filterByChartType($any($event.target).value)">
+			<option value="">All Types</option>
+			<option value="chart">.chart</option>
+			<option value="mid">.mid</option>
+		</select>
+		<button class="btn btn-sm btn-ghost" [class.btn-active]="showFiltersExpanded" (click)="toggleFilters()"><i class="bi bi-funnel"></i> More</button>
+		<button class="btn btn-sm btn-ghost" *ngIf="hasActiveFilters" (click)="clearFilters()"><i class="bi bi-x-circle"></i> Clear</button>
+		<div class="flex-1"></div>
+		<div class="flex gap-2 items-center" *ngIf="selectedIds.size > 0">
+			<span class="text-sm text-base-content/60">{{ selectedIds.size }} selected</span>
+			<button class="btn btn-sm btn-error btn-outline" (click)="removeSelectedCharts()" title="Remove selected to folder">
+				<i class="bi bi-trash"></i> Remove
+			</button>
+			<button class="btn btn-sm btn-ghost" (click)="clearSelection()">Clear</button>
+		</div>
+	</div>
+
+	<!-- Expanded filters panel -->
+	<div class="bg-base-200 rounded-lg p-3 mb-3 grid grid-cols-6 gap-3" *ngIf="showFiltersExpanded">
+		<div>
+			<label class="label py-0 text-xs">Genre</label>
+			<select class="select select-xs select-bordered w-full" [value]="filter.genre || ''" (change)="filterByGenre($any($event.target).value)">
+				<option value="">All</option>
+				<option *ngFor="let genre of genreOptions" [value]="genre">{{ genre }}</option>
+			</select>
+		</div>
+		<div>
+			<label class="label py-0 text-xs">Has Guitar</label>
+			<select
+				class="select select-xs select-bordered w-full"
+				[value]="filter.hasGuitar === undefined ? '' : filter.hasGuitar.toString()"
+				(change)="filterByInstrument('guitar', $any($event.target).value)">
+				<option value="">Any</option>
+				<option value="true">Yes</option>
+				<option value="false">No</option>
+			</select>
+		</div>
+		<div>
+			<label class="label py-0 text-xs">Guitar Diff</label>
+			<select
+				class="select select-xs select-bordered w-full"
+				[value]="filter.guitarDiff || ''"
+				(change)="filterByDifficulty('guitar', $any($event.target).value)">
+				<option value="">Any</option>
+				<option value="e">Easy</option>
+				<option value="m">Medium</option>
+				<option value="h">Hard</option>
+				<option value="x">Expert</option>
+			</select>
+		</div>
+		<div>
+			<label class="label py-0 text-xs">Has Bass</label>
+			<select
+				class="select select-xs select-bordered w-full"
+				[value]="filter.hasBass === undefined ? '' : filter.hasBass.toString()"
+				(change)="filterByInstrument('bass', $any($event.target).value)">
+				<option value="">Any</option>
+				<option value="true">Yes</option>
+				<option value="false">No</option>
+			</select>
+		</div>
+		<div>
+			<label class="label py-0 text-xs">Has Drums</label>
+			<select
+				class="select select-xs select-bordered w-full"
+				[value]="filter.hasDrums === undefined ? '' : filter.hasDrums.toString()"
+				(change)="filterByInstrument('drums', $any($event.target).value)">
+				<option value="">Any</option>
+				<option value="true">Yes</option>
+				<option value="false">No</option>
+			</select>
+		</div>
+		<div>
+			<label class="label py-0 text-xs">Has Keys</label>
+			<select
+				class="select select-xs select-bordered w-full"
+				[value]="filter.hasKeys === undefined ? '' : filter.hasKeys.toString()"
+				(change)="filterByInstrument('keys', $any($event.target).value)">
+				<option value="">Any</option>
+				<option value="true">Yes</option>
+				<option value="false">No</option>
+			</select>
+		</div>
+	</div>
+
+	<div class="flex flex-1 flex-col items-center justify-center" *ngIf="libraryPaths.length === 0">
+		<i class="bi bi-folder2-open text-6xl text-base-content/20 mb-4"></i>
+		<h3 class="text-lg font-semibold mb-2">No Library Folders Set</h3>
+		<p class="text-base-content/60 mb-4 text-center max-w-md">Add your Clone Hero/YARG chart library folders.</p>
+		<button class="btn btn-primary" (click)="manageFolders()"><i class="bi bi-folder-plus"></i> Add Library Folders</button>
+	</div>
+
+	<div class="flex flex-1 flex-col items-center justify-center" *ngIf="libraryPaths.length > 0 && stats && stats.totalCharts === 0 && !isScanning">
+		<i class="bi bi-music-note-list text-6xl text-base-content/20 mb-4"></i>
+		<h3 class="text-lg font-semibold mb-2">No Charts Found</h3>
+		<p class="text-base-content/60 mb-4 text-center max-w-md">No charts found. Make sure folders contain chart files.</p>
+		<button class="btn btn-primary" (click)="scanLibrary()"><i class="bi bi-arrow-clockwise"></i> Rescan Library</button>
+	</div>
+
+	<div
+		class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full"
+		*ngIf="charts.length > 0">
+		<table class="table table-xs table-zebra table-pin-rows w-full">
+			<thead>
+				<tr class="bg-base-200">
+					<th class="w-8"><input type="checkbox" class="checkbox checkbox-xs" [checked]="allSelected" (change)="selectAll()" /></th>
+					<th class="cursor-pointer hover:bg-base-300" (click)="sortBy('artist')">Artist{{ getSortIndicator('artist') }}</th>
+					<th class="cursor-pointer hover:bg-base-300" (click)="sortBy('name')">Song{{ getSortIndicator('name') }}</th>
+					<th class="cursor-pointer hover:bg-base-300" (click)="sortBy('charter')">Charter{{ getSortIndicator('charter') }}</th>
+					<th class="w-20 text-center" title="Instruments">Inst</th>
+					<th class="w-20 text-center" title="Guitar Difficulties">Gtr</th>
+					<th class="w-14 text-center cursor-pointer hover:bg-base-300" (click)="sortBy('chartType')" title="Chart Type">
+						Type{{ getSortIndicator('chartType') }}
+					</th>
+					<th class="w-8 text-center" title="Has Video">V</th>
+					<th class="w-8 text-center" title="Has Background">B</th>
+					<th class="w-8 text-center" title="Has Album Art">A</th>
+					<th class="w-8 text-center" title="Has Lyrics">L</th>
+					<th class="w-14"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr
+					*ngFor="let chart of displayedCharts"
+					[class.bg-primary]="isSelected(chart)"
+					class="cursor-pointer"
+					(mouseenter)="hoveredChartId = chart.id"
+					(mouseleave)="hoveredChartId = null">
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null">
+						<input type="checkbox" class="checkbox checkbox-xs" [checked]="isSelected(chart)" (change)="toggleSelection(chart)" />
+					</td>
+					<td
+						[style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null"
+						class="truncate max-w-[150px]"
+						[title]="chart.artist">
+						{{ chart.artist }}
+					</td>
+					<td
+						[style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null"
+						class="truncate max-w-[150px]"
+						[title]="chart.name">
+						{{ chart.name }}
+					</td>
+					<td
+						[style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null"
+						class="truncate max-w-[80px]"
+						[title]="chart.charter">
+						<span [innerHTML]="renderCharterName(chart.charter)"></span>
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null" class="text-center">
+						<div class="flex justify-center gap-0.5 text-xs">
+							<span *ngIf="chart.hasGuitar" class="badge badge-xs badge-primary" title="Guitar">G</span>
+							<span *ngIf="chart.hasBass" class="badge badge-xs badge-secondary" title="Bass">B</span>
+							<span *ngIf="chart.hasDrums" class="badge badge-xs badge-accent" title="Drums">D</span>
+							<span *ngIf="chart.hasKeys" class="badge badge-xs badge-info" title="Keys">K</span>
+							<span *ngIf="chart.hasVocals" class="badge badge-xs badge-warning" title="Vocals">V</span>
+							<span *ngIf="chart.hasGHL" class="badge badge-xs badge-neutral" title="Guitar Hero Live (6-fret)">GHL</span>
+						</div>
+					</td>
+					<td
+						[style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null"
+						class="text-center text-xs font-mono"
+						[title]="'Guitar: ' + (chart.guitarDiffs || 'none')">
+						{{ formatDiffs(chart.guitarDiffs) }}
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null" class="text-center">
+						<span class="badge badge-xs" [class.badge-success]="chart.chartType === 'mid'" [class.badge-warning]="chart.chartType === 'chart'">{{
+							chart.chartType || '?'
+						}}</span>
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null" class="text-center">
+						<button *ngIf="chart.hasVideo" class="btn btn-xs btn-ghost text-success" (click)="deleteVideo(chart)" title="Has video - click to delete">
+							✓
+						</button>
+						<button *ngIf="!chart.hasVideo" class="btn btn-xs btn-ghost text-error" (click)="goToVideo(chart)" title="No video - click to add">
+							✗
+						</button>
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null" class="text-center">
+						<button
+							*ngIf="chart.hasBackground"
+							class="btn btn-xs btn-ghost text-success"
+							(click)="deleteBackground(chart)"
+							title="Has background - click to delete">
+							✓
+						</button>
+						<button
+							*ngIf="!chart.hasBackground"
+							class="btn btn-xs btn-ghost text-error"
+							(click)="goToArt(chart, 'background')"
+							title="No background - click to add">
+							✗
+						</button>
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null" class="text-center">
+						<div class="relative inline-block group" *ngIf="chart.hasAlbumArt">
+							<button class="btn btn-xs btn-ghost text-success" (click)="deleteAlbumArt(chart)" title="Has album art - click to delete">✓</button>
+							<!-- Album art preview tooltip - appears below to avoid overflow clipping -->
+							<div class="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block pointer-events-none" style="z-index: 9999">
+								<div class="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-base-300"></div>
+								<div class="bg-base-300 rounded-lg shadow-2xl p-1 border border-base-content/20" style="width: 136px; height: 136px">
+									<img
+										*ngIf="getAlbumArtUrl(chart)"
+										[src]="getAlbumArtUrl(chart)"
+										style="width: 128px; height: 128px; object-fit: cover; border-radius: 4px"
+										alt="Album art" />
+									<div
+										*ngIf="!getAlbumArtUrl(chart)"
+										style="width: 128px; height: 128px; display: flex; align-items: center; justify-content: center">
+										<span class="loading loading-spinner"></span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<button
+							*ngIf="!chart.hasAlbumArt"
+							class="btn btn-xs btn-ghost text-error"
+							(click)="goToArt(chart, 'album')"
+							title="No album art - click to add">
+							✗
+						</button>
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null" class="text-center">
+						<button
+							*ngIf="chart.hasLyrics"
+							class="btn btn-xs btn-ghost text-success"
+							(click)="deleteLyrics(chart)"
+							title="Has lyrics - click to delete">
+							✓
+						</button>
+						<button *ngIf="!chart.hasLyrics" class="btn btn-xs btn-ghost text-error" (click)="goToLyrics(chart)" title="No lyrics - click to add">
+							✗
+						</button>
+					</td>
+					<td [style.background-color]="hoveredChartId === chart.id && !isSelected(chart) ? '#000' : null">
+						<div class="flex gap-0.5">
+							<button class="btn btn-xs btn-ghost" (click)="openFolder(chart)" title="Open folder"><i class="bi bi-folder2-open"></i></button>
+							<button class="btn btn-xs btn-ghost" (click)="editChart(chart)" title="Edit"><i class="bi bi-pencil"></i></button>
+							<button class="btn btn-xs btn-ghost text-error" (click)="confirmRemoveChart(chart)" title="Remove to folder">
+								<i class="bi bi-trash"></i>
+							</button>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<!-- Folder Management Modal -->
+	<div class="modal" [class.modal-open]="showFolderModal">
+		<div class="modal-box max-w-lg">
+			<h3 class="font-bold text-lg mb-4">Library Folders</h3>
+			<p class="text-sm text-base-content/60 mb-4">Add multiple folders containing your charts.</p>
+			<div class="space-y-2 mb-4 max-h-60 overflow-auto">
+				<div *ngFor="let folder of libraryPaths; let i = index" class="flex items-center gap-2 p-2 bg-base-200 rounded">
+					<i class="bi bi-folder text-primary"></i>
+					<span class="flex-1 truncate text-sm" [title]="folder">{{ folder }}</span>
+					<button class="btn btn-xs btn-ghost text-error" (click)="removeFolder(i)" title="Remove"><i class="bi bi-x"></i></button>
+				</div>
+				<div *ngIf="libraryPaths.length === 0" class="text-center text-base-content/50 py-4">No folders added yet</div>
+			</div>
+			<button class="btn btn-sm btn-outline w-full mb-4" (click)="addFolder()"><i class="bi bi-folder-plus"></i> Add Folder</button>
+
+			<div class="divider">Removal Folder</div>
+			<p class="text-sm text-base-content/60 mb-3">Charts you remove will be moved here instead of being deleted.</p>
+			<div class="flex items-center gap-2 mb-4">
+				<div class="flex-1 p-2 bg-base-200 rounded truncate text-sm" *ngIf="removalFolder">
+					<i class="bi bi-trash text-warning"></i> {{ removalFolder }}
+				</div>
+				<div class="flex-1 p-2 bg-base-200 rounded text-sm text-base-content/50" *ngIf="!removalFolder"><i class="bi bi-trash"></i> Not set</div>
+				<button class="btn btn-sm btn-outline" (click)="setRemovalFolder()">
+					<i class="bi bi-folder-plus"></i> {{ removalFolder ? 'Change' : 'Set' }}
+				</button>
+				<button class="btn btn-sm btn-ghost" *ngIf="removalFolder" (click)="clearRemovalFolder()">
+					<i class="bi bi-x"></i>
+				</button>
+			</div>
+
+			<div class="modal-action">
+				<button class="btn btn-ghost" (click)="closeFolderModal()">Close</button>
+				<button class="btn btn-primary" (click)="saveFoldersAndScan()" [disabled]="libraryPaths.length === 0">
+					<i class="bi bi-arrow-clockwise"></i> Save & Scan
+				</button>
+			</div>
+		</div>
+		<div class="modal-backdrop" (click)="closeFolderModal()"></div>
+	</div>
+
+	<!-- Edit Chart Modal -->
+	<div class="modal" [class.modal-open]="editingChart">
+		<div class="modal-box">
+			<h3 class="font-bold text-lg mb-4">Edit Chart Metadata</h3>
+			<div *ngIf="editingChart">
+				<div class="form-control mb-3">
+					<label class="label py-1"><span class="label-text">Song Name</span></label>
+					<input type="text" class="input input-bordered input-sm" [(ngModel)]="editingChart.name" />
+				</div>
+				<div class="form-control mb-3">
+					<label class="label py-1"><span class="label-text">Artist</span></label>
+					<input type="text" class="input input-bordered input-sm" [(ngModel)]="editingChart.artist" />
+				</div>
+				<div class="form-control mb-3">
+					<label class="label py-1"><span class="label-text">Album</span></label>
+					<input type="text" class="input input-bordered input-sm" [(ngModel)]="editingChart.album" />
+				</div>
+				<div class="grid grid-cols-2 gap-3">
+					<div class="form-control mb-3">
+						<label class="label py-1"><span class="label-text">Genre</span></label>
+						<input type="text" class="input input-bordered input-sm" [(ngModel)]="editingChart.genre" />
+					</div>
+					<div class="form-control mb-3">
+						<label class="label py-1"><span class="label-text">Year</span></label>
+						<input type="number" class="input input-bordered input-sm" [(ngModel)]="editingChart.year" />
+					</div>
+				</div>
+				<div class="form-control mb-3">
+					<label class="label py-1"><span class="label-text">Charter</span></label>
+					<input type="text" class="input input-bordered input-sm" [(ngModel)]="editingChart.charter" />
+				</div>
+			</div>
+			<div class="modal-action">
+				<button class="btn btn-ghost" (click)="cancelEdit()">Cancel</button>
+				<button class="btn btn-primary" (click)="saveChart()">Save</button>
+			</div>
+		</div>
+		<div class="modal-backdrop" (click)="cancelEdit()"></div>
+	</div>
+
+	<!-- Remove Confirmation Modal -->
+	<div class="modal" [class.modal-open]="showRemovalConfirm">
+		<div class="modal-box">
+			<h3 class="font-bold text-lg mb-4">Remove Chart?</h3>
+
+			<!-- Error in modal -->
+			<div class="alert alert-error mb-4" *ngIf="removalError && showRemovalConfirm">
+				<i class="bi bi-exclamation-triangle"></i>
+				<div class="text-sm whitespace-pre-wrap">{{ removalError }}</div>
+			</div>
+
+			<div *ngIf="chartToRemove">
+				<p class="mb-2">Are you sure you want to remove this chart?</p>
+				<div class="p-3 bg-base-200 rounded mb-4">
+					<div class="font-medium">{{ chartToRemove.name }}</div>
+					<div class="text-sm text-base-content/60">{{ chartToRemove.artist }}</div>
+					<div class="text-xs text-base-content/40 mt-1 truncate" [title]="chartToRemove.path">{{ chartToRemove.path }}</div>
+				</div>
+				<p class="text-sm text-base-content/60">
+					The chart folder will be moved to: <br />
+					<span class="text-warning">{{ removalFolder }}</span>
+				</p>
+			</div>
+			<div class="modal-action">
+				<button class="btn btn-ghost" (click)="cancelRemoval()">Cancel</button>
+				<button class="btn btn-error" (click)="executeRemoval()"><i class="bi bi-trash"></i> Remove</button>
+			</div>
+		</div>
+		<div class="modal-backdrop" (click)="cancelRemoval()"></div>
+	</div>
+</div>

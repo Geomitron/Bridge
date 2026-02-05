@@ -15,8 +15,13 @@ import { ResultTableComponent } from './components/browse/result-table/result-ta
 import { SearchBarComponent } from './components/browse/search-bar/search-bar.component'
 import { DownloadsModalComponent } from './components/browse/status-bar/downloads-modal/downloads-modal.component'
 import { StatusBarComponent } from './components/browse/status-bar/status-bar.component'
+import { LibraryComponent } from './components/library/library.component'
+import { VideoSyncComponent } from './components/video-sync/video-sync.component'
+import { ArtStudioComponent } from './components/art-studio/art-studio.component'
+import { LyricsComponent } from './components/lyrics/lyrics.component'
 import { SettingsComponent } from './components/settings/settings.component'
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
+import { ToolsComponent } from './components/tools/tools.component'
 import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 
 @NgModule({
@@ -35,6 +40,11 @@ import { RemoveStyleTagsPipe } from './core/pipes/remove-style-tags.pipe'
 		DownloadsModalComponent,
 		RemoveStyleTagsPipe,
 		SettingsComponent,
+		ToolsComponent,
+		LibraryComponent,
+		VideoSyncComponent,
+		ArtStudioComponent,
+		LyricsComponent,
 	],
 	bootstrap: [AppComponent], imports: [
 		BrowserModule,

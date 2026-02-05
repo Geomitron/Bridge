@@ -25,6 +25,62 @@ const electronApi: ContextBridgeApi = {
 		isMaximized: getInvoker('isMaximized'),
 		showOpenDialog: getInvoker('showOpenDialog'),
 		getThemeColors: getInvoker('getThemeColors'),
+		// Catalog Manager
+		catalogGetLibraryPaths: getInvoker('catalogGetLibraryPaths'),
+		catalogAddLibraryPath: getInvoker('catalogAddLibraryPath'),
+		catalogRemoveLibraryPath: getInvoker('catalogRemoveLibraryPath'),
+		catalogScan: getInvoker('catalogScan'),
+		catalogGetCharts: getInvoker('catalogGetCharts'),
+		catalogGetChart: getInvoker('catalogGetChart'),
+		catalogGetStats: getInvoker('catalogGetStats'),
+		catalogUpdateChart: getInvoker('catalogUpdateChart'),
+		catalogGetDistinct: getInvoker('catalogGetDistinct'),
+		catalogCheckChartsExist: getInvoker('catalogCheckChartsExist'),
+		catalogGetRemovalFolder: getInvoker('catalogGetRemovalFolder'),
+		catalogSetRemovalFolder: getInvoker('catalogSetRemovalFolder'),
+		catalogClearRemovalFolder: getInvoker('catalogClearRemovalFolder'),
+		catalogRemoveChart: getInvoker('catalogRemoveChart'),
+		catalogRemoveCharts: getInvoker('catalogRemoveCharts'),
+		// Video Sync
+		videoSearchYouTube: getInvoker('videoSearchYouTube'),
+		videoSearch: getInvoker('videoSearch'),
+		videoGetInfo: getInvoker('videoGetInfo'),
+		videoDownload: getInvoker('videoDownload'),
+		videoDownloadFromUrl: getInvoker('videoDownloadFromUrl'),
+		videoSelectLocalFile: getInvoker('videoSelectLocalFile'),
+		videoImportLocal: getInvoker('videoImportLocal'),
+		videoCancelDownload: getInvoker('videoCancelDownload'),
+		videoCheckTools: getInvoker('videoCheckTools'),
+		videoGetChartsMissingVideo: getInvoker('videoGetChartsMissingVideo'),
+		videoBuildSearchQuery: getInvoker('videoBuildSearchQuery'),
+		// Art Studio
+		artSearchAlbumArt: getInvoker('artSearchAlbumArt'),
+		artDownloadImage: getInvoker('artDownloadImage'),
+		artGenerateBackground: getInvoker('artGenerateBackground'),
+		artGetChartsMissingAlbumArt: getInvoker('artGetChartsMissingAlbumArt'),
+		artGetChartsMissingBackground: getInvoker('artGetChartsMissingBackground'),
+		artCheckChartAssets: getInvoker('artCheckChartAssets'),
+		artBatchFetchAlbumArt: getInvoker('artBatchFetchAlbumArt'),
+		artBatchGenerateBackgrounds: getInvoker('artBatchGenerateBackgrounds'),
+		artDeleteBackground: getInvoker('artDeleteBackground'),
+		artDeleteAlbumArt: getInvoker('artDeleteAlbumArt'),
+		artGetAlbumArtDataUrl: getInvoker('artGetAlbumArtDataUrl'),
+		artGetBackgroundDataUrl: getInvoker('artGetBackgroundDataUrl'),
+		artBatchDeleteBackgrounds: getInvoker('artBatchDeleteBackgrounds'),
+		artBatchRegenerateBackgrounds: getInvoker('artBatchRegenerateBackgrounds'),
+		// Video batch and delete
+		videoBatchDownload: getInvoker('videoBatchDownload'),
+		videoDeleteFromChart: getInvoker('videoDeleteFromChart'),
+		// Lyrics
+		lyricsSearch: getInvoker('lyricsSearch'),
+		lyricsGet: getInvoker('lyricsGet'),
+		lyricsGetById: getInvoker('lyricsGetById'),
+		lyricsDownload: getInvoker('lyricsDownload'),
+		lyricsGetChartsMissing: getInvoker('lyricsGetChartsMissing'),
+		lyricsBatchDownload: getInvoker('lyricsBatchDownload'),
+		lyricsCheckChart: getInvoker('lyricsCheckChart'),
+		lyricsDelete: getInvoker('lyricsDelete'),
+		lyricsGetAudioPath: getInvoker('lyricsGetAudioPath'),
 	},
 	emit: {
 		download: getEmitter('download'),
@@ -41,6 +97,8 @@ const electronApi: ContextBridgeApi = {
 		showFolder: getEmitter('showFolder'),
 		showFile: getEmitter('showFile'),
 		scanIssues: getEmitter('scanIssues'),
+		// Catalog Manager
+		catalogOpenFolder: getEmitter('catalogOpenFolder'),
 	},
 	on: {
 		errorLog: getListenerAdder('errorLog'),
@@ -53,6 +111,14 @@ const electronApi: ContextBridgeApi = {
 		maximized: getListenerAdder('maximized'),
 		minimized: getListenerAdder('minimized'),
 		updateIssueScan: getListenerAdder('updateIssueScan'),
+		// Catalog Manager
+		catalogScanProgress: getListenerAdder('catalogScanProgress'),
+		// Video Sync
+		videoDownloadProgress: getListenerAdder('videoDownloadProgress'),
+		// Art Studio
+		artDownloadProgress: getListenerAdder('artDownloadProgress'),
+		// Lyrics
+		lyricsProgress: getListenerAdder('lyricsProgress'),
 	},
 }
 

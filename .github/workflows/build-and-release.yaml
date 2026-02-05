@@ -16,9 +16,8 @@ jobs:
       - name: Build the app (Windows)
         shell: bash
         run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm build:windows -p never
+          npm ci
+          npm run build:windows -- -p never
       - name: Compress binary
         shell: powershell
         run: |
@@ -52,9 +51,8 @@ jobs:
       - name: Build the app (Linux)
         shell: bash
         run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm build:linux -p never
+          npm ci
+          npm run build:linux -- -p never
       - name: Compress binaries
         shell: bash
         run: |
@@ -76,9 +74,8 @@ jobs:
       - name: Build the app (OSX)
         shell: bash
         run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm build:mac -p never
+          npm ci
+          npm run build:mac -- -p never
       - name: Compress binaries
         shell: bash
         run: |

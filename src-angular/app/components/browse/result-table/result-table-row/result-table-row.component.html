@@ -2,6 +2,9 @@
 	<input type="checkbox" class="checkbox" (click)="$event.stopPropagation()" (focus)="rowFocused.emit()" [(ngModel)]="selected" />
 </td>
 <td>
+	<span *ngIf="isInLibrary" class="badge badge-success badge-sm mr-2" title="Already in your library">
+		<i class="bi bi-check-circle-fill"></i>
+	</span>
 	<span *ngIf="song.length > 1" class="rounded-sm bg-accent text-accent-content px-1 mr-1 font-bold">{{ song.length }}</span> {{ song[0].name }}
 </td>
 <td *ngIf="hasColumn('artist')">{{ song[0].artist }}</td>

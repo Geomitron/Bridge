@@ -6,6 +6,7 @@ import { ChartData } from 'src-shared/interfaces/search.interface'
 
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
+import { CatalogService } from '../../../core/services/catalog.service'
 import { ResultTableRowComponent } from './result-table-row/result-table-row.component'
 
 @Component({
@@ -25,10 +26,14 @@ export class ResultTableComponent implements OnInit {
 	sortDirection: 'asc' | 'desc' = 'asc'
 	sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null = null
 
+	// Track which charts are already in the library
+	chartExistenceMap: Record<string, boolean> = {}
+
 	constructor(
 		public searchService: SearchService,
 		private selectionService: SelectionService,
 		public settingsService: SettingsService,
+		private catalogService: CatalogService,
 		private router: Router,
 	) { }
 
@@ -37,10 +42,63 @@ export class ResultTableComponent implements OnInit {
 			this.resultTableDiv.nativeElement.scrollTop = 0
 			this.activeSong = null
 			setTimeout(() => this.tableScrolled(), 0)
+			// Check library for new search results
+			this.checkChartsInLibrary()
 		})
 		this.searchService.updateSearch.subscribe(() => {
 			setTimeout(() => this.tableScrolled(), 0)
+			// Check library for updated search results (next page)
+			this.checkChartsInLibrary()
 		})
+	}
+
+	/**
+	 * Check which search results are already in the library
+	 */
+	async checkChartsInLibrary(): Promise<void> {
+		const songs = this.searchService.groupedSongs
+		if (!songs || songs.length === 0) return
+
+		// Build list of charts to check - include all versions from each group
+		const chartsToCheck: Array<{ artist: string; name: string; charter: string }> = []
+
+		for (const songGroup of songs) {
+			for (const chart of songGroup) {
+				chartsToCheck.push({
+					artist: chart.artist || '',
+					name: chart.name || '',
+					charter: chart.charter || '',
+				})
+			}
+		}
+
+		// Check existence in library
+		try {
+			const result = await this.catalogService.checkChartsExist(chartsToCheck)
+			// Merge with existing map (for pagination)
+			this.chartExistenceMap = { ...this.chartExistenceMap, ...result }
+		} catch (err) {
+			console.error('Failed to check charts in library:', err)
+		}
+	}
+
+	/**
+	 * Check if a specific chart is in the library
+	 */
+	isChartInLibrary(chart: ChartData): boolean {
+		const key = this.catalogService.getChartExistenceKey(
+			chart.artist || '',
+			chart.name || '',
+			chart.charter || ''
+		)
+		return this.chartExistenceMap[key] === true
+	}
+
+	/**
+	 * Check if any version in the song group is in the library
+	 */
+	isAnyVersionInLibrary(songGroup: ChartData[]): boolean {
+		return songGroup.some(chart => this.isChartInLibrary(chart))
 	}
 
 	get songs() {

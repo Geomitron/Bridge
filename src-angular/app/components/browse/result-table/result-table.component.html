@@ -44,7 +44,9 @@
 					(rowFocused)="onRowClicked(song)"
 					[class.!bg-neutral]="activeSong === song"
 					[class.!text-neutral-content]="activeSong === song"
-					[song]="song"></tr>
+					[class.opacity-60]="isAnyVersionInLibrary(song)"
+					[song]="song"
+					[isInLibrary]="isAnyVersionInLibrary(song)"></tr>
 			}
 		</tbody>
 	</table>

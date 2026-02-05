@@ -14,6 +14,7 @@ import { SelectionService } from '../../../../core/services/selection.service.js
 })
 export class ResultTableRowComponent implements OnInit {
 	@Input() song: ChartData[]
+	@Input() isInLibrary: boolean = false
 
 	@Output() rowFocused: EventEmitter<string> = new EventEmitter()
 
