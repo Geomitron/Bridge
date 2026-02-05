@@ -1,5 +1,5 @@
 import { IpcInvokeHandlers, IpcToMainEmitHandlers } from '../src-shared/interfaces/ipc.interface.js'
-import { catalogGetCharts, catalogGetChart, catalogGetDistinct, catalogGetLibraryPaths, catalogAddLibraryPath, catalogRemoveLibraryPath, catalogGetStats, catalogOpenFolder, catalogScan, catalogUpdateChart, catalogGetRemovalFolder, catalogSetRemovalFolder, catalogClearRemovalFolder, catalogRemoveChart, catalogRemoveCharts, catalogCheckChartsExist } from './ipc/catalog/CatalogHandler.ipc.js'
+import { catalogGetCharts, catalogGetChart, catalogGetDistinct, catalogGetStats, catalogGetChartsCount, catalogOpenFolder, catalogScan, catalogUpdateChart, catalogDeleteChart, catalogDeleteCharts, catalogCheckChartsExist } from './ipc/catalog/CatalogHandler.ipc.js'
 import { videoSearchYouTube, videoSearch, videoGetInfo, videoDownload, videoDownloadFromUrl, videoSelectLocalFile, videoImportLocal, videoCancelDownload, videoCheckTools, videoGetChartsMissingVideo, videoBuildSearchQuery, videoBatchDownload, videoDeleteFromChart } from './ipc/video-sync/VideoSyncHandler.ipc.js'
 import { artSearchAlbumArt, artDownloadImage, artGenerateBackground, artGetChartsMissingAlbumArt, artGetChartsMissingBackground, artCheckChartAssets, artBatchFetchAlbumArt, artBatchGenerateBackgrounds, artDeleteBackground, artDeleteAlbumArt, artBatchDeleteBackgrounds, artBatchRegenerateBackgrounds, artGetAlbumArtDataUrl, artGetBackgroundDataUrl } from './ipc/art-studio/ArtStudioHandler.ipc.js'
 import { lyricsSearch, lyricsGet, lyricsGetById, lyricsDownload, lyricsGetChartsMissing, lyricsBatchDownload, lyricsCheckChart, lyricsDelete, lyricsGetAudioPath } from './ipc/lyrics/LyricsHandler.ipc.js'
@@ -19,21 +19,16 @@ export function getIpcInvokeHandlers(): IpcInvokeHandlers {
 		showOpenDialog,
 		getThemeColors,
 		// Catalog Manager
-		catalogGetLibraryPaths,
-		catalogAddLibraryPath,
-		catalogRemoveLibraryPath,
 		catalogScan,
 		catalogGetCharts,
 		catalogGetChart,
 		catalogGetStats,
+		catalogGetChartsCount,
 		catalogUpdateChart,
 		catalogGetDistinct,
 		catalogCheckChartsExist,
-		catalogGetRemovalFolder,
-		catalogSetRemovalFolder,
-		catalogClearRemovalFolder,
-		catalogRemoveChart,
-		catalogRemoveCharts,
+		catalogDeleteChart,
+		catalogDeleteCharts,
 		// Video Sync
 		videoSearchYouTube,
 		videoSearch,

@@ -4,18 +4,17 @@
 			<h2 class="text-xl font-semibold">Library</h2>
 			@if (stats()) {
 				<span class="text-sm text-base-content/60">
-					{{ displayedCharts().length }} of {{ stats()!.totalCharts }} charts
 					@if (showDuplicatesOnly()) {
-						<span class="text-warning">(showing duplicates)</span>
+						{{ displayedCharts().length }} duplicates
+					} @else if (totalFilteredCount() !== stats()!.totalCharts) {
+						{{ charts().length }} of {{ totalFilteredCount() }} filtered ({{ stats()!.totalCharts }} total)
+					} @else {
+						{{ charts().length }} of {{ stats()!.totalCharts }} charts
 					}
 				</span>
 			}
 		</div>
 		<div class="flex gap-2">
-			<button class="btn btn-sm btn-ghost" (click)="manageFolders()">
-				<i class="bi bi-folder2-open"></i>
-				<span>Folders</span>
-			</button>
 			<button class="btn btn-sm btn-primary" (click)="scanLibrary()" [disabled]="isScanning()">
 				<i class="bi bi-arrow-clockwise" [class.animate-spin]="isScanning()"></i>
 				@if (isScanning()) {
@@ -28,8 +27,8 @@
 		</div>
 	</div>
 
-	@if (libraryPaths().length > 0) {
-		<div class="text-xs text-base-content/50 mb-3 truncate"><i class="bi bi-folder"></i> {{ libraryPaths().length }} folder(s) configured</div>
+	@if (settingsService.libraryFolders.length > 0) {
+		<div class="text-xs text-base-content/50 mb-3 truncate"><i class="bi bi-folder"></i> {{ settingsService.libraryFolders.length }} folder(s) configured</div>
 	}
 
 	@if (scanProgress() && isScanning()) {
@@ -104,12 +103,12 @@
 	}
 
 	<!-- Error Alert -->
-	@if (removalError()) {
+	@if (deleteError()) {
 		<div class="alert alert-error mb-3">
 			<i class="bi bi-exclamation-triangle"></i>
 			<div class="flex-1">
 				<div class="font-semibold">Error</div>
-				<div class="text-sm whitespace-pre-wrap">{{ removalError() }}</div>
+				<div class="text-sm whitespace-pre-wrap">{{ deleteError() }}</div>
 			</div>
 			<button class="btn btn-sm btn-ghost" (click)="dismissError()">
 				<i class="bi bi-x"></i>
@@ -157,8 +156,8 @@
 		@if (selectedIds().size > 0) {
 			<div class="flex gap-2 items-center">
 				<span class="text-sm text-base-content/60">{{ selectedIds().size }} selected</span>
-				<button class="btn btn-sm btn-error btn-outline" (click)="removeSelectedCharts()" title="Remove selected to folder">
-					<i class="bi bi-trash"></i> Remove
+				<button class="btn btn-sm btn-error btn-outline" (click)="deleteSelectedCharts()" title="Delete selected charts">
+					<i class="bi bi-trash"></i> Delete
 				</button>
 				<button class="btn btn-sm btn-ghost" (click)="clearSelection()">Clear</button>
 			</div>
@@ -237,16 +236,16 @@
 		</div>
 	}
 
-	@if (libraryPaths().length === 0) {
+	@if (settingsService.libraryFolders.length === 0) {
 		<div class="flex flex-1 flex-col items-center justify-center">
 			<i class="bi bi-folder2-open text-6xl text-base-content/20 mb-4"></i>
 			<h3 class="text-lg font-semibold mb-2">No Library Folders Set</h3>
-			<p class="text-base-content/60 mb-4 text-center max-w-md">Add your Clone Hero/YARG chart library folders.</p>
-			<button class="btn btn-primary" (click)="manageFolders()"><i class="bi bi-folder-plus"></i> Add Library Folders</button>
+			<p class="text-base-content/60 mb-4 text-center max-w-md">Add your Clone Hero/YARG chart library folders in Settings.</p>
+			<button class="btn btn-primary" (click)="goToSettings()"><i class="bi bi-gear"></i> Go to Settings</button>
 		</div>
 	}
 
-	@if (libraryPaths().length > 0 && stats() && stats()!.totalCharts === 0 && !isScanning()) {
+	@if (settingsService.libraryFolders.length > 0 && stats() && stats()!.totalCharts === 0 && !isScanning()) {
 		<div class="flex flex-1 flex-col items-center justify-center">
 			<i class="bi bi-music-note-list text-6xl text-base-content/20 mb-4"></i>
 			<h3 class="text-lg font-semibold mb-2">No Charts Found</h3>
@@ -255,7 +254,7 @@
 		</div>
 	}
 
-	@if (charts().length > 0) {
+	@if (charts().length > 0 || isLoading()) {
 		<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
 			<table class="table table-xs table-zebra table-pin-rows w-full">
 				<thead>
@@ -398,7 +397,7 @@
 								<div class="flex gap-0.5">
 									<button class="btn btn-xs btn-ghost" (click)="openFolder(chart)" title="Open folder"><i class="bi bi-folder2-open"></i></button>
 									<button class="btn btn-xs btn-ghost" (click)="editChart(chart)" title="Edit"><i class="bi bi-pencil"></i></button>
-									<button class="btn btn-xs btn-ghost text-error" (click)="confirmRemoveChart(chart)" title="Remove to folder">
+									<button class="btn btn-xs btn-ghost text-error" (click)="confirmDeleteChart(chart)" title="Delete chart">
 										<i class="bi bi-trash"></i>
 									</button>
 								</div>
@@ -407,92 +406,64 @@
 					}
 				</tbody>
 			</table>
+
+			<!-- Infinite scroll sentinel and loading indicator -->
+			<div #scrollSentinel class="flex justify-center py-4">
+				@if (isLoadingMore()) {
+					<div class="flex items-center gap-2 text-base-content/60">
+						<span class="loading loading-spinner loading-sm"></span>
+						<span class="text-sm">Loading more charts...</span>
+					</div>
+				} @else if (hasMore()) {
+					<button class="btn btn-sm btn-ghost" (click)="loadMore()">
+						<i class="bi bi-arrow-down-circle"></i>
+						Load more ({{ totalFilteredCount() - charts().length }} remaining)
+					</button>
+				} @else if (charts().length > 0) {
+					<span class="text-xs text-base-content/40">All {{ charts().length }} charts loaded</span>
+				}
+			</div>
 		</div>
 	}
 
-	<!-- Folder Management Modal -->
-	<div class="modal" [class.modal-open]="showFolderModal()">
-		<div class="modal-box max-w-lg">
-			<h3 class="font-bold text-lg mb-4">Library Folders</h3>
-			<p class="text-sm text-base-content/60 mb-4">Add multiple folders containing your charts.</p>
-			<div class="space-y-2 mb-4 max-h-60 overflow-auto">
-				@for (folder of libraryPaths(); track folder; let i = $index) {
-					<div class="flex items-center gap-2 p-2 bg-base-200 rounded">
-						<i class="bi bi-folder text-primary"></i>
-						<span class="flex-1 truncate text-sm" [title]="folder">{{ folder }}</span>
-						<button class="btn btn-xs btn-ghost text-error" (click)="removeFolder(i)" title="Remove"><i class="bi bi-x"></i></button>
-					</div>
-				}
-				@if (libraryPaths().length === 0) {
-					<div class="text-center text-base-content/50 py-4">No folders added yet</div>
-				}
-			</div>
-			<button class="btn btn-sm btn-outline w-full mb-4" (click)="addFolder()"><i class="bi bi-folder-plus"></i> Add Folder</button>
-
-			<div class="divider">Removal Folder</div>
-			<p class="text-sm text-base-content/60 mb-3">Charts you remove will be moved here instead of being deleted.</p>
-			<div class="flex items-center gap-2 mb-4">
-				@if (removalFolder()) {
-					<div class="flex-1 p-2 bg-base-200 rounded truncate text-sm"><i class="bi bi-trash text-warning"></i> {{ removalFolder() }}</div>
-				}
-				@if (!removalFolder()) {
-					<div class="flex-1 p-2 bg-base-200 rounded text-sm text-base-content/50"><i class="bi bi-trash"></i> Not set</div>
-				}
-				<button class="btn btn-sm btn-outline" (click)="setRemovalFolder()">
-					<i class="bi bi-folder-plus"></i> {{ removalFolder() ? 'Change' : 'Set' }}
-				</button>
-				@if (removalFolder()) {
-					<button class="btn btn-sm btn-ghost" (click)="clearRemovalFolder()">
-						<i class="bi bi-x"></i>
-					</button>
-				}
-			</div>
-
-			<div class="modal-action">
-				<button class="btn btn-ghost" (click)="closeFolderModal()">Close</button>
-				<button class="btn btn-primary" (click)="saveFoldersAndScan()" [disabled]="libraryPaths().length === 0">
-					<i class="bi bi-arrow-clockwise"></i> Save & Scan
-				</button>
-			</div>
-		</div>
-		<div class="modal-backdrop" (click)="closeFolderModal()"></div>
-	</div>
-
 	<!-- Edit Chart Modal -->
 	<div class="modal" [class.modal-open]="editingChart()">
-		<div class="modal-box">
-			<h3 class="font-bold text-lg mb-4">Edit Chart Metadata</h3>
+		<div class="modal-box bg-base-100">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" (click)="cancelEdit()">
+				<i class="bi bi-x-lg"></i>
+			</button>
+			<h3 class="font-bold text-lg mb-6">Edit Chart Metadata</h3>
 			@if (editingChart()) {
-				<div>
-					<div class="form-control mb-3">
-						<label class="label py-1"><span class="label-text">Song Name</span></label>
+				<div class="flex flex-col gap-4">
+					<div class="form-control">
+						<label class="label pb-1 pt-0"><span class="label-text font-medium">Song Name</span></label>
 						<input type="text" class="input input-bordered input-sm" [ngModel]="editingChart()!.name" (ngModelChange)="updateEditingChart('name', $event)" />
 					</div>
-					<div class="form-control mb-3">
-						<label class="label py-1"><span class="label-text">Artist</span></label>
+					<div class="form-control">
+						<label class="label pb-1 pt-0"><span class="label-text font-medium">Artist</span></label>
 						<input type="text" class="input input-bordered input-sm" [ngModel]="editingChart()!.artist" (ngModelChange)="updateEditingChart('artist', $event)" />
 					</div>
-					<div class="form-control mb-3">
-						<label class="label py-1"><span class="label-text">Album</span></label>
+					<div class="form-control">
+						<label class="label pb-1 pt-0"><span class="label-text font-medium">Album</span></label>
 						<input type="text" class="input input-bordered input-sm" [ngModel]="editingChart()!.album" (ngModelChange)="updateEditingChart('album', $event)" />
 					</div>
-					<div class="grid grid-cols-2 gap-3">
-						<div class="form-control mb-3">
-							<label class="label py-1"><span class="label-text">Genre</span></label>
+					<div class="grid grid-cols-2 gap-4">
+						<div class="form-control">
+							<label class="label pb-1 pt-0"><span class="label-text font-medium">Genre</span></label>
 							<input type="text" class="input input-bordered input-sm" [ngModel]="editingChart()!.genre" (ngModelChange)="updateEditingChart('genre', $event)" />
 						</div>
-						<div class="form-control mb-3">
-							<label class="label py-1"><span class="label-text">Year</span></label>
+						<div class="form-control">
+							<label class="label pb-1 pt-0"><span class="label-text font-medium">Year</span></label>
 							<input type="number" class="input input-bordered input-sm" [ngModel]="editingChart()!.year" (ngModelChange)="updateEditingChart('year', $event)" />
 						</div>
 					</div>
-					<div class="form-control mb-3">
-						<label class="label py-1"><span class="label-text">Charter</span></label>
+					<div class="form-control">
+						<label class="label pb-1 pt-0"><span class="label-text font-medium">Charter</span></label>
 						<input type="text" class="input input-bordered input-sm" [ngModel]="editingChart()!.charter" (ngModelChange)="updateEditingChart('charter', $event)" />
 					</div>
 				</div>
 			}
-			<div class="modal-action">
+			<div class="modal-action mt-6">
 				<button class="btn btn-ghost" (click)="cancelEdit()">Cancel</button>
 				<button class="btn btn-primary" (click)="saveChart()">Save</button>
 			</div>
@@ -500,38 +471,88 @@
 		<div class="modal-backdrop" (click)="cancelEdit()"></div>
 	</div>
 
-	<!-- Remove Confirmation Modal -->
-	<div class="modal" [class.modal-open]="showRemovalConfirm()">
-		<div class="modal-box">
-			<h3 class="font-bold text-lg mb-4">Remove Chart?</h3>
+	<!-- Delete Confirmation Modal -->
+	<div class="modal" [class.modal-open]="showDeleteConfirm()">
+		<div class="modal-box bg-base-100">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" (click)="cancelDelete()">
+				<i class="bi bi-x-lg"></i>
+			</button>
+			<h3 class="font-bold text-lg mb-4">Delete Chart?</h3>
 
 			<!-- Error in modal -->
-			@if (removalError() && showRemovalConfirm()) {
+			@if (deleteError() && showDeleteConfirm()) {
 				<div class="alert alert-error mb-4">
 					<i class="bi bi-exclamation-triangle"></i>
-					<div class="text-sm whitespace-pre-wrap">{{ removalError() }}</div>
+					<div class="text-sm whitespace-pre-wrap">{{ deleteError() }}</div>
 				</div>
 			}
 
-			@if (chartToRemove()) {
+			@if (chartToDelete()) {
 				<div>
-					<p class="mb-2">Are you sure you want to remove this chart?</p>
-					<div class="p-3 bg-base-200 rounded mb-4">
-						<div class="font-medium">{{ chartToRemove()!.name }}</div>
-						<div class="text-sm text-base-content/60">{{ chartToRemove()!.artist }}</div>
-						<div class="text-xs text-base-content/40 mt-1 truncate" [title]="chartToRemove()!.path">{{ chartToRemove()!.path }}</div>
+					<p class="mb-3 text-base-content/80">Are you sure you want to permanently delete this chart?</p>
+					<div class="p-4 bg-base-200 rounded-lg mb-4">
+						<div class="font-semibold">{{ chartToDelete()!.name }}</div>
+						<div class="text-sm text-base-content/60 mt-1">{{ chartToDelete()!.artist }}</div>
+						<div class="text-xs text-base-content/40 mt-2 truncate font-mono" [title]="chartToDelete()!.path">{{ chartToDelete()!.path }}</div>
 					</div>
-					<p class="text-sm text-base-content/60">
-						The chart folder will be moved to: <br />
-						<span class="text-warning">{{ removalFolder() }}</span>
-					</p>
+					<div class="flex items-start gap-2 text-sm text-error">
+						<i class="bi bi-exclamation-triangle mt-0.5"></i>
+						<span>This action cannot be undone. The chart folder and all its contents will be permanently deleted.</span>
+					</div>
 				</div>
 			}
-			<div class="modal-action">
-				<button class="btn btn-ghost" (click)="cancelRemoval()">Cancel</button>
-				<button class="btn btn-error" (click)="executeRemoval()"><i class="bi bi-trash"></i> Remove</button>
+			<div class="modal-action mt-6">
+				<button class="btn btn-ghost" (click)="cancelDelete()">Cancel</button>
+				<button class="btn btn-error" (click)="executeDelete()"><i class="bi bi-trash"></i> Delete</button>
 			</div>
 		</div>
-		<div class="modal-backdrop" (click)="cancelRemoval()"></div>
+		<div class="modal-backdrop" (click)="cancelDelete()"></div>
+	</div>
+
+	<!-- Bulk Delete Confirmation Modal -->
+	<div class="modal" [class.modal-open]="showBulkDeleteConfirm()">
+		<div class="modal-box bg-base-100">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" (click)="cancelBulkDelete()">
+				<i class="bi bi-x-lg"></i>
+			</button>
+			<h3 class="font-bold text-lg mb-4">Delete {{ selectedIds().size }} Charts?</h3>
+
+			<p class="mb-4 text-base-content/80">Are you sure you want to permanently delete {{ selectedIds().size }} selected chart(s)?</p>
+
+			<div class="flex items-start gap-2 text-sm text-error">
+				<i class="bi bi-exclamation-triangle mt-0.5"></i>
+				<span>This action cannot be undone. All selected chart folders and their contents will be permanently deleted.</span>
+			</div>
+
+			<div class="modal-action mt-6">
+				<button class="btn btn-ghost" (click)="cancelBulkDelete()">Cancel</button>
+				<button class="btn btn-error" (click)="executeBulkDelete()"><i class="bi bi-trash"></i> Delete {{ selectedIds().size }} Charts</button>
+			</div>
+		</div>
+		<div class="modal-backdrop" (click)="cancelBulkDelete()"></div>
+	</div>
+
+	<!-- Asset Delete Confirmation Modal -->
+	<div class="modal" [class.modal-open]="showAssetDeleteConfirm()">
+		<div class="modal-box bg-base-100">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" (click)="cancelAssetDelete()">
+				<i class="bi bi-x-lg"></i>
+			</button>
+			<h3 class="font-bold text-lg mb-4">Delete {{ assetDeleteType() }}?</h3>
+
+			@if (assetDeleteChart()) {
+				<p class="mb-3 text-base-content/80">Are you sure you want to delete the {{ assetDeleteType()?.toLowerCase() }} from this chart?</p>
+				<div class="p-4 bg-base-200 rounded-lg mb-4">
+					<div class="font-semibold">{{ assetDeleteChart()!.name }}</div>
+					<div class="text-sm text-base-content/60 mt-1">{{ assetDeleteChart()!.artist }}</div>
+				</div>
+			}
+
+			<div class="modal-action mt-6">
+				<button class="btn btn-ghost" (click)="cancelAssetDelete()">Cancel</button>
+				<button class="btn btn-error" (click)="executeAssetDelete()"><i class="bi bi-trash"></i> Delete</button>
+			</div>
+		</div>
+		<div class="modal-backdrop" (click)="cancelAssetDelete()"></div>
 	</div>
 </div>

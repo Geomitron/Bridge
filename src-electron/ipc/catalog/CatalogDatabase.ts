@@ -8,9 +8,21 @@ import * as path from 'path'
 import { ChartRecord, CatalogFilter, CatalogStats } from '../../../src-shared/interfaces/catalog.interface.js'
 import { dataPath } from '../../../src-shared/Paths.js'
 
+/** Helper to convert boolean to SQLite integer */
+const boolToInt = (val: boolean): number => val ? 1 : 0
+
+/** Result of building filter clauses */
+interface FilterResult {
+	whereClause: string
+	params: Record<string, unknown>
+}
+
 class CatalogDatabase {
 	private db: Database.Database
 	private dbPath: string
+
+	// Prepared statements cache for frequently used queries
+	private stmtCache: Map<string, Database.Statement> = new Map()
 
 	constructor() {
 		this.dbPath = path.join(dataPath, 'catalog.db')
@@ -167,182 +179,98 @@ class CatalogDatabase {
 		}
 	}
 
-	upsertChart(chart: Omit<ChartRecord, 'id'>): number {
-		const stmt = this.db.prepare(`
-      INSERT INTO charts (
-        path, name, artist, album, genre, year, charter,
-        diff_guitar, diff_bass, diff_drums, diff_keys, diff_vocals,
-        diff_rhythm, diff_guitarghl, diff_bassghl,
-        hasGuitar, hasBass, hasDrums, hasKeys, hasVocals, hasRhythm, hasGHL,
-        guitarDiffs, bassDiffs, drumsDiffs, keysDiffs, vocalsDiffs, rhythmDiffs, ghlGuitarDiffs, ghlBassDiffs,
-        chartType,
-        hasVideo, hasBackground, hasAlbumArt, hasStems, hasLyrics,
-        songLength, previewStart, chorusId, folderHash, lastScanned
-      ) VALUES (
-        @path, @name, @artist, @album, @genre, @year, @charter,
-        @diff_guitar, @diff_bass, @diff_drums, @diff_keys, @diff_vocals,
-        @diff_rhythm, @diff_guitarghl, @diff_bassghl,
-        @hasGuitar, @hasBass, @hasDrums, @hasKeys, @hasVocals, @hasRhythm, @hasGHL,
-        @guitarDiffs, @bassDiffs, @drumsDiffs, @keysDiffs, @vocalsDiffs, @rhythmDiffs, @ghlGuitarDiffs, @ghlBassDiffs,
-        @chartType,
-        @hasVideo, @hasBackground, @hasAlbumArt, @hasStems, @hasLyrics,
-        @songLength, @previewStart, @chorusId, @folderHash, @lastScanned
-      )
-      ON CONFLICT(path) DO UPDATE SET
-        name = excluded.name,
-        artist = excluded.artist,
-        album = excluded.album,
-        genre = excluded.genre,
-        year = excluded.year,
-        charter = excluded.charter,
-        diff_guitar = excluded.diff_guitar,
-        diff_bass = excluded.diff_bass,
-        diff_drums = excluded.diff_drums,
-        diff_keys = excluded.diff_keys,
-        diff_vocals = excluded.diff_vocals,
-        diff_rhythm = excluded.diff_rhythm,
-        diff_guitarghl = excluded.diff_guitarghl,
-        diff_bassghl = excluded.diff_bassghl,
-        hasGuitar = excluded.hasGuitar,
-        hasBass = excluded.hasBass,
-        hasDrums = excluded.hasDrums,
-        hasKeys = excluded.hasKeys,
-        hasVocals = excluded.hasVocals,
-        hasRhythm = excluded.hasRhythm,
-        hasGHL = excluded.hasGHL,
-        guitarDiffs = excluded.guitarDiffs,
-        bassDiffs = excluded.bassDiffs,
-        drumsDiffs = excluded.drumsDiffs,
-        keysDiffs = excluded.keysDiffs,
-        vocalsDiffs = excluded.vocalsDiffs,
-        rhythmDiffs = excluded.rhythmDiffs,
-        ghlGuitarDiffs = excluded.ghlGuitarDiffs,
-        ghlBassDiffs = excluded.ghlBassDiffs,
-        chartType = excluded.chartType,
-        hasVideo = excluded.hasVideo,
-        hasBackground = excluded.hasBackground,
-        hasAlbumArt = excluded.hasAlbumArt,
-        hasStems = excluded.hasStems,
-        hasLyrics = excluded.hasLyrics,
-        songLength = excluded.songLength,
-        previewStart = excluded.previewStart,
-        chorusId = excluded.chorusId,
-        folderHash = excluded.folderHash,
-        lastScanned = excluded.lastScanned
-    `)
-
-		const result = stmt.run({
-			...chart,
-			hasGuitar: chart.hasGuitar ? 1 : 0,
-			hasBass: chart.hasBass ? 1 : 0,
-			hasDrums: chart.hasDrums ? 1 : 0,
-			hasKeys: chart.hasKeys ? 1 : 0,
-			hasVocals: chart.hasVocals ? 1 : 0,
-			hasRhythm: chart.hasRhythm ? 1 : 0,
-			hasGHL: chart.hasGHL ? 1 : 0,
-			hasVideo: chart.hasVideo ? 1 : 0,
-			hasBackground: chart.hasBackground ? 1 : 0,
-			hasAlbumArt: chart.hasAlbumArt ? 1 : 0,
-			hasStems: chart.hasStems ? 1 : 0,
-			hasLyrics: chart.hasLyrics ? 1 : 0,
-		})
-
-		return result.lastInsertRowid as number
-	}
-
-	getCharts(filter: CatalogFilter = {}): ChartRecord[] {
-		let query = 'SELECT * FROM charts WHERE 1=1'
+	/**
+	 * Build filter clauses for getCharts/getChartsCount queries
+	 * Extracts shared logic to avoid duplication
+	 */
+	private buildFilterClauses(filter: CatalogFilter): FilterResult {
+		const conditions: string[] = []
 		const params: Record<string, unknown> = {}
 
-		// Full-text search
+		// Full-text search handled separately since it changes the base query
 		if (filter.search) {
-			query = `
-        SELECT charts.* FROM charts
-        INNER JOIN charts_fts ON charts.id = charts_fts.rowid
-        WHERE charts_fts MATCH @search
-      `
 			params.search = filter.search.replace(/['"]/g, '').split(/\s+/).map(t => `${t}*`).join(' ')
 		}
 
 		// Exact filters
 		if (filter.artist) {
-			query += ' AND artist = @artist'
+			conditions.push('artist = @artist')
 			params.artist = filter.artist
 		}
 		if (filter.charter) {
-			query += ' AND charter = @charter'
+			conditions.push('charter = @charter')
 			params.charter = filter.charter
 		}
 		if (filter.genre) {
-			query += ' AND genre = @genre'
+			conditions.push('genre = @genre')
 			params.genre = filter.genre
 		}
 		if (filter.album) {
-			query += ' AND album = @album'
+			conditions.push('album = @album')
 			params.album = filter.album
 		}
 
 		// Chart type filter
 		if (filter.chartType) {
-			query += ' AND chartType = @chartType'
+			conditions.push('chartType = @chartType')
 			params.chartType = filter.chartType
 		}
 
 		// Asset filters
 		if (filter.hasVideo !== undefined) {
-			query += ' AND hasVideo = @hasVideo'
-			params.hasVideo = filter.hasVideo ? 1 : 0
+			conditions.push('hasVideo = @hasVideo')
+			params.hasVideo = boolToInt(filter.hasVideo)
 		}
 		if (filter.hasBackground !== undefined) {
-			query += ' AND hasBackground = @hasBackground'
-			params.hasBackground = filter.hasBackground ? 1 : 0
+			conditions.push('hasBackground = @hasBackground')
+			params.hasBackground = boolToInt(filter.hasBackground)
 		}
 		if (filter.hasAlbumArt !== undefined) {
-			query += ' AND hasAlbumArt = @hasAlbumArt'
-			params.hasAlbumArt = filter.hasAlbumArt ? 1 : 0
+			conditions.push('hasAlbumArt = @hasAlbumArt')
+			params.hasAlbumArt = boolToInt(filter.hasAlbumArt)
 		}
-		if ((filter as any).hasLyrics !== undefined) {
-			query += ' AND hasLyrics = @hasLyrics'
-			params.hasLyrics = (filter as any).hasLyrics ? 1 : 0
+		if (filter.hasLyrics !== undefined) {
+			conditions.push('hasLyrics = @hasLyrics')
+			params.hasLyrics = boolToInt(filter.hasLyrics)
 		}
 
 		// Instrument filters
 		if (filter.hasGuitar !== undefined) {
-			query += ' AND hasGuitar = @hasGuitar'
-			params.hasGuitar = filter.hasGuitar ? 1 : 0
+			conditions.push('hasGuitar = @hasGuitar')
+			params.hasGuitar = boolToInt(filter.hasGuitar)
 		}
 		if (filter.hasBass !== undefined) {
-			query += ' AND hasBass = @hasBass'
-			params.hasBass = filter.hasBass ? 1 : 0
+			conditions.push('hasBass = @hasBass')
+			params.hasBass = boolToInt(filter.hasBass)
 		}
 		if (filter.hasDrums !== undefined) {
-			query += ' AND hasDrums = @hasDrums'
-			params.hasDrums = filter.hasDrums ? 1 : 0
+			conditions.push('hasDrums = @hasDrums')
+			params.hasDrums = boolToInt(filter.hasDrums)
 		}
 		if (filter.hasKeys !== undefined) {
-			query += ' AND hasKeys = @hasKeys'
-			params.hasKeys = filter.hasKeys ? 1 : 0
+			conditions.push('hasKeys = @hasKeys')
+			params.hasKeys = boolToInt(filter.hasKeys)
 		}
 		if (filter.hasVocals !== undefined) {
-			query += ' AND hasVocals = @hasVocals'
-			params.hasVocals = filter.hasVocals ? 1 : 0
+			conditions.push('hasVocals = @hasVocals')
+			params.hasVocals = boolToInt(filter.hasVocals)
 		}
 
-		// Difficulty level filters (check if the difficulty level is in the diffs string)
+		// Difficulty level filters
 		if (filter.guitarDiff) {
-			query += ' AND guitarDiffs LIKE @guitarDiff'
+			conditions.push('guitarDiffs LIKE @guitarDiff')
 			params.guitarDiff = `%${filter.guitarDiff}%`
 		}
 		if (filter.bassDiff) {
-			query += ' AND bassDiffs LIKE @bassDiff'
+			conditions.push('bassDiffs LIKE @bassDiff')
 			params.bassDiff = `%${filter.bassDiff}%`
 		}
 		if (filter.drumsDiff) {
-			query += ' AND drumsDiffs LIKE @drumsDiff'
+			conditions.push('drumsDiffs LIKE @drumsDiff')
 			params.drumsDiff = `%${filter.drumsDiff}%`
 		}
 		if (filter.keysDiff) {
-			query += ' AND keysDiffs LIKE @keysDiff'
+			conditions.push('keysDiffs LIKE @keysDiff')
 			params.keysDiff = `%${filter.keysDiff}%`
 		}
 
@@ -350,13 +278,129 @@ class CatalogDatabase {
 		if (filter.instrument && (filter.minDifficulty !== undefined || filter.maxDifficulty !== undefined)) {
 			const diffCol = `diff_${filter.instrument}`
 			if (filter.minDifficulty !== undefined) {
-				query += ` AND ${diffCol} >= @minDiff`
+				conditions.push(`${diffCol} >= @minDiff`)
 				params.minDiff = filter.minDifficulty
 			}
 			if (filter.maxDifficulty !== undefined) {
-				query += ` AND ${diffCol} <= @maxDiff`
+				conditions.push(`${diffCol} <= @maxDiff`)
 				params.maxDiff = filter.maxDifficulty
 			}
+		}
+
+		return {
+			whereClause: conditions.length > 0 ? ' AND ' + conditions.join(' AND ') : '',
+			params,
+		}
+	}
+
+	/**
+	 * Convert chart record to database params with boolean conversion
+	 */
+	private chartToDbParams(chart: Omit<ChartRecord, 'id'>): Record<string, unknown> {
+		return {
+			...chart,
+			hasGuitar: boolToInt(chart.hasGuitar),
+			hasBass: boolToInt(chart.hasBass),
+			hasDrums: boolToInt(chart.hasDrums),
+			hasKeys: boolToInt(chart.hasKeys),
+			hasVocals: boolToInt(chart.hasVocals),
+			hasRhythm: boolToInt(chart.hasRhythm),
+			hasGHL: boolToInt(chart.hasGHL),
+			hasVideo: boolToInt(chart.hasVideo),
+			hasBackground: boolToInt(chart.hasBackground),
+			hasAlbumArt: boolToInt(chart.hasAlbumArt),
+			hasStems: boolToInt(chart.hasStems),
+			hasLyrics: boolToInt(chart.hasLyrics),
+		}
+	}
+
+	upsertChart(chart: Omit<ChartRecord, 'id'>): number {
+		const cacheKey = 'upsertChart'
+		let stmt = this.stmtCache.get(cacheKey)
+
+		if (!stmt) {
+			stmt = this.db.prepare(`
+        INSERT INTO charts (
+          path, name, artist, album, genre, year, charter,
+          diff_guitar, diff_bass, diff_drums, diff_keys, diff_vocals,
+          diff_rhythm, diff_guitarghl, diff_bassghl,
+          hasGuitar, hasBass, hasDrums, hasKeys, hasVocals, hasRhythm, hasGHL,
+          guitarDiffs, bassDiffs, drumsDiffs, keysDiffs, vocalsDiffs, rhythmDiffs, ghlGuitarDiffs, ghlBassDiffs,
+          chartType,
+          hasVideo, hasBackground, hasAlbumArt, hasStems, hasLyrics,
+          songLength, previewStart, chorusId, folderHash, lastScanned
+        ) VALUES (
+          @path, @name, @artist, @album, @genre, @year, @charter,
+          @diff_guitar, @diff_bass, @diff_drums, @diff_keys, @diff_vocals,
+          @diff_rhythm, @diff_guitarghl, @diff_bassghl,
+          @hasGuitar, @hasBass, @hasDrums, @hasKeys, @hasVocals, @hasRhythm, @hasGHL,
+          @guitarDiffs, @bassDiffs, @drumsDiffs, @keysDiffs, @vocalsDiffs, @rhythmDiffs, @ghlGuitarDiffs, @ghlBassDiffs,
+          @chartType,
+          @hasVideo, @hasBackground, @hasAlbumArt, @hasStems, @hasLyrics,
+          @songLength, @previewStart, @chorusId, @folderHash, @lastScanned
+        )
+        ON CONFLICT(path) DO UPDATE SET
+          name = excluded.name,
+          artist = excluded.artist,
+          album = excluded.album,
+          genre = excluded.genre,
+          year = excluded.year,
+          charter = excluded.charter,
+          diff_guitar = excluded.diff_guitar,
+          diff_bass = excluded.diff_bass,
+          diff_drums = excluded.diff_drums,
+          diff_keys = excluded.diff_keys,
+          diff_vocals = excluded.diff_vocals,
+          diff_rhythm = excluded.diff_rhythm,
+          diff_guitarghl = excluded.diff_guitarghl,
+          diff_bassghl = excluded.diff_bassghl,
+          hasGuitar = excluded.hasGuitar,
+          hasBass = excluded.hasBass,
+          hasDrums = excluded.hasDrums,
+          hasKeys = excluded.hasKeys,
+          hasVocals = excluded.hasVocals,
+          hasRhythm = excluded.hasRhythm,
+          hasGHL = excluded.hasGHL,
+          guitarDiffs = excluded.guitarDiffs,
+          bassDiffs = excluded.bassDiffs,
+          drumsDiffs = excluded.drumsDiffs,
+          keysDiffs = excluded.keysDiffs,
+          vocalsDiffs = excluded.vocalsDiffs,
+          rhythmDiffs = excluded.rhythmDiffs,
+          ghlGuitarDiffs = excluded.ghlGuitarDiffs,
+          ghlBassDiffs = excluded.ghlBassDiffs,
+          chartType = excluded.chartType,
+          hasVideo = excluded.hasVideo,
+          hasBackground = excluded.hasBackground,
+          hasAlbumArt = excluded.hasAlbumArt,
+          hasStems = excluded.hasStems,
+          hasLyrics = excluded.hasLyrics,
+          songLength = excluded.songLength,
+          previewStart = excluded.previewStart,
+          chorusId = excluded.chorusId,
+          folderHash = excluded.folderHash,
+          lastScanned = excluded.lastScanned
+      `)
+			this.stmtCache.set(cacheKey, stmt)
+		}
+
+		const result = stmt.run(this.chartToDbParams(chart))
+		return result.lastInsertRowid as number
+	}
+
+	getCharts(filter: CatalogFilter = {}): ChartRecord[] {
+		const { whereClause, params } = this.buildFilterClauses(filter)
+
+		// Build base query (FTS search changes the structure)
+		let query: string
+		if (filter.search) {
+			query = `
+        SELECT charts.* FROM charts
+        INNER JOIN charts_fts ON charts.id = charts_fts.rowid
+        WHERE charts_fts MATCH @search${whereClause}
+      `
+		} else {
+			query = `SELECT * FROM charts WHERE 1=1${whereClause}`
 		}
 
 		// Sorting
@@ -400,32 +444,64 @@ class CatalogDatabase {
 	/**
 	 * Check if charts exist in library by artist, name, and charter
 	 * Returns a map of "artist|name|charter" -> boolean
+	 *
+	 * Uses a temp table join for efficient bulk checking instead of loading all charts
 	 */
 	checkChartsExist(charts: Array<{ artist: string; name: string; charter: string }>): Map<string, boolean> {
 		const result = new Map<string, boolean>()
 
+		if (charts.length === 0) return result
+
 		// Normalize function for comparison
 		const normalize = (s: string) => s.toLowerCase().trim()
 
-		// Build a set of normalized keys from the input
-		const keysToCheck = new Set<string>()
+		// Initialize all keys as not found
 		charts.forEach(c => {
 			const key = `${normalize(c.artist)}|${normalize(c.name)}|${normalize(c.charter)}`
-			keysToCheck.add(key)
-			result.set(key, false) // Default to not found
+			result.set(key, false)
 		})
 
-		// Query all charts and check against our set
-		const stmt = this.db.prepare('SELECT artist, name, charter FROM charts')
-		const rows = stmt.all() as Array<{ artist: string; name: string; charter: string }>
+		// Use a transaction with temp table for efficient bulk checking
+		const checkCharts = this.db.transaction(() => {
+			// Create temp table for the search keys
+			this.db.exec(`
+				CREATE TEMP TABLE IF NOT EXISTS temp_chart_lookup (
+					artist TEXT,
+					name TEXT,
+					charter TEXT
+				)
+			`)
+			this.db.exec('DELETE FROM temp_chart_lookup')
 
-		for (const row of rows) {
-			const key = `${normalize(row.artist || '')}|${normalize(row.name || '')}|${normalize(row.charter || '')}`
-			if (keysToCheck.has(key)) {
+			// Insert search keys into temp table
+			const insertStmt = this.db.prepare(
+				'INSERT INTO temp_chart_lookup (artist, name, charter) VALUES (?, ?, ?)'
+			)
+			for (const chart of charts) {
+				insertStmt.run(normalize(chart.artist), normalize(chart.name), normalize(chart.charter))
+			}
+
+			// Join against charts table to find matches (case-insensitive)
+			const matches = this.db.prepare(`
+				SELECT LOWER(TRIM(c.artist)) as artist, LOWER(TRIM(c.name)) as name, LOWER(TRIM(c.charter)) as charter
+				FROM charts c
+				INNER JOIN temp_chart_lookup t
+					ON LOWER(TRIM(c.artist)) = t.artist
+					AND LOWER(TRIM(c.name)) = t.name
+					AND LOWER(TRIM(c.charter)) = t.charter
+			`).all() as Array<{ artist: string; name: string; charter: string }>
+
+			// Mark found charts as existing
+			for (const match of matches) {
+				const key = `${match.artist || ''}|${match.name || ''}|${match.charter || ''}`
 				result.set(key, true)
 			}
-		}
 
+			// Clean up temp table
+			this.db.exec('DELETE FROM temp_chart_lookup')
+		})
+
+		checkCharts()
 		return result
 	}
 
@@ -482,18 +558,36 @@ class CatalogDatabase {
 		return result.changes > 0
 	}
 
+	/**
+	 * Delete charts that are no longer in valid paths
+	 * Uses batch deletes in a transaction for efficiency
+	 */
 	deleteOrphans(validPaths: Set<string>): number {
 		const allCharts = this.db.prepare('SELECT id, path FROM charts').all() as Array<{ id: number; path: string }>
-		const deleteStmt = this.db.prepare('DELETE FROM charts WHERE id = ?')
 
-		let deleted = 0
+		// Collect IDs to delete
+		const idsToDelete: number[] = []
 		for (const chart of allCharts) {
 			if (!validPaths.has(chart.path)) {
-				deleteStmt.run(chart.id)
-				deleted++
+				idsToDelete.push(chart.id)
 			}
 		}
-		return deleted
+
+		if (idsToDelete.length === 0) return 0
+
+		// Batch delete in transaction for efficiency
+		// SQLite has a limit on compound query size, so we chunk into batches of 500
+		const BATCH_SIZE = 500
+		const deleteInBatches = this.db.transaction(() => {
+			for (let i = 0; i < idsToDelete.length; i += BATCH_SIZE) {
+				const batch = idsToDelete.slice(i, i + BATCH_SIZE)
+				const placeholders = batch.map(() => '?').join(',')
+				this.db.prepare(`DELETE FROM charts WHERE id IN (${placeholders})`).run(...batch)
+			}
+		})
+
+		deleteInBatches()
+		return idsToDelete.length
 	}
 
 	getStats(): CatalogStats {
@@ -520,9 +614,174 @@ class CatalogDatabase {
 		}
 	}
 
+	/**
+	 * Get count of charts matching the filter (for pagination)
+	 * Does not apply limit/offset
+	 */
+	getChartsCount(filter: CatalogFilter = {}): number {
+		const { whereClause, params } = this.buildFilterClauses(filter)
+
+		// Build base query (FTS search changes the structure)
+		let query: string
+		if (filter.search) {
+			query = `
+        SELECT COUNT(*) as count FROM charts
+        INNER JOIN charts_fts ON charts.id = charts_fts.rowid
+        WHERE charts_fts MATCH @search${whereClause}
+      `
+		} else {
+			query = `SELECT COUNT(*) as count FROM charts WHERE 1=1${whereClause}`
+		}
+
+		const stmt = this.db.prepare(query)
+		const result = stmt.get(params) as { count: number }
+		return result.count
+	}
+
 	getAllPaths(): Set<string> {
 		const rows = this.db.prepare('SELECT path FROM charts').all() as Array<{ path: string }>
 		return new Set(rows.map(r => r.path))
+	}
+
+	/**
+	 * Get all paths and their folder hashes for incremental scanning
+	 * Returns a map of path -> folderHash
+	 */
+	getAllHashes(): Map<string, string> {
+		const rows = this.db.prepare('SELECT path, folderHash FROM charts').all() as Array<{ path: string; folderHash: string }>
+		return new Map(rows.map(r => [r.path, r.folderHash || '']))
+	}
+
+	/**
+	 * Update the lastScanned timestamp for a chart without rescanning
+	 * Used for unchanged charts during incremental scans
+	 */
+	touchChart(chartPath: string): void {
+		const cacheKey = 'touchChart'
+		let stmt = this.stmtCache.get(cacheKey)
+		if (!stmt) {
+			stmt = this.db.prepare('UPDATE charts SET lastScanned = ? WHERE path = ?')
+			this.stmtCache.set(cacheKey, stmt)
+		}
+		stmt.run(new Date().toISOString(), chartPath)
+	}
+
+	/**
+	 * Batch touch multiple chart paths in a single transaction
+	 * Much more efficient than calling touchChart multiple times
+	 */
+	touchChartsBatch(chartPaths: string[]): void {
+		if (chartPaths.length === 0) return
+
+		const cacheKey = 'touchChart'
+		let stmt = this.stmtCache.get(cacheKey)
+		if (!stmt) {
+			stmt = this.db.prepare('UPDATE charts SET lastScanned = ? WHERE path = ?')
+			this.stmtCache.set(cacheKey, stmt)
+		}
+
+		const timestamp = new Date().toISOString()
+		const batchTouch = this.db.transaction(() => {
+			for (const chartPath of chartPaths) {
+				stmt!.run(timestamp, chartPath)
+			}
+		})
+		batchTouch()
+	}
+
+	/**
+	 * Batch upsert multiple charts in a single transaction
+	 * Much more efficient than calling upsertChart multiple times
+	 */
+	upsertChartsBatch(charts: Array<Omit<ChartRecord, 'id'>>): number[] {
+		if (charts.length === 0) return []
+
+		const cacheKey = 'upsertChart'
+		let stmt = this.stmtCache.get(cacheKey)
+
+		if (!stmt) {
+			stmt = this.db.prepare(`
+        INSERT INTO charts (
+          path, name, artist, album, genre, year, charter,
+          diff_guitar, diff_bass, diff_drums, diff_keys, diff_vocals,
+          diff_rhythm, diff_guitarghl, diff_bassghl,
+          hasGuitar, hasBass, hasDrums, hasKeys, hasVocals, hasRhythm, hasGHL,
+          guitarDiffs, bassDiffs, drumsDiffs, keysDiffs, vocalsDiffs, rhythmDiffs, ghlGuitarDiffs, ghlBassDiffs,
+          chartType,
+          hasVideo, hasBackground, hasAlbumArt, hasStems, hasLyrics,
+          songLength, previewStart, chorusId, folderHash, lastScanned
+        ) VALUES (
+          @path, @name, @artist, @album, @genre, @year, @charter,
+          @diff_guitar, @diff_bass, @diff_drums, @diff_keys, @diff_vocals,
+          @diff_rhythm, @diff_guitarghl, @diff_bassghl,
+          @hasGuitar, @hasBass, @hasDrums, @hasKeys, @hasVocals, @hasRhythm, @hasGHL,
+          @guitarDiffs, @bassDiffs, @drumsDiffs, @keysDiffs, @vocalsDiffs, @rhythmDiffs, @ghlGuitarDiffs, @ghlBassDiffs,
+          @chartType,
+          @hasVideo, @hasBackground, @hasAlbumArt, @hasStems, @hasLyrics,
+          @songLength, @previewStart, @chorusId, @folderHash, @lastScanned
+        )
+        ON CONFLICT(path) DO UPDATE SET
+          name = excluded.name,
+          artist = excluded.artist,
+          album = excluded.album,
+          genre = excluded.genre,
+          year = excluded.year,
+          charter = excluded.charter,
+          diff_guitar = excluded.diff_guitar,
+          diff_bass = excluded.diff_bass,
+          diff_drums = excluded.diff_drums,
+          diff_keys = excluded.diff_keys,
+          diff_vocals = excluded.diff_vocals,
+          diff_rhythm = excluded.diff_rhythm,
+          diff_guitarghl = excluded.diff_guitarghl,
+          diff_bassghl = excluded.diff_bassghl,
+          hasGuitar = excluded.hasGuitar,
+          hasBass = excluded.hasBass,
+          hasDrums = excluded.hasDrums,
+          hasKeys = excluded.hasKeys,
+          hasVocals = excluded.hasVocals,
+          hasRhythm = excluded.hasRhythm,
+          hasGHL = excluded.hasGHL,
+          guitarDiffs = excluded.guitarDiffs,
+          bassDiffs = excluded.bassDiffs,
+          drumsDiffs = excluded.drumsDiffs,
+          keysDiffs = excluded.keysDiffs,
+          vocalsDiffs = excluded.vocalsDiffs,
+          rhythmDiffs = excluded.rhythmDiffs,
+          ghlGuitarDiffs = excluded.ghlGuitarDiffs,
+          ghlBassDiffs = excluded.ghlBassDiffs,
+          chartType = excluded.chartType,
+          hasVideo = excluded.hasVideo,
+          hasBackground = excluded.hasBackground,
+          hasAlbumArt = excluded.hasAlbumArt,
+          hasStems = excluded.hasStems,
+          hasLyrics = excluded.hasLyrics,
+          songLength = excluded.songLength,
+          previewStart = excluded.previewStart,
+          chorusId = excluded.chorusId,
+          folderHash = excluded.folderHash,
+          lastScanned = excluded.lastScanned
+      `)
+			this.stmtCache.set(cacheKey, stmt)
+		}
+
+		const ids: number[] = []
+		const batchUpsert = this.db.transaction(() => {
+			for (const chart of charts) {
+				const result = stmt!.run(this.chartToDbParams(chart))
+				ids.push(result.lastInsertRowid as number)
+			}
+		})
+		batchUpsert()
+		return ids
+	}
+
+	/**
+	 * Run a function within a database transaction
+	 * Useful for external code that needs to batch multiple operations
+	 */
+	runInTransaction<T>(fn: () => T): T {
+		return this.db.transaction(fn)()
 	}
 
 	getDistinctValues(column: 'artist' | 'charter' | 'genre' | 'album'): string[] {

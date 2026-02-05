@@ -49,20 +49,8 @@ export interface IpcInvokeEvents {
 		output: ThemeColors | null
 	}
 	// Catalog Manager
-	catalogGetLibraryPaths: {
-		input: void
-		output: string[]
-	}
-	catalogAddLibraryPath: {
-		input: void
-		output: string | null
-	}
-	catalogRemoveLibraryPath: {
-		input: number
-		output: void
-	}
 	catalogScan: {
-		input: void
+		input: string[]  // Array of library folder paths to scan
 		output: ScanResult
 	}
 	catalogGetCharts: {
@@ -76,6 +64,10 @@ export interface IpcInvokeEvents {
 	catalogGetStats: {
 		input: void
 		output: CatalogStats
+	}
+	catalogGetChartsCount: {
+		input: CatalogFilter
+		output: number
 	}
 	catalogUpdateChart: {
 		input: { id: number; updates: Partial<ChartRecord> }
@@ -207,24 +199,12 @@ export interface IpcInvokeEvents {
 		input: number
 		output: { success: boolean; error?: string }
 	}
-	// Catalog Settings & Removal
-	catalogGetRemovalFolder: {
-		input: void
-		output: string | null
-	}
-	catalogSetRemovalFolder: {
-		input: void
-		output: string | null
-	}
-	catalogClearRemovalFolder: {
-		input: void
-		output: void
-	}
-	catalogRemoveChart: {
+	// Catalog Chart Deletion
+	catalogDeleteChart: {
 		input: number
 		output: { success: boolean; error?: string }
 	}
-	catalogRemoveCharts: {
+	catalogDeleteCharts: {
 		input: number[]
 		output: { success: number; failed: number; errors: string[] }
 	}

@@ -187,7 +187,3 @@ export interface CatalogStats {
 	uniqueArtists: number
 	uniqueCharters: number
 }
-
-export interface CatalogSettings {
-	removalFolder: string | null
-}

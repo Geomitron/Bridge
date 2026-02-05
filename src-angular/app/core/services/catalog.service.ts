@@ -3,27 +3,42 @@
  * Provides catalog operations to Angular components via Electron IPC
  */
 
-import { Injectable, signal, computed } from '@angular/core'
+import { Injectable, signal, inject, computed } from '@angular/core'
 import { ChartRecord, CatalogFilter, CatalogStats, ScanProgress, ScanResult } from '../../../../src-shared/interfaces/catalog.interface.js'
+import { SettingsService } from './settings.service'
+
+/** Number of charts to load per page */
+const PAGE_SIZE = 100
 
 @Injectable({
 	providedIn: 'root',
 })
 export class CatalogService {
+	private settingsService = inject(SettingsService)
+
 	// State signals
 	readonly charts = signal<ChartRecord[]>([])
 	readonly stats = signal<CatalogStats | null>(null)
 	readonly scanProgress = signal<ScanProgress | null>(null)
 	readonly isLoading = signal<boolean>(false)
-	readonly libraryPaths = signal<string[]>([])
+	readonly isLoadingMore = signal<boolean>(false)
 	readonly filter = signal<CatalogFilter>({
 		sortBy: 'artist',
 		sortDirection: 'asc',
 	})
 
+	// Pagination state
+	readonly totalFilteredCount = signal<number>(0)
+	readonly currentOffset = signal<number>(0)
+
+	// Computed: whether there are more charts to load
+	readonly hasMore = computed(() => {
+		return this.charts().length < this.totalFilteredCount()
+	})
+
 	constructor() {
 		this.setupIpcListeners()
-		this.loadLibraryPaths()
+		this.initializeFromSettings()
 	}
 
 	private setupIpcListeners(): void {
@@ -37,47 +52,29 @@ export class CatalogService {
 		})
 	}
 
-	private async loadLibraryPaths(): Promise<void> {
-		try {
-			const paths = await window.electron.invoke.catalogGetLibraryPaths()
-			this.libraryPaths.set(paths || [])
-			if (paths && paths.length > 0) {
+	private async initializeFromSettings(): Promise<void> {
+		// Wait a tick for settings to be loaded
+		setTimeout(async () => {
+			const libraryFolders = this.settingsService.libraryFolders
+			if (libraryFolders && libraryFolders.length > 0) {
 				this.refreshCharts()
 				this.refreshStats()
 			}
-		} catch (err) {
-			console.error('Failed to load library paths:', err)
-		}
-	}
-
-	async addLibraryPath(): Promise<string | null> {
-		try {
-			const newPath = await window.electron.invoke.catalogAddLibraryPath()
-			if (newPath) {
-				const paths = await window.electron.invoke.catalogGetLibraryPaths()
-				this.libraryPaths.set(paths || [])
-			}
-			return newPath
-		} catch (err) {
-			console.error('Failed to add library path:', err)
-			return null
-		}
-	}
-
-	async removeLibraryPath(index: number): Promise<void> {
-		try {
-			await window.electron.invoke.catalogRemoveLibraryPath(index)
-			const paths = await window.electron.invoke.catalogGetLibraryPaths()
-			this.libraryPaths.set(paths || [])
-		} catch (err) {
-			console.error('Failed to remove library path:', err)
-		}
+		}, 100)
 	}
 
 	async scanLibrary(): Promise<ScanResult | null> {
+		const libraryFolders = this.settingsService.libraryFolders
+		if (libraryFolders.length === 0) {
+			console.error('No library folders configured')
+			return null
+		}
+
+		const paths = libraryFolders.map(f => f.path)
+
 		this.isLoading.set(true)
 		try {
-			const result = await window.electron.invoke.catalogScan()
+			const result = await window.electron.invoke.catalogScan(paths)
 			return result
 		} catch (err) {
 			console.error('Failed to scan library:', err)
@@ -91,8 +88,16 @@ export class CatalogService {
 		this.isLoading.set(true)
 		try {
 			const currentFilter = this.filter()
-			const charts = await window.electron.invoke.catalogGetCharts(currentFilter)
+
+			// Get total count for pagination (without limit/offset)
+			const totalCount = await window.electron.invoke.catalogGetChartsCount(currentFilter)
+			this.totalFilteredCount.set(totalCount)
+
+			// Get first page of charts
+			const paginatedFilter = { ...currentFilter, limit: PAGE_SIZE, offset: 0 }
+			const charts = await window.electron.invoke.catalogGetCharts(paginatedFilter)
 			this.charts.set(charts)
+			this.currentOffset.set(charts.length)
 		} catch (err) {
 			console.error('Failed to refresh charts:', err)
 		} finally {
@@ -100,9 +105,36 @@ export class CatalogService {
 		}
 	}
 
+	/**
+	 * Load the next page of charts (for infinite scroll)
+	 */
+	async loadMoreCharts(): Promise<void> {
+		if (this.isLoadingMore() || !this.hasMore()) return
+
+		this.isLoadingMore.set(true)
+		try {
+			const currentFilter = this.filter()
+			const offset = this.currentOffset()
+
+			const paginatedFilter = { ...currentFilter, limit: PAGE_SIZE, offset }
+			const newCharts = await window.electron.invoke.catalogGetCharts(paginatedFilter)
+
+			if (newCharts.length > 0) {
+				this.charts.update(existing => [...existing, ...newCharts])
+				this.currentOffset.update(o => o + newCharts.length)
+			}
+		} catch (err) {
+			console.error('Failed to load more charts:', err)
+		} finally {
+			this.isLoadingMore.set(false)
+		}
+	}
+
 	async setFilter(filterUpdates: Partial<CatalogFilter>): Promise<void> {
 		const newFilter = { ...this.filter(), ...filterUpdates }
 		this.filter.set(newFilter)
+		// Reset pagination when filter changes
+		this.currentOffset.set(0)
 		await this.refreshCharts()
 	}
 
@@ -187,55 +219,29 @@ export class CatalogService {
 		return this.charts().filter(c => idSet.has(c.id))
 	}
 
-	// Removal folder methods
-	async getRemovalFolder(): Promise<string | null> {
+	// Chart deletion methods
+	async deleteChart(id: number): Promise<{ success: boolean; error?: string }> {
 		try {
-			return await window.electron.invoke.catalogGetRemovalFolder()
-		} catch (err) {
-			console.error('Failed to get removal folder:', err)
-			return null
-		}
-	}
-
-	async setRemovalFolder(): Promise<string | null> {
-		try {
-			return await window.electron.invoke.catalogSetRemovalFolder()
-		} catch (err) {
-			console.error('Failed to set removal folder:', err)
-			return null
-		}
-	}
-
-	async clearRemovalFolder(): Promise<void> {
-		try {
-			await window.electron.invoke.catalogClearRemovalFolder()
-		} catch (err) {
-			console.error('Failed to clear removal folder:', err)
-		}
-	}
-
-	async removeChart(id: number): Promise<{ success: boolean; error?: string }> {
-		try {
-			const result = await window.electron.invoke.catalogRemoveChart(id)
+			const result = await window.electron.invoke.catalogDeleteChart(id)
 			if (result.success) {
 				await this.refreshCharts()
 				await this.refreshStats()
 			}
 			return result
 		} catch (err) {
-			console.error('Failed to remove chart:', err)
+			console.error('Failed to delete chart:', err)
 			return { success: false, error: String(err) }
 		}
 	}
 
-	async removeCharts(ids: number[]): Promise<{ success: number; failed: number; errors: string[] }> {
+	async deleteCharts(ids: number[]): Promise<{ success: number; failed: number; errors: string[] }> {
 		try {
-			const result = await window.electron.invoke.catalogRemoveCharts(ids)
+			const result = await window.electron.invoke.catalogDeleteCharts(ids)
 			await this.refreshCharts()
 			await this.refreshStats()
 			return result
 		} catch (err) {
-			console.error('Failed to remove charts:', err)
+			console.error('Failed to delete charts:', err)
 			return { success: 0, failed: ids.length, errors: [String(err)] }
 		}
 	}

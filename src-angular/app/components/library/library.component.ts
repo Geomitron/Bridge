@@ -3,7 +3,7 @@
  * Main UI for browsing and managing local chart library
  */
 
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core'
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect, ViewChild, ElementRef, AfterViewInit } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { Router } from '@angular/router'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
@@ -11,6 +11,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs'
 import { ChartRecord, CatalogStats, ScanProgress, CatalogFilter } from '../../../../src-shared/interfaces/catalog.interface.js'
 import { CatalogService } from '../../core/services/catalog.service'
 import { ArtStudioService } from '../../core/services/art-studio.service'
+import { SettingsService } from '../../core/services/settings.service'
 
 @Component({
 	selector: 'app-library',
@@ -18,36 +19,51 @@ import { ArtStudioService } from '../../core/services/art-studio.service'
 	imports: [FormsModule],
 	templateUrl: './library.component.html',
 })
-export class LibraryComponent implements OnInit {
+export class LibraryComponent implements OnInit, OnDestroy, AfterViewInit {
 	private catalogService = inject(CatalogService)
 	private artStudioService = inject(ArtStudioService)
+	settingsService = inject(SettingsService)
 	private router = inject(Router)
 	private sanitizer = inject(DomSanitizer)
 
 	private searchSubject = new Subject<string>()
+	private intersectionObserver: IntersectionObserver | null = null
+
+	// Sentinel element for infinite scroll
+	@ViewChild('scrollSentinel') scrollSentinel!: ElementRef<HTMLDivElement>
 
 	// Data (signals from service)
 	charts = signal<ChartRecord[]>([])
 	stats = signal<CatalogStats | null>(null)
 	scanProgress = signal<ScanProgress | null>(null)
-	libraryPaths = signal<string[]>([])
 	filter = signal<CatalogFilter>({
 		sortBy: 'artist',
 		sortDirection: 'asc',
 	})
+
+	// Pagination state from service
+	totalFilteredCount = signal<number>(0)
+	hasMore = signal<boolean>(false)
+	isLoadingMore = signal<boolean>(false)
 
 	// UI State
 	isLoading = signal(false)
 	selectedIds = signal<Set<number>>(new Set())
 	searchQuery = signal('')
 	editingChart = signal<ChartRecord | null>(null)
-	showFolderModal = signal(false)
 	showFiltersExpanded = signal(false)
-	removalFolder = signal<string | null>(null)
-	showRemovalConfirm = signal(false)
-	chartToRemove = signal<ChartRecord | null>(null)
-	removalError = signal<string | null>(null)
+	showDeleteConfirm = signal(false)
+	chartToDelete = signal<ChartRecord | null>(null)
+	deleteError = signal<string | null>(null)
 	hoveredChartId = signal<number | null>(null)
+
+	// Bulk delete modal state
+	showBulkDeleteConfirm = signal(false)
+
+	// Asset delete modal state
+	showAssetDeleteConfirm = signal(false)
+	assetDeleteChart = signal<ChartRecord | null>(null)
+	assetDeleteType = signal<'Video' | 'Background' | 'Album Art' | 'Lyrics' | null>(null)
 
 	// Duplicates tracking
 	showDuplicatesOnly = signal(false)
@@ -65,9 +81,9 @@ export class LibraryComponent implements OnInit {
 
 	// Computed properties
 	allSelected = computed(() => {
-		const charts = this.charts()
+		const displayedCharts = this.displayedCharts()
 		const selectedIds = this.selectedIds()
-		return charts.length > 0 && selectedIds.size === charts.length
+		return displayedCharts.length > 0 && displayedCharts.every(c => selectedIds.has(c.id))
 	})
 
 	selectedCharts = computed(() => {
@@ -173,14 +189,22 @@ export class LibraryComponent implements OnInit {
 			this.isLoading.set(this.catalogService.isLoading())
 		})
 
-		// Effect to react to libraryPaths changes
-		effect(() => {
-			this.libraryPaths.set(this.catalogService.libraryPaths())
-		})
-
 		// Effect to react to filter changes
 		effect(() => {
 			this.filter.set(this.catalogService.filter())
+		})
+
+		// Effects for pagination state
+		effect(() => {
+			this.totalFilteredCount.set(this.catalogService.totalFilteredCount())
+		})
+
+		effect(() => {
+			this.hasMore.set(this.catalogService.hasMore())
+		})
+
+		effect(() => {
+			this.isLoadingMore.set(this.catalogService.isLoadingMore())
 		})
 
 		// Debounced search
@@ -192,15 +216,61 @@ export class LibraryComponent implements OnInit {
 		})
 	}
 
+	ngAfterViewInit(): void {
+		this.setupIntersectionObserver()
+
+		// Re-observe sentinel when charts data changes (sentinel may not exist initially)
+		effect(() => {
+			const chartsLength = this.charts().length
+			// Use setTimeout to ensure DOM has updated
+			if (chartsLength > 0) {
+				setTimeout(() => this.observeSentinel(), 0)
+			}
+		})
+	}
+
+	ngOnDestroy(): void {
+		if (this.intersectionObserver) {
+			this.intersectionObserver.disconnect()
+		}
+	}
+
+	private setupIntersectionObserver(): void {
+		// Create observer to detect when sentinel is visible
+		this.intersectionObserver = new IntersectionObserver(
+			(entries) => {
+				const [entry] = entries
+				if (entry.isIntersecting && this.hasMore() && !this.isLoadingMore() && !this.isLoading()) {
+					this.loadMore()
+				}
+			},
+			{
+				root: null, // viewport
+				rootMargin: '200px', // Start loading 200px before sentinel is visible
+				threshold: 0,
+			}
+		)
+
+		this.observeSentinel()
+	}
+
+	private observeSentinel(): void {
+		// Observe the scroll sentinel if it exists
+		if (this.scrollSentinel?.nativeElement && this.intersectionObserver) {
+			this.intersectionObserver.observe(this.scrollSentinel.nativeElement)
+		}
+	}
+
+	/**
+	 * Load more charts (called by infinite scroll or button)
+	 */
+	async loadMore(): Promise<void> {
+		await this.catalogService.loadMoreCharts()
+	}
+
 	ngOnInit(): void {
 		// Load filter options
 		this.loadFilterOptions()
-		this.loadRemovalFolder()
-	}
-
-	async loadRemovalFolder(): Promise<void> {
-		const folder = await this.catalogService.getRemovalFolder()
-		this.removalFolder.set(folder)
 	}
 
 	async loadFilterOptions(): Promise<void> {
@@ -220,31 +290,15 @@ export class LibraryComponent implements OnInit {
 		this.showFiltersExpanded.update(v => !v)
 	}
 
-	// Folder management
-	manageFolders(): void {
-		this.showFolderModal.set(true)
-	}
-
-	closeFolderModal(): void {
-		this.showFolderModal.set(false)
-	}
-
-	async addFolder(): Promise<void> {
-		await this.catalogService.addLibraryPath()
-	}
-
-	async removeFolder(index: number): Promise<void> {
-		await this.catalogService.removeLibraryPath(index)
-	}
-
-	async saveFoldersAndScan(): Promise<void> {
-		this.closeFolderModal()
-		await this.scanLibrary()
+	// Navigate to settings to manage folders
+	goToSettings(): void {
+		this.router.navigate(['/settings'])
 	}
 
 	async scanLibrary(): Promise<void> {
-		if (this.libraryPaths().length === 0) {
-			this.manageFolders()
+		if (this.settingsService.libraryFolders.length === 0) {
+			// No folders configured, navigate to settings
+			this.goToSettings()
 			return
 		}
 		// Set immediate loading state before async operation starts
@@ -379,12 +433,22 @@ export class LibraryComponent implements OnInit {
 	}
 
 	selectAll(): void {
-		const charts = this.charts()
-		const ids = this.selectedIds()
-		if (ids.size === charts.length) {
-			this.selectedIds.set(new Set())
+		const displayedCharts = this.displayedCharts()
+		const currentSelected = this.selectedIds()
+
+		// Check if all displayed charts are selected
+		const allDisplayedSelected = displayedCharts.every(c => currentSelected.has(c.id))
+
+		if (allDisplayedSelected) {
+			// Deselect all displayed charts
+			const newSet = new Set(currentSelected)
+			displayedCharts.forEach(c => newSet.delete(c.id))
+			this.selectedIds.set(newSet)
 		} else {
-			this.selectedIds.set(new Set(charts.map(c => c.id)))
+			// Select all displayed charts (keeping existing selections)
+			const newSet = new Set(currentSelected)
+			displayedCharts.forEach(c => newSet.add(c.id))
+			this.selectedIds.set(newSet)
 		}
 	}
 
@@ -421,92 +485,79 @@ export class LibraryComponent implements OnInit {
 		this.editingChart.set(null)
 	}
 
-	// Removal folder management
-	async setRemovalFolder(): Promise<void> {
-		const folder = await this.catalogService.setRemovalFolder()
-		if (folder) {
-			this.removalFolder.set(folder)
-		}
+	// Chart deletion
+	confirmDeleteChart(chart: ChartRecord): void {
+		this.chartToDelete.set(chart)
+		this.showDeleteConfirm.set(true)
+		this.deleteError.set(null)
 	}
 
-	async clearRemovalFolder(): Promise<void> {
-		await this.catalogService.clearRemovalFolder()
-		this.removalFolder.set(null)
+	cancelDelete(): void {
+		this.chartToDelete.set(null)
+		this.showDeleteConfirm.set(false)
+		this.deleteError.set(null)
 	}
 
-	confirmRemoveChart(chart: ChartRecord): void {
-		if (!this.removalFolder()) {
-			this.removalError.set('Please set a removal folder first. Click the Folders button to configure it.')
-			return
-		}
-		this.chartToRemove.set(chart)
-		this.showRemovalConfirm.set(true)
-		this.removalError.set(null)
-	}
-
-	cancelRemoval(): void {
-		this.chartToRemove.set(null)
-		this.showRemovalConfirm.set(false)
-		this.removalError.set(null)
-	}
-
-	async executeRemoval(): Promise<void> {
-		const chart = this.chartToRemove()
+	async executeDelete(): Promise<void> {
+		const chart = this.chartToDelete()
 		if (!chart) return
 
-		this.removalError.set(null)
+		this.deleteError.set(null)
 
 		try {
-			const result = await this.catalogService.removeChart(chart.id)
+			const result = await this.catalogService.deleteChart(chart.id)
 
 			if (!result.success) {
-				this.removalError.set(result.error || 'Unknown error occurred')
-				console.error('Removal failed:', result.error)
+				this.deleteError.set(result.error || 'Unknown error occurred')
+				console.error('Deletion failed:', result.error)
 				// Keep modal open to show error
 				return
 			}
 
 			// Success - close modal
-			this.chartToRemove.set(null)
-			this.showRemovalConfirm.set(false)
+			this.chartToDelete.set(null)
+			this.showDeleteConfirm.set(false)
 			this.selectedIds.set(new Set())
 		} catch (err) {
-			this.removalError.set(`Exception: ${err instanceof Error ? err.message : String(err)}`)
-			console.error('Removal exception:', err)
+			this.deleteError.set(`Exception: ${err instanceof Error ? err.message : String(err)}`)
+			console.error('Deletion exception:', err)
 		}
 	}
 
-	async removeSelectedCharts(): Promise<void> {
-		if (!this.removalFolder()) {
-			this.removalError.set('Please set a removal folder first. Click the Folders button to configure it.')
-			return
-		}
+	deleteSelectedCharts(): void {
+		const ids = this.selectedIds()
+		if (ids.size === 0) return
+		this.showBulkDeleteConfirm.set(true)
+	}
 
+	cancelBulkDelete(): void {
+		this.showBulkDeleteConfirm.set(false)
+	}
+
+	async executeBulkDelete(): Promise<void> {
 		const ids = this.selectedIds()
 		if (ids.size === 0) return
 
-		const confirmed = confirm(`Remove ${ids.size} chart(s) to the removal folder?`)
-		if (!confirmed) return
-
-		this.removalError.set(null)
+		this.deleteError.set(null)
+		this.showBulkDeleteConfirm.set(false)
 
 		try {
-			const result = await this.catalogService.removeCharts([...ids])
+			const result = await this.catalogService.deleteCharts([...ids])
 
 			if (result.failed > 0) {
-				this.removalError.set(`Removed ${result.success} charts. ${result.failed} failed.\n${result.errors.join('\n')}`)
-				console.error('Batch removal errors:', result.errors)
+				this.deleteError.set(`Deleted ${result.success} charts. ${result.failed} failed.\n${result.errors.join('\n')}`)
+				console.error('Batch deletion errors:', result.errors)
 			}
 
 			this.selectedIds.set(new Set())
 		} catch (err) {
-			this.removalError.set(`Exception: ${err instanceof Error ? err.message : String(err)}`)
-			console.error('Batch removal exception:', err)
+			this.deleteError.set(`Exception: ${err instanceof Error ? err.message : String(err)}`)
+			console.error('Batch deletion exception:', err)
 		}
 	}
 
 	dismissError(): void {
-		this.removalError.set(null)
+		this.deleteError.set(null)
 	}
 
 	// Format difficulty levels for display
@@ -524,67 +575,70 @@ export class LibraryComponent implements OnInit {
 	}
 
 	// Asset deletion methods
-	async deleteVideo(chart: ChartRecord): Promise<void> {
-		if (!confirm(`Delete video from "${chart.artist} - ${chart.name}"?`)) return
-
-		try {
-			const result = await window.electron.invoke.videoDeleteFromChart(chart.id)
-			if (result.success) {
-				await this.catalogService.refreshCharts()
-				await this.catalogService.refreshStats()
-			} else {
-				this.removalError.set(result.error || 'Failed to delete video')
-			}
-		} catch (err) {
-			this.removalError.set(`Error: ${err}`)
-		}
+	deleteVideo(chart: ChartRecord): void {
+		this.confirmAssetDelete(chart, 'Video')
 	}
 
-	async deleteBackground(chart: ChartRecord): Promise<void> {
-		if (!confirm(`Delete background from "${chart.artist} - ${chart.name}"?`)) return
-
-		try {
-			const result = await window.electron.invoke.artDeleteBackground(chart.id)
-			if (result.success) {
-				await this.catalogService.refreshCharts()
-				await this.catalogService.refreshStats()
-			} else {
-				this.removalError.set(result.error || 'Failed to delete background')
-			}
-		} catch (err) {
-			this.removalError.set(`Error: ${err}`)
-		}
+	deleteBackground(chart: ChartRecord): void {
+		this.confirmAssetDelete(chart, 'Background')
 	}
 
-	async deleteAlbumArt(chart: ChartRecord): Promise<void> {
-		if (!confirm(`Delete album art from "${chart.artist} - ${chart.name}"?`)) return
-
-		try {
-			const result = await window.electron.invoke.artDeleteAlbumArt(chart.id)
-			if (result.success) {
-				await this.catalogService.refreshCharts()
-				await this.catalogService.refreshStats()
-			} else {
-				this.removalError.set(result.error || 'Failed to delete album art')
-			}
-		} catch (err) {
-			this.removalError.set(`Error: ${err}`)
-		}
+	deleteAlbumArt(chart: ChartRecord): void {
+		this.confirmAssetDelete(chart, 'Album Art')
 	}
 
-	async deleteLyrics(chart: ChartRecord): Promise<void> {
-		if (!confirm(`Delete lyrics from "${chart.artist} - ${chart.name}"?`)) return
+	deleteLyrics(chart: ChartRecord): void {
+		this.confirmAssetDelete(chart, 'Lyrics')
+	}
+
+	confirmAssetDelete(chart: ChartRecord, type: 'Video' | 'Background' | 'Album Art' | 'Lyrics'): void {
+		this.assetDeleteChart.set(chart)
+		this.assetDeleteType.set(type)
+		this.showAssetDeleteConfirm.set(true)
+	}
+
+	cancelAssetDelete(): void {
+		this.assetDeleteChart.set(null)
+		this.assetDeleteType.set(null)
+		this.showAssetDeleteConfirm.set(false)
+	}
+
+	async executeAssetDelete(): Promise<void> {
+		const chart = this.assetDeleteChart()
+		const type = this.assetDeleteType()
+		if (!chart || !type) return
+
+		this.showAssetDeleteConfirm.set(false)
 
 		try {
-			const result = await window.electron.invoke.lyricsDelete(chart.id)
+			let result: { success: boolean; error?: string }
+
+			switch (type) {
+				case 'Video':
+					result = await window.electron.invoke.videoDeleteFromChart(chart.id)
+					break
+				case 'Background':
+					result = await window.electron.invoke.artDeleteBackground(chart.id)
+					break
+				case 'Album Art':
+					result = await window.electron.invoke.artDeleteAlbumArt(chart.id)
+					break
+				case 'Lyrics':
+					result = await window.electron.invoke.lyricsDelete(chart.id)
+					break
+			}
+
 			if (result.success) {
 				await this.catalogService.refreshCharts()
 				await this.catalogService.refreshStats()
 			} else {
-				this.removalError.set(result.error || 'Failed to delete lyrics')
+				this.deleteError.set(result.error || `Failed to delete ${type.toLowerCase()}`)
 			}
 		} catch (err) {
-			this.removalError.set(`Error: ${err}`)
+			this.deleteError.set(`Error: ${err}`)
+		} finally {
+			this.assetDeleteChart.set(null)
+			this.assetDeleteType.set(null)
 		}
 	}
 

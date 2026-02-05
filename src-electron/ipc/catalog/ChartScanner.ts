@@ -3,29 +3,63 @@
  * Scans directories for Clone Hero/YARG charts and extracts metadata
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
+import Bottleneck from 'bottleneck'
 import * as crypto from 'crypto'
 import { EventEmitter } from 'eventemitter3'
-import { ChartRecord, SongIniData, ChartAssets, ScanProgress, ScanResult } from '../../../src-shared/interfaces/catalog.interface.js'
+import * as fs from 'fs'
+import * as path from 'path'
+import { SngHeader, SngStream } from 'parse-sng'
+import { scanChartFolder, ScannedChart, Difficulty, Instrument } from 'scan-chart'
+import { Readable } from 'stream'
+
+import { ChartRecord, ChartAssets, ScanProgress, ScanResult } from '../../../src-shared/interfaces/catalog.interface.js'
+import { appearsToBeChartFolder, getExtension, hasChartExtension, hasIniExtension, hasAlbumName, hasSngExtension } from '../../../src-shared/UtilFunctions.js'
+import { hasVideoExtension } from '../../ElectronUtilFunctions.js'
 import { getCatalogDb } from './CatalogDatabase.js'
 
-// File patterns for chart detection
-const CHART_FILES = ['notes.chart', 'notes.mid']
-const AUDIO_FILES = ['song.ogg', 'song.mp3', 'song.wav', 'guitar.ogg', 'guitar.mp3']
+// File patterns for asset detection
 const VIDEO_EXTENSIONS = ['.mp4', '.avi', '.webm', '.mkv', '.mov']
 const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+const STEM_NAMES = ['guitar', 'bass', 'drums', 'vocals', 'keys', 'rhythm', 'crowd', 'backing']
+const AUDIO_EXTENSIONS = ['.ogg', '.mp3', '.wav', '.opus']
+
+// Scanning configuration
+const CONFIG = {
+	/** Maximum concurrent chart scans - balances speed vs memory */
+	MAX_CONCURRENT_SCANS: 20,
+	/** Maximum directory depth to prevent infinite recursion */
+	MAX_DIRECTORY_DEPTH: 20,
+	/** Progress update interval - don't emit for every chart on large scans */
+	PROGRESS_UPDATE_INTERVAL: 1,
+	/** Maximum file size to read into memory (2GB) */
+	MAX_FILE_SIZE_BYTES: 2 * 1024 * 1024 * 1024,
+	/** Total max size of files to load per chart (5GB) */
+	MAX_TOTAL_FILES_SIZE_BYTES: 5 * 1024 * 1024 * 1024,
+}
 
 interface ScannerEvents {
 	progress: (progress: ScanProgress) => void
+}
+
+interface ChartFolder {
+	path: string
+	files: string[]
+	isSng: boolean
+	folderHash?: string
 }
 
 class ChartScanner extends EventEmitter<ScannerEvents> {
 	private isScanning = false
 	private shouldCancel = false
 
+	// Rate limiter for concurrent scans - ensures bounded memory usage
+	private scanLimiter = new Bottleneck({
+		maxConcurrent: CONFIG.MAX_CONCURRENT_SCANS,
+	})
+
 	/**
-	 * Scan multiple library paths
+	 * Scan multiple library paths for charts
+	 * Optimized for large libraries with parallel discovery and scanning
 	 */
 	async scanLibraryPaths(libraryPaths: string[]): Promise<ScanResult> {
 		if (this.isScanning) {
@@ -46,68 +80,101 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 		}
 
 		try {
-			// Phase 1: Discover chart folders from all paths
+			// Phase 1: Discover chart folders from all paths in parallel
 			this.emit('progress', { phase: 'discovering', current: 0, total: 0, message: 'Discovering chart folders...' })
 
-			const allChartFolders: string[] = []
-			for (const libraryPath of libraryPaths) {
-				if (this.shouldCancel) break
-
+			const discoveryPromises = libraryPaths.map(async libraryPath => {
 				try {
 					await fs.promises.access(libraryPath)
-					const folders = await this.discoverChartFolders(libraryPath)
-					allChartFolders.push(...folders)
+					return await this.discoverChartFolders(libraryPath)
 				} catch (err) {
 					result.errors.push({
 						path: libraryPath,
 						error: `Cannot access folder: ${err instanceof Error ? err.message : String(err)}`,
 					})
+					return []
 				}
-			}
+			})
+
+			const discoveredArrays = await Promise.all(discoveryPromises)
+			const allChartFolders = discoveredArrays.flat()
 
 			if (this.shouldCancel) {
 				return { ...result, duration: Date.now() - startTime }
 			}
 
-			// Phase 2: Scan each folder
+			this.emit('progress', {
+				phase: 'discovering',
+				current: allChartFolders.length,
+				total: allChartFolders.length,
+				message: `Found ${allChartFolders.length} chart folders`,
+			})
+
+			// Phase 2: Get existing paths and hashes for incremental scanning
 			const existingPaths = db.getAllPaths()
+			const existingHashes = db.getAllHashes()
 			const scannedPaths = new Set<string>()
 			const total = allChartFolders.length
 
-			for (let i = 0; i < allChartFolders.length; i++) {
-				if (this.shouldCancel) break
+			// Phase 3: Scan charts with rate limiting
+			let completed = 0
+			let lastProgressUpdate = 0
 
-				const folderPath = allChartFolders[i]
-				scannedPaths.add(folderPath)
+			const scanPromises = allChartFolders.map(chartFolder =>
+				this.scanLimiter.schedule(async () => {
+					if (this.shouldCancel) return
 
-				this.emit('progress', {
-					phase: 'scanning',
-					current: i + 1,
-					total,
-					currentPath: folderPath,
-					message: `Scanning ${path.basename(folderPath)}`,
-				})
+					scannedPaths.add(chartFolder.path)
 
-				try {
-					const chart = await this.scanChartFolder(folderPath)
-					const isNew = !existingPaths.has(folderPath)
+					try {
+						// Compute folder hash first to check if we can skip
+						const folderHash = await this.computeFolderHash(chartFolder.path, chartFolder.files)
 
-					db.upsertChart(chart)
+						// Check if chart exists and is unchanged
+						const isNew = !existingPaths.has(chartFolder.path)
+						const existingHash = existingHashes.get(chartFolder.path)
+						const isUnchanged = !isNew && existingHash === folderHash
 
-					if (isNew) {
-						result.added++
-					} else {
-						result.updated++
+						if (isUnchanged) {
+							// Chart unchanged, just update lastScanned
+							db.touchChart(chartFolder.path)
+							result.updated++
+						} else {
+							// Chart is new or changed - perform full scan
+							const chart = await this.scanChartFolder(chartFolder, folderHash)
+							db.upsertChart(chart)
+
+							if (isNew) {
+								result.added++
+							} else {
+								result.updated++
+							}
+						}
+					} catch (err) {
+						result.errors.push({
+							path: chartFolder.path,
+							error: err instanceof Error ? err.message : String(err),
+						})
 					}
-				} catch (err) {
-					result.errors.push({
-						path: folderPath,
-						error: err instanceof Error ? err.message : String(err),
-					})
-				}
-			}
 
-			// Phase 3: Remove orphaned records
+					// Throttled progress updates for large scans
+					completed++
+					if (completed - lastProgressUpdate >= CONFIG.PROGRESS_UPDATE_INTERVAL || completed === total) {
+						lastProgressUpdate = completed
+						this.emit('progress', {
+							phase: 'scanning',
+							current: completed,
+							total,
+							currentPath: chartFolder.path,
+							message: `Scanned ${completed}/${total} charts`,
+						})
+					}
+				})
+			)
+
+			await Promise.all(scanPromises)
+
+			// Phase 4: Remove orphaned records
 			if (!this.shouldCancel) {
 				result.removed = db.deleteOrphans(scannedPaths)
 			}
@@ -123,13 +190,22 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 
 	cancelScan(): void {
 		this.shouldCancel = true
+		this.scanLimiter.stop()
+		// Recreate limiter for next scan
+		this.scanLimiter = new Bottleneck({
+			maxConcurrent: CONFIG.MAX_CONCURRENT_SCANS,
+		})
 	}
 
-	private async discoverChartFolders(rootPath: string): Promise<string[]> {
-		const chartFolders: string[] = []
+	/**
+	 * Discover all chart folders in a directory tree
+	 * Uses parallel traversal for speed
+	 */
+	private async discoverChartFolders(rootPath: string): Promise<ChartFolder[]> {
+		const chartFolders: ChartFolder[] = []
 
-		const scanDir = async (dirPath: string, depth: number = 0): Promise<void> => {
-			if (depth > 10 || this.shouldCancel) return
+		const scanDir = async (dirPath: string, depth: number): Promise<void> => {
+			if (depth > CONFIG.MAX_DIRECTORY_DEPTH || this.shouldCancel) return
 
 			let entries: fs.Dirent[]
 			try {
@@ -138,121 +214,249 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 				return
 			}
 
-			const hasChart = entries.some(e =>
-				e.isFile() && CHART_FILES.includes(e.name.toLowerCase())
+			// Check for .sng files first
+			const sngFiles = entries.filter(e => e.isFile() && hasSngExtension(e.name))
+			for (const sngFile of sngFiles) {
+				chartFolders.push({
+					path: path.join(dirPath, sngFile.name),
+					files: [sngFile.name],
+					isSng: true,
+				})
+			}
+
+			// Get all files for chart folder detection
+			const files = entries.filter(e => e.isFile()).map(e => e.name)
+			const extensions = files.map(f => getExtension(f))
+
+			// Check if this appears to be a chart folder (has chart file + ini/audio)
+			const subfolders = entries.filter(e =>
+				e.isDirectory() && !e.name.startsWith('.') && e.name !== '__MACOSX'
 			)
 
-			if (hasChart) {
-				chartFolders.push(dirPath)
+			if (appearsToBeChartFolder(extensions) && subfolders.length === 0) {
+				// This is a chart folder - don't recurse into it
+				chartFolders.push({
+					path: dirPath,
+					files,
+					isSng: false,
+				})
 				return
 			}
 
-			for (const entry of entries) {
-				if (entry.isDirectory() && !entry.name.startsWith('.')) {
-					await scanDir(path.join(dirPath, entry.name), depth + 1)
-				}
-			}
+			// Recurse into subdirectories in parallel
+			const subPromises = subfolders.map(entry =>
+				scanDir(path.join(dirPath, entry.name), depth + 1)
+			)
+			await Promise.all(subPromises)
 		}
 
-		await scanDir(rootPath)
+		await scanDir(rootPath, 0)
 		return chartFolders
 	}
 
-	private async scanChartFolder(folderPath: string): Promise<Omit<ChartRecord, 'id'>> {
-		const songIni = await this.parseSongIni(folderPath)
-		const assets = await this.detectAssets(folderPath)
-		const folderHash = await this.computeFolderHash(folderPath)
+	/**
+	 * Scan a single chart folder and extract metadata using scan-chart library
+	 */
+	private async scanChartFolder(chartFolder: ChartFolder, folderHash: string): Promise<Omit<ChartRecord, 'id'>> {
+		// Load files for scan-chart
+		const files = chartFolder.isSng
+			? await this.getFilesFromSng(chartFolder.path)
+			: await this.getFilesFromFolder(chartFolder)
 
-		// Determine chart type from the chart file
+		// Use scan-chart library for robust parsing
+		const scannedChart = scanChartFolder(files)
+
+		// Detect additional assets not covered by scan-chart
+		const assets = chartFolder.isSng
+			? this.getAssetsFromSngFiles(files)
+			: await this.detectAssets(chartFolder.path)
+
+		// Convert scan-chart result to our ChartRecord format
+		return this.convertToChartRecord(scannedChart, chartFolder.path, folderHash, assets)
+	}
+
+	/**
+	 * Load files from a regular chart folder
+	 */
+	private async getFilesFromFolder(chartFolder: ChartFolder): Promise<{ fileName: string; data: Uint8Array }[]> {
+		const results: { fileName: string; data: Uint8Array }[] = []
+		let totalSize = 0
+
+		// Sort files by size to load smaller files first
+		const filesWithStats = await Promise.all(
+			chartFolder.files.map(async fileName => {
+				const filePath = path.join(chartFolder.path, fileName)
+				try {
+					const stat = await fs.promises.stat(filePath)
+					return { fileName, filePath, size: stat.size }
+				} catch {
+					return { fileName, filePath, size: 0 }
+				}
+			})
+		)
+
+		const sortedFiles = filesWithStats.sort((a, b) => a.size - b.size)
+
+		for (const { fileName, filePath, size } of sortedFiles) {
+			// Only load files needed for scanning (chart, ini, album art)
+			// Skip large files like video/audio unless needed
+			const shouldLoad = hasChartExtension(fileName) ||
+				hasIniExtension(fileName) ||
+				hasAlbumName(fileName)
+
+			if (shouldLoad && size < CONFIG.MAX_FILE_SIZE_BYTES && totalSize + size < CONFIG.MAX_TOTAL_FILES_SIZE_BYTES) {
+				try {
+					const data = await fs.promises.readFile(filePath)
+					results.push({ fileName, data })
+					totalSize += size
+				} catch {
+					// File read failed, add with empty data
+					results.push({ fileName, data: new Uint8Array() })
+				}
+			} else {
+				// Add file reference without data (for asset detection)
+				results.push({ fileName, data: new Uint8Array() })
+			}
+		}
+
+		return results
+	}
+
+	/**
+	 * Load files from a .sng archive
+	 */
+	private async getFilesFromSng(sngPath: string): Promise<{ fileName: string; data: Uint8Array }[]> {
+		const files: { fileName: string; data: Uint8Array }[] = []
+
+		try {
+			const sngStream = new SngStream(
+				Readable.toWeb(fs.createReadStream(sngPath)) as ReadableStream<Uint8Array>,
+				{ generateSongIni: true }
+			)
+
+			let header: SngHeader
+
+			await new Promise<void>((resolve, reject) => {
+				sngStream.on('header', h => { header = h })
+				sngStream.on('error', reject)
+
+				sngStream.on('file', async (fileName, fileStream, nextFile) => {
+					try {
+						// Check file size from header
+						const fileMeta = header?.fileMeta?.find(f => f.filename === fileName)
+						const fileSize = fileMeta ? Number(fileMeta.contentsLen) : 0
+						const shouldLoad = hasChartExtension(fileName) ||
+							hasIniExtension(fileName) ||
+							hasAlbumName(fileName)
+
+						if (shouldLoad && fileSize < CONFIG.MAX_FILE_SIZE_BYTES && !hasVideoExtension(fileName)) {
+							// Read the file data
+							const chunks: Uint8Array[] = []
+							const reader = fileStream.getReader()
+
+							while (true) {
+								const { done, value } = await reader.read()
+								if (done) break
+								chunks.push(value)
+							}
+
+							const totalLength = chunks.reduce((sum, c) => sum + c.length, 0)
+							const data = new Uint8Array(totalLength)
+							let offset = 0
+							for (const chunk of chunks) {
+								data.set(chunk, offset)
+								offset += chunk.length
+							}
+
+							files.push({ fileName, data })
+						} else {
+							// Skip large/video files but record their presence
+							const reader = fileStream.getReader()
+							while (true) {
+								const { done } = await reader.read()
+								if (done) break
+							}
+							files.push({ fileName, data: new Uint8Array() })
+						}
+
+						if (nextFile) {
+							nextFile()
+						} else {
+							resolve()
+						}
+					} catch (err) {
+						reject(err)
+					}
+				})
+
+				sngStream.start()
+			})
+		} catch (err) {
+			// .sng parsing failed, return empty files
+			console.error('Failed to parse .sng file:', err)
+		}
+
+		return files
+	}
+
+	/**
+	 * Convert ScannedChart from scan-chart to our ChartRecord format
+	 */
+	private convertToChartRecord(
+		scanned: ScannedChart,
+		folderPath: string,
+		folderHash: string,
+		assets: ChartAssets
+	): Omit<ChartRecord, 'id'> {
+		const notesData = scanned.notesData
+
+		// Get instrument presence from notesData
+		const instruments = notesData?.instruments ?? []
+		const hasGuitar = instruments.includes('guitar')
+		const hasBass = instruments.includes('bass')
+		const hasDrums = instruments.includes('drums')
+		const hasKeys = instruments.includes('keys')
+		const hasRhythm = instruments.includes('rhythm')
+		const hasGHL = instruments.includes('guitarghl') || instruments.includes('bassghl')
+		const hasVocals = notesData?.hasVocals ?? false
+
+		// Extract difficulty levels per instrument from notesData
+		const getDifficultiesForInstrument = (inst: Instrument): string => {
+			if (!notesData?.noteCounts) return ''
+			const diffs = notesData.noteCounts
+				.filter(nc => nc.instrument === inst && nc.count > 0)
+				.map(nc => this.difficultyToCode(nc.difficulty))
+			return this.sortDifficulties(diffs).join(',')
+		}
+
+		// Determine chart type from available files
 		let chartType: 'mid' | 'chart' | 'sng' | null = null
 		if (assets.chart) {
 			const lower = assets.chart.toLowerCase()
 			if (lower.endsWith('.mid')) chartType = 'mid'
 			else if (lower.endsWith('.chart')) chartType = 'chart'
-			else if (lower.endsWith('.sng')) chartType = 'sng'
-		}
-
-		// Check if this is from an official charter (Harmonix = Rock Band, Neversoft = Guitar Hero)
-		// These always have all difficulties (EMHX)
-		const charterName = (songIni.charter || songIni.frets || '').toLowerCase()
-		const isOfficialCharter = charterName.includes('harmonix') ||
-			charterName.includes('neversoft') ||
-			charterName.includes('vicarious visions') ||
-			charterName.includes('budcat') ||
-			charterName.includes('freestyle games')
-
-		// Detect if this is a GH3-style encrypted MIDI
-		// GH3 charts have `icon = gh3` or `multiplier_note` in song.ini
-		const isGH3Style = songIni.icon === 'gh3' ||
-			songIni.multiplier_note !== undefined ||
-			(songIni as any).gh3_unlock !== undefined ||
-			isOfficialCharter
-
-		// Parse chart file to detect available difficulty levels
-		let diffLevels = await this.parseChartDifficulties(assets.chart, chartType)
-
-		// For GH3-style encrypted MIDIs or official charters, if parsing returned minimal results but
-		// we know instruments exist (from song.ini diff_ fields or track detection),
-		// assume all standard difficulties (E/M/H/X) are available
-		if (isGH3Style && chartType === 'mid') {
-			diffLevels = await this.parseGH3MidiDifficulties(assets.chart, songIni, diffLevels)
-		}
-
-		// Get difficulties (null means not present, >= 0 means charted)
-		const diff_guitar = songIni.diff_guitar ?? null
-		const diff_bass = songIni.diff_bass ?? null
-		const diff_drums = songIni.diff_drums ?? songIni.diff_drums_real ?? null
-		const diff_keys = songIni.diff_keys ?? null
-		const diff_vocals = songIni.diff_vocals ?? null
-		const diff_rhythm = songIni.diff_rhythm ?? null
-		const diff_guitarghl = songIni.diff_guitarghl ?? null
-		const diff_bassghl = songIni.diff_bassghl ?? null
-
-		// Determine which instruments are available based on parsed chart or song.ini
-		const hasGuitar = diffLevels.guitar.length > 0 || (diff_guitar !== null && diff_guitar >= -1)
-		const hasBass = diffLevels.bass.length > 0 || (diff_bass !== null && diff_bass >= -1)
-		const hasDrums = diffLevels.drums.length > 0 || (diff_drums !== null && diff_drums >= -1)
-		const hasKeys = diffLevels.keys.length > 0 || (diff_keys !== null && diff_keys >= -1)
-		const hasVocals = diffLevels.vocals.length > 0 || (diff_vocals !== null && diff_vocals >= -1)
-		const hasRhythm = diffLevels.rhythm.length > 0 || (diff_rhythm !== null && diff_rhythm >= -1)
-		const hasGHL = diffLevels.ghlGuitar.length > 0 || diffLevels.ghlBass.length > 0 ||
-			(diff_guitarghl !== null && diff_guitarghl >= -1) ||
-			(diff_bassghl !== null && diff_bassghl >= -1)
-
-		// For official charters, force all difficulties for any instrument that exists
-		// These are always complete charts from the original games
-		if (isOfficialCharter) {
-			const allDiffs = ['e', 'm', 'h', 'x']
-			if (hasGuitar) diffLevels.guitar = allDiffs
-			if (hasBass) diffLevels.bass = allDiffs
-			if (hasDrums) diffLevels.drums = allDiffs
-			if (hasKeys) diffLevels.keys = allDiffs
-			if (hasVocals) diffLevels.vocals = allDiffs
-			if (hasRhythm) diffLevels.rhythm = allDiffs
-			if (hasGHL) {
-				diffLevels.ghlGuitar = allDiffs
-				diffLevels.ghlBass = allDiffs
-			}
+			else if (lower.endsWith('.sng') || folderPath.toLowerCase().endsWith('.sng')) chartType = 'sng'
+		} else if (folderPath.toLowerCase().endsWith('.sng')) {
+			chartType = 'sng'
 		}
 
 		return {
 			path: folderPath,
-			name: songIni.name || path.basename(folderPath),
-			artist: songIni.artist || 'Unknown Artist',
-			album: songIni.album || '',
-			genre: songIni.genre || '',
-			year: typeof songIni.year === 'number' ? songIni.year :
-				typeof songIni.year === 'string' ? parseInt(songIni.year, 10) || null : null,
-			charter: songIni.charter || songIni.frets || '',
+			name: scanned.name || path.basename(folderPath).replace(/\.sng$/i, ''),
+			artist: scanned.artist || 'Unknown Artist',
+			album: scanned.album || '',
+			genre: scanned.genre || '',
+			year: this.parseYear(scanned.year),
+			charter: scanned.charter || '',
 
-			diff_guitar,
-			diff_bass,
-			diff_drums,
-			diff_keys,
-			diff_vocals,
-			diff_rhythm,
-			diff_guitarghl,
-			diff_bassghl,
+			diff_guitar: scanned.diff_guitar ?? null,
+			diff_bass: scanned.diff_bass ?? null,
+			diff_drums: scanned.diff_drums ?? null,
+			diff_keys: scanned.diff_keys ?? null,
+			diff_vocals: scanned.diff_vocals ?? null,
+			diff_rhythm: scanned.diff_rhythm ?? null,
+			diff_guitarghl: scanned.diff_guitarghl ?? null,
+			diff_bassghl: scanned.diff_bassghl ?? null,
 
 			hasGuitar,
 			hasBass,
@@ -262,542 +466,35 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 			hasRhythm,
 			hasGHL,
 
-			// Store difficulty levels as comma-separated strings
-			guitarDiffs: diffLevels.guitar.join(','),
-			bassDiffs: diffLevels.bass.join(','),
-			drumsDiffs: diffLevels.drums.join(','),
-			keysDiffs: diffLevels.keys.join(','),
-			vocalsDiffs: diffLevels.vocals.join(','),
-			rhythmDiffs: diffLevels.rhythm.join(','),
-			ghlGuitarDiffs: diffLevels.ghlGuitar.join(','),
-			ghlBassDiffs: diffLevels.ghlBass.join(','),
+			guitarDiffs: getDifficultiesForInstrument('guitar'),
+			bassDiffs: getDifficultiesForInstrument('bass'),
+			drumsDiffs: getDifficultiesForInstrument('drums'),
+			keysDiffs: getDifficultiesForInstrument('keys'),
+			vocalsDiffs: '', // Vocals don't have traditional difficulty levels
+			rhythmDiffs: getDifficultiesForInstrument('rhythm'),
+			ghlGuitarDiffs: getDifficultiesForInstrument('guitarghl'),
+			ghlBassDiffs: getDifficultiesForInstrument('bassghl'),
 
 			chartType,
 
-			hasVideo: assets.video !== null,
+			hasVideo: scanned.hasVideoBackground || assets.video !== null,
 			hasBackground: assets.background !== null,
-			hasAlbumArt: assets.albumArt !== null,
+			hasAlbumArt: scanned.albumArt !== null || assets.albumArt !== null,
 			hasStems: Object.keys(assets.stems).length > 0,
-			hasLyrics: await this.detectLyrics(folderPath, assets.chart, chartType),
+			hasLyrics: notesData?.hasLyrics ?? notesData?.hasVocals ?? false,
 
-			songLength: songIni.song_length ?? null,
-			previewStart: songIni.preview_start_time ?? null,
+			songLength: scanned.song_length ?? null,
+			previewStart: scanned.preview_start_time ?? null,
 
 			chorusId: null,
-			folderHash: folderHash,
+			folderHash,
 			lastScanned: new Date().toISOString(),
 		}
 	}
 
 	/**
-	 * Parse chart file to detect available difficulty levels per instrument
+	 * Detect assets in a chart folder (video, background, stems, etc.)
 	 */
-	private async parseChartDifficulties(chartPath: string | null, chartType: 'mid' | 'chart' | 'sng' | null): Promise<{
-		guitar: string[]
-		bass: string[]
-		drums: string[]
-		keys: string[]
-		vocals: string[]
-		rhythm: string[]
-		ghlGuitar: string[]
-		ghlBass: string[]
-	}> {
-		const result = {
-			guitar: [] as string[],
-			bass: [] as string[],
-			drums: [] as string[],
-			keys: [] as string[],
-			vocals: [] as string[],
-			rhythm: [] as string[],
-			ghlGuitar: [] as string[],
-			ghlBass: [] as string[],
-		}
-
-		if (!chartPath) {
-			return result
-		}
-
-		try {
-			if (chartType === 'chart') {
-				return await this.parseChartFileDifficulties(chartPath)
-			} else if (chartType === 'mid') {
-				return await this.parseMidiDifficulties(chartPath)
-			}
-		} catch (err) {
-			// Failed to parse, return empty
-			console.error('Failed to parse chart difficulties:', err)
-		}
-
-		return result
-	}
-
-	/**
-	 * Parse .chart file for difficulty sections
-	 */
-	private async parseChartFileDifficulties(chartPath: string): Promise<{
-		guitar: string[]
-		bass: string[]
-		drums: string[]
-		keys: string[]
-		vocals: string[]
-		rhythm: string[]
-		ghlGuitar: string[]
-		ghlBass: string[]
-	}> {
-		const result = {
-			guitar: [] as string[],
-			bass: [] as string[],
-			drums: [] as string[],
-			keys: [] as string[],
-			vocals: [] as string[],
-			rhythm: [] as string[],
-			ghlGuitar: [] as string[],
-			ghlBass: [] as string[],
-		}
-
-		const content = await fs.promises.readFile(chartPath, 'utf-8')
-
-		// .chart files have sections like [ExpertSingle], [HardSingle], etc.
-		const sectionRegex = /\[(Easy|Medium|Hard|Expert)(Single|DoubleBass|DoubleRhythm|Drums|Keyboard|GHLGuitar|GHLBass)\]/gi
-
-		let match
-		while ((match = sectionRegex.exec(content)) !== null) {
-			const diff = match[1].toLowerCase()
-			const inst = match[2].toLowerCase()
-
-			const diffCode = diff === 'easy' ? 'e' : diff === 'medium' ? 'm' : diff === 'hard' ? 'h' : 'x'
-
-			switch (inst) {
-				case 'single':
-					if (!result.guitar.includes(diffCode)) result.guitar.push(diffCode)
-					break
-				case 'doublebass':
-					if (!result.bass.includes(diffCode)) result.bass.push(diffCode)
-					break
-				case 'doublerhythm':
-					if (!result.rhythm.includes(diffCode)) result.rhythm.push(diffCode)
-					break
-				case 'drums':
-					if (!result.drums.includes(diffCode)) result.drums.push(diffCode)
-					break
-				case 'keyboard':
-					if (!result.keys.includes(diffCode)) result.keys.push(diffCode)
-					break
-				case 'ghlguitar':
-					if (!result.ghlGuitar.includes(diffCode)) result.ghlGuitar.push(diffCode)
-					break
-				case 'ghlbass':
-					if (!result.ghlBass.includes(diffCode)) result.ghlBass.push(diffCode)
-					break
-			}
-		}
-
-		// Sort difficulty levels
-		const sortDiffs = (arr: string[]) => {
-			const order = ['e', 'm', 'h', 'x']
-			return arr.sort((a, b) => order.indexOf(a) - order.indexOf(b))
-		}
-
-		result.guitar = sortDiffs(result.guitar)
-		result.bass = sortDiffs(result.bass)
-		result.drums = sortDiffs(result.drums)
-		result.keys = sortDiffs(result.keys)
-		result.rhythm = sortDiffs(result.rhythm)
-		result.ghlGuitar = sortDiffs(result.ghlGuitar)
-		result.ghlBass = sortDiffs(result.ghlBass)
-
-		return result
-	}
-
-	/**
-	 * Parse MIDI file for difficulty levels
-	 * MIDI stores notes on tracks, with difficulty determined by note pitch:
-	 * - Expert: 96-100 (and 96-100 for open notes on some tracks)
-	 * - Hard: 84-88
-	 * - Medium: 72-76
-	 * - Easy: 60-64
-	 * Drums use different ranges:
-	 * - Expert: 96-100
-	 * - Hard: 84-88
-	 * - Medium: 72-76
-	 * - Easy: 60-64
-	 */
-	private async parseMidiDifficulties(midiPath: string): Promise<{
-		guitar: string[]
-		bass: string[]
-		drums: string[]
-		keys: string[]
-		vocals: string[]
-		rhythm: string[]
-		ghlGuitar: string[]
-		ghlBass: string[]
-	}> {
-		const result = {
-			guitar: [] as string[],
-			bass: [] as string[],
-			drums: [] as string[],
-			keys: [] as string[],
-			vocals: [] as string[],
-			rhythm: [] as string[],
-			ghlGuitar: [] as string[],
-			ghlBass: [] as string[],
-		}
-
-		const buffer = await fs.promises.readFile(midiPath)
-
-		// Simple MIDI parser - we just need to find track names and note ranges
-		// MIDI format: chunks starting with 'MTrk'
-
-		let pos = 0
-
-		// Check MIDI header
-		if (buffer.toString('ascii', 0, 4) !== 'MThd') {
-			return result
-		}
-
-		// Skip header (MThd + length + format + tracks + division)
-		pos = 14
-
-		// Track name to instrument mapping
-		const trackMap: { [key: string]: keyof typeof result } = {
-			'part guitar': 'guitar',
-			'part bass': 'bass',
-			'part drums': 'drums',
-			'part keys': 'keys',
-			'part vocals': 'vocals',
-			'part rhythm': 'rhythm',
-			'part guitar ghl': 'ghlGuitar',
-			'part bass ghl': 'ghlBass',
-			't1 gems': 'guitar',  // Rock Band format
-			'part real_guitar': 'guitar',
-			'part real_bass': 'bass',
-		}
-
-		// Note ranges for each difficulty (standard 5-fret)
-		const diffRanges = {
-			'e': { min: 60, max: 64 },
-			'm': { min: 72, max: 76 },
-			'h': { min: 84, max: 88 },
-			'x': { min: 96, max: 100 },
-		}
-
-		while (pos < buffer.length - 8) {
-			// Look for track chunk
-			if (buffer.toString('ascii', pos, pos + 4) !== 'MTrk') {
-				pos++
-				continue
-			}
-
-			pos += 4
-			const trackLength = buffer.readUInt32BE(pos)
-			pos += 4
-
-			const trackEnd = pos + trackLength
-			let currentTrackName = ''
-			const notesFound = new Set<number>()
-
-			// Parse track events
-			while (pos < trackEnd && pos < buffer.length) {
-				// Read variable-length delta time
-				let delta = 0
-				let byte
-				do {
-					byte = buffer[pos++]
-					delta = (delta << 7) | (byte & 0x7f)
-				} while (byte & 0x80 && pos < trackEnd)
-
-				if (pos >= trackEnd) break
-
-				const eventType = buffer[pos]
-
-				// Meta event
-				if (eventType === 0xff) {
-					pos++
-					const metaType = buffer[pos++]
-
-					// Read length
-					let length = 0
-					do {
-						byte = buffer[pos++]
-						length = (length << 7) | (byte & 0x7f)
-					} while (byte & 0x80 && pos < trackEnd)
-
-					// Track name (meta type 0x03)
-					if (metaType === 0x03 && length > 0) {
-						currentTrackName = buffer.toString('ascii', pos, pos + length).toLowerCase().trim()
-					}
-
-					pos += length
-				}
-				// Note On (0x90-0x9F)
-				else if ((eventType & 0xf0) === 0x90) {
-					pos++
-					const note = buffer[pos++]
-					const velocity = buffer[pos++]
-
-					if (velocity > 0) {
-						notesFound.add(note)
-					}
-				}
-				// Note Off (0x80-0x8F)
-				else if ((eventType & 0xf0) === 0x80) {
-					pos += 3
-				}
-				// Other channel events (2 data bytes)
-				else if ((eventType & 0xf0) === 0xa0 || // Aftertouch
-					(eventType & 0xf0) === 0xb0 || // Control Change
-					(eventType & 0xf0) === 0xe0) { // Pitch Bend
-					pos += 3
-				}
-				// Program Change, Channel Pressure (1 data byte)
-				else if ((eventType & 0xf0) === 0xc0 ||
-					(eventType & 0xf0) === 0xd0) {
-					pos += 2
-				}
-				// SysEx
-				else if (eventType === 0xf0 || eventType === 0xf7) {
-					pos++
-					let length = 0
-					do {
-						byte = buffer[pos++]
-						length = (length << 7) | (byte & 0x7f)
-					} while (byte & 0x80 && pos < trackEnd)
-					pos += length
-				}
-				// Running status or unknown - try to skip
-				else {
-					pos++
-				}
-			}
-
-			// Map track to instrument and check which difficulties have notes
-			const instrument = trackMap[currentTrackName]
-			if (instrument && notesFound.size > 0) {
-				for (const [diff, range] of Object.entries(diffRanges)) {
-					for (const note of notesFound) {
-						if (note >= range.min && note <= range.max) {
-							if (!result[instrument].includes(diff)) {
-								result[instrument].push(diff)
-							}
-							break
-						}
-					}
-				}
-			}
-
-			pos = trackEnd
-		}
-
-		// Sort difficulty levels
-		const sortDiffs = (arr: string[]) => {
-			const order = ['e', 'm', 'h', 'x']
-			return arr.sort((a, b) => order.indexOf(a) - order.indexOf(b))
-		}
-
-		result.guitar = sortDiffs(result.guitar)
-		result.bass = sortDiffs(result.bass)
-		result.drums = sortDiffs(result.drums)
-		result.keys = sortDiffs(result.keys)
-		result.rhythm = sortDiffs(result.rhythm)
-		result.ghlGuitar = sortDiffs(result.ghlGuitar)
-		result.ghlBass = sortDiffs(result.ghlBass)
-
-		return result
-	}
-
-	/**
-	 * Handle GH3-style encrypted MIDI files and official charter charts
-	 * These MIDIs can't be parsed normally, so we detect instruments from
-	 * track names and assume all difficulties (E/M/H/X) are present
-	 */
-	private async parseGH3MidiDifficulties(
-		midiPath: string | null,
-		songIni: SongIniData,
-		existingResult: {
-			guitar: string[]
-			bass: string[]
-			drums: string[]
-			keys: string[]
-			vocals: string[]
-			rhythm: string[]
-			ghlGuitar: string[]
-			ghlBass: string[]
-		}
-	): Promise<typeof existingResult> {
-		const result = { ...existingResult }
-		const allDiffs = ['e', 'm', 'h', 'x']
-
-		// If we already parsed ALL difficulties for an instrument, keep those
-		// But if we only found 1-2 difficulties, it's likely a parsing issue with encrypted MIDIs
-		const hasCompleteParse =
-			result.guitar.length >= 3 ||
-			result.bass.length >= 3 ||
-			result.drums.length >= 3 ||
-			result.rhythm.length >= 3
-
-		if (hasCompleteParse) {
-			return result
-		}
-
-		// For GH3 MIDIs / official charters, detect which instrument tracks exist
-		// and assume all difficulties are present
-		if (midiPath) {
-			try {
-				const buffer = await fs.promises.readFile(midiPath)
-				const trackNames = this.extractMidiTrackNames(buffer)
-
-				for (const trackName of trackNames) {
-					const lower = trackName.toLowerCase().trim()
-
-					if (lower === 'part guitar' || lower === 't1 gems') {
-						result.guitar = allDiffs
-					} else if (lower === 'part bass') {
-						result.bass = allDiffs
-					} else if (lower === 'part drums') {
-						result.drums = allDiffs
-					} else if (lower === 'part keys') {
-						result.keys = allDiffs
-					} else if (lower === 'part vocals') {
-						result.vocals = allDiffs
-					} else if (lower === 'part rhythm') {
-						result.rhythm = allDiffs
-					} else if (lower === 'part guitar ghl') {
-						result.ghlGuitar = allDiffs
-					} else if (lower === 'part bass ghl') {
-						result.ghlBass = allDiffs
-					}
-				}
-			} catch (err) {
-				// Failed to read, fall back to song.ini hints
-			}
-		}
-
-		// Also use song.ini diff_ fields as hints for instruments we didn't detect from tracks
-		// diff_* = -1 means "auto-detect" or "all difficulties present"
-		if (songIni.diff_guitar !== undefined && songIni.diff_guitar >= -1 && result.guitar.length < 4) {
-			result.guitar = allDiffs
-		}
-		if (songIni.diff_bass !== undefined && songIni.diff_bass >= -1 && result.bass.length < 4) {
-			result.bass = allDiffs
-		}
-		if (songIni.diff_drums !== undefined && songIni.diff_drums >= -1 && result.drums.length < 4) {
-			result.drums = allDiffs
-		}
-		if (songIni.diff_keys !== undefined && songIni.diff_keys >= -1 && result.keys.length < 4) {
-			result.keys = allDiffs
-		}
-		if (songIni.diff_vocals !== undefined && songIni.diff_vocals >= -1 && result.vocals.length < 4) {
-			result.vocals = allDiffs
-		}
-		if (songIni.diff_rhythm !== undefined && songIni.diff_rhythm >= -1 && result.rhythm.length < 4) {
-			result.rhythm = allDiffs
-		}
-
-		return result
-	}
-
-	/**
-	 * Extract track names from a MIDI file without fully parsing it
-	 */
-	private extractMidiTrackNames(buffer: Buffer): string[] {
-		const trackNames: string[] = []
-		let pos = 14 // Skip MIDI header
-
-		while (pos < buffer.length - 8) {
-			if (buffer.toString('ascii', pos, pos + 4) !== 'MTrk') {
-				pos++
-				continue
-			}
-
-			pos += 4
-			const trackLength = buffer.readUInt32BE(pos)
-			pos += 4
-			const trackEnd = pos + trackLength
-
-			// Look for track name meta event (FF 03)
-			while (pos < trackEnd && pos < buffer.length - 4) {
-				// Skip variable-length delta time
-				let byte
-				do {
-					byte = buffer[pos++]
-				} while (byte & 0x80 && pos < trackEnd)
-
-				if (pos >= trackEnd) break
-
-				const eventType = buffer[pos]
-
-				if (eventType === 0xff) {
-					pos++
-					const metaType = buffer[pos++]
-
-					// Read length
-					let length = 0
-					do {
-						byte = buffer[pos++]
-						length = (length << 7) | (byte & 0x7f)
-					} while (byte & 0x80 && pos < trackEnd)
-
-					// Track name (meta type 0x03)
-					if (metaType === 0x03 && length > 0 && pos + length <= buffer.length) {
-						const name = buffer.toString('ascii', pos, pos + length)
-						trackNames.push(name)
-					}
-
-					pos += length
-
-					// Found a track name, move to next track
-					if (metaType === 0x03) break
-				} else {
-					// Skip other events - simplified, just move to next track
-					break
-				}
-			}
-
-			pos = trackEnd
-		}
-
-		return trackNames
-	}
-
-	private async parseSongIni(folderPath: string): Promise<SongIniData> {
-		const iniPath = path.join(folderPath, 'song.ini')
-		const data: SongIniData = {}
-
-		try {
-			const content = await fs.promises.readFile(iniPath, 'utf-8')
-			const lines = content.split(/\r?\n/)
-
-			for (const line of lines) {
-				const trimmed = line.trim()
-
-				if (!trimmed || trimmed.startsWith(';') || trimmed.startsWith('[')) {
-					continue
-				}
-
-				const eqIndex = trimmed.indexOf('=')
-				if (eqIndex === -1) continue
-
-				const key = trimmed.substring(0, eqIndex).trim().toLowerCase()
-				let value: string | number = trimmed.substring(eqIndex + 1).trim()
-
-				if ((value.startsWith('"') && value.endsWith('"')) ||
-					(value.startsWith("'") && value.endsWith("'"))) {
-					value = value.slice(1, -1)
-				}
-
-				if (/^-?\d+$/.test(value)) {
-					value = parseInt(value, 10)
-				}
-
-				data[key] = value
-			}
-		} catch {
-			// song.ini might not exist
-		}
-
-		return data
-	}
-
 	private async detectAssets(folderPath: string): Promise<ChartAssets> {
 		let entries: fs.Dirent[]
 		try {
@@ -813,7 +510,8 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 				const pattern = prefix + ext
 				const found = files.find(f => f === pattern.toLowerCase())
 				if (found) {
-					return path.join(folderPath, entries.find(e => e.name.toLowerCase() === found)!.name)
+					const original = entries.find(e => e.name.toLowerCase() === found)
+					return original ? path.join(folderPath, original.name) : null
 				}
 			}
 			return null
@@ -823,7 +521,8 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 			for (const pattern of patterns) {
 				const found = files.find(f => f === pattern.toLowerCase())
 				if (found) {
-					return path.join(folderPath, entries.find(e => e.name.toLowerCase() === found)!.name)
+					const original = entries.find(e => e.name.toLowerCase() === found)
+					return original ? path.join(folderPath, original.name) : null
 				}
 			}
 			return null
@@ -831,9 +530,8 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 
 		// Detect stems
 		const stems: ChartAssets['stems'] = {}
-		const stemNames = ['guitar', 'bass', 'drums', 'vocals', 'keys', 'rhythm', 'crowd']
-		for (const stem of stemNames) {
-			const stemFile = findByPrefix(stem, ['.ogg', '.mp3', '.wav', '.opus'])
+		for (const stem of STEM_NAMES) {
+			const stemFile = findByPrefix(stem, AUDIO_EXTENSIONS)
 			if (stemFile) {
 				stems[stem as keyof typeof stems] = stemFile
 			}
@@ -844,22 +542,84 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 			background: findByPrefix('background', IMAGE_EXTENSIONS),
 			albumArt: findByPrefix('album', IMAGE_EXTENSIONS),
 			stems,
-			audio: findFile(AUDIO_FILES),
-			chart: findFile(CHART_FILES),
+			audio: findFile(['song.ogg', 'song.mp3', 'song.wav', 'guitar.ogg', 'guitar.mp3']),
+			chart: findFile(['notes.chart', 'notes.mid']),
 		}
 	}
 
-	private async computeFolderHash(folderPath: string): Promise<string> {
+	/**
+	 * Get asset information from files loaded from .sng
+	 */
+	private getAssetsFromSngFiles(files: { fileName: string; data: Uint8Array }[]): ChartAssets {
+		const fileNames = files.map(f => f.fileName.toLowerCase())
+
+		const findFile = (patterns: string[]): string | null => {
+			for (const pattern of patterns) {
+				if (fileNames.includes(pattern.toLowerCase())) {
+					return pattern
+				}
+			}
+			return null
+		}
+
+		const findByPrefix = (prefix: string, extensions: string[]): string | null => {
+			for (const ext of extensions) {
+				const pattern = prefix + ext
+				if (fileNames.includes(pattern.toLowerCase())) {
+					return pattern
+				}
+			}
+			return null
+		}
+
+		const stems: ChartAssets['stems'] = {}
+		for (const stem of STEM_NAMES) {
+			const stemFile = findByPrefix(stem, AUDIO_EXTENSIONS)
+			if (stemFile) {
+				stems[stem as keyof typeof stems] = stemFile
+			}
+		}
+
+		return {
+			video: findByPrefix('video', VIDEO_EXTENSIONS),
+			background: findByPrefix('background', IMAGE_EXTENSIONS),
+			albumArt: findByPrefix('album', IMAGE_EXTENSIONS),
+			stems,
+			audio: findFile(['song.ogg', 'song.mp3', 'song.wav', 'guitar.ogg', 'guitar.mp3']),
+			chart: findFile(['notes.chart', 'notes.mid']),
+		}
+	}
+
+	/**
+	 * Compute a hash of folder contents for change detection
+	 * Uses file names, sizes, and modification times
+	 */
+	private async computeFolderHash(folderPath: string, files?: string[]): Promise<string> {
 		const hash = crypto.createHash('md5')
 
 		try {
-			const entries = await fs.promises.readdir(folderPath, { withFileTypes: true })
-			const files = entries.filter(e => e.isFile()).sort((a, b) => a.name.localeCompare(b.name))
+			if (folderPath.toLowerCase().endsWith('.sng')) {
+				// For .sng files, hash the file itself
+				const stat = await fs.promises.stat(folderPath)
+				hash.update(`${path.basename(folderPath)}:${stat.size}:${stat.mtimeMs}`)
+			} else {
+				// For folders, hash all files
+				const entries = files
+					? files.map(f => ({ name: f }))
+					: (await fs.promises.readdir(folderPath, { withFileTypes: true }))
+						.filter(e => e.isFile())
 
-			for (const file of files) {
-				const filePath = path.join(folderPath, file.name)
-				const stat = await fs.promises.stat(filePath)
-				hash.update(`${file.name}:${stat.size}:${stat.mtimeMs}`)
+				const sortedFiles = entries.sort((a, b) => a.name.localeCompare(b.name))
+
+				for (const file of sortedFiles) {
+					const filePath = path.join(folderPath, file.name)
+					try {
+						const stat = await fs.promises.stat(filePath)
+						hash.update(`${file.name}:${stat.size}:${stat.mtimeMs}`)
+					} catch {
+						hash.update(file.name)
+					}
+				}
 			}
 		} catch {
 			hash.update(folderPath)
@@ -868,6 +628,9 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 		return hash.digest('hex')
 	}
 
+	/**
+	 * Rescan a single chart (for manual refresh)
+	 */
 	async rescanChart(folderPath: string): Promise<ChartRecord | null> {
 		const db = getCatalogDb()
 
@@ -881,56 +644,55 @@ class ChartScanner extends EventEmitter<ScannerEvents> {
 			return null
 		}
 
-		const chart = await this.scanChartFolder(folderPath)
+		const isSng = hasSngExtension(folderPath)
+		let files: string[] = []
+
+		if (!isSng) {
+			const entries = await fs.promises.readdir(folderPath, { withFileTypes: true })
+			files = entries.filter(e => e.isFile()).map(e => e.name)
+		}
+
+		const chartFolder: ChartFolder = {
+			path: folderPath,
+			files,
+			isSng,
+		}
+
+		const folderHash = await this.computeFolderHash(folderPath, files)
+		const chart = await this.scanChartFolder(chartFolder, folderHash)
 		const id = db.upsertChart(chart)
 		return db.getChart(id)
 	}
 
 	/**
-	 * Detect if a chart has lyrics
-	 * Checks for:
-	 * 1. lyrics.txt file in folder
-	 * 2. lyric events in .chart files
-	 * 3. PART VOCALS track with lyrics in .mid files
+	 * Convert scan-chart Difficulty to our single-letter code
 	 */
-	private async detectLyrics(folderPath: string, chartPath: string | null, chartType: 'mid' | 'chart' | 'sng' | null): Promise<boolean> {
-		// Check for lyrics.txt file
-		try {
-			const lyricsFile = path.join(folderPath, 'lyrics.txt')
-			await fs.promises.access(lyricsFile)
-			return true
-		} catch {
-			// No lyrics.txt
+	private difficultyToCode(diff: Difficulty): string {
+		switch (diff) {
+			case 'easy': return 'e'
+			case 'medium': return 'm'
+			case 'hard': return 'h'
+			case 'expert': return 'x'
+			default: return ''
 		}
+	}
 
-		if (!chartPath) return false
+	/**
+	 * Sort difficulty codes in standard order
+	 */
+	private sortDifficulties(diffs: string[]): string[] {
+		const order = ['e', 'm', 'h', 'x']
+		return [...new Set(diffs)].filter(d => d).sort((a, b) => order.indexOf(a) - order.indexOf(b))
+	}
 
-		try {
-			if (chartType === 'chart') {
-				// Check for lyric events in .chart file
-				const content = await fs.promises.readFile(chartPath, 'utf-8')
-				// Look for lyric events like: = E "lyric text"
-				return /=\s*E\s+"lyric\s/i.test(content)
-			} else if (chartType === 'mid') {
-				// Check for lyrics in MIDI - look for PART VOCALS track with lyric events
-				const buffer = await fs.promises.readFile(chartPath)
-
-				// Simple check - look for "PART VOCALS" and lyric meta event (0xFF 0x05)
-				const hasVocalsTrack = buffer.includes(Buffer.from('PART VOCALS'))
-				if (!hasVocalsTrack) return false
-
-				// Look for lyric meta events (FF 05) in the file
-				for (let i = 0; i < buffer.length - 2; i++) {
-					if (buffer[i] === 0xFF && buffer[i + 1] === 0x05) {
-						return true
-					}
-				}
-			}
-		} catch {
-			// Failed to read chart file
-		}
-
-		return false
+	/**
+	 * Parse year from various formats
+	 */
+	private parseYear(year: string | number | undefined): number | null {
+		if (year === undefined || year === null) return null
+		if (typeof year === 'number') return Number.isFinite(year) ? year : null
+		const parsed = parseInt(year, 10)
+		return Number.isFinite(parsed) ? parsed : null
 	}
 }
 

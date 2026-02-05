@@ -3,7 +3,7 @@
  * Exports functions that match Bridge's IPC pattern
  */
 
-import { shell, dialog } from 'electron'
+import { shell } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { CatalogFilter, ChartRecord, ScanProgress } from '../../../src-shared/interfaces/catalog.interface.js'
@@ -29,100 +29,14 @@ function initScanner() {
 }
 
 /**
- * Get all configured library paths
+ * Scan library paths for charts
+ * @param paths Array of folder paths to scan
  */
-export async function catalogGetLibraryPaths(): Promise<string[]> {
-	const db = getCatalogDb()
-	const pathsJson = db.getSetting('libraryPaths')
-	if (!pathsJson) return []
-	try {
-		return JSON.parse(pathsJson)
-	} catch {
-		return []
-	}
-}
-
-/**
- * Add a new library path (opens dialog)
- */
-export async function catalogAddLibraryPath(): Promise<string | null> {
-	const db = getCatalogDb()
-
-	const result = await dialog.showOpenDialog(mainWindow, {
-		title: 'Select Chart Library Folder',
-		properties: ['openDirectory'],
-		message: 'Choose a folder containing your charts',
-	})
-
-	if (result.canceled || !result.filePaths.length) {
-		return null
-	}
-
-	const newPath = result.filePaths[0]
-
-	// Get existing paths
-	const pathsJson = db.getSetting('libraryPaths')
-	let paths: string[] = []
-	if (pathsJson) {
-		try {
-			paths = JSON.parse(pathsJson)
-		} catch {
-			paths = []
-		}
-	}
-
-	// Add new path if not already present
-	if (!paths.includes(newPath)) {
-		paths.push(newPath)
-		db.setSetting('libraryPaths', JSON.stringify(paths))
-	}
-
-	return newPath
-}
-
-/**
- * Remove a library path by index
- */
-export async function catalogRemoveLibraryPath(index: number): Promise<void> {
-	const db = getCatalogDb()
-
-	const pathsJson = db.getSetting('libraryPaths')
-	if (!pathsJson) return
-
-	try {
-		const paths: string[] = JSON.parse(pathsJson)
-		if (index >= 0 && index < paths.length) {
-			paths.splice(index, 1)
-			db.setSetting('libraryPaths', JSON.stringify(paths))
-		}
-	} catch {
-		// Invalid JSON, reset
-		db.setSetting('libraryPaths', '[]')
-	}
-}
-
-/**
- * Scan all library paths for charts
- */
-export async function catalogScan() {
+export async function catalogScan(paths: string[]) {
 	initScanner()
 
-	const db = getCatalogDb()
-	const pathsJson = db.getSetting('libraryPaths')
-
-	if (!pathsJson) {
-		throw new Error('No library paths configured. Please add at least one library folder.')
-	}
-
-	let paths: string[] = []
-	try {
-		paths = JSON.parse(pathsJson)
-	} catch {
-		throw new Error('Invalid library paths configuration.')
-	}
-
-	if (paths.length === 0) {
-		throw new Error('No library paths configured. Please add at least one library folder.')
+	if (!paths || paths.length === 0) {
+		throw new Error('No library paths provided. Please configure library folders in Settings.')
 	}
 
 	const scanner = getChartScanner()
@@ -151,6 +65,14 @@ export async function catalogGetChart(id: number) {
 export async function catalogGetStats() {
 	const db = getCatalogDb()
 	return db.getStats()
+}
+
+/**
+ * Get count of charts matching filter (for pagination)
+ */
+export async function catalogGetChartsCount(filter: CatalogFilter) {
+	const db = getCatalogDb()
+	return db.getChartsCount(filter)
 }
 
 /**
@@ -258,52 +180,10 @@ async function updateSongIni(chartPath: string, updates: Partial<ChartRecord>): 
 }
 
 /**
- * Get the configured removal folder
+ * Delete a chart permanently
  */
-export async function catalogGetRemovalFolder(): Promise<string | null> {
+export async function catalogDeleteChart(id: number): Promise<{ success: boolean; error?: string }> {
 	const db = getCatalogDb()
-	return db.getSetting('removalFolder') || null
-}
-
-/**
- * Set the removal folder (opens dialog)
- */
-export async function catalogSetRemovalFolder(): Promise<string | null> {
-	const db = getCatalogDb()
-
-	const result = await dialog.showOpenDialog(mainWindow, {
-		title: 'Select Removal Folder',
-		properties: ['openDirectory'],
-		message: 'Choose a folder where removed charts will be moved',
-	})
-
-	if (result.canceled || !result.filePaths.length) {
-		return null
-	}
-
-	const folderPath = result.filePaths[0]
-	db.setSetting('removalFolder', folderPath)
-	return folderPath
-}
-
-/**
- * Clear the removal folder setting
- */
-export async function catalogClearRemovalFolder(): Promise<void> {
-	const db = getCatalogDb()
-	db.setSetting('removalFolder', '')
-}
-
-/**
- * Remove a chart by moving it to the removal folder
- */
-export async function catalogRemoveChart(id: number): Promise<{ success: boolean; error?: string }> {
-	const db = getCatalogDb()
-
-	const removalFolder = db.getSetting('removalFolder')
-	if (!removalFolder) {
-		return { success: false, error: 'No removal folder configured. Please set one in Library > Folders.' }
-	}
 
 	const chart = db.getChart(id)
 	if (!chart) {
@@ -320,53 +200,13 @@ export async function catalogRemoveChart(id: number): Promise<{ success: boolean
 			return { success: true }
 		}
 
-		// Check if removal folder exists, create if not
+		// Delete the chart folder permanently
 		try {
-			await fs.promises.access(removalFolder)
-		} catch {
-			try {
-				await fs.promises.mkdir(removalFolder, { recursive: true })
-			} catch (mkdirErr) {
-				return {
-					success: false,
-					error: `Cannot create removal folder "${removalFolder}": ${mkdirErr instanceof Error ? mkdirErr.message : String(mkdirErr)}`,
-				}
-			}
-		}
-
-		// Get the chart folder name
-		const folderName = path.basename(chart.path)
-
-		// Create unique destination path (add timestamp if folder exists)
-		let destPath = path.join(removalFolder, folderName)
-		if (await fileExists(destPath)) {
-			const timestamp = Date.now()
-			destPath = path.join(removalFolder, `${folderName}_${timestamp}`)
-		}
-
-		// Try to move the folder
-		try {
-			await fs.promises.rename(chart.path, destPath)
-		} catch (renameErr) {
-			// rename() fails across drives, try copy + delete
-			const errMsg = renameErr instanceof Error ? renameErr.message : String(renameErr)
-
-			if (errMsg.includes('EXDEV') || errMsg.includes('cross-device')) {
-				// Cross-device move - need to copy then delete
-				try {
-					await copyDirectory(chart.path, destPath)
-					await fs.promises.rm(chart.path, { recursive: true, force: true })
-				} catch (copyErr) {
-					return {
-						success: false,
-						error: `Failed to copy chart across drives: ${copyErr instanceof Error ? copyErr.message : String(copyErr)}`,
-					}
-				}
-			} else {
-				return {
-					success: false,
-					error: `Failed to move chart: ${errMsg}\nFrom: ${chart.path}\nTo: ${destPath}`,
-				}
+			await fs.promises.rm(chart.path, { recursive: true, force: true })
+		} catch (deleteErr) {
+			return {
+				success: false,
+				error: `Failed to delete chart: ${deleteErr instanceof Error ? deleteErr.message : String(deleteErr)}\nPath: ${chart.path}`,
 			}
 		}
 
@@ -383,32 +223,13 @@ export async function catalogRemoveChart(id: number): Promise<{ success: boolean
 }
 
 /**
- * Copy a directory recursively
+ * Delete multiple charts permanently
  */
-async function copyDirectory(src: string, dest: string): Promise<void> {
-	await fs.promises.mkdir(dest, { recursive: true })
-	const entries = await fs.promises.readdir(src, { withFileTypes: true })
-
-	for (const entry of entries) {
-		const srcPath = path.join(src, entry.name)
-		const destPath = path.join(dest, entry.name)
-
-		if (entry.isDirectory()) {
-			await copyDirectory(srcPath, destPath)
-		} else {
-			await fs.promises.copyFile(srcPath, destPath)
-		}
-	}
-}
-
-/**
- * Remove multiple charts
- */
-export async function catalogRemoveCharts(ids: number[]): Promise<{ success: number; failed: number; errors: string[] }> {
+export async function catalogDeleteCharts(ids: number[]): Promise<{ success: number; failed: number; errors: string[] }> {
 	const results = { success: 0, failed: 0, errors: [] as string[] }
 
 	for (const id of ids) {
-		const result = await catalogRemoveChart(id)
+		const result = await catalogDeleteChart(id)
 		if (result.success) {
 			results.success++
 		} else {
