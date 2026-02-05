@@ -1,41 +1,6 @@
-<div class="h-full w-full flex flex-col pt-3">
-	<div #previewDiv class="flex-1 w-full bg-black" (click)="togglePlaying()"></div>
-	<div class="join flex">
-		<button class="btn join-item btn-neutral btn-sm rounded-none px-2" (click)="togglePlaying()">
-			@switch (playState()) {
-				@case ('end') {
-					<i class="bi bi-arrow-counterclockwise text-xl text-neutral-content"></i>
-				}
-				@case ('paused') {
-					<i class="bi bi-play text-xl text-neutral-content"></i>
-				}
-				@case ('loading') {
-					<span class="loading loading-spinner loading-sm self-center"></span>
-				}
-				@case ('play') {
-					<i class="bi bi-pause text-xl text-neutral-content"></i>
-				}
-			}
-		</button>
-		<div class="dropdown dropdown-top dropdown-hover join-item">
-			<button tabindex="0" class="btn btn-neutral btn-sm rounded-none px-2" (click)="toggleMuted()">
-				@if (volumeBar.value === 0) {
-					<i class="bi bi-volume-mute text-xl text-neutral-content"></i>
-				} @else if (volumeBar.value <= 50) {
-					<i class="bi bi-volume-down text-xl text-neutral-content"></i>
-				} @else {
-					<i class="bi bi-volume-up text-xl text-neutral-content"></i>
-				}
-			</button>
-			<ul tabindex="0" class="menu dropdown-content z-[1] ml-9 w-28 !origin-bottom-left -rotate-90 bg-base-100 p-2 shadow">
-				<input type="range" min="0" max="100" class="range range-xs" [formControl]="volumeBar" />
-			</ul>
-		</div>
-		@if (chartPreview) {
-			<button class="btn join-item btn-neutral no-animation btn-sm rounded-none px-1">{{ timestampText() }}</button>
-		}
-		<button class="btn join-item btn-neutral no-animation btn-sm flex-grow rounded-none px-2">
-			<input type="range" min="0" max="100" class="range range-primary range-xs" [formControl]="seekBar" />
-		</button>
-	</div>
-</div>
+<chart-preview-player
+	#player
+	[attr.volume]="initialVolume"
+	class="block h-full w-full"
+	(click)="onPlayerInteraction()">
+</chart-preview-player>

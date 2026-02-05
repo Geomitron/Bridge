@@ -4,19 +4,24 @@
  */
 
 import { Component, OnInit, OnDestroy, inject, signal, computed, effect, ViewChild, ElementRef, AfterViewInit } from '@angular/core'
-import { FormsModule } from '@angular/forms'
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms'
 import { Router } from '@angular/router'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs'
+import { Difficulty, Instrument } from 'scan-chart'
 import { ChartRecord, CatalogStats, ScanProgress, CatalogFilter } from '../../../../src-shared/interfaces/catalog.interface.js'
+import { ChartData } from '../../../../src-shared/interfaces/search.interface.js'
 import { CatalogService } from '../../core/services/catalog.service'
 import { ArtStudioService } from '../../core/services/art-studio.service'
 import { SettingsService } from '../../core/services/settings.service'
+import { ChartSidebarPreviewComponent } from '../browse/chart-sidebar/chart-sidebar-preview/chart-sidebar-preview.component'
+import { difficulties, instruments, shortInstrumentDisplay, difficultyDisplay } from '../../../../src-shared/UtilFunctions.js'
+import { environment } from '../../../environments/environment'
 
 @Component({
 	selector: 'app-library',
 	standalone: true,
-	imports: [FormsModule],
+	imports: [FormsModule, ReactiveFormsModule, ChartSidebarPreviewComponent],
 	templateUrl: './library.component.html',
 })
 export class LibraryComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -29,8 +34,14 @@ export class LibraryComponent implements OnInit, OnDestroy, AfterViewInit {
 	private searchSubject = new Subject<string>()
 	private intersectionObserver: IntersectionObserver | null = null
 
+	// Helper functions for template
+	shortInstrumentDisplay = shortInstrumentDisplay
+	difficultyDisplay = difficultyDisplay
+
 	// Sentinel element for infinite scroll
 	@ViewChild('scrollSentinel') scrollSentinel!: ElementRef<HTMLDivElement>
+	@ViewChild('previewModal') previewModal!: ElementRef<HTMLDialogElement>
+	@ViewChild('chartPreview') chartPreview!: ChartSidebarPreviewComponent
 
 	// Data (signals from service)
 	charts = signal<ChartRecord[]>([])
@@ -78,6 +89,13 @@ export class LibraryComponent implements OnInit, OnDestroy, AfterViewInit {
 	charterOptions = signal<string[]>([])
 	genreOptions = signal<string[]>([])
 	albumOptions = signal<string[]>([])
+
+	// Chart preview state
+	previewLoading = signal(false)
+	previewError = signal<string | null>(null)
+	previewChartData = signal<ChartData | null>(null)
+	instrumentDropdown = new FormControl<Instrument>('guitar', { nonNullable: true })
+	difficultyDropdown = new FormControl<Difficulty>('expert', { nonNullable: true })
 
 	// Computed properties
 	allSelected = computed(() => {
@@ -840,5 +858,153 @@ export class LibraryComponent implements OnInit, OnDestroy, AfterViewInit {
 			if (!chart) return null
 			return { ...chart, [field]: value }
 		})
+	}
+
+	// ==================== Chart Preview ====================
+
+	/**
+	 * Get list of instruments available for the preview chart
+	 */
+	previewInstrumentsList = computed((): Instrument[] => {
+		const chart = this.previewChartData()
+		if (!chart) return []
+
+		const noteCounts = chart.notesData?.noteCounts ?? []
+		const availableInstruments = noteCounts
+			.filter(nc => nc.count > 0)
+			.map(nc => nc.instrument)
+
+		// Return unique instruments sorted by standard order
+		return [...new Set(availableInstruments)].sort(
+			(a, b) => instruments.indexOf(a) - instruments.indexOf(b)
+		)
+	})
+
+	/**
+	 * Get list of difficulties available for the selected instrument
+	 */
+	previewDifficultiesList = computed((): Difficulty[] => {
+		const chart = this.previewChartData()
+		if (!chart) return []
+
+		const noteCounts = chart.notesData?.noteCounts ?? []
+		const selectedInstrument = this.instrumentDropdown.value
+
+		const availableDifficulties = noteCounts
+			.filter(nc => nc.instrument === selectedInstrument && nc.count > 0)
+			.map(nc => nc.difficulty)
+
+		// Return unique difficulties sorted by standard order
+		return [...new Set(availableDifficulties)].sort(
+			(a, b) => difficulties.indexOf(a) - difficulties.indexOf(b)
+		)
+	})
+
+	/**
+	 * Open the chart preview modal for a library chart
+	 * Searches Chorus Encore to find the matching chart data
+	 */
+	async openChartPreview(chart: ChartRecord): Promise<void> {
+		this.previewLoading.set(true)
+		this.previewError.set(null)
+		this.previewChartData.set(null)
+
+		// Show the modal immediately with loading state
+		this.previewModal?.nativeElement?.showModal()
+
+		try {
+			// Search Chorus Encore for matching chart
+			const searchQuery = `${chart.artist} ${chart.name}`.trim()
+
+			// Use advanced search for more precise matching
+			const response = await fetch(`${environment.apiUrl}/search`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					search: searchQuery,
+					per_page: 50,
+					page: 1,
+					source: 'bridge',
+				}),
+			})
+
+			if (!response.ok) {
+				throw new Error('Failed to search Chorus Encore')
+			}
+
+			const result = await response.json()
+			const charts: ChartData[] = result.data || []
+
+			// Find the best matching chart (by artist, name, and optionally charter)
+			const artistLower = (chart.artist || '').toLowerCase().trim()
+			const nameLower = (chart.name || '').toLowerCase().trim()
+			const charterLower = this.stripHtmlTags(chart.charter || '').toLowerCase().trim()
+
+			let matchedChart = charts.find(c =>
+				(c.artist || '').toLowerCase().trim() === artistLower &&
+				(c.name || '').toLowerCase().trim() === nameLower &&
+				this.stripHtmlTags(c.charter || '').toLowerCase().trim() === charterLower
+			)
+
+			// If no exact match with charter, try just artist + name
+			if (!matchedChart) {
+				matchedChart = charts.find(c =>
+					(c.artist || '').toLowerCase().trim() === artistLower &&
+					(c.name || '').toLowerCase().trim() === nameLower
+				)
+			}
+
+			if (!matchedChart) {
+				throw new Error('Chart not found on Chorus Encore. The preview is only available for charts that are on the online database.')
+			}
+
+			this.previewChartData.set(matchedChart)
+
+			// Set default instrument and difficulty based on what's available
+			const availableInstruments = this.previewInstrumentsList()
+			if (availableInstruments.length > 0 && !availableInstruments.includes(this.instrumentDropdown.value)) {
+				this.instrumentDropdown.setValue(availableInstruments[0])
+			}
+
+			const availableDifficulties = this.previewDifficultiesList()
+			if (availableDifficulties.length > 0 && !availableDifficulties.includes(this.difficultyDropdown.value)) {
+				this.difficultyDropdown.setValue(availableDifficulties[0])
+			}
+		} catch (err) {
+			this.previewError.set(err instanceof Error ? err.message : 'Failed to load chart preview')
+		} finally {
+			this.previewLoading.set(false)
+		}
+	}
+
+	/**
+	 * Close the preview modal and clean up
+	 */
+	closeChartPreview(): void {
+		this.chartPreview?.endChartPreview()
+		this.previewChartData.set(null)
+		this.previewError.set(null)
+		this.previewModal?.nativeElement?.close()
+	}
+
+	/**
+	 * Called when instrument dropdown changes in preview
+	 */
+	onPreviewInstrumentChange(): void {
+		// Update difficulty if current one is not available for new instrument
+		const availableDifficulties = this.previewDifficultiesList()
+		if (availableDifficulties.length > 0 && !availableDifficulties.includes(this.difficultyDropdown.value)) {
+			this.difficultyDropdown.setValue(availableDifficulties[0])
+		}
+		// Use setTimeout to ensure Angular has propagated the new input values to the child
+		setTimeout(() => this.chartPreview?.resetChartPreview(), 0)
+	}
+
+	/**
+	 * Called when difficulty dropdown changes in preview
+	 */
+	onPreviewDifficultyChange(): void {
+		// Use setTimeout to ensure Angular has propagated the new input values to the child
+		setTimeout(() => this.chartPreview?.resetChartPreview(), 0)
 	}
 }

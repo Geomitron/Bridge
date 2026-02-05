@@ -396,6 +396,7 @@
 							<td [style.background-color]="hoveredChartId() === chart.id && !isSelected(chart) ? '#000' : null">
 								<div class="flex gap-0.5">
 									<button class="btn btn-xs btn-ghost" (click)="openFolder(chart)" title="Open folder"><i class="bi bi-folder2-open"></i></button>
+									<button class="btn btn-xs btn-ghost" (click)="openChartPreview(chart)" title="Chart preview"><i class="bi bi-play"></i></button>
 									<button class="btn btn-xs btn-ghost" (click)="editChart(chart)" title="Edit"><i class="bi bi-pencil"></i></button>
 									<button class="btn btn-xs btn-ghost text-error" (click)="confirmDeleteChart(chart)" title="Delete chart">
 										<i class="bi bi-trash"></i>
@@ -555,4 +556,55 @@
 		</div>
 		<div class="modal-backdrop" (click)="cancelAssetDelete()"></div>
 	</div>
+
+	<!-- Chart Preview Modal -->
+	<dialog #previewModal class="modal" (close)="closeChartPreview()">
+		<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2 h-[50vh] w-[80vw] max-w-full max-h-full overflow-hidden">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
+				</button>
+			</form>
+
+			@if (previewLoading()) {
+				<div class="flex flex-1 items-center justify-center">
+					<span class="loading loading-spinner loading-lg"></span>
+					<span class="ml-3">Searching Chorus Encore...</span>
+				</div>
+			} @else if (previewError()) {
+				<div class="flex flex-1 flex-col items-center justify-center text-center p-4">
+					<i class="bi bi-exclamation-triangle text-4xl text-warning mb-3"></i>
+					<p class="text-base-content/80">{{ previewError() }}</p>
+				</div>
+			} @else if (previewChartData()) {
+				@if (previewInstrumentsList().length > 1 || previewDifficultiesList().length > 1) {
+					<div class="flex gap-2 items-center mb-2 flex-shrink-0">
+						@if (previewInstrumentsList().length > 1) {
+							<select class="select select-bordered select-sm" [formControl]="instrumentDropdown" (change)="onPreviewInstrumentChange()">
+								@for (instrument of previewInstrumentsList(); track instrument) {
+									<option [value]="instrument">{{ shortInstrumentDisplay(instrument) }}</option>
+								}
+							</select>
+						}
+						@if (previewDifficultiesList().length > 1) {
+							<select class="select select-bordered select-sm" [formControl]="difficultyDropdown" (change)="onPreviewDifficultyChange()">
+								@for (difficulty of previewDifficultiesList(); track difficulty) {
+									<option [value]="difficulty">{{ difficultyDisplay(difficulty) }}</option>
+								}
+							</select>
+						}
+					</div>
+				}
+				<app-chart-sidebar-preview
+					#chartPreview
+					class="flex-1 min-h-0 overflow-hidden"
+					[selectedChart]="previewChartData()!"
+					[instrument]="instrumentDropdown.value"
+					[difficulty]="difficultyDropdown.value" />
+			}
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
 </div>

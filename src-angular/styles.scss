@@ -142,6 +142,22 @@ input[type='number'] {
 	/* The collapse-content grid cell animates, content inside is clipped */
 }
 
+/* Chart preview player fullscreen styling */
+chart-preview-player:fullscreen {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	background-color: black !important;
+}
+
+chart-preview-player:fullscreen canvas {
+	max-width: 100vw !important;
+	max-height: 100vh !important;
+	width: auto !important;
+	height: auto !important;
+	object-fit: contain !important;
+}
+
 /* "Already in Library" row indicator for browse results */
 .in-library-row {
 	opacity: 0.55;
