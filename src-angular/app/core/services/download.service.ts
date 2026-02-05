@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable, NgZone } from '@angular/core'
+import { Injectable, signal, computed } from '@angular/core'
 
 import _ from 'lodash'
 import { ChartData } from 'src-shared/interfaces/search.interface'
@@ -12,61 +12,65 @@ import { SettingsService } from './settings.service'
 })
 export class DownloadService {
 
-	public downloadCountChanges = new EventEmitter<number>()
-	public downloads: DownloadProgress[] = []
+	readonly downloads = signal<DownloadProgress[]>([])
 
-	constructor(zone: NgZone, private settingsService: SettingsService) {
-		window.electron.on.downloadQueueUpdate(download => zone.run(() => {
-			const downloadIndex = this.downloads.findIndex(d => d.md5 === download.md5)
-			if (download.type === 'cancel') {
-				this.downloads = this.downloads.filter(d => d.md5 !== this.downloads[downloadIndex]?.md5)
-			} else if (downloadIndex === -1) {
-				this.downloads.push(download)
-			} else {
-				_.assign(this.downloads[downloadIndex], download)
-			}
-		}))
-	}
+	// Computed signals for derived state
+	readonly downloadCount = computed(() => this.downloads().length)
 
-	get downloadCount() {
-		return this.downloads.length
-	}
+	readonly completedCount = computed(() =>
+		this.downloads().filter(download => download.type === 'done').length
+	)
 
-	get completedCount() {
-		return this.downloads.filter(download => download.type === 'done').length
-	}
-
-	get totalDownloadingPercent() {
+	readonly totalDownloadingPercent = computed(() => {
+		const currentDownloads = this.downloads()
 		let total = 0
 		let count = 0
-		for (const download of this.downloads) {
+		for (const download of currentDownloads) {
 			if (!download.stale) {
 				total += download.percent ?? 0
 				count++
 			}
 		}
-		if (this.anyErrorsExist && total === 0) { return null }
+		if (this.anyErrorsExist() && total === 0) { return null }
 		return count ? total / count : 0
-	}
+	})
 
-	get currentDownloadText() {
-		const download = this.downloads.find(d => !d.stale && d.type === 'good')
+	readonly currentDownloadText = computed(() => {
+		const download = this.downloads().find(d => !d.stale && d.type === 'good')
 		if (download) {
 			return 'Downloading: '
 				+ _.truncate(resolveChartFolderName(this.settingsService.chartFolderName, download.chart), { length: 80 })
 		} else {
 			return ''
 		}
-	}
+	})
 
-	get anyErrorsExist() {
-		return this.downloads.find(download => download.type === 'error') ? true : false
+	readonly anyErrorsExist = computed(() =>
+		this.downloads().find(download => download.type === 'error') ? true : false
+	)
+
+	constructor(private settingsService: SettingsService) {
+		window.electron.on.downloadQueueUpdate(download => {
+			this.downloads.update(downloads => {
+				const downloadIndex = downloads.findIndex(d => d.md5 === download.md5)
+				if (download.type === 'cancel') {
+					return downloads.filter(d => d.md5 !== downloads[downloadIndex]?.md5)
+				} else if (downloadIndex === -1) {
+					return [...downloads, download]
+				} else {
+					const newDownloads = [...downloads]
+					newDownloads[downloadIndex] = { ...newDownloads[downloadIndex], ...download }
+					return newDownloads
+				}
+			})
+		})
 	}
 
 	addDownload(chart: ChartData) {
-		if (!this.downloads.find(d => d.md5 === chart.md5)) { // Don't download something twice
-			if (this.downloads.every(d => d.type === 'done')) { // Reset overall progress bar if it finished
-				this.downloads.forEach(d => d.stale = true)
+		const currentDownloads = this.downloads()
+		if (!currentDownloads.find(d => d.md5 === chart.md5)) { // Don't download something twice
+			if (currentDownloads.every(d => d.type === 'done')) { // Reset overall progress bar if it finished
+				this.downloads.update(downloads => downloads.map(d => ({ ...d, stale: true })))
 			}
 			const newChart = {
 				name: chart.name ?? 'Unknown Name',
@@ -76,7 +80,7 @@ export class DownloadService {
 				year: chart.year ?? 'Unknown Year',
 				charter: chart.charter ?? 'Unknown Charter',
 			}
-			this.downloads.push({
+			this.downloads.update(downloads => [...downloads, {
 				md5: chart.md5,
 				chart: newChart,
 				header: 'Waiting for other downloads to finish...',
@@ -84,37 +88,42 @@ export class DownloadService {
 				percent: 0,
 				type: 'good',
 				isPath: false,
-			})
+			}])
 			window.electron.emit.download({ action: 'add', md5: chart.md5, hasVideoBackground: chart.hasVideoBackground, chart: newChart })
 		}
-		this.downloadCountChanges.emit(this.downloadCount)
 	}
 
 	cancelDownload(md5: string) {
 		window.electron.emit.download({ action: 'remove', md5 })
-		this.downloadCountChanges.emit(this.downloadCount - 1)
 	}
 
 	cancelAllCompleted() {
-		for (const download of this.downloads) {
+		const currentDownloads = this.downloads()
+		for (const download of currentDownloads) {
 			if (download.type === 'done') {
 				window.electron.emit.download({ action: 'remove', md5: download.md5 })
 			}
 		}
-		this.downloads = this.downloads.filter(d => d.type !== 'done')
-		this.downloadCountChanges.emit(this.downloadCount)
+		this.downloads.update(downloads => downloads.filter(d => d.type !== 'done'))
 	}
 
 	retryDownload(md5: string) {
-		const chartDownload = this.downloads.find(d => d.md5 === md5)
-		if (chartDownload) {
-			chartDownload.type = 'good'
-			chartDownload.header = 'Waiting to retry...'
-			chartDownload.body = ''
-			chartDownload.isPath = false
-			chartDownload.percent = 0
-
-			window.electron.emit.download({ action: 'retry', md5 })
-		}
+		this.downloads.update(downloads => {
+			const index = downloads.findIndex(d => d.md5 === md5)
+			if (index !== -1) {
+				const newDownloads = [...downloads]
+				newDownloads[index] = {
+					...newDownloads[index],
+					type: 'good',
+					header: 'Waiting to retry...',
+					body: '',
+					isPath: false,
+					percent: 0,
+				}
+				window.electron.emit.download({ action: 'retry', md5 })
+				return newDownloads
+			}
+			return downloads
+		})
 	}
 }

@@ -2,8 +2,7 @@
  * Bridge Art Studio Module - Angular Service
  */
 
-import { Injectable } from '@angular/core'
-import { BehaviorSubject } from 'rxjs'
+import { Injectable, signal, computed } from '@angular/core'
 import {
 	AlbumArtResult,
 	ArtDownloadProgress,
@@ -16,11 +15,8 @@ import {
 	providedIn: 'root',
 })
 export class ArtStudioService {
-	private downloadProgressSubject = new BehaviorSubject<ArtDownloadProgress | null>(null)
-	private isProcessingSubject = new BehaviorSubject<boolean>(false)
-
-	readonly downloadProgress$ = this.downloadProgressSubject.asObservable()
-	readonly isProcessing$ = this.isProcessingSubject.asObservable()
+	readonly downloadProgress = signal<ArtDownloadProgress | null>(null)
+	readonly isProcessing = signal<boolean>(false)
 
 	constructor() {
 		this.setupIpcListeners()
@@ -28,12 +24,12 @@ export class ArtStudioService {
 
 	private setupIpcListeners(): void {
 		window.electron.on.artDownloadProgress((progress: ArtDownloadProgress) => {
-			this.downloadProgressSubject.next(progress)
+			this.downloadProgress.set(progress)
 
 			if (progress.phase === 'complete' || progress.phase === 'error') {
-				this.isProcessingSubject.next(false)
+				this.isProcessing.set(false)
 			} else {
-				this.isProcessingSubject.next(true)
+				this.isProcessing.set(true)
 			}
 		})
 	}
@@ -48,8 +44,8 @@ export class ArtStudioService {
 	}
 
 	async downloadImage(options: ArtDownloadOptions): Promise<string> {
-		this.isProcessingSubject.next(true)
-		this.downloadProgressSubject.next({
+		this.isProcessing.set(true)
+		this.downloadProgress.set({
 			phase: 'downloading',
 			percent: 0,
 			message: 'Starting download...',
@@ -59,7 +55,7 @@ export class ArtStudioService {
 		try {
 			return await window.electron.invoke.artDownloadImage(options)
 		} catch (err) {
-			this.downloadProgressSubject.next({
+			this.downloadProgress.set({
 				phase: 'error',
 				percent: 0,
 				message: `Error: ${err}`,
@@ -67,13 +63,13 @@ export class ArtStudioService {
 			})
 			throw err
 		} finally {
-			this.isProcessingSubject.next(false)
+			this.isProcessing.set(false)
 		}
 	}
 
 	async generateBackground(options: BackgroundGenerateOptions): Promise<string> {
-		this.isProcessingSubject.next(true)
-		this.downloadProgressSubject.next({
+		this.isProcessing.set(true)
+		this.downloadProgress.set({
 			phase: 'processing',
 			percent: 0,
 			message: 'Generating background...',
@@ -83,7 +79,7 @@ export class ArtStudioService {
 		try {
 			return await window.electron.invoke.artGenerateBackground(options)
 		} catch (err) {
-			this.downloadProgressSubject.next({
+			this.downloadProgress.set({
 				phase: 'error',
 				percent: 0,
 				message: `Error: ${err}`,
@@ -91,7 +87,7 @@ export class ArtStudioService {
 			})
 			throw err
 		} finally {
-			this.isProcessingSubject.next(false)
+			this.isProcessing.set(false)
 		}
 	}
 
@@ -123,20 +119,20 @@ export class ArtStudioService {
 	}
 
 	async batchFetchAlbumArt(chartIds: number[]): Promise<{ success: number; failed: number; skipped: number }> {
-		this.isProcessingSubject.next(true)
+		this.isProcessing.set(true)
 		try {
 			return await window.electron.invoke.artBatchFetchAlbumArt(chartIds)
 		} finally {
-			this.isProcessingSubject.next(false)
+			this.isProcessing.set(false)
 		}
 	}
 
 	async batchGenerateBackgrounds(chartIds: number[]): Promise<{ success: number; failed: number; skipped: number }> {
-		this.isProcessingSubject.next(true)
+		this.isProcessing.set(true)
 		try {
 			return await window.electron.invoke.artBatchGenerateBackgrounds(chartIds)
 		} finally {
-			this.isProcessingSubject.next(false)
+			this.isProcessing.set(false)
 		}
 	}
 
@@ -166,13 +162,5 @@ export class ArtStudioService {
 			console.error('Failed to get background data URL:', err)
 			return null
 		}
-	}
-
-	get isProcessing(): boolean {
-		return this.isProcessingSubject.value
-	}
-
-	get downloadProgress(): ArtDownloadProgress | null {
-		return this.downloadProgressSubject.value
 	}
 }

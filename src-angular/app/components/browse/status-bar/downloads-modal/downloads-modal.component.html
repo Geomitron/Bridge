@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-4 min-h-0">
 	<div
 		class="flex flex-col gap-2 p-1 overflow-y-auto max-h-[75vh] scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
-		@for (download of downloadService.downloads; track download.md5) {
+		@for (download of downloadService.downloads(); track download.md5) {
 			<div
 				class="card bg-neutral text-neutral-content shadow-xl"
 				[class.border-error]="download.type === 'error'"
@@ -62,7 +62,7 @@
 			</div>
 		}
 	</div>
-	@if (downloadService.completedCount > 1) {
+	@if (downloadService.completedCount() > 1) {
 		<div class="flex justify-end">
 			<button class="btn btn-success btn-sm" (click)="downloadService.cancelAllCompleted()">Clear completed</button>
 		</div>

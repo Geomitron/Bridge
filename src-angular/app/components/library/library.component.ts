@@ -3,7 +3,8 @@
  * Main UI for browsing and managing local chart library
  */
 
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core'
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core'
+import { FormsModule } from '@angular/forms'
 import { Router } from '@angular/router'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs'
@@ -13,90 +14,173 @@ import { ArtStudioService } from '../../core/services/art-studio.service'
 
 @Component({
 	selector: 'app-library',
+	standalone: true,
+	imports: [FormsModule],
 	templateUrl: './library.component.html',
-	standalone: false,
 })
 export class LibraryComponent implements OnInit {
+	private catalogService = inject(CatalogService)
+	private artStudioService = inject(ArtStudioService)
+	private router = inject(Router)
+	private sanitizer = inject(DomSanitizer)
+
 	private searchSubject = new Subject<string>()
 
-	// Data
-	charts: ChartRecord[] = []
-	stats: CatalogStats | null = null
-	scanProgress: ScanProgress | null = null
-	libraryPaths: string[] = []
-
-	// UI State
-	isLoading = false
-	selectedIds = new Set<number>()
-	searchQuery = ''
-	editingChart: ChartRecord | null = null
-	showFolderModal = false
-	showFiltersExpanded = false
-	removalFolder: string | null = null
-	showRemovalConfirm = false
-	chartToRemove: ChartRecord | null = null
-	removalError: string | null = null
-	hoveredChartId: number | null = null
-
-	// Duplicates tracking
-	showDuplicatesOnly = false
-	duplicateKeys = new Set<string>()  // Set of "artist|name" keys that have duplicates
-
-	// Album art preview cache (path -> dataUrl)
-	albumArtCache: Map<string, string | null> = new Map()
-	loadingArtPaths: Set<string> = new Set()
-
-	// Filter state
-	filter: CatalogFilter = {
+	// Data (signals from service)
+	charts = signal<ChartRecord[]>([])
+	stats = signal<CatalogStats | null>(null)
+	scanProgress = signal<ScanProgress | null>(null)
+	libraryPaths = signal<string[]>([])
+	filter = signal<CatalogFilter>({
 		sortBy: 'artist',
 		sortDirection: 'asc',
-	}
+	})
+
+	// UI State
+	isLoading = signal(false)
+	selectedIds = signal<Set<number>>(new Set())
+	searchQuery = signal('')
+	editingChart = signal<ChartRecord | null>(null)
+	showFolderModal = signal(false)
+	showFiltersExpanded = signal(false)
+	removalFolder = signal<string | null>(null)
+	showRemovalConfirm = signal(false)
+	chartToRemove = signal<ChartRecord | null>(null)
+	removalError = signal<string | null>(null)
+	hoveredChartId = signal<number | null>(null)
+
+	// Duplicates tracking
+	showDuplicatesOnly = signal(false)
+	duplicateKeys = signal<Set<string>>(new Set())  // Set of "artist|name" keys that have duplicates
+
+	// Album art preview cache (path -> dataUrl)
+	albumArtCache = signal<Map<string, string | null>>(new Map())
+	loadingArtPaths = signal<Set<string>>(new Set())
 
 	// Filter dropdown options
-	artistOptions: string[] = []
-	charterOptions: string[] = []
-	genreOptions: string[] = []
-	albumOptions: string[] = []
+	artistOptions = signal<string[]>([])
+	charterOptions = signal<string[]>([])
+	genreOptions = signal<string[]>([])
+	albumOptions = signal<string[]>([])
 
-	constructor(
-		private catalogService: CatalogService,
-		private artStudioService: ArtStudioService,
-		private ref: ChangeDetectorRef,
-		private router: Router,
-		private sanitizer: DomSanitizer,
-	) { }
+	// Computed properties
+	allSelected = computed(() => {
+		const charts = this.charts()
+		const selectedIds = this.selectedIds()
+		return charts.length > 0 && selectedIds.size === charts.length
+	})
 
-	ngOnInit(): void {
-		// Subscribe to service observables
-		this.catalogService.charts$.subscribe(charts => {
-			this.charts = charts
+	selectedCharts = computed(() => {
+		const ids = [...this.selectedIds()]
+		return this.catalogService.getChartsByIds(ids)
+	})
+
+	hasActiveFilters = computed(() => {
+		const f = this.filter()
+		return !!(
+			f.search ||
+			f.artist ||
+			f.charter ||
+			f.genre ||
+			f.chartType ||
+			f.hasVideo !== undefined ||
+			f.hasBackground !== undefined ||
+			f.hasAlbumArt !== undefined ||
+			f.hasGuitar !== undefined ||
+			f.hasBass !== undefined ||
+			f.hasDrums !== undefined ||
+			f.hasKeys !== undefined ||
+			f.hasVocals !== undefined ||
+			f.guitarDiff ||
+			f.bassDiff ||
+			f.drumsDiff ||
+			f.keysDiff
+		)
+	})
+
+	missingVideoCount = computed(() => {
+		const s = this.stats()
+		return s ? s.totalCharts - s.withVideo : 0
+	})
+
+	missingBackgroundCount = computed(() => {
+		const s = this.stats()
+		return s ? s.totalCharts - s.withBackground : 0
+	})
+
+	missingAlbumArtCount = computed(() => {
+		const s = this.stats()
+		return s ? s.totalCharts - s.withAlbumArt : 0
+	})
+
+	missingLyricsCount = computed(() => {
+		const s = this.stats()
+		return s ? s.totalCharts - s.withLyrics : 0
+	})
+
+	scanProgressPercent = computed(() => {
+		const progress = this.scanProgress()
+		if (!progress || progress.total === 0) return 0
+		return Math.round((progress.current / progress.total) * 100)
+	})
+
+	isScanning = computed(() => {
+		const progress = this.scanProgress()
+		return progress !== null &&
+			progress.phase !== 'complete' &&
+			progress.phase !== 'error'
+	})
+
+	duplicateCount = computed(() => {
+		let count = 0
+		const charts = this.charts()
+		for (const chart of charts) {
+			if (this.isDuplicate(chart)) {
+				count++
+			}
+		}
+		return count
+	})
+
+	displayedCharts = computed(() => {
+		const charts = this.charts()
+		if (this.showDuplicatesOnly()) {
+			return charts.filter(c => this.isDuplicate(c))
+		}
+		return charts
+	})
+
+	constructor() {
+		// Effect to react to charts changes and compute duplicates
+		effect(() => {
+			const charts = this.catalogService.charts()
+			this.charts.set(charts)
 			this.computeDuplicates(charts)
-			this.ref.detectChanges()
 		})
 
-		this.catalogService.stats$.subscribe(stats => {
-			this.stats = stats
-			this.ref.detectChanges()
+		// Effect to react to stats changes
+		effect(() => {
+			this.stats.set(this.catalogService.stats())
 		})
 
-		this.catalogService.scanProgress$.subscribe(progress => {
-			this.scanProgress = progress
-			this.ref.detectChanges()
+		// Effect to react to scanProgress changes
+		effect(() => {
+			this.scanProgress.set(this.catalogService.scanProgress())
 		})
 
-		this.catalogService.isLoading$.subscribe(loading => {
-			this.isLoading = loading
-			this.ref.detectChanges()
+		// Effect to react to isLoading changes
+		effect(() => {
+			this.isLoading.set(this.catalogService.isLoading())
 		})
 
-		this.catalogService.libraryPaths$.subscribe(paths => {
-			this.libraryPaths = paths
-			this.ref.detectChanges()
+		// Effect to react to libraryPaths changes
+		effect(() => {
+			this.libraryPaths.set(this.catalogService.libraryPaths())
 		})
 
-		this.catalogService.filter$.subscribe(filter => {
-			this.filter = filter
-			this.ref.detectChanges()
+		// Effect to react to filter changes
+		effect(() => {
+			this.filter.set(this.catalogService.filter())
 		})
 
 		// Debounced search
@@ -106,51 +190,51 @@ export class LibraryComponent implements OnInit {
 		).subscribe(query => {
 			this.catalogService.search(query)
 		})
+	}
 
+	ngOnInit(): void {
 		// Load filter options
 		this.loadFilterOptions()
 		this.loadRemovalFolder()
 	}
 
 	async loadRemovalFolder(): Promise<void> {
-		this.removalFolder = await this.catalogService.getRemovalFolder()
-		this.ref.detectChanges()
+		const folder = await this.catalogService.getRemovalFolder()
+		this.removalFolder.set(folder)
 	}
 
 	async loadFilterOptions(): Promise<void> {
-		this.artistOptions = await this.catalogService.getDistinctValues('artist')
-		this.charterOptions = await this.catalogService.getDistinctValues('charter')
-		this.genreOptions = await this.catalogService.getDistinctValues('genre')
-		this.albumOptions = await this.catalogService.getDistinctValues('album')
-		this.ref.detectChanges()
+		const [artists, charters, genres, albums] = await Promise.all([
+			this.catalogService.getDistinctValues('artist'),
+			this.catalogService.getDistinctValues('charter'),
+			this.catalogService.getDistinctValues('genre'),
+			this.catalogService.getDistinctValues('album'),
+		])
+		this.artistOptions.set(artists)
+		this.charterOptions.set(charters)
+		this.genreOptions.set(genres)
+		this.albumOptions.set(albums)
 	}
 
 	toggleFilters(): void {
-		this.showFiltersExpanded = !this.showFiltersExpanded
-		this.ref.detectChanges()
+		this.showFiltersExpanded.update(v => !v)
 	}
 
 	// Folder management
 	manageFolders(): void {
-		this.showFolderModal = true
-		this.ref.detectChanges()
+		this.showFolderModal.set(true)
 	}
 
 	closeFolderModal(): void {
-		this.showFolderModal = false
-		this.ref.detectChanges()
+		this.showFolderModal.set(false)
 	}
 
 	async addFolder(): Promise<void> {
-		const newPath = await this.catalogService.addLibraryPath()
-		if (newPath) {
-			this.ref.detectChanges()
-		}
+		await this.catalogService.addLibraryPath()
 	}
 
 	async removeFolder(index: number): Promise<void> {
 		await this.catalogService.removeLibraryPath(index)
-		this.ref.detectChanges()
 	}
 
 	async saveFoldersAndScan(): Promise<void> {
@@ -159,13 +243,12 @@ export class LibraryComponent implements OnInit {
 	}
 
 	async scanLibrary(): Promise<void> {
-		if (this.libraryPaths.length === 0) {
+		if (this.libraryPaths().length === 0) {
 			this.manageFolders()
 			return
 		}
 		// Set immediate loading state before async operation starts
-		this.scanProgress = { phase: 'starting', current: 0, total: 0, message: 'Starting scan...' }
-		this.ref.detectChanges()
+		this.scanProgress.set({ phase: 'starting', current: 0, total: 0, message: 'Starting scan...' })
 
 		await this.catalogService.scanLibrary()
 		await this.loadFilterOptions()
@@ -173,19 +256,20 @@ export class LibraryComponent implements OnInit {
 
 	onSearchInput(event: Event): void {
 		const query = (event.target as HTMLInputElement).value
-		this.searchQuery = query
+		this.searchQuery.set(query)
 		this.searchSubject.next(query)
 	}
 
 	clearSearch(): void {
-		this.searchQuery = ''
+		this.searchQuery.set('')
 		this.searchSubject.next('')
 	}
 
 	sortBy(column: string): void {
-		if (this.filter.sortBy === column) {
+		const currentFilter = this.filter()
+		if (currentFilter.sortBy === column) {
 			this.catalogService.setFilter({
-				sortDirection: this.filter.sortDirection === 'asc' ? 'desc' : 'asc',
+				sortDirection: currentFilter.sortDirection === 'asc' ? 'desc' : 'asc',
 			})
 		} else {
 			this.catalogService.setFilter({
@@ -196,8 +280,9 @@ export class LibraryComponent implements OnInit {
 	}
 
 	getSortIndicator(column: string): string {
-		if (this.filter.sortBy !== column) return ''
-		return this.filter.sortDirection === 'asc' ? ' ▲' : ' ▼'
+		const f = this.filter()
+		if (f.sortBy !== column) return ''
+		return f.sortDirection === 'asc' ? ' ▲' : ' ▼'
 	}
 
 	filterByAsset(asset: 'video' | 'background' | 'albumArt' | 'lyrics', hasAsset: boolean | undefined): void {
@@ -273,65 +358,38 @@ export class LibraryComponent implements OnInit {
 	}
 
 	clearFilters(): void {
-		this.searchQuery = ''
+		this.searchQuery.set('')
 		this.catalogService.clearFilters()
 	}
 
-	get hasActiveFilters(): boolean {
-		return !!(
-			this.filter.search ||
-			this.filter.artist ||
-			this.filter.charter ||
-			this.filter.genre ||
-			this.filter.chartType ||
-			this.filter.hasVideo !== undefined ||
-			this.filter.hasBackground !== undefined ||
-			this.filter.hasAlbumArt !== undefined ||
-			this.filter.hasGuitar !== undefined ||
-			this.filter.hasBass !== undefined ||
-			this.filter.hasDrums !== undefined ||
-			this.filter.hasKeys !== undefined ||
-			this.filter.hasVocals !== undefined ||
-			this.filter.guitarDiff ||
-			this.filter.bassDiff ||
-			this.filter.drumsDiff ||
-			this.filter.keysDiff
-		)
-	}
-
 	toggleSelection(chart: ChartRecord): void {
-		if (this.selectedIds.has(chart.id)) {
-			this.selectedIds.delete(chart.id)
-		} else {
-			this.selectedIds.add(chart.id)
-		}
-		this.ref.detectChanges()
+		this.selectedIds.update(ids => {
+			const newIds = new Set(ids)
+			if (newIds.has(chart.id)) {
+				newIds.delete(chart.id)
+			} else {
+				newIds.add(chart.id)
+			}
+			return newIds
+		})
 	}
 
 	isSelected(chart: ChartRecord): boolean {
-		return this.selectedIds.has(chart.id)
+		return this.selectedIds().has(chart.id)
 	}
 
 	selectAll(): void {
-		if (this.selectedIds.size === this.charts.length) {
-			this.selectedIds.clear()
+		const charts = this.charts()
+		const ids = this.selectedIds()
+		if (ids.size === charts.length) {
+			this.selectedIds.set(new Set())
 		} else {
-			this.charts.forEach(c => this.selectedIds.add(c.id))
+			this.selectedIds.set(new Set(charts.map(c => c.id)))
 		}
-		this.ref.detectChanges()
-	}
-
-	get allSelected(): boolean {
-		return this.charts.length > 0 && this.selectedIds.size === this.charts.length
-	}
-
-	get selectedCharts(): ChartRecord[] {
-		return this.catalogService.getChartsByIds([...this.selectedIds])
 	}
 
 	clearSelection(): void {
-		this.selectedIds.clear()
-		this.ref.detectChanges()
+		this.selectedIds.set(new Set())
 	}
 
 	openFolder(chart: ChartRecord): void {
@@ -339,127 +397,116 @@ export class LibraryComponent implements OnInit {
 	}
 
 	editChart(chart: ChartRecord): void {
-		this.editingChart = { ...chart }
-		this.ref.detectChanges()
+		this.editingChart.set({ ...chart })
 	}
 
 	async saveChart(): Promise<void> {
-		if (!this.editingChart) return
+		const chart = this.editingChart()
+		if (!chart) return
 
-		await this.catalogService.updateChart(this.editingChart.id, {
-			name: this.editingChart.name,
-			artist: this.editingChart.artist,
-			album: this.editingChart.album,
-			genre: this.editingChart.genre,
-			year: this.editingChart.year,
-			charter: this.editingChart.charter,
+		await this.catalogService.updateChart(chart.id, {
+			name: chart.name,
+			artist: chart.artist,
+			album: chart.album,
+			genre: chart.genre,
+			year: chart.year,
+			charter: chart.charter,
 		})
 
-		this.editingChart = null
+		this.editingChart.set(null)
 		await this.loadFilterOptions()
 	}
 
 	cancelEdit(): void {
-		this.editingChart = null
-		this.ref.detectChanges()
+		this.editingChart.set(null)
 	}
 
 	// Removal folder management
 	async setRemovalFolder(): Promise<void> {
 		const folder = await this.catalogService.setRemovalFolder()
 		if (folder) {
-			this.removalFolder = folder
-			this.ref.detectChanges()
+			this.removalFolder.set(folder)
 		}
 	}
 
 	async clearRemovalFolder(): Promise<void> {
 		await this.catalogService.clearRemovalFolder()
-		this.removalFolder = null
-		this.ref.detectChanges()
+		this.removalFolder.set(null)
 	}
 
 	confirmRemoveChart(chart: ChartRecord): void {
-		if (!this.removalFolder) {
-			this.removalError = 'Please set a removal folder first. Click the Folders button to configure it.'
-			this.ref.detectChanges()
+		if (!this.removalFolder()) {
+			this.removalError.set('Please set a removal folder first. Click the Folders button to configure it.')
 			return
 		}
-		this.chartToRemove = chart
-		this.showRemovalConfirm = true
-		this.removalError = null
-		this.ref.detectChanges()
+		this.chartToRemove.set(chart)
+		this.showRemovalConfirm.set(true)
+		this.removalError.set(null)
 	}
 
 	cancelRemoval(): void {
-		this.chartToRemove = null
-		this.showRemovalConfirm = false
-		this.removalError = null
-		this.ref.detectChanges()
+		this.chartToRemove.set(null)
+		this.showRemovalConfirm.set(false)
+		this.removalError.set(null)
 	}
 
 	async executeRemoval(): Promise<void> {
-		if (!this.chartToRemove) return
+		const chart = this.chartToRemove()
+		if (!chart) return
 
-		this.removalError = null
+		this.removalError.set(null)
 
 		try {
-			const result = await this.catalogService.removeChart(this.chartToRemove.id)
+			const result = await this.catalogService.removeChart(chart.id)
 
 			if (!result.success) {
-				this.removalError = result.error || 'Unknown error occurred'
+				this.removalError.set(result.error || 'Unknown error occurred')
 				console.error('Removal failed:', result.error)
 				// Keep modal open to show error
-				this.ref.detectChanges()
 				return
 			}
 
 			// Success - close modal
-			this.chartToRemove = null
-			this.showRemovalConfirm = false
-			this.selectedIds.clear()
-			this.ref.detectChanges()
+			this.chartToRemove.set(null)
+			this.showRemovalConfirm.set(false)
+			this.selectedIds.set(new Set())
 		} catch (err) {
-			this.removalError = `Exception: ${err instanceof Error ? err.message : String(err)}`
+			this.removalError.set(`Exception: ${err instanceof Error ? err.message : String(err)}`)
 			console.error('Removal exception:', err)
-			this.ref.detectChanges()
 		}
 	}
 
 	async removeSelectedCharts(): Promise<void> {
-		if (!this.removalFolder) {
-			this.removalError = 'Please set a removal folder first. Click the Folders button to configure it.'
-			this.ref.detectChanges()
+		if (!this.removalFolder()) {
+			this.removalError.set('Please set a removal folder first. Click the Folders button to configure it.')
 			return
 		}
 
-		if (this.selectedIds.size === 0) return
+		const ids = this.selectedIds()
+		if (ids.size === 0) return
 
-		const confirmed = confirm(`Remove ${this.selectedIds.size} chart(s) to the removal folder?`)
+		const confirmed = confirm(`Remove ${ids.size} chart(s) to the removal folder?`)
 		if (!confirmed) return
 
-		this.removalError = null
+		this.removalError.set(null)
 
 		try {
-			const result = await this.catalogService.removeCharts([...this.selectedIds])
+			const result = await this.catalogService.removeCharts([...ids])
 
 			if (result.failed > 0) {
-				this.removalError = `Removed ${result.success} charts. ${result.failed} failed.\n${result.errors.join('\n')}`
+				this.removalError.set(`Removed ${result.success} charts. ${result.failed} failed.\n${result.errors.join('\n')}`)
 				console.error('Batch removal errors:', result.errors)
 			}
 
-			this.selectedIds.clear()
-			this.ref.detectChanges()
+			this.selectedIds.set(new Set())
 		} catch (err) {
-			this.removalError = `Exception: ${err instanceof Error ? err.message : String(err)}`
+			this.removalError.set(`Exception: ${err instanceof Error ? err.message : String(err)}`)
 			console.error('Batch removal exception:', err)
-			this.ref.detectChanges()
 		}
 	}
 
 	dismissError(): void {
-		this.removalError = null
-		this.ref.detectChanges()
+		this.removalError.set(null)
 	}
 
 	// Format difficulty levels for display
@@ -476,34 +523,6 @@ export class LibraryComponent implements OnInit {
 		}).join('')
 	}
 
-	// Stats helpers
-	get missingVideoCount(): number {
-		return this.stats ? this.stats.totalCharts - this.stats.withVideo : 0
-	}
-
-	get missingBackgroundCount(): number {
-		return this.stats ? this.stats.totalCharts - this.stats.withBackground : 0
-	}
-
-	get missingAlbumArtCount(): number {
-		return this.stats ? this.stats.totalCharts - this.stats.withAlbumArt : 0
-	}
-
-	get missingLyricsCount(): number {
-		return this.stats ? this.stats.totalCharts - this.stats.withLyrics : 0
-	}
-
-	get scanProgressPercent(): number {
-		if (!this.scanProgress || this.scanProgress.total === 0) return 0
-		return Math.round((this.scanProgress.current / this.scanProgress.total) * 100)
-	}
-
-	get isScanning(): boolean {
-		return this.scanProgress !== null &&
-			this.scanProgress.phase !== 'complete' &&
-			this.scanProgress.phase !== 'error'
-	}
-
 	// Asset deletion methods
 	async deleteVideo(chart: ChartRecord): Promise<void> {
 		if (!confirm(`Delete video from "${chart.artist} - ${chart.name}"?`)) return
@@ -514,12 +533,11 @@ export class LibraryComponent implements OnInit {
 				await this.catalogService.refreshCharts()
 				await this.catalogService.refreshStats()
 			} else {
-				this.removalError = result.error || 'Failed to delete video'
+				this.removalError.set(result.error || 'Failed to delete video')
 			}
 		} catch (err) {
-			this.removalError = `Error: ${err}`
+			this.removalError.set(`Error: ${err}`)
 		}
-		this.ref.detectChanges()
 	}
 
 	async deleteBackground(chart: ChartRecord): Promise<void> {
@@ -531,12 +549,11 @@ export class LibraryComponent implements OnInit {
 				await this.catalogService.refreshCharts()
 				await this.catalogService.refreshStats()
 			} else {
-				this.removalError = result.error || 'Failed to delete background'
+				this.removalError.set(result.error || 'Failed to delete background')
 			}
 		} catch (err) {
-			this.removalError = `Error: ${err}`
+			this.removalError.set(`Error: ${err}`)
 		}
-		this.ref.detectChanges()
 	}
 
 	async deleteAlbumArt(chart: ChartRecord): Promise<void> {
@@ -548,12 +565,11 @@ export class LibraryComponent implements OnInit {
 				await this.catalogService.refreshCharts()
 				await this.catalogService.refreshStats()
 			} else {
-				this.removalError = result.error || 'Failed to delete album art'
+				this.removalError.set(result.error || 'Failed to delete album art')
 			}
 		} catch (err) {
-			this.removalError = `Error: ${err}`
+			this.removalError.set(`Error: ${err}`)
 		}
-		this.ref.detectChanges()
 	}
 
 	async deleteLyrics(chart: ChartRecord): Promise<void> {
@@ -565,12 +581,11 @@ export class LibraryComponent implements OnInit {
 				await this.catalogService.refreshCharts()
 				await this.catalogService.refreshStats()
 			} else {
-				this.removalError = result.error || 'Failed to delete lyrics'
+				this.removalError.set(result.error || 'Failed to delete lyrics')
 			}
 		} catch (err) {
-			this.removalError = `Error: ${err}`
+			this.removalError.set(`Error: ${err}`)
 		}
-		this.ref.detectChanges()
 	}
 
 	// Navigation methods - go to specific tabs with chart pre-selected
@@ -622,41 +637,22 @@ export class LibraryComponent implements OnInit {
 		}
 
 		// Store keys that have more than one occurrence
-		this.duplicateKeys.clear()
+		const newDuplicateKeys = new Set<string>()
 		for (const [key, count] of counts) {
 			if (count > 1) {
-				this.duplicateKeys.add(key)
+				newDuplicateKeys.add(key)
 			}
 		}
-	}
-
-	get duplicateCount(): number {
-		// Count total charts that are duplicates
-		let count = 0
-		for (const chart of this.charts) {
-			if (this.isDuplicate(chart)) {
-				count++
-			}
-		}
-		return count
+		this.duplicateKeys.set(newDuplicateKeys)
 	}
 
 	isDuplicate(chart: ChartRecord): boolean {
 		const key = `${(chart.artist || '').toLowerCase().trim()}|${(chart.name || '').toLowerCase().trim()}`
-		return this.duplicateKeys.has(key)
+		return this.duplicateKeys().has(key)
 	}
 
 	toggleDuplicatesFilter(): void {
-		this.showDuplicatesOnly = !this.showDuplicatesOnly
-		this.ref.detectChanges()
-	}
-
-	// Get charts to display (filtered by duplicates if enabled)
-	get displayedCharts(): ChartRecord[] {
-		if (this.showDuplicatesOnly) {
-			return this.charts.filter(c => this.isDuplicate(c))
-		}
-		return this.charts
+		this.showDuplicatesOnly.update(v => !v)
 	}
 
 	// ==================== Charter Name Rendering ====================
@@ -735,12 +731,14 @@ export class LibraryComponent implements OnInit {
 		if (!chart.hasAlbumArt) return null
 
 		// Return cached if available
-		if (this.albumArtCache.has(chart.path)) {
-			return this.albumArtCache.get(chart.path) || null
+		const cache = this.albumArtCache()
+		if (cache.has(chart.path)) {
+			return cache.get(chart.path) || null
 		}
 
 		// Trigger async load if not already loading
-		if (!this.loadingArtPaths.has(chart.path)) {
+		const loading = this.loadingArtPaths()
+		if (!loading.has(chart.path)) {
 			this.loadAlbumArt(chart.path)
 		}
 
@@ -751,18 +749,42 @@ export class LibraryComponent implements OnInit {
 	 * Load album art asynchronously and cache it
 	 */
 	private async loadAlbumArt(chartPath: string): Promise<void> {
-		if (this.loadingArtPaths.has(chartPath)) return
-		this.loadingArtPaths.add(chartPath)
+		if (this.loadingArtPaths().has(chartPath)) return
+
+		this.loadingArtPaths.update(paths => {
+			const newPaths = new Set(paths)
+			newPaths.add(chartPath)
+			return newPaths
+		})
 
 		try {
 			const dataUrl = await this.artStudioService.getAlbumArtDataUrl(chartPath)
-			this.albumArtCache.set(chartPath, dataUrl)
-			this.ref.detectChanges()
+			this.albumArtCache.update(cache => {
+				const newCache = new Map(cache)
+				newCache.set(chartPath, dataUrl)
+				return newCache
+			})
 		} catch (err) {
 			console.error('Failed to load album art:', err)
-			this.albumArtCache.set(chartPath, null)
+			this.albumArtCache.update(cache => {
+				const newCache = new Map(cache)
+				newCache.set(chartPath, null)
+				return newCache
+			})
 		} finally {
-			this.loadingArtPaths.delete(chartPath)
+			this.loadingArtPaths.update(paths => {
+				const newPaths = new Set(paths)
+				newPaths.delete(chartPath)
+				return newPaths
+			})
 		}
+	}
+
+	// Helper method for ngModel binding on editingChart
+	updateEditingChart(field: keyof ChartRecord, value: any): void {
+		this.editingChart.update(chart => {
+			if (!chart) return null
+			return { ...chart, [field]: value }
+		})
 	}
 }

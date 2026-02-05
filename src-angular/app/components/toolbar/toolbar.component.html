@@ -7,11 +7,11 @@
 		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/lyrics">Lyrics</button>
 		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8" routerLinkActive="btn-active" routerLink="/tools">Tools</button>
 		<button class="btn btn-ghost btn-sm rounded-none px-4 min-h-8 h-8 gap-2" routerLinkActive="btn-active" routerLink="/settings">
-			@if (updateAvailable === 'error') {
+			@if (updateAvailable() === 'error') {
 				<i class="bi bi-exclamation-triangle-fill text-warning"></i>
 			}
 			Settings
-			@if (updateAvailable === 'yes') {
+			@if (updateAvailable() === 'yes') {
 				<div class="badge badge-accent badge-sm">Update Available</div>
 			}
 		</button>
@@ -20,7 +20,7 @@
 	<div class="flex flex-nowrap gap-0" style="-webkit-app-region: no-drag">
 		<button class="btn btn-square btn-ghost btn-sm rounded-none min-h-8 h-8 w-8 cursor-default" (click)="minimize()"><i class="bi bi-dash-lg"></i></button>
 		<button class="btn btn-square btn-ghost btn-sm rounded-none min-h-8 h-8 w-8 cursor-default" (click)="toggleMaximized()">
-			<i class="bi" [ngClass]="isMaximized ? 'bi-window-stack' : 'bi-window'"></i>
+			<i class="bi" [ngClass]="isMaximized() ? 'bi-window-stack' : 'bi-window'"></i>
 		</button>
 		<button class="btn btn-square btn-ghost btn-sm rounded-none min-h-8 h-8 w-8 hover:bg-red-600/20 cursor-default" (click)="close()">
 			<i class="bi bi-x-lg"></i>

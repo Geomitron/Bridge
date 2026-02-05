@@ -1,9 +1,15 @@
 import { AfterViewInit, Component, ElementRef, HostBinding, ViewChild } from '@angular/core'
 
+import { SearchBarComponent } from './search-bar/search-bar.component'
+import { ResultTableComponent } from './result-table/result-table.component'
+import { ChartSidebarComponent } from './chart-sidebar/chart-sidebar.component'
+import { StatusBarComponent } from './status-bar/status-bar.component'
+
 @Component({
 	selector: 'app-browse',
+	standalone: true,
+	imports: [SearchBarComponent, ResultTableComponent, ChartSidebarComponent, StatusBarComponent],
 	templateUrl: './browse.component.html',
-	standalone: false,
 })
 export class BrowseComponent implements AfterViewInit {
 	@HostBinding('class.contents') contents = true

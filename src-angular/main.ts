@@ -1,7 +1,11 @@
-import { enableProdMode } from '@angular/core'
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic'
+import { enableProdMode, provideZonelessChangeDetection } from '@angular/core'
+import { bootstrapApplication } from '@angular/platform-browser'
+import { provideRouter, RouteReuseStrategy } from '@angular/router'
+import { provideHttpClient } from '@angular/common/http'
 
-import { AppModule } from './app/app.module.js'
+import { AppComponent } from './app/app.component.js'
+import { routes } from './app/app.routes.js'
+import { TabPersistStrategy } from './app/core/tab-persist.strategy.js'
 import { environment } from './environments/environment.js'
 
 console.log('[DEBUG] main.ts loaded, window.electron:', typeof window.electron, window.electron ? Object.keys(window.electron) : 'undefined')
@@ -12,6 +16,11 @@ if (environment.production) {
 	enableProdMode()
 }
 
-platformBrowserDynamic()
-	.bootstrapModule(AppModule)
-	.catch(err => console.error(err))
+bootstrapApplication(AppComponent, {
+	providers: [
+		provideZonelessChangeDetection(),
+		provideRouter(routes),
+		provideHttpClient(),
+		{ provide: RouteReuseStrategy, useClass: TabPersistStrategy },
+	],
+}).catch(err => console.error(err))

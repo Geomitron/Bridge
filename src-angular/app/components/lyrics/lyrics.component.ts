@@ -2,7 +2,8 @@
  * Bridge Lyrics Module - Angular Component
  */
 
-import { ChangeDetectorRef, Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core'
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, inject, signal, effect, DestroyRef } from '@angular/core'
+import { FormsModule } from '@angular/forms'
 import { ChartLyricsMatch, LyricsSearchResult, LyricsDownloadProgress } from '../../../../src-shared/interfaces/lyrics.interface.js'
 import { LyricsService } from '../../core/services/lyrics.service'
 import { CatalogService } from '../../core/services/catalog.service'
@@ -14,71 +15,72 @@ interface LyricLine {
 
 @Component({
 	selector: 'app-lyrics',
+	standalone: true,
+	imports: [FormsModule],
 	templateUrl: './lyrics.component.html',
-	standalone: false,
 })
 export class LyricsComponent implements OnInit, OnDestroy {
+	private lyricsService = inject(LyricsService)
+	private catalogService = inject(CatalogService)
+	private destroyRef = inject(DestroyRef)
+
 	@ViewChild('audioPlayer') audioPlayerRef!: ElementRef<HTMLAudioElement>
 
 	// Data
-	chartsMissingLyrics: ChartLyricsMatch[] = []
-	filteredCharts: ChartLyricsMatch[] = []
-	searchResults: LyricsSearchResult[] = []
+	chartsMissingLyrics = signal<ChartLyricsMatch[]>([])
+	filteredCharts = signal<ChartLyricsMatch[]>([])
+	searchResults = signal<LyricsSearchResult[]>([])
 
 	// UI State
-	isLoading = false
-	isSearching = false
-	isDownloading = false
-	selectedChart: ChartLyricsMatch | null = null
-	selectedLyrics: LyricsSearchResult | null = null
-	progress: LyricsDownloadProgress | null = null
-	error: string | null = null
-	successMessage: string | null = null
+	isLoading = signal(false)
+	isSearching = signal(false)
+	isDownloading = signal(false)
+	selectedChart = signal<ChartLyricsMatch | null>(null)
+	selectedLyrics = signal<LyricsSearchResult | null>(null)
+	progress = signal<LyricsDownloadProgress | null>(null)
+	error = signal<string | null>(null)
+	successMessage = signal<string | null>(null)
 
 	// Search state
-	searchArtist = ''
-	searchTitle = ''
+	searchArtist = signal('')
+	searchTitle = signal('')
 
 	// Timing offset in milliseconds (positive = delay lyrics)
-	offsetMs = 0
+	offsetMs = signal(0)
 
 	// Sync tool state
-	showSyncTool = false
-	audioSrc: string | null = null
-	isPlaying = false
-	currentTime = 0
-	lyricsPreviewLines: LyricLine[] = []
-	audioLoaded = false
-	audioError: string | null = null
-	hasVocalsTrack = false
-	detectedVocalStartMs: number | null = null
-	syncTargetTime = 0  // Where in the audio the first lyric should appear (ms)
-	maxSyncTime = 60000  // Max slider value (60 seconds)
-	offsetConfirmed = false
+	showSyncTool = signal(false)
+	audioSrc = signal<string | null>(null)
+	isPlaying = signal(false)
+	currentTime = signal(0)
+	lyricsPreviewLines = signal<LyricLine[]>([])
+	audioLoaded = signal(false)
+	audioError = signal<string | null>(null)
+	hasVocalsTrack = signal(false)
+	detectedVocalStartMs = signal<number | null>(null)
+	syncTargetTime = signal(0)  // Where in the audio the first lyric should appear (ms)
+	maxSyncTime = signal(60000)  // Max slider value (60 seconds)
+	offsetConfirmed = signal(false)
 	private audioTimeInterval: any = null
 
 	// Expose Math for template
 	Math = Math
 
 	// Filter state
-	filterQuery = ''
-	filterArtist = ''
-	sortField: 'artist' | 'name' = 'artist'
-	sortDirection: 'asc' | 'desc' = 'asc'
-	artistOptions: string[] = []
+	filterQuery = signal('')
+	filterArtist = signal('')
+	sortField = signal<'artist' | 'name'>('artist')
+	sortDirection = signal<'asc' | 'desc'>('asc')
+	artistOptions = signal<string[]>([])
 
-	constructor(
-		private lyricsService: LyricsService,
-		private catalogService: CatalogService,
-		private ref: ChangeDetectorRef,
-	) { }
+	constructor() {
+		// Subscribe to progress signal from service
+		effect(() => {
+			this.progress.set(this.lyricsService.progress())
+		})
+	}
 
 	ngOnInit(): void {
-		this.lyricsService.progress$.subscribe(progress => {
-			this.progress = progress
-			this.ref.detectChanges()
-		})
-
 		this.loadChartsMissingLyrics().then(() => {
 			// Check if we were navigated here with a pre-selected chart
 			this.checkForPreselectedChart()
@@ -111,136 +113,132 @@ export class LyricsComponent implements OnInit, OnDestroy {
 	}
 
 	async loadChartsMissingLyrics(): Promise<void> {
-		this.isLoading = true
-		this.error = null
-		this.ref.detectChanges()
+		this.isLoading.set(true)
+		this.error.set(null)
 
 		try {
-			this.chartsMissingLyrics = await this.lyricsService.getChartsMissingLyrics()
+			const charts = await this.lyricsService.getChartsMissingLyrics()
+			this.chartsMissingLyrics.set(charts)
 			this.buildArtistOptions()
 			this.applyFilter()
 		} catch (err) {
-			this.error = `Failed to load charts: ${err}`
+			this.error.set(`Failed to load charts: ${err}`)
 		} finally {
-			this.isLoading = false
-			this.ref.detectChanges()
+			this.isLoading.set(false)
 		}
 	}
 
 	buildArtistOptions(): void {
 		const artists = new Set<string>()
-		for (const chart of this.chartsMissingLyrics) {
+		for (const chart of this.chartsMissingLyrics()) {
 			if (chart.chartArtist) {
 				artists.add(chart.chartArtist)
 			}
 		}
-		this.artistOptions = Array.from(artists).sort((a, b) =>
+		this.artistOptions.set(Array.from(artists).sort((a, b) =>
 			a.toLowerCase().localeCompare(b.toLowerCase())
-		)
+		))
 	}
 
 	applyFilter(): void {
-		let filtered = [...this.chartsMissingLyrics]
+		let filtered = [...this.chartsMissingLyrics()]
 
 		// Text search
-		if (this.filterQuery) {
-			const query = this.filterQuery.toLowerCase()
+		const query = this.filterQuery()
+		if (query) {
+			const queryLower = query.toLowerCase()
 			filtered = filtered.filter(c =>
-				c.chartName.toLowerCase().includes(query) ||
-				c.chartArtist.toLowerCase().includes(query)
+				c.chartName.toLowerCase().includes(queryLower) ||
+				c.chartArtist.toLowerCase().includes(queryLower)
 			)
 		}
 
 		// Artist filter
-		if (this.filterArtist) {
-			filtered = filtered.filter(c => c.chartArtist === this.filterArtist)
+		const artistFilter = this.filterArtist()
+		if (artistFilter) {
+			filtered = filtered.filter(c => c.chartArtist === artistFilter)
 		}
 
 		// Sort
+		const field = this.sortField()
+		const direction = this.sortDirection()
 		filtered.sort((a, b) => {
-			const aVal = this.sortField === 'artist' ? a.chartArtist : a.chartName
-			const bVal = this.sortField === 'artist' ? b.chartArtist : b.chartName
+			const aVal = field === 'artist' ? a.chartArtist : a.chartName
+			const bVal = field === 'artist' ? b.chartArtist : b.chartName
 			const cmp = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
-			return this.sortDirection === 'asc' ? cmp : -cmp
+			return direction === 'asc' ? cmp : -cmp
 		})
 
-		this.filteredCharts = filtered
-		this.ref.detectChanges()
+		this.filteredCharts.set(filtered)
 	}
 
 	toggleSortDirection(): void {
-		this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+		this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc')
 		this.applyFilter()
 	}
 
 	clearFilters(): void {
-		this.filterQuery = ''
-		this.filterArtist = ''
-		this.sortField = 'artist'
-		this.sortDirection = 'asc'
+		this.filterQuery.set('')
+		this.filterArtist.set('')
+		this.sortField.set('artist')
+		this.sortDirection.set('asc')
 		this.applyFilter()
 	}
 
 	selectChart(chart: ChartLyricsMatch): void {
-		this.selectedChart = chart
-		this.searchResults = []
-		this.selectedLyrics = null
-		this.error = null
-		this.successMessage = null
-		this.offsetMs = 0
-		this.offsetConfirmed = false
-		this.syncTargetTime = 0
+		this.selectedChart.set(chart)
+		this.searchResults.set([])
+		this.selectedLyrics.set(null)
+		this.error.set(null)
+		this.successMessage.set(null)
+		this.offsetMs.set(0)
+		this.offsetConfirmed.set(false)
+		this.syncTargetTime.set(0)
 
 		// Pre-fill search fields
-		this.searchArtist = chart.chartArtist
-		this.searchTitle = chart.chartName
-
-		this.ref.detectChanges()
+		this.searchArtist.set(chart.chartArtist)
+		this.searchTitle.set(chart.chartName)
 	}
 
 	clearSelection(): void {
-		this.selectedChart = null
-		this.searchResults = []
-		this.selectedLyrics = null
-		this.searchArtist = ''
-		this.searchTitle = ''
-		this.error = null
-		this.successMessage = null
-		this.ref.detectChanges()
+		this.selectedChart.set(null)
+		this.searchResults.set([])
+		this.selectedLyrics.set(null)
+		this.searchArtist.set('')
+		this.searchTitle.set('')
+		this.error.set(null)
+		this.successMessage.set(null)
 	}
 
 	async searchLyrics(): Promise<void> {
-		if (!this.searchArtist.trim() && !this.searchTitle.trim()) {
-			this.error = 'Please enter artist or title to search'
+		const artist = this.searchArtist()
+		const title = this.searchTitle()
+		if (!artist.trim() && !title.trim()) {
+			this.error.set('Please enter artist or title to search')
 			return
 		}
 
-		this.isSearching = true
-		this.error = null
-		this.searchResults = []
-		this.selectedLyrics = null
-		this.ref.detectChanges()
+		this.isSearching.set(true)
+		this.error.set(null)
+		this.searchResults.set([])
+		this.selectedLyrics.set(null)
 
 		try {
-			this.searchResults = await this.lyricsService.searchLyrics(
-				this.searchArtist.trim(),
-				this.searchTitle.trim()
-			)
+			const results = await this.lyricsService.searchLyrics(artist.trim(), title.trim())
+			this.searchResults.set(results)
 
-			if (this.searchResults.length === 0) {
-				this.error = 'No synced lyrics found. Try different search terms.'
+			if (results.length === 0) {
+				this.error.set('No synced lyrics found. Try different search terms.')
 			}
 		} catch (err) {
-			this.error = `Search failed: ${err}`
+			this.error.set(`Search failed: ${err}`)
 		} finally {
-			this.isSearching = false
-			this.ref.detectChanges()
+			this.isSearching.set(false)
 		}
 	}
 
 	selectLyrics(lyrics: LyricsSearchResult): void {
-		this.selectedLyrics = lyrics
-		this.ref.detectChanges()
+		this.selectedLyrics.set(lyrics)
 	}
 
 	previewLyrics(lyrics: LyricsSearchResult): void {
@@ -249,28 +247,29 @@ export class LyricsComponent implements OnInit, OnDestroy {
 	}
 
 	async downloadLyrics(): Promise<void> {
-		if (!this.selectedChart || !this.selectedLyrics) return
+		const chart = this.selectedChart()
+		const lyrics = this.selectedLyrics()
+		if (!chart || !lyrics) return
 
-		this.isDownloading = true
-		this.error = null
-		this.successMessage = null
-		this.ref.detectChanges()
+		this.isDownloading.set(true)
+		this.error.set(null)
+		this.successMessage.set(null)
 
 		try {
 			const result = await this.lyricsService.downloadLyrics(
-				this.selectedChart.chartId,
-				this.selectedLyrics.id,
-				this.selectedChart.chartPath,
-				this.selectedChart.chartType,
-				this.offsetMs
+				chart.chartId,
+				lyrics.id,
+				chart.chartPath,
+				chart.chartType,
+				this.offsetMs()
 			)
 
 			if (result.success) {
-				this.successMessage = 'Lyrics added successfully!'
+				this.successMessage.set('Lyrics added successfully!')
 
 				// Remove from list
-				this.chartsMissingLyrics = this.chartsMissingLyrics.filter(
-					c => c.chartId !== this.selectedChart!.chartId
+				this.chartsMissingLyrics.update(charts =>
+					charts.filter(c => c.chartId !== chart.chartId)
 				)
 				this.applyFilter()
 
@@ -279,20 +278,19 @@ export class LyricsComponent implements OnInit, OnDestroy {
 				this.catalogService.refreshStats()
 
 				// Reset offset for next chart
-				this.offsetMs = 0
+				this.offsetMs.set(0)
 
 				// Clear selection after a moment
 				setTimeout(() => {
 					this.clearSelection()
 				}, 1500)
 			} else {
-				this.error = result.error || 'Failed to add lyrics'
+				this.error.set(result.error || 'Failed to add lyrics')
 			}
 		} catch (err) {
-			this.error = `Download failed: ${err}`
+			this.error.set(`Download failed: ${err}`)
 		} finally {
-			this.isDownloading = false
-			this.ref.detectChanges()
+			this.isDownloading.set(false)
 		}
 	}
 
@@ -318,13 +316,11 @@ export class LyricsComponent implements OnInit, OnDestroy {
 	}
 
 	dismissError(): void {
-		this.error = null
-		this.ref.detectChanges()
+		this.error.set(null)
 	}
 
 	dismissSuccess(): void {
-		this.successMessage = null
-		this.ref.detectChanges()
+		this.successMessage.set(null)
 	}
 
 	// ==================== Sync Tool Methods ====================
@@ -334,35 +330,36 @@ export class LyricsComponent implements OnInit, OnDestroy {
 	}
 
 	async openSyncTool(): Promise<void> {
-		if (!this.selectedChart || !this.selectedLyrics) return
+		const chart = this.selectedChart()
+		const lyrics = this.selectedLyrics()
+		if (!chart || !lyrics) return
 
-		this.showSyncTool = true
-		this.currentTime = 0
-		this.isPlaying = false
-		this.audioSrc = null
-		this.audioLoaded = false
-		this.audioError = null
-		this.hasVocalsTrack = false
-		this.detectedVocalStartMs = null
-		this.syncTargetTime = 0
+		this.showSyncTool.set(true)
+		this.currentTime.set(0)
+		this.isPlaying.set(false)
+		this.audioSrc.set(null)
+		this.audioLoaded.set(false)
+		this.audioError.set(null)
+		this.hasVocalsTrack.set(false)
+		this.detectedVocalStartMs.set(null)
+		this.syncTargetTime.set(0)
 
 		// Parse LRC to get first few lines for preview
 		this.parseLyricsPreview()
 
 		// Initialize syncTargetTime from first LRC line if no offset yet
-		if (this.lyricsPreviewLines.length > 0 && !this.offsetConfirmed) {
-			this.syncTargetTime = this.lyricsPreviewLines[0].time
+		const previewLines = this.lyricsPreviewLines()
+		if (previewLines.length > 0 && !this.offsetConfirmed()) {
+			this.syncTargetTime.set(previewLines[0].time)
 		}
-
-		this.ref.detectChanges()
 
 		// Find audio file in chart folder and load as data URL
 		try {
-			const result = await this.lyricsService.getChartAudioPath(this.selectedChart.chartPath)
+			const result = await this.lyricsService.getChartAudioPath(chart.chartPath)
 			if (result) {
-				this.audioSrc = result.dataUrl
-				this.hasVocalsTrack = result.hasVocalsTrack
-				this.detectedVocalStartMs = result.vocalStartMs
+				this.audioSrc.set(result.dataUrl)
+				this.hasVocalsTrack.set(result.hasVocalsTrack)
+				this.detectedVocalStartMs.set(result.vocalStartMs)
 
 				console.log('Audio loaded:', {
 					hasVocalsTrack: result.hasVocalsTrack,
@@ -372,25 +369,23 @@ export class LyricsComponent implements OnInit, OnDestroy {
 
 				// Auto-set syncTargetTime if we detected vocal start
 				if (result.vocalStartMs !== null) {
-					this.syncTargetTime = result.vocalStartMs
+					this.syncTargetTime.set(result.vocalStartMs)
 					this.updateOffsetFromSyncTarget()
 				}
 			} else {
-				this.audioSrc = null
-				this.audioError = 'No audio file found in chart folder'
+				this.audioSrc.set(null)
+				this.audioError.set('No audio file found in chart folder')
 				console.log('No audio file found')
 			}
 		} catch (err) {
 			console.error('Failed to get audio:', err)
-			this.audioSrc = null
-			this.audioError = `Failed to load audio: ${err}`
+			this.audioSrc.set(null)
+			this.audioError.set(`Failed to load audio: ${err}`)
 		}
-
-		this.ref.detectChanges()
 	}
 
 	closeSyncTool(): void {
-		this.showSyncTool = false
+		this.showSyncTool.set(false)
 		this.stopAudioTracking()
 
 		// Stop and reset audio
@@ -399,89 +394,85 @@ export class LyricsComponent implements OnInit, OnDestroy {
 			this.audioPlayerRef.nativeElement.currentTime = 0
 		}
 
-		this.audioSrc = null
-		this.isPlaying = false
-		this.currentTime = 0
-		this.audioLoaded = false
-		this.audioError = null
-		this.hasVocalsTrack = false
-		this.detectedVocalStartMs = null
+		this.audioSrc.set(null)
+		this.isPlaying.set(false)
+		this.currentTime.set(0)
+		this.audioLoaded.set(false)
+		this.audioError.set(null)
+		this.hasVocalsTrack.set(false)
+		this.detectedVocalStartMs.set(null)
 		// Don't reset syncTargetTime - we need it for the confirmed display
-		this.ref.detectChanges()
 	}
 
 	onAudioLoaded(): void {
-		this.audioLoaded = true
-		this.audioError = null
+		this.audioLoaded.set(true)
+		this.audioError.set(null)
 
 		// Set max sync time based on audio duration (cap at 2 minutes)
 		if (this.audioPlayerRef?.nativeElement) {
 			const duration = this.audioPlayerRef.nativeElement.duration * 1000
-			this.maxSyncTime = Math.min(duration, 120000)
+			this.maxSyncTime.set(Math.min(duration, 120000))
 		}
 
 		console.log('Audio element loaded successfully')
-		this.ref.detectChanges()
 	}
 
 	onAudioError(event: Event): void {
 		const audio = event.target as HTMLAudioElement
-		this.audioLoaded = false
-		this.audioError = `Audio playback error: ${audio.error?.message || 'Unknown error'}`
+		this.audioLoaded.set(false)
+		this.audioError.set(`Audio playback error: ${audio.error?.message || 'Unknown error'}`)
 		console.error('Audio error:', audio.error)
-		this.ref.detectChanges()
 	}
 
-	onSyncTargetChange(): void {
+	onSyncTargetChange(value: number): void {
+		this.syncTargetTime.set(value)
 		this.updateOffsetFromSyncTarget()
-		this.ref.detectChanges()
 	}
 
 	updateOffsetFromSyncTarget(): void {
-		if (this.lyricsPreviewLines.length > 0) {
-			const firstLrcTime = this.lyricsPreviewLines[0].time
-			this.offsetMs = Math.round(this.syncTargetTime - firstLrcTime)
+		const previewLines = this.lyricsPreviewLines()
+		if (previewLines.length > 0) {
+			const firstLrcTime = previewLines[0].time
+			this.offsetMs.set(Math.round(this.syncTargetTime() - firstLrcTime))
 		}
 	}
 
 	previewFromTarget(): void {
-		if (!this.audioPlayerRef?.nativeElement || !this.audioLoaded) return
+		if (!this.audioPlayerRef?.nativeElement || !this.audioLoaded()) return
 
 		const audio = this.audioPlayerRef.nativeElement
 
 		// Seek to slightly before the target time (0.5s before) so user can hear the lead-in
-		const seekTime = Math.max(0, (this.syncTargetTime / 1000) - 0.5)
+		const seekTime = Math.max(0, (this.syncTargetTime() / 1000) - 0.5)
 		audio.currentTime = seekTime
 		audio.play()
-		this.isPlaying = true
+		this.isPlaying.set(true)
 		this.startAudioTracking()
-		this.ref.detectChanges()
 	}
 
 	stopPreview(): void {
 		if (!this.audioPlayerRef?.nativeElement) return
 
 		this.audioPlayerRef.nativeElement.pause()
-		this.isPlaying = false
+		this.isPlaying.set(false)
 		this.stopAudioTracking()
-		this.ref.detectChanges()
 	}
 
 	acceptSyncTiming(): void {
-		this.offsetConfirmed = true
+		this.offsetConfirmed.set(true)
 		this.closeSyncTool()
-		this.successMessage = `Timing set: First lyric will appear at ${this.formatTime(this.syncTargetTime / 1000)}`
-		this.ref.detectChanges()
+		this.successMessage.set(`Timing set: First lyric will appear at ${this.formatTime(this.syncTargetTime() / 1000)}`)
 	}
 
 	parseLyricsPreview(): void {
-		if (!this.selectedLyrics?.syncedLyrics) {
-			this.lyricsPreviewLines = []
+		const lyrics = this.selectedLyrics()
+		if (!lyrics?.syncedLyrics) {
+			this.lyricsPreviewLines.set([])
 			return
 		}
 
 		const lines: LyricLine[] = []
-		const lrcLines = this.selectedLyrics.syncedLyrics.split('\n')
+		const lrcLines = lyrics.syncedLyrics.split('\n')
 
 		for (const line of lrcLines) {
 			// Parse [mm:ss.xx] or [mm:ss:xx] format
@@ -504,22 +495,20 @@ export class LyricsComponent implements OnInit, OnDestroy {
 			if (lines.length >= 8) break
 		}
 
-		this.lyricsPreviewLines = lines
+		this.lyricsPreviewLines.set(lines)
 	}
 
 	private startAudioTracking(): void {
 		this.stopAudioTracking()
 		this.audioTimeInterval = setInterval(() => {
 			if (this.audioPlayerRef?.nativeElement) {
-				this.currentTime = this.audioPlayerRef.nativeElement.currentTime
+				this.currentTime.set(this.audioPlayerRef.nativeElement.currentTime)
 
 				// Check if audio ended
 				if (this.audioPlayerRef.nativeElement.ended) {
-					this.isPlaying = false
+					this.isPlaying.set(false)
 					this.stopAudioTracking()
 				}
-
-				this.ref.detectChanges()
 			}
 		}, 100)
 	}
@@ -536,5 +525,28 @@ export class LyricsComponent implements OnInit, OnDestroy {
 		const secs = Math.floor(seconds % 60)
 		const ms = Math.floor((seconds % 1) * 10)
 		return `${mins}:${secs.toString().padStart(2, '0')}.${ms}`
+	}
+
+	// Event handlers for template two-way binding
+	onFilterQueryChange(value: string): void {
+		this.filterQuery.set(value)
+		this.applyFilter()
+	}
+
+	onFilterArtistChange(value: string): void {
+		this.filterArtist.set(value)
+		this.applyFilter()
+	}
+
+	onSearchArtistChange(value: string): void {
+		this.searchArtist.set(value)
+	}
+
+	onSearchTitleChange(value: string): void {
+		this.searchTitle.set(value)
+	}
+
+	onOffsetMsChange(value: number): void {
+		this.offsetMs.set(value)
 	}
 }

@@ -1,5 +1,6 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
-import { FormControl } from '@angular/forms'
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core'
+import { ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms'
+import { NgClass } from '@angular/common'
 
 import _ from 'lodash'
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
@@ -7,49 +8,49 @@ import { themes } from 'src-shared/Settings'
 
 @Component({
 	selector: 'app-settings',
+	standalone: true,
+	imports: [ReactiveFormsModule, FormsModule, NgClass],
 	templateUrl: './settings.component.html',
-	standalone: false,
 })
 export class SettingsComponent implements OnInit {
+	settingsService = inject(SettingsService)
+
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 
-	public chartFolderName: FormControl<string>
-	public isSng: FormControl<boolean>
-	public downloadVideos: FormControl<boolean>
-	public isCompactTable: FormControl<boolean>
+	chartFolderName: FormControl<string>
+	isSng: FormControl<boolean>
+	downloadVideos: FormControl<boolean>
+	isCompactTable: FormControl<boolean>
 
-	public artistColumn: FormControl<boolean>
-	public albumColumn: FormControl<boolean>
-	public genreColumn: FormControl<boolean>
-	public yearColumn: FormControl<boolean>
-	public charterColumn: FormControl<boolean>
-	public lengthColumn: FormControl<boolean>
-	public difficultyColumn: FormControl<boolean>
-	public uploadedColumn: FormControl<boolean>
+	artistColumn: FormControl<boolean>
+	albumColumn: FormControl<boolean>
+	genreColumn: FormControl<boolean>
+	yearColumn: FormControl<boolean>
+	charterColumn: FormControl<boolean>
+	lengthColumn: FormControl<boolean>
+	difficultyColumn: FormControl<boolean>
+	uploadedColumn: FormControl<boolean>
 
-	updateAvailable: 'yes' | 'no' | 'error' = 'no'
-	loginClicked = false
-	downloadUpdateText = 'Download Update'
-	retryUpdateText = 'Failed to check for update'
-	updateDownloading = false
-	updateDownloaded = false
-	updateRetrying = false
-	currentVersion = ''
+	updateAvailable = signal<'yes' | 'no' | 'error'>('no')
+	loginClicked = signal(false)
+	downloadUpdateText = signal('Download Update')
+	retryUpdateText = signal('Failed to check for update')
+	updateDownloading = signal(false)
+	updateDownloaded = signal(false)
+	updateRetrying = signal(false)
+	currentVersion = signal('')
 
-	constructor(
-		public settingsService: SettingsService,
-		private ref: ChangeDetectorRef
-	) {
-		const ss = settingsService
+	constructor() {
+		const ss = this.settingsService
 
 		this.chartFolderName = new FormControl<string>(ss.chartFolderName, { nonNullable: true })
 		this.chartFolderName.valueChanges.subscribe(value => ss.chartFolderName = value)
 
 		this.isSng = new FormControl<boolean>(ss.isSng, { nonNullable: true })
-		this.isSng.valueChanges.subscribe(value => settingsService.isSng = value)
+		this.isSng.valueChanges.subscribe(value => this.settingsService.isSng = value)
 		this.downloadVideos = new FormControl<boolean>(ss.downloadVideos, { nonNullable: true })
-		this.downloadVideos.valueChanges.subscribe(value => settingsService.downloadVideos = value)
-		this.isCompactTable = new FormControl<boolean>(settingsService.isCompactTable, { nonNullable: true })
+		this.downloadVideos.valueChanges.subscribe(value => this.settingsService.downloadVideos = value)
+		this.isCompactTable = new FormControl<boolean>(this.settingsService.isCompactTable, { nonNullable: true })
 		this.isCompactTable.valueChanges.subscribe(value => ss.isCompactTable = value)
 
 		this.artistColumn = new FormControl<boolean>(ss.visibleColumns.includes('artist'), { nonNullable: true })
@@ -74,27 +75,23 @@ export class SettingsComponent implements OnInit {
 
 	async ngOnInit() {
 		window.electron.on.updateAvailable(result => {
-			this.updateAvailable = result !== null ? 'yes' : 'no'
-			this.updateRetrying = false
+			this.updateAvailable.set(result !== null ? 'yes' : 'no')
+			this.updateRetrying.set(false)
 			if (result !== null) {
-				this.downloadUpdateText = `Download Update (${result.version})`
+				this.downloadUpdateText.set(`Download Update (${result.version})`)
 			}
-			this.ref.detectChanges()
 		})
 		window.electron.on.updateError(err => {
 			console.log(err)
-			this.updateAvailable = 'error'
-			this.updateRetrying = false
-			this.retryUpdateText = 'Failed to check for update'
-			this.ref.detectChanges()
+			this.updateAvailable.set('error')
+			this.updateRetrying.set(false)
+			this.retryUpdateText.set('Failed to check for update')
 		})
 		window.electron.invoke.getCurrentVersion().then(version => {
-			this.currentVersion = `v${version}`
-			this.ref.detectChanges()
+			this.currentVersion.set(`v${version}`)
 		})
 		window.electron.invoke.getUpdateAvailable().then(isAvailable => {
-			this.updateAvailable = isAvailable
-			this.ref.detectChanges()
+			this.updateAvailable.set(isAvailable)
 		})
 	}
 
@@ -156,33 +153,30 @@ export class SettingsComponent implements OnInit {
 	}
 
 	async downloadUpdate() {
-		if (this.updateDownloaded) {
+		if (this.updateDownloaded()) {
 			window.electron.emit.quitAndInstall()
-		} else if (!this.updateDownloading) {
+		} else if (!this.updateDownloading()) {
 			if (await window.electron.invoke.getPlatform() === 'darwin') { // Thanks Apple...
 				this.openUrl('https://github.com/Geomitron/Bridge/releases/latest')
 			} else {
-				this.updateDownloading = true
+				this.updateDownloading.set(true)
 				window.electron.emit.downloadUpdate()
-				this.downloadUpdateText = 'Downloading... (0%)'
+				this.downloadUpdateText.set('Downloading... (0%)')
 				window.electron.on.updateProgress(result => {
-					this.downloadUpdateText = `Downloading... (${result.percent.toFixed(0)}%)`
-					this.ref.detectChanges()
+					this.downloadUpdateText.set(`Downloading... (${result.percent.toFixed(0)}%)`)
 				})
 				window.electron.on.updateDownloaded(() => {
-					this.downloadUpdateText = 'Quit and install update'
-					this.updateDownloaded = true
-					this.ref.detectChanges()
+					this.downloadUpdateText.set('Quit and install update')
+					this.updateDownloaded.set(true)
 				})
 			}
 		}
 	}
 
 	retryUpdate() {
-		if (this.updateRetrying === false) {
-			this.updateRetrying = true
-			this.retryUpdateText = 'Retrying...'
-			this.ref.detectChanges()
+		if (this.updateRetrying() === false) {
+			this.updateRetrying.set(true)
+			this.retryUpdateText.set('Retrying...')
 			window.electron.emit.retryUpdate()
 		}
 	}

@@ -1,4 +1,4 @@
-import { Component, HostBinding } from '@angular/core'
+import { Component, HostBinding, inject } from '@angular/core'
 
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 import { DownloadProgress } from 'src-shared/interfaces/download.interface'
@@ -8,16 +8,15 @@ import { DownloadService } from '../../../../core/services/download.service'
 
 @Component({
 	selector: 'app-downloads-modal',
+	standalone: true,
+	imports: [],
 	templateUrl: './downloads-modal.component.html',
-	standalone: false,
 })
 export class DownloadsModalComponent {
 	@HostBinding('class.contents') contents = true
 
-	constructor(
-		public downloadService: DownloadService,
-		public settingsService: SettingsService,
-	) { }
+	downloadService = inject(DownloadService)
+	settingsService = inject(SettingsService)
 
 	showFile(filepath: string) {
 		window.electron.emit.showFile(filepath)

@@ -1,25 +1,28 @@
-import { ChangeDetectorRef, Component } from '@angular/core'
+import { Component, inject, signal } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
 
+import { ToolbarComponent } from './components/toolbar/toolbar.component'
 import { SettingsService } from './core/services/settings.service'
 
 @Component({
 	selector: 'app-root',
+	standalone: true,
+	imports: [RouterOutlet, ToolbarComponent],
 	templateUrl: './app.component.html',
 	styles: [],
-	standalone: false,
 })
 export class AppComponent {
+	private settingsService = inject(SettingsService)
 
-	settingsLoaded = false
+	settingsLoaded = signal(false)
 
-	constructor(settingsService: SettingsService, private cdr: ChangeDetectorRef) {
+	constructor() {
 		// Ensure settings are loaded before rendering the application
-		settingsService.loadSettings()
+		this.settingsService.loadSettings()
 			.then(() => {
 				console.log('[DEBUG] Setting settingsLoaded = true')
-				this.settingsLoaded = true
-				this.cdr.detectChanges()
-				console.log('[DEBUG] Change detection triggered, settingsLoaded:', this.settingsLoaded)
+				this.settingsLoaded.set(true)
+				console.log('[DEBUG] settingsLoaded:', this.settingsLoaded())
 			})
 			.catch(err => console.error('Failed to load settings:', err))
 
@@ -27,11 +30,11 @@ export class AppComponent {
 			if (event.ctrlKey && (event.key === '+' || event.key === '-' || event.key === '=' || event.key === '0')) {
 				event.preventDefault()
 				if (event.key === '+' || event.key === '=') {
-					settingsService.zoomIn()
+					this.settingsService.zoomIn()
 				} else if (event.key === '-') {
-					settingsService.zoomOut()
+					this.settingsService.zoomOut()
 				} else {
-					settingsService.zoomFactor = 1
+					this.settingsService.zoomFactor = 1
 				}
 			}
 		})
@@ -39,9 +42,9 @@ export class AppComponent {
 		document.addEventListener('wheel', event => {
 			if (event.ctrlKey && event.deltaY !== 0) {
 				if (event.deltaY > 0) {
-					settingsService.zoomOut()
+					this.settingsService.zoomOut()
 				} else {
-					settingsService.zoomIn()
+					this.settingsService.zoomIn()
 				}
 			}
 		})

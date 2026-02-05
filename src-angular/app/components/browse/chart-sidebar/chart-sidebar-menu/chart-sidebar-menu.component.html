@@ -7,16 +7,16 @@
 					<i class="bi bi-exclamation-triangle text-sm text-secondary-content"></i> Report issue
 				</button>
 				<dialog #reportModal class="modal">
-					@if (reportState === 'sent') {
+					@if (reportState() === 'sent') {
 						<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
 							<form method="dialog">
 								<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
 									<i class="bi bi-x-lg text-lg"></i>
 								</button>
 							</form>
-							<span class="text-xl text-center">{{ reportMessage }}</span>
+							<span class="text-xl text-center">{{ reportMessage() }}</span>
 						</div>
-					} @else if (reportState === 'sending') {
+					} @else if (reportState() === 'sending') {
 						<div class="modal-box flex flex-col gap-2 bg-base-100 text-base-content">
 							<span class="loading loading-spinner loading-sm self-center"></span>
 						</div>
@@ -110,7 +110,7 @@
 					</form>
 				</dialog>
 			</div>
-			@if (displayVersions.length > 1) {
+			@if (displayVersions().length > 1) {
 				<span class="uppercase">Select Version</span>
 			}
 		</div>
@@ -119,7 +119,7 @@
 			<table class="table table-xs">
 				<thead>
 					<tr>
-						@if (displayVersions.length > 1) {
+						@if (displayVersions().length > 1) {
 							<th></th>
 						}
 						<th></th>
@@ -142,9 +142,9 @@
 					</tr>
 				</thead>
 				<tbody>
-					@for (version of displayVersions; track version.chartId) {
+					@for (version of displayVersions(); track version.chartId) {
 						<tr>
-							@if (displayVersions.length > 1) {
+							@if (displayVersions().length > 1) {
 								<td>
 									<input
 										type="radio"

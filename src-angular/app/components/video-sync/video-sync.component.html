@@ -3,39 +3,39 @@
 	<div class="flex justify-between items-center mb-4">
 		<div class="flex items-baseline gap-3">
 			<h2 class="text-xl font-semibold">Video Sync</h2>
-			@if (filteredCharts.length > 0) {
-				<span class="text-sm text-base-content/60"> {{ filteredCharts.length }} of {{ chartsMissingVideo.length }} charts </span>
+			@if (filteredCharts().length > 0) {
+				<span class="text-sm text-base-content/60"> {{ filteredCharts().length }} of {{ chartsMissingVideo().length }} charts </span>
 			}
 		</div>
 		<div class="flex gap-2">
-			<button class="btn btn-sm btn-ghost" (click)="refreshTools()" [disabled]="checkingTools">
-				<i class="bi bi-arrow-clockwise" [class.animate-spin]="checkingTools"></i>
+			<button class="btn btn-sm btn-ghost" (click)="refreshTools()" [disabled]="checkingTools()">
+				<i class="bi bi-arrow-clockwise" [class.animate-spin]="checkingTools()"></i>
 				Check Tools
 			</button>
-			<button class="btn btn-sm btn-primary" (click)="loadChartsMissingVideo()" [disabled]="loadingCharts">
-				<i class="bi bi-arrow-clockwise" [class.animate-spin]="loadingCharts"></i>
+			<button class="btn btn-sm btn-primary" (click)="loadChartsMissingVideo()" [disabled]="loadingCharts()">
+				<i class="bi bi-arrow-clockwise" [class.animate-spin]="loadingCharts()"></i>
 				Refresh
 			</button>
 		</div>
 	</div>
 
 	<!-- Tool Status Warning -->
-	@if (toolsAvailable && (!toolsAvailable.ytDlp || !toolsAvailable.ffmpeg)) {
+	@if (toolsAvailable() && (!toolsAvailable()!.ytDlp || !toolsAvailable()!.ffmpeg)) {
 		<div class="alert alert-warning mb-4">
 			<i class="bi bi-exclamation-triangle"></i>
 			<div class="flex-1">
 				<div class="font-semibold">Required tools not found</div>
 				<div class="text-sm">
-					@if (!toolsAvailable.ytDlp) {
+					@if (!toolsAvailable()!.ytDlp) {
 						<span>
 							yt-dlp is required for downloading.
 							<a class="link" (click)="openYtDlpInstall()">Install yt-dlp</a>
 						</span>
 					}
-					@if (!toolsAvailable.ytDlp && !toolsAvailable.ffmpeg) {
+					@if (!toolsAvailable()!.ytDlp && !toolsAvailable()!.ffmpeg) {
 						<span> | </span>
 					}
-					@if (!toolsAvailable.ffmpeg) {
+					@if (!toolsAvailable()!.ffmpeg) {
 						<span>
 							ffmpeg is required for video processing.
 							<a class="link" (click)="openFfmpegInstall()">Install ffmpeg</a>
@@ -47,7 +47,7 @@
 	}
 
 	<!-- Tool Status OK -->
-	@if (toolsAvailable?.ytDlp && toolsAvailable?.ffmpeg) {
+	@if (toolsAvailable()?.ytDlp && toolsAvailable()?.ffmpeg) {
 		<div class="alert alert-success mb-3">
 			<i class="bi bi-check-circle"></i>
 			<span>yt-dlp and ffmpeg are installed and ready</span>
@@ -55,45 +55,45 @@
 	}
 
 	<!-- Search and Filter Bar (List View) -->
-	@if (viewMode === 'list' && chartsMissingVideo.length > 0) {
+	@if (viewMode() === 'list' && chartsMissingVideo().length > 0) {
 		<div class="flex gap-2 mb-3 items-center flex-wrap">
 			<div class="join">
 				<input
 					type="text"
 					placeholder="Search artist or song..."
 					class="input input-sm input-bordered join-item w-48"
-					[(ngModel)]="filterQuery"
-					(input)="applyFilter()" />
-				@if (filterQuery) {
-					<button class="btn btn-sm btn-ghost join-item" (click)="filterQuery = ''; applyFilter()">
+					[ngModel]="filterQuery()"
+					(ngModelChange)="onFilterQueryChange($event)" />
+				@if (filterQuery()) {
+					<button class="btn btn-sm btn-ghost join-item" (click)="onFilterQueryChange('')">
 						<i class="bi bi-x"></i>
 					</button>
 				}
 			</div>
-			<select class="select select-sm select-bordered w-40" [(ngModel)]="filterArtist" (change)="applyFilter()">
+			<select class="select select-sm select-bordered w-40" [ngModel]="filterArtist()" (ngModelChange)="onFilterArtistChange($event)">
 				<option value="">All Artists</option>
-				@for (artist of artistOptions; track artist) {
+				@for (artist of artistOptions(); track artist) {
 					<option [value]="artist">{{ artist }}</option>
 				}
 			</select>
-			<select class="select select-sm select-bordered w-32" [(ngModel)]="sortField" (change)="applyFilter()">
+			<select class="select select-sm select-bordered w-32" [ngModel]="sortField()" (ngModelChange)="onSortFieldChange($event)">
 				<option value="artist">Sort: Artist</option>
 				<option value="name">Sort: Song</option>
 			</select>
 			<button class="btn btn-sm btn-ghost" (click)="toggleSortDirection()">
-				<i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'" [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
+				<i class="bi" [class.bi-sort-alpha-down]="sortDirection() === 'asc'" [class.bi-sort-alpha-up]="sortDirection() === 'desc'"></i>
 			</button>
-			@if (filterQuery || filterArtist) {
+			@if (filterQuery() || filterArtist()) {
 				<button class="btn btn-sm btn-ghost" (click)="clearFilters()"><i class="bi bi-x-circle"></i> Clear</button>
 			}
 		</div>
 	}
 
 	<!-- List View -->
-	@if (viewMode === 'list') {
+	@if (viewMode() === 'list') {
 		<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
 			<!-- Empty state -->
-			@if (chartsMissingVideo.length === 0 && !loadingCharts) {
+			@if (chartsMissingVideo().length === 0 && !loadingCharts()) {
 				<div class="flex flex-col items-center justify-center h-full">
 					<i class="bi bi-camera-video text-6xl text-base-content/20 mb-4"></i>
 					<h3 class="text-lg font-semibold mb-2">All Charts Have Videos!</h3>
@@ -101,13 +101,13 @@
 				</div>
 			}
 			<!-- Loading -->
-			@if (loadingCharts) {
+			@if (loadingCharts()) {
 				<div class="flex items-center justify-center h-full">
 					<span class="loading loading-spinner loading-lg"></span>
 				</div>
 			}
 			<!-- No filter results -->
-			@if (chartsMissingVideo.length > 0 && filteredCharts.length === 0 && !loadingCharts) {
+			@if (chartsMissingVideo().length > 0 && filteredCharts().length === 0 && !loadingCharts()) {
 				<div class="flex flex-col items-center justify-center h-full">
 					<i class="bi bi-search text-4xl text-base-content/20 mb-4"></i>
 					<h3 class="text-lg font-semibold mb-2">No Matches</h3>
@@ -116,9 +116,9 @@
 				</div>
 			}
 			<!-- Chart list -->
-			@if (filteredCharts.length > 0) {
+			@if (filteredCharts().length > 0) {
 				<div class="space-y-2">
-					@for (chart of filteredCharts; track chart) {
+					@for (chart of filteredCharts(); track chart) {
 						<div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300">
 							<div class="flex-1 min-w-0 cursor-pointer" (click)="selectChart(chart)">
 								<div class="font-medium truncate">{{ chart.chartName }}</div>
@@ -138,45 +138,46 @@
 	}
 
 	<!-- Search View -->
-	@if (viewMode === 'search') {
+	@if (viewMode() === 'search') {
 		<div class="flex-1 min-h-0 flex flex-col">
 			<!-- Back button and chart info -->
 			<div class="flex items-center gap-4 mb-4">
 				<button class="btn btn-sm btn-ghost" (click)="goBackToList()"><i class="bi bi-arrow-left"></i> Back</button>
-				@if (selectedChart) {
+				@if (selectedChart()) {
 					<div class="flex-1">
-						<div class="font-medium">{{ selectedChart.chartName }}</div>
-						<div class="text-sm text-base-content/60">{{ selectedChart.chartArtist }}</div>
+						<div class="font-medium">{{ selectedChart()!.chartName }}</div>
+						<div class="text-sm text-base-content/60">{{ selectedChart()!.chartArtist }}</div>
 					</div>
 				}
 			</div>
 			<!-- Source tabs -->
 			<div class="tabs tabs-box mb-3 w-fit" role="tablist">
-				<button class="tab" role="tab" [class.tab-active]="searchSource === 'youtube'" (click)="searchSource = 'youtube'">
+				<button class="tab" role="tab" [class.tab-active]="searchSource() === 'youtube'" (click)="onSearchSourceChange('youtube')">
 					<i class="bi bi-youtube mr-1"></i> YouTube Search
 				</button>
-				<button class="tab" role="tab" [class.tab-active]="searchSource === 'url'" (click)="searchSource = 'url'">
+				<button class="tab" role="tab" [class.tab-active]="searchSource() === 'url'" (click)="onSearchSourceChange('url')">
 					<i class="bi bi-link-45deg mr-1"></i> Paste URL
 				</button>
-				<button class="tab" role="tab" [class.tab-active]="searchSource === 'local'" (click)="searchSource = 'local'">
+				<button class="tab" role="tab" [class.tab-active]="searchSource() === 'local'" (click)="onSearchSourceChange('local')">
 					<i class="bi bi-folder2-open mr-1"></i> Local File
 				</button>
 			</div>
 			<!-- Search bar (for YouTube) -->
-			@if (searchSource === 'youtube') {
+			@if (searchSource() === 'youtube') {
 				<div class="join w-full mb-4">
 					<input
 						type="text"
 						class="input input-bordered join-item flex-1"
 						placeholder="Search YouTube..."
-						[(ngModel)]="searchQuery"
+						[ngModel]="searchQuery()"
+						(ngModelChange)="onSearchQueryChange($event)"
 						(keyup.enter)="search()"
-						[disabled]="isSearching || isDownloading" />
-					<button class="btn btn-primary join-item" (click)="search()" [disabled]="isSearching || isDownloading || !searchQuery.trim()">
-						@if (!isSearching) {
+						[disabled]="isSearching() || isDownloading()" />
+					<button class="btn btn-primary join-item" (click)="search()" [disabled]="isSearching() || isDownloading() || !searchQuery().trim()">
+						@if (!isSearching()) {
 							<i class="bi bi-search"></i>
 						}
-						@if (isSearching) {
+						@if (isSearching()) {
 							<span class="loading loading-spinner loading-sm"></span>
 						}
 						Search
@@ -184,7 +185,7 @@
 				</div>
 			}
 			<!-- URL paste input -->
-			@if (searchSource === 'url') {
+			@if (searchSource() === 'url') {
 				<div class="mb-4">
 					<div class="text-sm text-base-content/60 mb-2">
 						Paste a video URL from YouTube, Vimeo, Dailymotion, Archive.org, or any of 1000+ supported sites
@@ -194,14 +195,15 @@
 							type="text"
 							class="input input-bordered join-item flex-1"
 							placeholder="https://www.youtube.com/watch?v=... or any video URL"
-							[(ngModel)]="pasteUrl"
+							[ngModel]="pasteUrl()"
+							(ngModelChange)="onPasteUrlChange($event)"
 							(keyup.enter)="downloadFromUrl()"
-							[disabled]="isDownloading" />
-						<button class="btn btn-primary join-item" (click)="downloadFromUrl()" [disabled]="isDownloading || !pasteUrl.trim()">
-							@if (!isDownloading) {
+							[disabled]="isDownloading()" />
+						<button class="btn btn-primary join-item" (click)="downloadFromUrl()" [disabled]="isDownloading() || !pasteUrl().trim()">
+							@if (!isDownloading()) {
 								<i class="bi bi-download"></i>
 							}
-							@if (isDownloading) {
+							@if (isDownloading()) {
 								<span class="loading loading-spinner loading-sm"></span>
 							}
 							Download
@@ -210,23 +212,23 @@
 				</div>
 			}
 			<!-- Local file import -->
-			@if (searchSource === 'local') {
+			@if (searchSource() === 'local') {
 				<div class="mb-4">
 					<div class="text-sm text-base-content/60 mb-2">Select a video file from your computer to copy into the chart folder</div>
 					<div class="flex gap-2">
-						<button class="btn btn-primary" (click)="selectLocalFile()" [disabled]="isDownloading">
+						<button class="btn btn-primary" (click)="selectLocalFile()" [disabled]="isDownloading()">
 							<i class="bi bi-folder2-open"></i>
 							Choose Video File
 						</button>
-						@if (selectedLocalFile) {
+						@if (selectedLocalFile()) {
 							<span class="text-sm text-base-content/60 self-center">
-								{{ selectedLocalFile }}
+								{{ selectedLocalFile() }}
 							</span>
 						}
 					</div>
-					@if (selectedLocalFile) {
+					@if (selectedLocalFile()) {
 						<div class="mt-3">
-							<button class="btn btn-success" (click)="importLocalFile()" [disabled]="isDownloading">
+							<button class="btn btn-success" (click)="importLocalFile()" [disabled]="isDownloading()">
 								<i class="bi bi-check-lg"></i>
 								Import to Chart Folder
 							</button>
@@ -235,32 +237,32 @@
 				</div>
 			}
 			<!-- Search error -->
-			@if (searchError) {
+			@if (searchError()) {
 				<div class="alert alert-error mb-4">
 					<i class="bi bi-exclamation-circle"></i>
-					<span>{{ searchError }}</span>
+					<span>{{ searchError() }}</span>
 				</div>
 			}
 			<!-- Download progress -->
-			@if (downloadProgress && isDownloading) {
+			@if (downloadProgress() && isDownloading()) {
 				<div class="mb-4">
 					<div class="flex justify-between text-sm mb-1">
-						<span>{{ downloadProgress.message }}</span>
-						<span>{{ downloadProgress.percent | number: '1.0-0' }}%</span>
+						<span>{{ downloadProgress()!.message }}</span>
+						<span>{{ downloadProgress()!.percent | number: '1.0-0' }}%</span>
 					</div>
-					<progress class="progress progress-primary w-full" [value]="downloadProgress.percent" max="100"></progress>
+					<progress class="progress progress-primary w-full" [value]="downloadProgress()!.percent" max="100"></progress>
 					<button class="btn btn-sm btn-ghost mt-2" (click)="cancelDownload()"><i class="bi bi-x"></i> Cancel</button>
 				</div>
 			}
 			<!-- Download error -->
-			@if (downloadError) {
+			@if (downloadError()) {
 				<div class="alert alert-error mb-4">
 					<i class="bi bi-exclamation-circle"></i>
 					<div class="flex-1">
 						<div class="font-semibold">Download Failed</div>
-						<div class="text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">{{ downloadError }}</div>
+						<div class="text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">{{ downloadError() }}</div>
 					</div>
-					<button class="btn btn-sm btn-ghost" (click)="downloadError = null">
+					<button class="btn btn-sm btn-ghost" (click)="downloadError.set(null)">
 						<i class="bi bi-x"></i>
 					</button>
 				</div>
@@ -268,12 +270,12 @@
 			<!-- Search results -->
 			<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
 				<div class="space-y-2">
-					@for (video of searchResults; track video) {
+					@for (video of searchResults(); track video) {
 						<div
 							class="flex gap-3 p-3 rounded-lg cursor-pointer transition-colors"
-							[class.bg-base-200]="selectedVideo?.videoId !== video.videoId"
-							[class.bg-primary]="selectedVideo?.videoId === video.videoId"
-							[class.hover:bg-base-300]="selectedVideo?.videoId !== video.videoId"
+							[class.bg-base-200]="selectedVideo()?.videoId !== video.videoId"
+							[class.bg-primary]="selectedVideo()?.videoId === video.videoId"
+							[class.hover:bg-base-300]="selectedVideo()?.videoId !== video.videoId"
 							(click)="selectVideo(video)">
 							<!-- Thumbnail -->
 							<img [src]="video.thumbnailUrl" class="w-32 h-20 object-cover rounded" alt="Video thumbnail" />
@@ -295,10 +297,10 @@
 								</button>
 								<button
 									class="btn btn-sm"
-									[class.btn-primary]="selectedVideo?.videoId === video.videoId"
-									[class.btn-ghost]="selectedVideo?.videoId !== video.videoId"
+									[class.btn-primary]="selectedVideo()?.videoId === video.videoId"
+									[class.btn-ghost]="selectedVideo()?.videoId !== video.videoId"
 									(click)="$event.stopPropagation(); selectVideo(video); downloadVideo()"
-									[disabled]="isDownloading || !toolsAvailable?.ytDlp"
+									[disabled]="isDownloading() || !toolsAvailable()?.ytDlp"
 									title="Download">
 									<i class="bi bi-download"></i>
 								</button>
@@ -306,17 +308,17 @@
 						</div>
 					}
 					<!-- No results -->
-					@if (searchResults.length === 0 && !isSearching && searchQuery) {
+					@if (searchResults().length === 0 && !isSearching() && searchQuery()) {
 						<div class="text-center text-base-content/50 py-8">No videos found. Try a different search query.</div>
 					}
 				</div>
 			</div>
 			<!-- Selected video download button -->
-			@if (selectedVideo && !isDownloading) {
+			@if (selectedVideo() && !isDownloading()) {
 				<div class="mt-4 flex justify-end">
-					<button class="btn btn-primary" (click)="downloadVideo()" [disabled]="!toolsAvailable?.ytDlp">
+					<button class="btn btn-primary" (click)="downloadVideo()" [disabled]="!toolsAvailable()?.ytDlp">
 						<i class="bi bi-download"></i>
-						Download "{{ selectedVideo.title | slice: 0 : 40 }}{{ selectedVideo.title.length > 40 ? '...' : '' }}"
+						Download "{{ selectedVideo()!.title | slice: 0 : 40 }}{{ selectedVideo()!.title.length > 40 ? '...' : '' }}"
 					</button>
 				</div>
 			}

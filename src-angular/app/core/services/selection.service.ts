@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable } from '@angular/core'
+import { Injectable, signal, computed, effect, inject } from '@angular/core'
 
 import { SearchService } from './search.service'
 
@@ -7,35 +7,61 @@ import { SearchService } from './search.service'
 })
 export class SelectionService {
 
-	private allSelected = false
-	private selectAllChangedEmitter = new EventEmitter<boolean>()
+	private searchService = inject(SearchService)
 
-	public selections: { [groupId: number]: boolean | undefined } = {}
+	readonly allSelected = signal(false)
+	readonly selections = signal<{ [groupId: number]: boolean | undefined }>({})
 
-	constructor(searchService: SearchService) {
-		searchService.newSearch.subscribe(() => {
-			this.selections = {}
-			this.deselectAll()
-		})
+	// Signal to notify when select all changes
+	readonly selectAllChanged = signal<boolean | null>(null)
+
+	constructor() {
+		// Reset selections when a new search happens
+		effect(() => {
+			const event = this.searchService.searchEvent()
+			if (event?.type === 'new') {
+				this.selections.set({})
+				this.deselectAll()
+			}
+		}, { allowSignalWrites: true })
 	}
 
 	isAllSelected() {
-		return this.allSelected
+		return this.allSelected()
 	}
 
 	deselectAll() {
-		this.allSelected = false
-		for (const groupId in this.selections) {
-			this.selections[groupId] = false
-		}
-		this.selectAllChangedEmitter.emit(false)
+		this.allSelected.set(false)
+		this.selections.update(selections => {
+			const updated = { ...selections }
+			for (const groupId in updated) {
+				updated[groupId] = false
+			}
+			return updated
+		})
+		this.selectAllChanged.set(false)
 	}
 
 	selectAll() {
-		this.allSelected = true
-		for (const groupId in this.selections) {
-			this.selections[groupId] = true
-		}
-		this.selectAllChangedEmitter.emit(true)
+		this.allSelected.set(true)
+		this.selections.update(selections => {
+			const updated = { ...selections }
+			for (const groupId in updated) {
+				updated[groupId] = true
+			}
+			return updated
+		})
+		this.selectAllChanged.set(true)
+	}
+
+	setSelection(groupId: number, selected: boolean) {
+		this.selections.update(selections => ({
+			...selections,
+			[groupId]: selected,
+		}))
+	}
+
+	getSelection(groupId: number): boolean {
+		return this.selections()[groupId] ?? false
 	}
 }

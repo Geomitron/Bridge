@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild } from '@angular/core'
-import { FormControl } from '@angular/forms'
+import { Component, ElementRef, HostBinding, input, signal, OnDestroy, OnInit, ViewChild, inject, effect } from '@angular/core'
+import { ReactiveFormsModule, FormControl } from '@angular/forms'
 
 import { chain, sortBy } from 'lodash'
 import { SngHeader, SngStream } from 'parse-sng'
@@ -13,38 +13,38 @@ import { ChartPreview } from './render.js'
 
 @Component({
 	selector: 'app-chart-sidebar-preview',
+	standalone: true,
+	imports: [ReactiveFormsModule],
 	templateUrl: './chart-sidebar-preview.component.html',
-	standalone: false,
 })
 export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
+	private settingsService = inject(SettingsService)
+
 	@HostBinding('class.h-full') height = true
 	@ViewChild('previewDiv') previewDiv: ElementRef<HTMLDivElement>
 
-	@Input() selectedChart: ChartData
-	@Input() instrument: Instrument
-	@Input() difficulty: Difficulty
+	selectedChart = input.required<ChartData>()
+	instrument = input.required<Instrument>()
+	difficulty = input.required<Difficulty>()
 
 	private lastVolume: number | null = null
-	public isMuted = true
-	public playState: 'paused' | 'loading' | 'play' | 'end' = 'paused'
-	public chartPreview: ChartPreview | null = null
+	isMuted = signal(true)
+	playState = signal<'paused' | 'loading' | 'play' | 'end'>('paused')
+	chartPreview: ChartPreview | null = null
 
 	private parsedChart: ReturnType<typeof parseChartFile> | null = null
 	private textures: Awaited<ReturnType<typeof ChartPreview.loadTextures>> | null = null
 	private audioFiles: Uint8Array[] | null = null
 
-	public seekBar: FormControl<number>
-	public volumeBar: FormControl<number>
-	public timestampUpdateInterval: ReturnType<typeof setInterval>
-	public timestampText: string = ''
+	seekBar: FormControl<number>
+	volumeBar: FormControl<number>
+	timestampUpdateInterval: ReturnType<typeof setInterval>
+	timestampText = signal('')
 
-	constructor(
-		private cdr: ChangeDetectorRef,
-		private settingsService: SettingsService,
-	) { }
 	ngOnInit() {
+		const chart = this.selectedChart()
 		this.seekBar = new FormControl<number>(
-			(100 * (this.selectedChart.preview_start_time ?? 0)) / (this.selectedChart.song_length ?? 5 * 60 * 1000),
+			(100 * (chart.preview_start_time ?? 0)) / (chart.song_length ?? 5 * 60 * 1000),
 			{ nonNullable: true },
 		)
 		this.seekBar.valueChanges
@@ -53,16 +53,16 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 				switchMap(progress =>
 					from(
 						(async () => {
-							this.playState = 'loading'
+							this.playState.set('loading')
 							await this.chartPreview?.seek(progress / 100)
-							this.playState = 'paused'
+							this.playState.set('paused')
 						})(),
 					),
 				),
 			)
 			.subscribe()
 		this.volumeBar = new FormControl<number>(this.settingsService.volume, { nonNullable: true })
-		this.isMuted = this.settingsService.volume === 0
+		this.isMuted.set(this.settingsService.volume === 0)
 		this.volumeBar.valueChanges.subscribe(volume => {
 			this.settingsService.volume = volume
 			if (this.chartPreview) {
@@ -83,19 +83,21 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 	}
 	async resetChartPreview(checkInstrumentType = true) {
 		if (this.parsedChart && this.textures && this.audioFiles) {
-			this.playState = 'loading'
-			if (checkInstrumentType && this.chartPreview?.instrumentType !== getInstrumentType(this.instrument)) {
-				this.textures = await ChartPreview.loadTextures(getInstrumentType(this.instrument))
+			this.playState.set('loading')
+			const instrument = this.instrument()
+			if (checkInstrumentType && this.chartPreview?.instrumentType !== getInstrumentType(instrument)) {
+				this.textures = await ChartPreview.loadTextures(getInstrumentType(instrument))
 			}
 			this.chartPreview?.dispose()
+			const chart = this.selectedChart()
 			this.chartPreview = await ChartPreview.create(
 				this.parsedChart,
 				this.textures,
 				this.audioFiles,
-				this.instrument,
-				this.difficulty,
-				this.selectedChart.delay ?? (this.selectedChart.chart_offset ?? 0) * 1000,
-				this.selectedChart.song_length ?? 5 * 60 * 1000,
+				instrument,
+				this.difficulty(),
+				chart.delay ?? (chart.chart_offset ?? 0) * 1000,
+				chart.song_length ?? 5 * 60 * 1000,
 				this.previewDiv.nativeElement,
 			)
 			this.chartPreview.on('progress', percentComplete => {
@@ -103,17 +105,16 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 			})
 			this.chartPreview.on('end', async () => {
 				await this.chartPreview!.togglePaused()
-				this.playState = 'end'
-				this.cdr.detectChanges()
+				this.playState.set('end')
 			})
 			this.chartPreview.volume = this.volumeBar.value / 100
 			await this.chartPreview.seek(this.seekBar.value / 100)
 			document.addEventListener('keydown', this.spaceListener)
 			this.timestampUpdateInterval = setInterval(
-				() => (this.timestampText = msToRoughTime(this.chartPreview!.chartCurrentTimeMs) + ' / ' + msToRoughTime(this.chartPreview!.chartEndTimeMs)),
+				() => this.timestampText.set(msToRoughTime(this.chartPreview!.chartCurrentTimeMs) + ' / ' + msToRoughTime(this.chartPreview!.chartEndTimeMs)),
 				100,
 			)
-			this.playState = 'paused'
+			this.playState.set('paused')
 		}
 	}
 	endChartPreview() {
@@ -123,21 +124,22 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 		this.parsedChart = null
 		this.textures = null
 		this.audioFiles = null
-		this.playState = 'paused'
+		this.playState.set('paused')
 		this.seekBar.setValue(0, { emitEvent: false })
 		document.removeEventListener('keydown', this.spaceListener)
 		clearInterval(this.timestampUpdateInterval)
 	}
 
 	async togglePlaying() {
-		if (this.playState === 'end') {
+		if (this.playState() === 'end') {
 			await this.chartPreview!.seek(0)
-			this.playState = 'paused'
+			this.playState.set('paused')
 		}
-		if (this.playState === 'paused') {
-			this.playState = 'loading'
+		if (this.playState() === 'paused') {
+			this.playState.set('loading')
 			if (this.chartPreview === null) {
-				const filesPromise = getChartFiles(this.selectedChart)
+				const chart = this.selectedChart()
+				const filesPromise = getChartFiles(chart)
 				const [parsedChart, textures, audioFiles] = await Promise.all([
 					(async () => {
 						const { chartData, format } = findChartData(await filesPromise)
@@ -152,11 +154,11 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 								five_lane_drums: false,
 								pro_drums: false,
 							},
-							this.selectedChart,
+							chart,
 						)
 						return parseChartFile(chartData, format, iniChartModifiers)
 					})(),
-					ChartPreview.loadTextures(getInstrumentType(this.instrument)),
+					ChartPreview.loadTextures(getInstrumentType(this.instrument())),
 					(async () => findAudioData(await filesPromise))(),
 				])
 				this.parsedChart = parsedChart
@@ -165,17 +167,18 @@ export class ChartSidebarPreviewComponent implements OnInit, OnDestroy {
 				await this.resetChartPreview(false)
 			}
 			await this.chartPreview!.togglePaused()
-			this.playState = 'play'
-		} else if (this.playState === 'play') {
-			this.playState = 'loading'
+			this.playState.set('play')
+		} else if (this.playState() === 'play') {
+			this.playState.set('loading')
 			await this.chartPreview!.togglePaused()
-			this.playState = 'paused'
+			this.playState.set('paused')
 		}
 	}
 
 	toggleMuted() {
-		this.isMuted = !this.isMuted
-		if (this.isMuted) {
+		const muted = !this.isMuted()
+		this.isMuted.set(muted)
+		if (muted) {
 			this.lastVolume = this.volumeBar.value
 			this.volumeBar.setValue(0)
 		} else {

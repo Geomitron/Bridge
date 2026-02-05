@@ -3,32 +3,23 @@
  * Provides catalog operations to Angular components via Electron IPC
  */
 
-import { Injectable } from '@angular/core'
-import { BehaviorSubject } from 'rxjs'
+import { Injectable, signal, computed } from '@angular/core'
 import { ChartRecord, CatalogFilter, CatalogStats, ScanProgress, ScanResult } from '../../../../src-shared/interfaces/catalog.interface.js'
 
 @Injectable({
 	providedIn: 'root',
 })
 export class CatalogService {
-	// State subjects
-	private chartsSubject = new BehaviorSubject<ChartRecord[]>([])
-	private statsSubject = new BehaviorSubject<CatalogStats | null>(null)
-	private scanProgressSubject = new BehaviorSubject<ScanProgress | null>(null)
-	private isLoadingSubject = new BehaviorSubject<boolean>(false)
-	private libraryPathsSubject = new BehaviorSubject<string[]>([])
-	private filterSubject = new BehaviorSubject<CatalogFilter>({
+	// State signals
+	readonly charts = signal<ChartRecord[]>([])
+	readonly stats = signal<CatalogStats | null>(null)
+	readonly scanProgress = signal<ScanProgress | null>(null)
+	readonly isLoading = signal<boolean>(false)
+	readonly libraryPaths = signal<string[]>([])
+	readonly filter = signal<CatalogFilter>({
 		sortBy: 'artist',
 		sortDirection: 'asc',
 	})
-
-	// Public observables
-	readonly charts$ = this.chartsSubject.asObservable()
-	readonly stats$ = this.statsSubject.asObservable()
-	readonly scanProgress$ = this.scanProgressSubject.asObservable()
-	readonly isLoading$ = this.isLoadingSubject.asObservable()
-	readonly libraryPaths$ = this.libraryPathsSubject.asObservable()
-	readonly filter$ = this.filterSubject.asObservable()
 
 	constructor() {
 		this.setupIpcListeners()
@@ -37,9 +28,9 @@ export class CatalogService {
 
 	private setupIpcListeners(): void {
 		window.electron.on.catalogScanProgress((progress: ScanProgress) => {
-			this.scanProgressSubject.next(progress)
+			this.scanProgress.set(progress)
 			if (progress.phase === 'complete') {
-				this.scanProgressSubject.next(null)
+				this.scanProgress.set(null)
 				this.refreshCharts()
 				this.refreshStats()
 			}
@@ -49,7 +40,7 @@ export class CatalogService {
 	private async loadLibraryPaths(): Promise<void> {
 		try {
 			const paths = await window.electron.invoke.catalogGetLibraryPaths()
-			this.libraryPathsSubject.next(paths || [])
+			this.libraryPaths.set(paths || [])
 			if (paths && paths.length > 0) {
 				this.refreshCharts()
 				this.refreshStats()
@@ -64,7 +55,7 @@ export class CatalogService {
 			const newPath = await window.electron.invoke.catalogAddLibraryPath()
 			if (newPath) {
 				const paths = await window.electron.invoke.catalogGetLibraryPaths()
-				this.libraryPathsSubject.next(paths || [])
+				this.libraryPaths.set(paths || [])
 			}
 			return newPath
 		} catch (err) {
@@ -77,14 +68,14 @@ export class CatalogService {
 		try {
 			await window.electron.invoke.catalogRemoveLibraryPath(index)
 			const paths = await window.electron.invoke.catalogGetLibraryPaths()
-			this.libraryPathsSubject.next(paths || [])
+			this.libraryPaths.set(paths || [])
 		} catch (err) {
 			console.error('Failed to remove library path:', err)
 		}
 	}
 
 	async scanLibrary(): Promise<ScanResult | null> {
-		this.isLoadingSubject.next(true)
+		this.isLoading.set(true)
 		try {
 			const result = await window.electron.invoke.catalogScan()
 			return result
@@ -92,33 +83,33 @@ export class CatalogService {
 			console.error('Failed to scan library:', err)
 			return null
 		} finally {
-			this.isLoadingSubject.next(false)
+			this.isLoading.set(false)
 		}
 	}
 
 	async refreshCharts(): Promise<void> {
-		this.isLoadingSubject.next(true)
+		this.isLoading.set(true)
 		try {
-			const filter = this.filterSubject.value
-			const charts = await window.electron.invoke.catalogGetCharts(filter)
-			this.chartsSubject.next(charts)
+			const currentFilter = this.filter()
+			const charts = await window.electron.invoke.catalogGetCharts(currentFilter)
+			this.charts.set(charts)
 		} catch (err) {
 			console.error('Failed to refresh charts:', err)
 		} finally {
-			this.isLoadingSubject.next(false)
+			this.isLoading.set(false)
 		}
 	}
 
-	async setFilter(filter: Partial<CatalogFilter>): Promise<void> {
-		const newFilter = { ...this.filterSubject.value, ...filter }
-		this.filterSubject.next(newFilter)
+	async setFilter(filterUpdates: Partial<CatalogFilter>): Promise<void> {
+		const newFilter = { ...this.filter(), ...filterUpdates }
+		this.filter.set(newFilter)
 		await this.refreshCharts()
 	}
 
 	async refreshStats(): Promise<void> {
 		try {
 			const stats = await window.electron.invoke.catalogGetStats()
-			this.statsSubject.next(stats)
+			this.stats.set(stats)
 		} catch (err) {
 			console.error('Failed to get stats:', err)
 		}
@@ -191,26 +182,9 @@ export class CatalogService {
 		await this.setFilter({ search: query || undefined })
 	}
 
-	// Sync accessors
-	get charts(): ChartRecord[] {
-		return this.chartsSubject.value
-	}
-
-	get stats(): CatalogStats | null {
-		return this.statsSubject.value
-	}
-
-	get filter(): CatalogFilter {
-		return this.filterSubject.value
-	}
-
-	get libraryPaths(): string[] {
-		return this.libraryPathsSubject.value
-	}
-
 	getChartsByIds(ids: number[]): ChartRecord[] {
 		const idSet = new Set(ids)
-		return this.charts.filter(c => idSet.has(c.id))
+		return this.charts().filter(c => idSet.has(c.id))
 	}
 
 	// Removal folder methods

@@ -1,27 +1,27 @@
-@if (selectedChart) {
+@if (selectedChart()) {
 	<div class="flex h-full flex-col">
 		<div class="relative">
-			@if (albumArtMd5) {
-				@if (hasIcons && icon) {
-					<div class="tooltip absolute bottom-3 left-3" [attr.data-tip]="iconTooltip">
+			@if (albumArtMd5()) {
+				@if (hasIcons() && icon()) {
+					<div class="tooltip absolute bottom-3 left-3" [attr.data-tip]="iconTooltip()">
 						<img
 							class="w-16"
-							src="https://clonehero.gitlab.io/sources/icons/{{ icon }}"
-							[alt]="selectedChart.icon"
-							(load)="iconLoading = false"
-							(error)="iconLoading = false"
-							[class.hidden]="iconLoading" />
+							src="https://clonehero.gitlab.io/sources/icons/{{ icon() }}"
+							[alt]="selectedChart()!.icon"
+							(load)="iconLoading.set(false)"
+							(error)="iconLoading.set(false)"
+							[class.hidden]="iconLoading()" />
 					</div>
 				}
-				@if (albumLoading) {
+				@if (albumLoading()) {
 					<div class="skeleton w-full aspect-square"></div>
 				}
 				<img
-					src="https://files.enchor.us/{{ albumArtMd5 }}.jpg"
+					src="https://files.enchor.us/{{ albumArtMd5() }}.jpg"
 					alt="Album art"
-					(load)="albumLoading = false"
-					(error)="albumLoading = false"
-					[class.hidden]="albumLoading" />
+					(load)="albumLoading.set(false)"
+					(error)="albumLoading.set(false)"
+					[class.hidden]="albumLoading()" />
 			}
 		</div>
 		<div
@@ -29,11 +29,11 @@
 			<div class="flex flex-1 flex-col gap-1">
 				<div>
 					<b>Charter: </b>
-					<a class="link link-hover" (click)="onSourceLinkClicked()">{{ selectedChart.charter | removeStyleTags }}</a>
+					<a class="link link-hover" (click)="onSourceLinkClicked()">{{ selectedChart()!.charter | removeStyleTags }}</a>
 				</div>
 				<div class="whitespace-nowrap">
 					<span class="font-bold">Length:</span>
-					{{ effectiveLength }} (+{{ extraLengthSeconds }}s)
+					{{ effectiveLength() }} (+{{ extraLengthSeconds() }}s)
 					<div
 						class="tooltip tooltip-bottom cursor-help [text-wrap:balance]"
 						data-tip="The time between the first and last note. The second value is the extra time at the start and end of the song without notes.">
@@ -42,35 +42,35 @@
 				</div>
 				<div class="flex flex-wrap">
 					<div class="flex-1">
-						@if (hasIssues) {
+						@if (hasIssuesComputed()) {
 							<div class="dropdown dropdown-hover">
 								<label tabindex="0" class="cursor-help"><i class="bi bi-exclamation-triangle text-lg -my-3 ml-1"></i> Issues Detected</label>
 								<div tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box min-w-max">
-									@if (metadataIssues.length > 0) {
+									@if (metadataIssues().length > 0) {
 										<div class="menu-title">Metadata Issues Found:</div>
 										<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
-											@for (issue of metadataIssues; track issue) {
+											@for (issue of metadataIssues(); track issue) {
 												<li class="list-item">{{ issue.description }}</li>
 											}
 										</ul>
 									}
-									@if (folderIssues.length > 0) {
+									@if (folderIssues().length > 0) {
 										<div class="menu-title">Chart Folder Issues Found:</div>
 										<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
-											@for (issue of folderIssues; track issue) {
+											@for (issue of folderIssues(); track issue) {
 												<li class="list-item">{{ issue.description }}</li>
 											}
 										</ul>
 									}
-									@if (globalChartIssues.length > 0) {
+									@if (globalChartIssues().length > 0) {
 										<div class="menu-title">Chart Issues Found:</div>
 										<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
-											@for (issue of globalChartIssues; track issue) {
+											@for (issue of globalChartIssues(); track issue) {
 												<li class="list-item">{{ issue }}</li>
 											}
 										</ul>
 									}
-									@for (trackIssues of trackIssuesGroups; track $index) {
+									@for (trackIssues of trackIssuesGroups(); track $index) {
 										<div class="menu-title">{{ trackIssues.groupName }}</div>
 										<ul class="list-disc ml-9 min-w-[246px] max-w-[min(26.1vw,444px)]">
 											@for (issue of trackIssues.issues; track issue) {
@@ -81,10 +81,10 @@
 								</div>
 							</div>
 						}
-						@if (selectedChart.modchart) {
+						@if (selectedChart()!.modchart) {
 							<div><i class="bi bi-star text-lg -my-3 ml-1"></i> Modchart</div>
 						}
-						@for (pair of boolProperties; track $index) {
+						@for (pair of boolProperties(); track $index) {
 							<p class="flex items-center">
 								<i class="bi text-2xl -my-3" [ngClass]="pair.value ? 'bi-check2' : 'bi-x'" [ngStyle]="{ color: pair.value ? 'green' : 'red' }"> </i>
 								<span class="ml-1 whitespace-nowrap" [class.font-bold]="pair.value">{{ pair.text }}</span>
@@ -96,35 +96,35 @@
 			<div class="flex flex-1 flex-col gap-1">
 				<div
 					class="flex flex-wrap gap-1 max-h-40 min-h-[44px] max-w-[234px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-h-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
-					@if (selectedChart.notesData.hasVocals) {
-						<app-chart-sidebar-instrument [chart]="selectedChart" instrument="vocals" />
+					@if (selectedChart()!.notesData.hasVocals) {
+						<app-chart-sidebar-instrument [chart]="selectedChart()!" instrument="vocals" />
 					}
-					@for (instrument of instruments; track $index) {
-						<app-chart-sidebar-instrument [chart]="selectedChart" [instrument]="instrument" />
+					@for (instrument of instrumentsList(); track $index) {
+						<app-chart-sidebar-instrument [chart]="selectedChart()!" [instrument]="instrument" />
 					}
 				</div>
 				<div class="flex flex-1 flex-col">
-					@if (instruments.length > 1 || difficulties.length > 1) {
+					@if (instrumentsList().length > 1 || difficultiesList().length > 1) {
 						<div class="flex flex-wrap gap-1">
-							@if (instruments.length > 1) {
+							@if (instrumentsList().length > 1) {
 								<select class="select select-bordered select-sm grow-[40]" [formControl]="instrumentDropdown">
-									@for (instrument of instruments; track $index) {
+									@for (instrument of instrumentsList(); track $index) {
 										<option [value]="instrument">{{ shortInstrumentDisplay(instrument) }}</option>
 									}
 								</select>
 							}
-							@if (difficulties.length > 1) {
+							@if (difficultiesList().length > 1) {
 								<select class="select select-bordered select-sm flex-1" [formControl]="difficultyDropdown">
-									@for (difficulty of difficulties; track $index) {
+									@for (difficulty of difficultiesList(); track $index) {
 										<option [value]="difficulty">{{ difficultyDisplay(difficulty) }}</option>
 									}
 								</select>
 							}
 						</div>
 					}
-					<p class="font-bold whitespace-nowrap">Average NPS: {{ averageNps || 'N/A' }}</p>
-					<p class="font-bold whitespace-nowrap">Maximum NPS: {{ maximumNps }}</p>
-					<p class="font-bold whitespace-nowrap">Note Count: {{ noteCount }}</p>
+					<p class="font-bold whitespace-nowrap">Average NPS: {{ averageNps() || 'N/A' }}</p>
+					<p class="font-bold whitespace-nowrap">Maximum NPS: {{ maximumNps() }}</p>
+					<p class="font-bold whitespace-nowrap">Note Count: {{ noteCount() }}</p>
 					<button class="btn btn-sm btn-neutral my-1 max-w-fit flex-nowrap" (click)="previewModal.showModal()">
 						<i class="bi bi-play text-lg text-neutral-content"></i>
 						Chart Preview
@@ -138,7 +138,7 @@
 							</form>
 							<app-chart-sidebar-preview
 								#chartPreview
-								[selectedChart]="selectedChart"
+								[selectedChart]="selectedChart()!"
 								[instrument]="instrumentDropdown.value"
 								[difficulty]="difficultyDropdown.value" />
 						</div>
@@ -155,9 +155,9 @@
 				#menu
 				class="cursor-pointer bg-neutral rounded-md join-item dropdown dropdown-top dropdown-end p-1 flex items-center"
 				(click)="showMenu()"
-				[class.dropdown-open]="menuVisible">
+				[class.dropdown-open]="menuVisible()">
 				<i class="bi bi-three-dots text-2xl px-1 text-neutral-content"></i>
-				<app-chart-sidebar-menu [chartVersions]="charts![0]" (selectedVersionChanges)="selectedChart = $event" />
+				<app-chart-sidebar-menu [chartVersions]="charts()![0]" (selectedVersionChanges)="setSelectedChart($event)" />
 			</div>
 			<dialog #libraryDirectoryErrorModal class="modal">
 				<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">

@@ -2,11 +2,14 @@
  * Bridge Video Sync Module - Component
  */
 
-import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core'
+import { Component, OnInit, OnDestroy, inject, signal, effect, DestroyRef } from '@angular/core'
+import { FormsModule } from '@angular/forms'
+import { DecimalPipe, SlicePipe } from '@angular/common'
 import { VideoSyncService } from '../../core/services/video-sync.service'
 import { CatalogService } from '../../core/services/catalog.service'
 import { NavigationEnd, Router } from '@angular/router'
-import { Subscription, filter } from 'rxjs'
+import { filter } from 'rxjs'
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import {
 	YouTubeSearchResult,
 	VideoDownloadProgress,
@@ -15,70 +18,71 @@ import {
 
 @Component({
 	selector: 'app-video-sync',
+	standalone: true,
+	imports: [FormsModule, DecimalPipe, SlicePipe],
 	templateUrl: './video-sync.component.html',
-	standalone: false,
 })
 export class VideoSyncComponent implements OnInit, OnDestroy {
-	private routerSub: Subscription | null = null
+	private videoSyncService = inject(VideoSyncService)
+	private catalogService = inject(CatalogService)
+	private router = inject(Router)
+	private destroyRef = inject(DestroyRef)
+
 	// Tool status
-	toolsAvailable: { ytDlp: boolean; ffmpeg: boolean } | null = null
-	checkingTools = true
+	toolsAvailable = signal<{ ytDlp: boolean; ffmpeg: boolean } | null>(null)
+	checkingTools = signal(true)
 
 	// Charts without videos
-	chartsMissingVideo: ChartVideoMatch[] = []
-	filteredCharts: ChartVideoMatch[] = []
-	loadingCharts = false
+	chartsMissingVideo = signal<ChartVideoMatch[]>([])
+	filteredCharts = signal<ChartVideoMatch[]>([])
+	loadingCharts = signal(false)
 
 	// Filter/sort state
-	filterQuery = ''
-	filterArtist = ''
-	sortField: 'artist' | 'name' = 'artist'
-	sortDirection: 'asc' | 'desc' = 'asc'
-	artistOptions: string[] = []
+	filterQuery = signal('')
+	filterArtist = signal('')
+	sortField = signal<'artist' | 'name'>('artist')
+	sortDirection = signal<'asc' | 'desc'>('asc')
+	artistOptions = signal<string[]>([])
 
 	// Currently selected chart
-	selectedChart: ChartVideoMatch | null = null
+	selectedChart = signal<ChartVideoMatch | null>(null)
 
 	// Search
-	searchQuery = ''
-	searchResults: YouTubeSearchResult[] = []
-	isSearching = false
-	searchError: string | null = null
-	searchSource: 'youtube' | 'url' | 'local' = 'youtube'
+	searchQuery = signal('')
+	searchResults = signal<YouTubeSearchResult[]>([])
+	isSearching = signal(false)
+	searchError = signal<string | null>(null)
+	searchSource = signal<'youtube' | 'url' | 'local'>('youtube')
 
 	// URL paste
-	pasteUrl = ''
+	pasteUrl = signal('')
 
 	// Local file import
-	selectedLocalFile: string | null = null
+	selectedLocalFile = signal<string | null>(null)
 
 	// Download
-	selectedVideo: YouTubeSearchResult | null = null
-	downloadProgress: VideoDownloadProgress | null = null
-	isDownloading = false
-	downloadError: string | null = null
+	selectedVideo = signal<YouTubeSearchResult | null>(null)
+	downloadProgress = signal<VideoDownloadProgress | null>(null)
+	isDownloading = signal(false)
+	downloadError = signal<string | null>(null)
 
 	// View mode
-	viewMode: 'list' | 'search' = 'list'
+	viewMode = signal<'list' | 'search'>('list')
 
-	constructor(
-		private videoSyncService: VideoSyncService,
-		private catalogService: CatalogService,
-		private ref: ChangeDetectorRef,
-		private router: Router,
-	) { }
-
-	ngOnInit(): void {
-		// Subscribe to observables
-		this.videoSyncService.toolsAvailable$.subscribe(tools => {
-			this.toolsAvailable = tools
-			this.checkingTools = false
-			this.ref.detectChanges()
+	constructor() {
+		// Subscribe to toolsAvailable
+		effect(() => {
+			const tools = this.videoSyncService.toolsAvailable()
+			if (tools !== null) {
+				this.toolsAvailable.set(tools)
+				this.checkingTools.set(false)
+			}
 		})
 
-		this.videoSyncService.downloadProgress$.subscribe(progress => {
-			this.downloadProgress = progress
-			this.ref.detectChanges()
+		// Subscribe to downloadProgress
+		effect(() => {
+			const progress = this.videoSyncService.downloadProgress()
+			this.downloadProgress.set(progress)
 
 			// Refresh chart list when download completes
 			if (progress?.phase === 'complete') {
@@ -89,19 +93,21 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 
 			// Handle download errors
 			if (progress?.phase === 'error') {
-				this.downloadError = progress.message
-				this.ref.detectChanges()
+				this.downloadError.set(progress.message)
 			}
 		})
 
-		this.videoSyncService.isDownloading$.subscribe(downloading => {
-			this.isDownloading = downloading
-			this.ref.detectChanges()
+		// Subscribe to isDownloading
+		effect(() => {
+			this.isDownloading.set(this.videoSyncService.isDownloading())
 		})
+	}
 
+	ngOnInit(): void {
 		// Listen for navigation to this route (handles route reuse)
-		this.routerSub = this.router.events.pipe(
-			filter(event => event instanceof NavigationEnd)
+		this.router.events.pipe(
+			filter(event => event instanceof NavigationEnd),
+			takeUntilDestroyed(this.destroyRef)
 		).subscribe((event: any) => {
 			if (event.urlAfterRedirects === '/video-sync') {
 				this.checkForPreselectedChart()
@@ -116,9 +122,7 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		if (this.routerSub) {
-			this.routerSub.unsubscribe()
-		}
+		// DestroyRef handles cleanup
 	}
 
 	private checkForPreselectedChart(): void {
@@ -145,82 +149,83 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 	}
 
 	async loadChartsMissingVideo(): Promise<void> {
-		this.loadingCharts = true
-		this.ref.detectChanges()
+		this.loadingCharts.set(true)
 
 		try {
-			this.chartsMissingVideo = await this.videoSyncService.getChartsMissingVideo(10000)
+			const charts = await this.videoSyncService.getChartsMissingVideo(10000)
+			this.chartsMissingVideo.set(charts)
 			this.buildArtistOptions()
 			this.applyFilter()
 		} catch (err) {
 			console.error('Failed to load charts:', err)
 		} finally {
-			this.loadingCharts = false
-			this.ref.detectChanges()
+			this.loadingCharts.set(false)
 		}
 	}
 
 	buildArtistOptions(): void {
 		const artists = new Set<string>()
-		this.chartsMissingVideo.forEach(c => {
+		this.chartsMissingVideo().forEach(c => {
 			if (c.chartArtist) artists.add(c.chartArtist)
 		})
-		this.artistOptions = Array.from(artists).sort((a, b) =>
+		this.artistOptions.set(Array.from(artists).sort((a, b) =>
 			a.toLowerCase().localeCompare(b.toLowerCase())
-		)
+		))
 	}
 
 	applyFilter(): void {
-		let result = [...this.chartsMissingVideo]
+		let result = [...this.chartsMissingVideo()]
 
 		// Text filter
-		if (this.filterQuery) {
-			const query = this.filterQuery.toLowerCase()
+		const query = this.filterQuery()
+		if (query) {
+			const queryLower = query.toLowerCase()
 			result = result.filter(c =>
-				c.chartName.toLowerCase().includes(query) ||
-				c.chartArtist.toLowerCase().includes(query)
+				c.chartName.toLowerCase().includes(queryLower) ||
+				c.chartArtist.toLowerCase().includes(queryLower)
 			)
 		}
 
 		// Artist filter
-		if (this.filterArtist) {
-			result = result.filter(c => c.chartArtist === this.filterArtist)
+		const artistFilter = this.filterArtist()
+		if (artistFilter) {
+			result = result.filter(c => c.chartArtist === artistFilter)
 		}
 
 		// Sort
+		const field = this.sortField()
+		const direction = this.sortDirection()
 		result.sort((a, b) => {
-			const aVal = this.sortField === 'artist' ? a.chartArtist : a.chartName
-			const bVal = this.sortField === 'artist' ? b.chartArtist : b.chartName
+			const aVal = field === 'artist' ? a.chartArtist : a.chartName
+			const bVal = field === 'artist' ? b.chartArtist : b.chartName
 			const cmp = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
-			return this.sortDirection === 'asc' ? cmp : -cmp
+			return direction === 'asc' ? cmp : -cmp
 		})
 
-		this.filteredCharts = result
-		this.ref.detectChanges()
+		this.filteredCharts.set(result)
 	}
 
 	toggleSortDirection(): void {
-		this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+		this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc')
 		this.applyFilter()
 	}
 
 	clearFilters(): void {
-		this.filterQuery = ''
-		this.filterArtist = ''
+		this.filterQuery.set('')
+		this.filterArtist.set('')
 		this.applyFilter()
 	}
 
 	selectChart(chart: ChartVideoMatch): void {
-		this.selectedChart = chart
-		this.searchQuery = chart.suggestedQuery
-		this.searchResults = []
-		this.selectedVideo = null
-		this.searchError = null
-		this.searchSource = 'youtube'
-		this.pasteUrl = ''
-		this.selectedLocalFile = null
-		this.viewMode = 'search'
-		this.ref.detectChanges()
+		this.selectedChart.set(chart)
+		this.searchQuery.set(chart.suggestedQuery)
+		this.searchResults.set([])
+		this.selectedVideo.set(null)
+		this.searchError.set(null)
+		this.searchSource.set('youtube')
+		this.pasteUrl.set('')
+		this.selectedLocalFile.set(null)
+		this.viewMode.set('search')
 	}
 
 	getSourceName(source: string): string {
@@ -234,34 +239,35 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 	}
 
 	async search(): Promise<void> {
-		if (!this.searchQuery.trim()) return
+		const query = this.searchQuery()
+		if (!query.trim()) return
 
-		this.isSearching = true
-		this.searchError = null
-		this.searchResults = []
-		this.ref.detectChanges()
+		this.isSearching.set(true)
+		this.searchError.set(null)
+		this.searchResults.set([])
 
 		try {
-			this.searchResults = await this.videoSyncService.searchVideos(this.searchQuery, 'youtube')
+			const results = await this.videoSyncService.searchVideos(query, 'youtube')
+			this.searchResults.set(results)
 		} catch (err) {
-			this.searchError = `Search failed: ${err}`
+			this.searchError.set(`Search failed: ${err}`)
 		} finally {
-			this.isSearching = false
-			this.ref.detectChanges()
+			this.isSearching.set(false)
 		}
 	}
 
 	async downloadFromUrl(): Promise<void> {
-		if (!this.selectedChart || !this.pasteUrl.trim()) return
+		const chart = this.selectedChart()
+		const url = this.pasteUrl()
+		if (!chart || !url.trim()) return
 
-		this.downloadError = null
-		this.ref.detectChanges()
+		this.downloadError.set(null)
 
 		try {
 			await this.videoSyncService.downloadFromUrl({
-				chartId: this.selectedChart.chartId,
-				url: this.pasteUrl.trim(),
-				outputPath: this.selectedChart.chartPath,
+				chartId: chart.chartId,
+				url: url.trim(),
+				outputPath: chart.chartPath,
 			})
 			this.goBackToList()
 		} catch (err) {
@@ -273,52 +279,50 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 		try {
 			const filePath = await this.videoSyncService.selectVideoFile()
 			if (filePath) {
-				this.selectedLocalFile = filePath
-				this.ref.detectChanges()
+				this.selectedLocalFile.set(filePath)
 			}
 		} catch (err) {
-			this.searchError = `Failed to select file: ${err}`
-			this.ref.detectChanges()
+			this.searchError.set(`Failed to select file: ${err}`)
 		}
 	}
 
 	async importLocalFile(): Promise<void> {
-		if (!this.selectedChart || !this.selectedLocalFile) return
+		const chart = this.selectedChart()
+		const localFile = this.selectedLocalFile()
+		if (!chart || !localFile) return
 
-		this.downloadError = null
-		this.ref.detectChanges()
+		this.downloadError.set(null)
 
 		try {
 			await this.videoSyncService.importLocalVideo({
-				chartId: this.selectedChart.chartId,
-				sourcePath: this.selectedLocalFile,
-				outputPath: this.selectedChart.chartPath,
+				chartId: chart.chartId,
+				sourcePath: localFile,
+				outputPath: chart.chartPath,
 			})
 			this.goBackToList()
 		} catch (err) {
 			console.error('Import failed:', err)
-			this.downloadError = `Import failed: ${err}`
-			this.ref.detectChanges()
+			this.downloadError.set(`Import failed: ${err}`)
 		}
 	}
 
 	selectVideo(video: YouTubeSearchResult): void {
-		this.selectedVideo = video
-		this.ref.detectChanges()
+		this.selectedVideo.set(video)
 	}
 
 	async downloadVideo(): Promise<void> {
-		if (!this.selectedChart || !this.selectedVideo) return
+		const chart = this.selectedChart()
+		const video = this.selectedVideo()
+		if (!chart || !video) return
 
 		// Clear any previous error
-		this.downloadError = null
-		this.ref.detectChanges()
+		this.downloadError.set(null)
 
 		try {
 			await this.videoSyncService.downloadVideo({
-				chartId: this.selectedChart.chartId,
-				videoId: this.selectedVideo.videoId,
-				outputPath: this.selectedChart.chartPath,
+				chartId: chart.chartId,
+				videoId: video.videoId,
+				outputPath: chart.chartPath,
 			})
 
 			// Go back to list after successful download
@@ -330,23 +334,23 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 	}
 
 	cancelDownload(): void {
-		if (this.selectedVideo) {
-			this.videoSyncService.cancelDownload(this.selectedVideo.videoId)
+		const video = this.selectedVideo()
+		if (video) {
+			this.videoSyncService.cancelDownload(video.videoId)
 		}
 	}
 
 	goBackToList(): void {
-		this.viewMode = 'list'
-		this.selectedChart = null
-		this.selectedVideo = null
-		this.searchResults = []
-		this.searchQuery = ''
-		this.searchError = null
-		this.downloadError = null
-		this.pasteUrl = ''
-		this.selectedLocalFile = null
-		this.searchSource = 'youtube'
-		this.ref.detectChanges()
+		this.viewMode.set('list')
+		this.selectedChart.set(null)
+		this.selectedVideo.set(null)
+		this.searchResults.set([])
+		this.searchQuery.set('')
+		this.searchError.set(null)
+		this.downloadError.set(null)
+		this.pasteUrl.set('')
+		this.selectedLocalFile.set(null)
+		this.searchSource.set('youtube')
 	}
 
 	formatDuration(seconds: number | null): string {
@@ -369,8 +373,35 @@ export class VideoSyncComponent implements OnInit, OnDestroy {
 	}
 
 	refreshTools(): void {
-		this.checkingTools = true
-		this.ref.detectChanges()
+		this.checkingTools.set(true)
 		this.videoSyncService.checkTools()
+	}
+
+	// Event handler methods for template two-way binding
+	onFilterQueryChange(value: string): void {
+		this.filterQuery.set(value)
+		this.applyFilter()
+	}
+
+	onFilterArtistChange(value: string): void {
+		this.filterArtist.set(value)
+		this.applyFilter()
+	}
+
+	onSortFieldChange(value: 'artist' | 'name'): void {
+		this.sortField.set(value)
+		this.applyFilter()
+	}
+
+	onSearchQueryChange(value: string): void {
+		this.searchQuery.set(value)
+	}
+
+	onPasteUrlChange(value: string): void {
+		this.pasteUrl.set(value)
+	}
+
+	onSearchSourceChange(value: 'youtube' | 'url' | 'local'): void {
+		this.searchSource.set(value)
 	}
 }

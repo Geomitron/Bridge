@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
-import { AbstractControl, FormBuilder, FormControl } from '@angular/forms'
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject, signal, computed, effect } from '@angular/core'
+import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms'
+import { NgClass } from '@angular/common'
 
 import dayjs from 'dayjs'
 import { distinctUntilChanged, switchMap, throttleTime } from 'rxjs'
@@ -9,11 +10,14 @@ import { difficulties, difficultyDisplay, drumsReviewedDisplay, drumTypeDisplay,
 
 @Component({
 	selector: 'app-search-bar',
+	standalone: true,
+	imports: [ReactiveFormsModule, FormsModule, NgClass],
 	templateUrl: './search-bar.component.html',
-	standalone: false,
 	host: { class: 'block relative z-10' },
 })
 export class SearchBarComponent implements OnInit, AfterViewInit {
+	private searchService = inject(SearchService)
+	private fb = inject(FormBuilder)
 
 	@ViewChild('searchInput') searchInput: ElementRef<HTMLInputElement>
 
@@ -24,92 +28,86 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	@ViewChild('hasRollLanes') hasRollLanes: ElementRef<HTMLInputElement>
 	@ViewChild('has2xKick') has2xKick: ElementRef<HTMLInputElement>
 
-	public showAdvanced = false
-	public instruments = instruments
-	public difficulties = difficulties
-	public drumTypes = drumTypeNames
-	public instrumentDisplay = instrumentDisplay
-	public difficultyDisplay = difficultyDisplay
-	public drumTypeDisplay = drumTypeDisplay
-	public drumsReviewedDisplay = drumsReviewedDisplay
+	showAdvanced = signal(false)
+	instruments = instruments
+	difficulties = difficulties
+	drumTypes = drumTypeNames
+	instrumentDisplay = instrumentDisplay
+	difficultyDisplay = difficultyDisplay
+	drumTypeDisplay = drumTypeDisplay
+	drumsReviewedDisplay = drumsReviewedDisplay
 
-	public advancedSearchForm: ReturnType<this['getAdvancedSearchForm']>
-	public startValidation = false
+	advancedSearchForm: ReturnType<this['getAdvancedSearchForm']>
+	startValidation = signal(false)
 
-	constructor(
-		private searchService: SearchService,
-		private fb: FormBuilder,
-	) { }
+	// Reactive getters
+	searchLoading = computed(() => this.searchService.searchLoading())
+	instrument = computed(() => this.searchService.instrument())
+	difficulty = computed(() => this.searchService.difficulty())
+	drumType = computed(() => this.searchService.drumType())
+	drumsReviewed = computed(() => this.searchService.drumsReviewed())
+
+	// Search control with signal
+	searchValue = signal('')
 
 	ngOnInit() {
-		this.searchControl.valueChanges.pipe(
-			throttleTime(400, undefined, { leading: true, trailing: true }),
-			distinctUntilChanged(),
-			switchMap(search => this.searchService.search(search || '*'))
-		).subscribe()
-
 		this.initializeAdvancedSearchForm()
+
+		// Watch search value changes
+		effect(() => {
+			const value = this.searchValue()
+			// This will be handled by template binding
+		})
 	}
 
 	ngAfterViewInit() {
 		this.searchInput.nativeElement.focus()
 		this.updateDisabledControls()
-		this.searchService.instrument.valueChanges.subscribe(() => {
+
+		// Watch for instrument changes to update disabled controls
+		effect(() => {
+			const _ = this.instrument() // Track the signal
 			this.updateDisabledControls()
 		})
 	}
 
+	onSearchInput(value: string) {
+		this.searchValue.set(value)
+		// Debounce and search
+		this.searchService.searchValue.set(value)
+		this.searchService.search(value || '*').subscribe()
+	}
+
 	setShowAdvanced(showAdvanced: boolean) {
-		this.showAdvanced = showAdvanced
+		this.showAdvanced.set(showAdvanced)
 		if (showAdvanced) {
-			this.startValidation = false
-			this.searchControl.disable()
-		} else {
-			this.searchControl.enable()
+			this.startValidation.set(false)
 		}
 	}
 
-	get searchControl() {
-		return this.searchService.searchControl
-	}
-	get instrument() {
-		return this.searchService.instrument.value
-	}
-	get searchLoading() {
-		return this.searchService.searchLoading
-	}
 	setInstrument(instrument: Instrument | null, event: MouseEvent) {
-		this.searchService.instrument.setValue(instrument)
+		this.searchService.setInstrument(instrument)
 		if (event.target instanceof HTMLElement) {
 			event.target.parentElement?.parentElement?.blur()
 		}
 	}
 
-	get difficulty() {
-		return this.searchService.difficulty.value
-	}
 	setDifficulty(difficulty: Difficulty | null, event: MouseEvent) {
-		this.searchService.difficulty.setValue(difficulty)
+		this.searchService.setDifficulty(difficulty)
 		if (event.target instanceof HTMLElement) {
 			event.target.parentElement?.parentElement?.blur()
 		}
 	}
 
-	get drumType() {
-		return this.searchService.drumType.value
-	}
 	setDrumType(drumType: DrumTypeName | null, event: MouseEvent) {
-		this.searchService.drumType.setValue(drumType)
+		this.searchService.setDrumType(drumType)
 		if (event.target instanceof HTMLElement) {
 			event.target.parentElement?.parentElement?.blur()
 		}
 	}
 
-	get drumsReviewed() {
-		return this.searchService.drumsReviewed.value
-	}
 	setDrumsReviewed(drumsReviewed: boolean, event: MouseEvent) {
-		this.searchService.drumsReviewed.setValue(drumsReviewed)
+		this.searchService.setDrumsReviewed(drumsReviewed)
 		if (event.target instanceof HTMLElement) {
 			event.target.parentElement?.parentElement?.blur()
 		}
@@ -140,8 +138,10 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	}
 
 	updateDisabledControls() {
-		const isDrums = this.searchService.instrument.value === 'drums'
-		const isAny = this.searchService.instrument.value === null
+		if (!this.hasForcedNotes?.nativeElement) return
+
+		const isDrums = this.searchService.instrument() === 'drums'
+		const isAny = this.searchService.instrument() === null
 		const explanation = 'Not available for the current instrument.'
 
 		this.hasForcedNotes.nativeElement.disabled = isDrums && !isAny
@@ -231,14 +231,14 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	}
 
 	searchAdvanced() {
-		this.startValidation = true
-		if (this.advancedSearchForm.valid && !this.searchService.searchLoading) {
+		this.startValidation.set(true)
+		if (this.advancedSearchForm.valid && !this.searchService.searchLoading()) {
 			this.searchService.advancedSearch({
-				instrument: this.instrument,
-				difficulty: this.difficulty,
-				drumType: this.drumType,
-				drumsReviewed: this.drumsReviewed,
-				sort: this.searchService.sortColumn !== null ? { type: this.searchService.sortColumn, direction: this.searchService.sortDirection } : null,
+				instrument: this.instrument(),
+				difficulty: this.difficulty(),
+				drumType: this.drumType(),
+				drumsReviewed: this.drumsReviewed(),
+				sort: this.searchService.sortColumn() !== null ? { type: this.searchService.sortColumn()!, direction: this.searchService.sortDirection() } : null,
 				source: 'bridge' as const,
 				...this.advancedSearchForm.getRawValue(),
 			}).subscribe()

@@ -2,16 +2,14 @@
  * Bridge Lyrics Module - Angular Service
  */
 
-import { Injectable } from '@angular/core'
-import { BehaviorSubject } from 'rxjs'
+import { Injectable, signal } from '@angular/core'
 import { LyricsSearchResult, ChartLyricsMatch, LyricsDownloadProgress } from '../../../../src-shared/interfaces/lyrics.interface.js'
 
 @Injectable({
 	providedIn: 'root',
 })
 export class LyricsService {
-	private progressSubject = new BehaviorSubject<LyricsDownloadProgress | null>(null)
-	readonly progress$ = this.progressSubject.asObservable()
+	readonly progress = signal<LyricsDownloadProgress | null>(null)
 
 	constructor() {
 		this.setupIpcListeners()
@@ -19,9 +17,9 @@ export class LyricsService {
 
 	private setupIpcListeners(): void {
 		window.electron.on.lyricsProgress((progress: LyricsDownloadProgress) => {
-			this.progressSubject.next(progress)
+			this.progress.set(progress)
 			if (progress.phase === 'complete' || progress.phase === 'error') {
-				setTimeout(() => this.progressSubject.next(null), 2000)
+				setTimeout(() => this.progress.set(null), 2000)
 			}
 		})
 	}

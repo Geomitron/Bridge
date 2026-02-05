@@ -1,4 +1,5 @@
-import { Component, ElementRef, ViewChild } from '@angular/core'
+import { Component, ElementRef, ViewChild, inject, computed, effect } from '@angular/core'
+import { DecimalPipe } from '@angular/common'
 
 import _ from 'lodash'
 
@@ -6,35 +7,39 @@ import { removeStyleTags } from '../../../../../src-shared/UtilFunctions.js'
 import { DownloadService } from '../../../core/services/download.service'
 import { SearchService } from '../../../core/services/search.service'
 import { SelectionService } from '../../../core/services/selection.service'
+import { DownloadsModalComponent } from './downloads-modal/downloads-modal.component'
 
 @Component({
 	selector: 'app-status-bar',
+	standalone: true,
+	imports: [DecimalPipe, DownloadsModalComponent],
 	templateUrl: './status-bar.component.html',
-	standalone: false,
 })
 export class StatusBarComponent {
+	downloadService = inject(DownloadService)
+	searchService = inject(SearchService)
+	private selectionService = inject(SelectionService)
 
 	@ViewChild('downloadsModal', { static: false }) downloadsModalComponent: ElementRef
 
-	constructor(
-		public downloadService: DownloadService,
-		public searchService: SearchService,
-		private selectionService: SelectionService,
-	) {
-		this.downloadService.downloadCountChanges.subscribe(downloadCount => {
-			if (downloadCount === 0) {
+	selectedGroupIds = computed(() => {
+		const selections = this.selectionService.selections()
+		return _.keys(_.pickBy(selections)).map(k => Number(k))
+	})
+
+	constructor() {
+		// Watch for download count changes to close modal when empty
+		effect(() => {
+			const count = this.downloadService.downloadCount()
+			if (count === 0 && this.downloadsModalComponent?.nativeElement) {
 				this.downloadsModalComponent.nativeElement.close()
 			}
 		})
 	}
 
-	get selectedGroupIds() {
-		return _.keys(_.pickBy(this.selectionService.selections)).map(k => Number(k))
-	}
-
 	async downloadSelected() {
-		const selectedGroupIds = this.selectedGroupIds
-		const selectedCharts = this.searchService.groupedSongs.filter(gs => selectedGroupIds.includes(gs[0].groupId))
+		const selectedIds = this.selectedGroupIds()
+		const selectedCharts = this.searchService.groupedSongs().filter(gs => selectedIds.includes(gs[0].groupId))
 
 		for (const chart of _.uniqBy(selectedCharts, gs => `${removeStyleTags(gs[0].artist ?? 'Unknown Artist')
 			} - ${removeStyleTags(gs[0].name ?? 'Unknown Name')

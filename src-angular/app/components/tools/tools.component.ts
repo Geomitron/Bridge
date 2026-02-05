@@ -1,36 +1,36 @@
-import { Component, ElementRef, NgZone, ViewChild } from '@angular/core'
+import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core'
 
 import { SettingsService } from 'src-angular/app/core/services/settings.service'
 
 @Component({
 	selector: 'app-tools',
+	standalone: true,
+	imports: [],
 	templateUrl: './tools.component.html',
-	standalone: false,
 })
 export class ToolsComponent {
+	settingsService = inject(SettingsService)
+
 	@ViewChild('themeDropdown', { static: true }) themeDropdown: ElementRef
 	@ViewChild('scanErrorModal') scanErrorModal: ElementRef<HTMLDialogElement>
 
-	public scanning = false
-	public buttonText = 'Scan for issues'
-	public scanErrorText = ''
+	scanning = signal(false)
+	buttonText = signal('Scan for issues')
+	scanErrorText = signal('')
 
-	constructor(
-		zone: NgZone,
-		public settingsService: SettingsService,
-	) {
-		window.electron.on.updateIssueScan(({ status, message }) => zone.run(() => {
+	constructor() {
+		window.electron.on.updateIssueScan(({ status, message }) => {
 			if (status === 'progress') {
-				this.buttonText = message
+				this.buttonText.set(message)
 			} else if (status === 'error') {
-				this.scanning = false
-				this.scanErrorText = message
+				this.scanning.set(false)
+				this.scanErrorText.set(message)
 				this.scanErrorModal.nativeElement.showModal()
 			} else if (status === 'done') {
-				this.scanning = false
-				this.buttonText = message + ' (click to scan again)'
+				this.scanning.set(false)
+				this.buttonText.set(message + ' (click to scan again)')
 			}
-		}))
+		})
 	}
 
 	openIssueScanDirectory() {
@@ -71,7 +71,7 @@ export class ToolsComponent {
 
 	async scanIssues() {
 		if (this.settingsService.issueScanDirectory && this.settingsService.spreadsheetOutputDirectory) {
-			this.scanning = true
+			this.scanning.set(true)
 			window.electron.emit.scanIssues()
 		}
 	}

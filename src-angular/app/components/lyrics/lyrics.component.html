@@ -2,11 +2,11 @@
 	<div class="flex justify-between items-center mb-3">
 		<div class="flex items-baseline gap-3">
 			<h2 class="text-xl font-semibold">Lyrics</h2>
-			<span class="text-sm text-base-content/60"> {{ filteredCharts.length }} of {{ chartsMissingLyrics.length }} charts missing lyrics </span>
+			<span class="text-sm text-base-content/60"> {{ filteredCharts().length }} of {{ chartsMissingLyrics().length }} charts missing lyrics </span>
 		</div>
 		<div class="flex gap-2">
-			<button class="btn btn-sm btn-primary" (click)="loadChartsMissingLyrics()" [disabled]="isLoading">
-				<i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoading"></i>
+			<button class="btn btn-sm btn-primary" (click)="loadChartsMissingLyrics()" [disabled]="isLoading()">
+				<i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoading()"></i>
 				Refresh
 			</button>
 		</div>
@@ -22,10 +22,10 @@
 	</div>
 
 	<!-- Error alert -->
-	@if (error) {
+	@if (error()) {
 		<div class="alert alert-error mb-3">
 			<i class="bi bi-exclamation-triangle"></i>
-			<span>{{ error }}</span>
+			<span>{{ error() }}</span>
 			<button class="btn btn-sm btn-ghost" (click)="dismissError()">
 				<i class="bi bi-x"></i>
 			</button>
@@ -33,10 +33,10 @@
 	}
 
 	<!-- Success alert -->
-	@if (successMessage) {
+	@if (successMessage()) {
 		<div class="alert alert-success mb-3">
 			<i class="bi bi-check-circle"></i>
-			<span>{{ successMessage }}</span>
+			<span>{{ successMessage() }}</span>
 			<button class="btn btn-sm btn-ghost" (click)="dismissSuccess()">
 				<i class="bi bi-x"></i>
 			</button>
@@ -53,41 +53,41 @@
 						type="text"
 						placeholder="Search..."
 						class="input input-sm input-bordered join-item w-40"
-						[(ngModel)]="filterQuery"
-						(input)="applyFilter()" />
-					@if (filterQuery) {
-						<button class="btn btn-sm btn-ghost join-item" (click)="filterQuery = ''; applyFilter()">
+						[ngModel]="filterQuery()"
+						(ngModelChange)="onFilterQueryChange($event)" />
+					@if (filterQuery()) {
+						<button class="btn btn-sm btn-ghost join-item" (click)="onFilterQueryChange('')">
 							<i class="bi bi-x"></i>
 						</button>
 					}
 				</div>
-				<select class="select select-sm select-bordered w-40" [(ngModel)]="filterArtist" (change)="applyFilter()">
+				<select class="select select-sm select-bordered w-40" [ngModel]="filterArtist()" (ngModelChange)="onFilterArtistChange($event)">
 					<option value="">All Artists</option>
-					@for (artist of artistOptions; track artist) {
+					@for (artist of artistOptions(); track artist) {
 						<option [value]="artist">{{ artist }}</option>
 					}
 				</select>
-				<select class="select select-sm select-bordered w-28" [(ngModel)]="sortField" (change)="applyFilter()">
+				<select class="select select-sm select-bordered w-28" [ngModel]="sortField()" (ngModelChange)="sortField.set($event); applyFilter()">
 					<option value="artist">Sort: Artist</option>
 					<option value="name">Sort: Song</option>
 				</select>
 				<button class="btn btn-sm btn-ghost" (click)="toggleSortDirection()">
-					<i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'" [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
+					<i class="bi" [class.bi-sort-alpha-down]="sortDirection() === 'asc'" [class.bi-sort-alpha-up]="sortDirection() === 'desc'"></i>
 				</button>
-				@if (filterQuery || filterArtist) {
+				@if (filterQuery() || filterArtist()) {
 					<button class="btn btn-sm btn-ghost" (click)="clearFilters()"><i class="bi bi-x-circle"></i> Clear</button>
 				}
 			</div>
 
 			<!-- Loading -->
-			@if (isLoading) {
+			@if (isLoading()) {
 				<div class="flex-1 flex items-center justify-center">
 					<span class="loading loading-spinner loading-lg"></span>
 				</div>
 			}
 
 			<!-- Empty state -->
-			@if (!isLoading && chartsMissingLyrics.length === 0) {
+			@if (!isLoading() && chartsMissingLyrics().length === 0) {
 				<div class="flex-1 flex flex-col items-center justify-center">
 					<i class="bi bi-music-note-beamed text-6xl text-base-content/20 mb-4"></i>
 					<h3 class="text-lg font-semibold mb-2">All Charts Have Lyrics!</h3>
@@ -96,7 +96,7 @@
 			}
 
 			<!-- No results -->
-			@if (!isLoading && chartsMissingLyrics.length > 0 && filteredCharts.length === 0) {
+			@if (!isLoading() && chartsMissingLyrics().length > 0 && filteredCharts().length === 0) {
 				<div class="flex-1 flex flex-col items-center justify-center">
 					<i class="bi bi-search text-4xl text-base-content/20 mb-4"></i>
 					<p class="text-base-content/60 mb-2">No charts match your filters</p>
@@ -105,14 +105,14 @@
 			}
 
 			<!-- Chart list -->
-			@if (!isLoading && filteredCharts.length > 0) {
+			@if (!isLoading() && filteredCharts().length > 0) {
 				<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
-					@for (chart of filteredCharts; track chart) {
+					@for (chart of filteredCharts(); track chart) {
 						<div
 							class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors mb-1"
-							[class.bg-base-200]="selectedChart?.chartId !== chart.chartId"
-							[class.bg-primary]="selectedChart?.chartId === chart.chartId"
-							[class.hover:bg-base-300]="selectedChart?.chartId !== chart.chartId"
+							[class.bg-base-200]="selectedChart()?.chartId !== chart.chartId"
+							[class.bg-primary]="selectedChart()?.chartId === chart.chartId"
+							[class.hover:bg-base-300]="selectedChart()?.chartId !== chart.chartId"
 							(click)="selectChart(chart)">
 							<div class="flex-1 min-w-0">
 								<div class="font-medium truncate">{{ chart.chartName }}</div>
@@ -130,7 +130,7 @@
 		<!-- Right: Search and results -->
 		<div class="w-1/2 flex flex-col overflow-hidden border-l border-base-300 pl-4">
 			<!-- No chart selected -->
-			@if (!selectedChart) {
+			@if (!selectedChart()) {
 				<div class="flex-1 flex flex-col items-center justify-center">
 					<i class="bi bi-arrow-left text-4xl text-base-content/20 mb-4"></i>
 					<p class="text-base-content/60">Select a chart to search for lyrics</p>
@@ -138,16 +138,16 @@
 			}
 
 			<!-- Chart selected -->
-			@if (selectedChart) {
+			@if (selectedChart()) {
 				<div class="flex flex-col flex-1 overflow-hidden">
 					<!-- Selected chart info -->
 					<div class="bg-base-200 rounded-lg p-3 mb-4">
 						<div class="flex justify-between items-start">
 							<div>
-								<div class="font-semibold">{{ selectedChart.chartName }}</div>
-								<div class="text-sm text-base-content/60">{{ selectedChart.chartArtist }}</div>
-								@if (selectedChart.chartAlbum) {
-									<div class="text-xs text-base-content/50 mt-1">{{ selectedChart.chartAlbum }}</div>
+								<div class="font-semibold">{{ selectedChart()!.chartName }}</div>
+								<div class="text-sm text-base-content/60">{{ selectedChart()!.chartArtist }}</div>
+								@if (selectedChart()!.chartAlbum) {
+									<div class="text-xs text-base-content/50 mt-1">{{ selectedChart()!.chartAlbum }}</div>
 								}
 							</div>
 							<button class="btn btn-sm btn-ghost" (click)="clearSelection()">
@@ -161,19 +161,21 @@
 							type="text"
 							placeholder="Artist"
 							class="input input-sm input-bordered flex-1"
-							[(ngModel)]="searchArtist"
+							[ngModel]="searchArtist()"
+							(ngModelChange)="onSearchArtistChange($event)"
 							(keyup.enter)="searchLyrics()" />
 						<input
 							type="text"
 							placeholder="Title"
 							class="input input-sm input-bordered flex-1"
-							[(ngModel)]="searchTitle"
+							[ngModel]="searchTitle()"
+							(ngModelChange)="onSearchTitleChange($event)"
 							(keyup.enter)="searchLyrics()" />
-						<button class="btn btn-sm btn-primary" (click)="searchLyrics()" [disabled]="isSearching">
-							@if (!isSearching) {
+						<button class="btn btn-sm btn-primary" (click)="searchLyrics()" [disabled]="isSearching()">
+							@if (!isSearching()) {
 								<i class="bi bi-search"></i>
 							}
-							@if (isSearching) {
+							@if (isSearching()) {
 								<span class="loading loading-spinner loading-xs"></span>
 							}
 							Search
@@ -182,19 +184,19 @@
 					<!-- Search results -->
 					<div class="flex-1 overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-base-300 scrollbar-thumb-neutral scrollbar-thumb-rounded-full">
 						<!-- No results message -->
-						@if (searchResults.length === 0 && !isSearching) {
+						@if (searchResults().length === 0 && !isSearching()) {
 							<div class="text-center text-base-content/60 py-8">
 								<i class="bi bi-search text-3xl mb-2"></i>
 								<p>Search LRCLIB for synced lyrics</p>
 							</div>
 						}
 						<!-- Results list -->
-						@for (lyrics of searchResults; track lyrics) {
+						@for (lyrics of searchResults(); track lyrics) {
 							<div
 								class="p-3 rounded-lg mb-2 cursor-pointer transition-colors"
-								[class.bg-base-200]="selectedLyrics?.id !== lyrics.id"
-								[class.bg-primary]="selectedLyrics?.id === lyrics.id"
-								[class.hover:bg-base-300]="selectedLyrics?.id !== lyrics.id"
+								[class.bg-base-200]="selectedLyrics()?.id !== lyrics.id"
+								[class.bg-primary]="selectedLyrics()?.id === lyrics.id"
+								[class.hover:bg-base-300]="selectedLyrics()?.id !== lyrics.id"
 								(click)="selectLyrics(lyrics)">
 								<div class="flex justify-between items-start mb-1">
 									<div class="font-medium">{{ lyrics.trackName }}</div>
@@ -218,10 +220,10 @@
 						}
 					</div>
 					<!-- Download button -->
-					@if (selectedLyrics) {
+					@if (selectedLyrics()) {
 						<div class="pt-4 border-t border-base-300 mt-4">
 							<!-- Sync Tool -->
-							@if (!showSyncTool && !offsetConfirmed) {
+							@if (!showSyncTool() && !offsetConfirmed()) {
 								<div class="mb-4 p-3 bg-base-200 rounded-lg">
 									<button class="btn btn-sm btn-outline w-full" (click)="openSyncTool()">
 										<i class="bi bi-music-note-beamed"></i>
@@ -231,7 +233,7 @@
 								</div>
 							}
 							<!-- Sync Tool Panel -->
-							@if (showSyncTool) {
+							@if (showSyncTool()) {
 								<div class="mb-4 p-3 bg-base-200 rounded-lg">
 									<div class="flex justify-between items-center mb-3">
 										<span class="font-medium text-sm">Sync Tool</span>
@@ -240,95 +242,95 @@
 										</button>
 									</div>
 									<!-- Vocals track badge -->
-									@if (hasVocalsTrack) {
+									@if (hasVocalsTrack()) {
 										<div class="mb-3">
 											<span class="badge badge-success gap-1">
 												<i class="bi bi-mic-fill"></i>
 												Vocals track detected
 											</span>
-											@if (detectedVocalStartMs !== null) {
-												<span class="text-xs text-base-content/60 ml-2"> Audio starts at {{ (detectedVocalStartMs / 1000).toFixed(1) }}s </span>
+											@if (detectedVocalStartMs() !== null) {
+												<span class="text-xs text-base-content/60 ml-2"> Audio starts at {{ (detectedVocalStartMs()! / 1000).toFixed(1) }}s </span>
 											}
 										</div>
 									}
 									<!-- Auto-calculated offset notice -->
-									@if (detectedVocalStartMs !== null) {
+									@if (detectedVocalStartMs() !== null) {
 										<div class="alert alert-info py-2 mb-3">
 											<i class="bi bi-magic"></i>
 											<div class="text-sm">
-												<strong>Auto-detected: First lyric at {{ (syncTargetTime / 1000).toFixed(1) }}s</strong>
+												<strong>Auto-detected: First lyric at {{ (syncTargetTime() / 1000).toFixed(1) }}s</strong>
 												<div class="text-xs">Use the slider below to fine-tune, then preview to verify.</div>
 											</div>
 										</div>
 									}
-									@if (!audioSrc) {
+									@if (!audioSrc()) {
 										<div class="alert alert-warning text-sm py-2 mb-3">
 											<i class="bi bi-exclamation-triangle"></i>
 											<span>No audio file found in chart folder</span>
 										</div>
 									}
 									<!-- Audio Player (hidden) -->
-									@if (audioSrc) {
-										<audio #audioPlayer [src]="audioSrc" class="hidden" (error)="onAudioError($event)" (loadeddata)="onAudioLoaded()"></audio>
+									@if (audioSrc()) {
+										<audio #audioPlayer [src]="audioSrc()" class="hidden" (error)="onAudioError($event)" (loadeddata)="onAudioLoaded()"></audio>
 									}
-									@if (audioSrc) {
+									@if (audioSrc()) {
 										<div>
 											<!-- First lyrics preview -->
-											@if (lyricsPreviewLines.length > 0) {
+											@if (lyricsPreviewLines().length > 0) {
 												<div class="mb-3">
-													<div class="text-xs text-base-content/60 mb-1">First lyric: "{{ lyricsPreviewLines[0].text }}"</div>
-													<div class="text-xs text-base-content/50">LRC timestamp: {{ formatTime(lyricsPreviewLines[0].time / 1000) }}</div>
+													<div class="text-xs text-base-content/60 mb-1">First lyric: "{{ lyricsPreviewLines()[0].text }}"</div>
+													<div class="text-xs text-base-content/50">LRC timestamp: {{ formatTime(lyricsPreviewLines()[0].time / 1000) }}</div>
 												</div>
 											}
 											<!-- Sync Target Slider -->
 											<div class="mb-4">
 												<div class="flex justify-between items-center mb-1">
 													<label class="text-sm font-medium">When should this lyric appear?</label>
-													<span class="text-sm font-mono text-primary">{{ formatTime(syncTargetTime / 1000) }}</span>
+													<span class="text-sm font-mono text-primary">{{ formatTime(syncTargetTime() / 1000) }}</span>
 												</div>
 												<input
 													type="range"
 													[min]="0"
-													[max]="maxSyncTime"
+													[max]="maxSyncTime()"
 													step="100"
 													class="range range-sm range-primary"
-													[(ngModel)]="syncTargetTime"
-													(input)="onSyncTargetChange()" />
+													[ngModel]="syncTargetTime()"
+													(ngModelChange)="onSyncTargetChange($event)" />
 												<div class="flex justify-between text-xs text-base-content/50 mt-1">
 													<span>0:00</span>
-													<span>{{ formatTime(maxSyncTime / 1000) }}</span>
+													<span>{{ formatTime(maxSyncTime() / 1000) }}</span>
 												</div>
 											</div>
 											<!-- Preview Controls -->
 											<div class="flex gap-2 mb-3">
-												<button class="btn btn-sm btn-primary flex-1" (click)="previewFromTarget()" [disabled]="!audioLoaded">
+												<button class="btn btn-sm btn-primary flex-1" (click)="previewFromTarget()" [disabled]="!audioLoaded()">
 													<i class="bi bi-play-fill"></i>
-													Preview from {{ formatTime(syncTargetTime / 1000) }}
+													Preview from {{ formatTime(syncTargetTime() / 1000) }}
 												</button>
-												<button class="btn btn-sm btn-secondary" (click)="stopPreview()" [disabled]="!isPlaying">
+												<button class="btn btn-sm btn-secondary" (click)="stopPreview()" [disabled]="!isPlaying()">
 													<i class="bi bi-stop-fill"></i>
 												</button>
 											</div>
 											<!-- Current playback position -->
-											@if (isPlaying || currentTime > 0) {
-												<div class="text-center text-sm font-mono mb-3">Playing: {{ formatTime(currentTime) }}</div>
+											@if (isPlaying() || currentTime() > 0) {
+												<div class="text-center text-sm font-mono mb-3">Playing: {{ formatTime(currentTime()) }}</div>
 											}
-											@if (!audioLoaded && !audioError) {
+											@if (!audioLoaded() && !audioError()) {
 												<div class="text-xs text-base-content/50 mt-1">Loading audio...</div>
 											}
-											@if (audioError) {
+											@if (audioError()) {
 												<div class="text-xs text-error mt-1">
-													{{ audioError }}
+													{{ audioError() }}
 												</div>
 											}
 											<!-- Calculated Offset Display -->
 											<div class="bg-base-300 rounded-lg p-3 mb-3">
 												<div class="text-center">
 													<div class="text-xs text-base-content/60">First lyric will appear at</div>
-													<div class="text-2xl font-bold text-primary">{{ formatTime(syncTargetTime / 1000) }}</div>
-													@if (lyricsPreviewLines.length > 0) {
+													<div class="text-2xl font-bold text-primary">{{ formatTime(syncTargetTime() / 1000) }}</div>
+													@if (lyricsPreviewLines().length > 0) {
 														<div class="text-xs text-base-content/50 mt-1">
-															LRC original: {{ formatTime(lyricsPreviewLines[0].time / 1000) }} → Adjusted: {{ formatTime(syncTargetTime / 1000) }}
+															LRC original: {{ formatTime(lyricsPreviewLines()[0].time / 1000) }} → Adjusted: {{ formatTime(syncTargetTime() / 1000) }}
 														</div>
 													}
 												</div>
@@ -343,36 +345,36 @@
 								</div>
 							}
 							<!-- After accepting, show confirmed offset -->
-							@if (!showSyncTool && offsetConfirmed) {
+							@if (!showSyncTool() && offsetConfirmed()) {
 								<div class="mb-4 p-3 bg-base-200 rounded-lg">
 									<div class="flex justify-between items-center">
 										<div>
 											<div class="text-sm font-medium">Timing Confirmed</div>
-											<div class="text-xs text-base-content/60">First lyric at {{ formatTime(syncTargetTime / 1000) }}</div>
+											<div class="text-xs text-base-content/60">First lyric at {{ formatTime(syncTargetTime() / 1000) }}</div>
 										</div>
 										<button class="btn btn-sm btn-ghost" (click)="openSyncTool()"><i class="bi bi-pencil"></i> Adjust</button>
 									</div>
 								</div>
 							}
 							<div class="flex gap-2">
-								<button class="btn btn-primary flex-1" (click)="downloadLyrics()" [disabled]="isDownloading">
-									@if (!isDownloading) {
+								<button class="btn btn-primary flex-1" (click)="downloadLyrics()" [disabled]="isDownloading()">
+									@if (!isDownloading()) {
 										<i class="bi bi-download"></i>
 									}
-									@if (isDownloading) {
+									@if (isDownloading()) {
 										<span class="loading loading-spinner loading-sm"></span>
 									}
-									{{ isDownloading ? 'Adding Lyrics...' : 'Add Lyrics to Chart' }}
+									{{ isDownloading() ? 'Adding Lyrics...' : 'Add Lyrics to Chart' }}
 								</button>
 							</div>
 							<div class="text-xs text-base-content/50 mt-2 text-center">This will add lyric events to the chart file</div>
 						</div>
 					}
 					<!-- Progress -->
-					@if (progress && progress.phase !== 'complete') {
+					@if (progress() && progress()!.phase !== 'complete') {
 						<div class="mt-4">
-							<progress class="progress progress-primary w-full" [value]="progress.percent" max="100"></progress>
-							<div class="text-xs text-base-content/60 mt-1">{{ progress.message }}</div>
+							<progress class="progress progress-primary w-full" [value]="progress()!.percent" max="100"></progress>
+							<div class="text-xs text-base-content/60 mt-1">{{ progress()!.message }}</div>
 						</div>
 					}
 				</div>

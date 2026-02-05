@@ -39,10 +39,10 @@
 			(click)="scanIssues()"
 			class="btn btn-primary self-end"
 			[attr.disabled]="
-				settingsService.issueScanDirectory === undefined || settingsService.spreadsheetOutputDirectory === undefined || scanning ? true : null
+				settingsService.issueScanDirectory === undefined || settingsService.spreadsheetOutputDirectory === undefined || scanning() ? true : null
 			">
 			<i class="bi bi-gear-wide-connected text-lg"></i>
-			{{ buttonText }}
+			{{ buttonText() }}
 		</button>
 		<dialog #scanErrorModal class="modal">
 			<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
@@ -52,7 +52,7 @@
 					</button>
 				</form>
 				<h3 class="text-lg font-bold">Error scanning charts for issues:</h3>
-				<p class="py-4">{{ scanErrorText }}</p>
+				<p class="py-4">{{ scanErrorText() }}</p>
 			</div>
 			<form method="dialog" class="modal-backdrop">
 				<button>close</button>

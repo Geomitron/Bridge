@@ -1,38 +1,38 @@
 <td>
-	<input type="checkbox" class="checkbox" (click)="$event.stopPropagation()" (focus)="rowFocused.emit()" [(ngModel)]="selected" />
+	<input type="checkbox" class="checkbox" (click)="$event.stopPropagation()" (focus)="rowFocused.emit()" [ngModel]="selected()" (ngModelChange)="setSelected($event)" />
 </td>
 <td>
-	@if (isInLibrary) {
+	@if (isInLibrary()) {
 		<span class="badge badge-success badge-sm mr-2" title="Already in your library">
 			<i class="bi bi-check-circle-fill"></i>
 		</span>
 	}
-	@if (song.length > 1) {
-		<span class="rounded-sm bg-accent text-accent-content px-1 mr-1 font-bold">{{ song.length }}</span>
+	@if (song().length > 1) {
+		<span class="rounded-sm bg-accent text-accent-content px-1 mr-1 font-bold">{{ song().length }}</span>
 	}
-	{{ song[0].name }}
+	{{ song()[0].name }}
 </td>
 @if (hasColumn('artist')) {
-	<td>{{ song[0].artist }}</td>
+	<td>{{ song()[0].artist }}</td>
 }
 @if (hasColumn('album')) {
-	<td>{{ song[0].album || 'Various' }}</td>
+	<td>{{ song()[0].album || 'Various' }}</td>
 }
 @if (hasColumn('genre')) {
-	<td>{{ song[0].genre || 'Various' }}</td>
+	<td>{{ song()[0].genre || 'Various' }}</td>
 }
 @if (hasColumn('year')) {
-	<td>{{ song[0].year || 'Various' }}</td>
+	<td>{{ song()[0].year || 'Various' }}</td>
 }
 @if (hasColumn('charter')) {
-	<td>{{ song[0].charter || 'Various' }}</td>
+	<td>{{ song()[0].charter || 'Various' }}</td>
 }
 @if (hasColumn('length')) {
-	<td>{{ songLength }}</td>
+	<td>{{ songLength() }}</td>
 }
 @if (hasColumn('difficulty')) {
-	<td>{{ songDifficulty }}</td>
+	<td>{{ songDifficulty() }}</td>
 }
 @if (hasColumn('uploaded')) {
-	<td class="text-nowrap">{{ uploaded | date: 'yyyy-MM-dd' }}</td>
+	<td class="text-nowrap">{{ uploaded() | date: 'yyyy-MM-dd' }}</td>
 }

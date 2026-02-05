@@ -1,38 +1,34 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core'
+import { Component, OnInit, signal } from '@angular/core'
+import { RouterLink, RouterLinkActive } from '@angular/router'
+import { NgClass } from '@angular/common'
 
 @Component({
 	selector: 'app-toolbar',
+	standalone: true,
+	imports: [RouterLink, RouterLinkActive, NgClass],
 	templateUrl: './toolbar.component.html',
-	standalone: false,
 })
 export class ToolbarComponent implements OnInit {
 
-	isMaximized: boolean
-	updateAvailable: 'yes' | 'no' | 'error' = 'no'
-
-	constructor(private ref: ChangeDetectorRef) { }
+	isMaximized = signal(false)
+	updateAvailable = signal<'yes' | 'no' | 'error'>('no')
 
 	async ngOnInit() {
-		this.isMaximized = await window.electron.invoke.isMaximized()
+		this.isMaximized.set(await window.electron.invoke.isMaximized())
 		window.electron.on.minimized(() => {
-			this.isMaximized = false
-			this.ref.detectChanges()
+			this.isMaximized.set(false)
 		})
 		window.electron.on.maximized(() => {
-			this.isMaximized = true
-			this.ref.detectChanges()
+			this.isMaximized.set(true)
 		})
 
 		window.electron.on.updateAvailable(result => {
-			this.updateAvailable = result !== null ? 'yes' : 'no'
-			this.ref.detectChanges()
+			this.updateAvailable.set(result !== null ? 'yes' : 'no')
 		})
 		window.electron.on.updateError(() => {
-			this.updateAvailable = 'error'
-			this.ref.detectChanges()
+			this.updateAvailable.set('error')
 		})
-		this.updateAvailable = await window.electron.invoke.getUpdateAvailable()
-		this.ref.detectChanges()
+		this.updateAvailable.set(await window.electron.invoke.getUpdateAvailable())
 	}
 
 	minimize() {
@@ -45,7 +41,7 @@ export class ToolbarComponent implements OnInit {
 		} else {
 			window.electron.emit.maximize()
 		}
-		this.isMaximized = !this.isMaximized
+		this.isMaximized.set(!this.isMaximized())
 	}
 
 	close() {

@@ -2,7 +2,7 @@
 	<div #previewDiv class="flex-1 w-full bg-black" (click)="togglePlaying()"></div>
 	<div class="join flex">
 		<button class="btn join-item btn-neutral btn-sm rounded-none px-2" (click)="togglePlaying()">
-			@switch (playState) {
+			@switch (playState()) {
 				@case ('end') {
 					<i class="bi bi-arrow-counterclockwise text-xl text-neutral-content"></i>
 				}
@@ -32,7 +32,7 @@
 			</ul>
 		</div>
 		@if (chartPreview) {
-			<button class="btn join-item btn-neutral no-animation btn-sm rounded-none px-1">{{ timestampText }}</button>
+			<button class="btn join-item btn-neutral no-animation btn-sm rounded-none px-1">{{ timestampText() }}</button>
 		}
 		<button class="btn join-item btn-neutral no-animation btn-sm flex-grow rounded-none px-2">
 			<input type="range" min="0" max="100" class="range range-primary range-xs" [formControl]="seekBar" />

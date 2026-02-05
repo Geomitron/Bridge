@@ -1,4 +1,4 @@
-import { Inject, Injectable, DOCUMENT } from '@angular/core'
+import { Inject, Injectable, DOCUMENT, signal, computed } from '@angular/core'
 
 import _ from 'lodash'
 import { Difficulty, Instrument } from 'scan-chart'
@@ -12,7 +12,7 @@ import { colorNames, convertColorFormat } from '../../../../src-shared/UtilFunct
 })
 export class SettingsService {
 
-	private settings: Settings
+	private _settings = signal<Settings | null>(null)
 
 	constructor(
 		@Inject(DOCUMENT) private document: Document,
@@ -20,19 +20,24 @@ export class SettingsService {
 
 	async loadSettings() {
 		console.log('[DEBUG] loadSettings() called, invoking getSettings...')
-		this.settings = await window.electron.invoke.getSettings()
-		console.log('[DEBUG] getSettings returned:', this.settings)
-		if (this.settings.customTheme) {
+		const settings = await window.electron.invoke.getSettings()
+		console.log('[DEBUG] getSettings returned:', settings)
+		this._settings.set(settings)
+		if (settings.customTheme) {
 			console.log('[DEBUG] Setting custom theme colors')
-			setThemeColors(this.settings.customTheme)
-		} else if (!themes.includes(this.settings.theme)) {
+			setThemeColors(settings.customTheme)
+		} else if (!themes.includes(settings.theme)) {
 			console.log('[DEBUG] Theme not in themes list, defaulting to dark')
 			this.changeTheme('dark')
 		} else {
-			console.log('[DEBUG] Changing theme to:', this.settings.theme)
-			this.changeTheme(this.settings.theme)
+			console.log('[DEBUG] Changing theme to:', settings.theme)
+			this.changeTheme(settings.theme)
 		}
 		console.log('[DEBUG] loadSettings() completed successfully')
+	}
+
+	private get settings(): Settings {
+		return this._settings()!
 	}
 
 	private saveSettings() {
@@ -47,7 +52,7 @@ export class SettingsService {
 		return this.settings.instrument
 	}
 	set instrument(newValue: Instrument | null) {
-		this.settings.instrument = newValue
+		this._settings.update(s => ({ ...s!, instrument: newValue }))
 		this.saveSettings()
 	}
 
@@ -55,7 +60,7 @@ export class SettingsService {
 		return this.settings.difficulty
 	}
 	set difficulty(newValue: Difficulty | null) {
-		this.settings.difficulty = newValue
+		this._settings.update(s => ({ ...s!, difficulty: newValue }))
 		this.saveSettings()
 	}
 
@@ -63,28 +68,28 @@ export class SettingsService {
 		return this.settings.libraryPath
 	}
 	set libraryDirectory(value: string | undefined) {
-		this.settings.libraryPath = value
+		this._settings.update(s => ({ ...s!, libraryPath: value }))
 		this.saveSettings()
 	}
 	get issueScanDirectory() {
 		return this.settings.issueScanPath
 	}
 	set issueScanDirectory(value: string | undefined) {
-		this.settings.issueScanPath = value
+		this._settings.update(s => ({ ...s!, issueScanPath: value }))
 		this.saveSettings()
 	}
 	get spreadsheetOutputDirectory() {
 		return this.settings.spreadsheetOutputPath
 	}
 	set spreadsheetOutputDirectory(value: string | undefined) {
-		this.settings.spreadsheetOutputPath = value
+		this._settings.update(s => ({ ...s!, spreadsheetOutputPath: value }))
 		this.saveSettings()
 	}
 	get chartFolderName() {
 		return this.settings.chartFolderName
 	}
 	set chartFolderName(value: string) {
-		this.settings.chartFolderName = value
+		this._settings.update(s => ({ ...s!, chartFolderName: value }))
 		this.saveSettings()
 	}
 
@@ -92,7 +97,7 @@ export class SettingsService {
 		return this.settings.downloadVideos
 	}
 	set downloadVideos(isChecked) {
-		this.settings.downloadVideos = isChecked
+		this._settings.update(s => ({ ...s!, downloadVideos: isChecked }))
 		this.saveSettings()
 	}
 
@@ -100,7 +105,7 @@ export class SettingsService {
 		return this.settings.theme
 	}
 	set theme(value: typeof themes[number]) {
-		this.settings.theme = value
+		this._settings.update(s => ({ ...s!, theme: value }))
 		if (!this.settings.customTheme) {
 			this.changeTheme(value)
 		}
@@ -119,14 +124,14 @@ export class SettingsService {
 			}
 			this.changeTheme(this.settings.theme)
 		}
-		this.settings.customTheme = value
+		this._settings.update(s => ({ ...s!, customTheme: value }))
 		this.saveSettings()
 	}
 	get customThemePath() {
 		return this.settings.customThemePath
 	}
 	set customThemePath(value: string | null) {
-		this.settings.customThemePath = value
+		this._settings.update(s => ({ ...s!, customThemePath: value }))
 		this.saveSettings()
 	}
 
@@ -134,7 +139,7 @@ export class SettingsService {
 		return this.settings.isSng
 	}
 	set isSng(value: boolean) {
-		this.settings.isSng = value
+		this._settings.update(s => ({ ...s!, isSng: value }))
 		this.saveSettings()
 	}
 
@@ -142,18 +147,18 @@ export class SettingsService {
 		return this.settings.isCompactTable
 	}
 	set isCompactTable(value: boolean) {
-		this.settings.isCompactTable = value
+		this._settings.update(s => ({ ...s!, isCompactTable: value }))
 		this.saveSettings()
 	}
 	get visibleColumns() {
 		return this.settings.visibleColumns
 	}
 	addVisibleColumn(column: string) {
-		this.settings.visibleColumns.push(column)
+		this._settings.update(s => ({ ...s!, visibleColumns: [...s!.visibleColumns, column] }))
 		this.saveSettings()
 	}
 	removeVisibleColumn(column: string) {
-		this.settings.visibleColumns = this.settings.visibleColumns.filter(c => c !== column)
+		this._settings.update(s => ({ ...s!, visibleColumns: s!.visibleColumns.filter(c => c !== column) }))
 		this.saveSettings()
 	}
 
@@ -161,7 +166,7 @@ export class SettingsService {
 		return this.settings.zoomFactor
 	}
 	set zoomFactor(value: number) {
-		this.settings.zoomFactor = value
+		this._settings.update(s => ({ ...s!, zoomFactor: value }))
 		this.saveSettings()
 	}
 	zoomIn() {
@@ -177,7 +182,7 @@ export class SettingsService {
 		return this.settings.volume
 	}
 	set volume(value: number) {
-		this.settings.volume = value
+		this._settings.update(s => ({ ...s!, volume: value }))
 		this.saveSettings()
 	}
 }

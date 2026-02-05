@@ -49,9 +49,7 @@
               "base": "dist/angular"
             },
             "index": "src-angular/index.html",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": [],
             "tsConfig": "src-angular/tsconfig.angular.json",
             "inlineStyleLanguage": "scss",
             "assets": [

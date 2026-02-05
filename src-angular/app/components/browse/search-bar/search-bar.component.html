@@ -1,12 +1,12 @@
 <div
 	class="collapse bg-base-100 overflow-visible rounded-none border-t border-t-base-200 py-1"
-	[ngClass]="showAdvanced ? 'collapse-open' : 'collapse-close'">
+	[ngClass]="showAdvanced() ? 'collapse-open' : 'collapse-close'">
 	<div class="flex flex-wrap justify-end gap-1 collapse-title p-0 min-h-0">
 		<!-- Search Input -->
 		<div class="flex items-center flex-1 flex-grow-[2] min-w-[21rem]">
 			<label class="input input-bordered flex items-center gap-2 w-full pr-3">
-				<input #searchInput type="text" [formControl]="searchControl" placeholder="Search..." class="grow" />
-				@if (searchLoading) {
+				<input #searchInput type="text" [ngModel]="searchValue()" (ngModelChange)="onSearchInput($event)" [disabled]="showAdvanced()" placeholder="Search..." class="grow" />
+				@if (searchLoading()) {
 					<span class="loading loading-spinner loading-sm"></span>
 				} @else {
 					<i class="bi bi-search opacity-70"></i>
@@ -17,10 +17,10 @@
 			<!-- Instrument Dropdown -->
 			<div class="dropdown">
 				<label tabindex="0" class="btn btn-neutral join-item uppercase">
-					@if (instrument) {
-						<img class="w-8 hidden sm:block" src="https://static.enchor.us/instrument-{{ instrument }}.png" />
+					@if (instrument()) {
+						<img class="w-8 hidden sm:block" src="https://static.enchor.us/instrument-{{ instrument() }}.png" />
 					}
-					{{ instrumentDisplay(instrument) }}
+					{{ instrumentDisplay(instrument()) }}
 				</label>
 				<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-64">
 					<li>
@@ -38,8 +38,8 @@
 			</div>
 			<!-- Difficulty Dropdown -->
 			<div class="dropdown">
-				<label tabindex="0" class="btn btn-neutral join-item uppercase" [class.rounded-r-none]="instrument === 'drums'">{{
-					difficultyDisplay(difficulty)
+				<label tabindex="0" class="btn btn-neutral join-item uppercase" [class.rounded-r-none]="instrument() === 'drums'">{{
+					difficultyDisplay(difficulty())
 				}}</label>
 				<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-40">
 					<li>
@@ -52,10 +52,10 @@
 					}
 				</ul>
 			</div>
-			@if (instrument === 'drums') {
+			@if (instrument() === 'drums') {
 				<!-- Drum Type Dropdown -->
 				<div class="dropdown">
-					<label tabindex="0" class="btn btn-neutral join-item uppercase">{{ drumTypeDisplay(drumType) }}</label>
+					<label tabindex="0" class="btn btn-neutral join-item uppercase">{{ drumTypeDisplay(drumType()) }}</label>
 					<ul tabindex="0" class="menu dropdown-content z-[2] p-2 shadow bg-neutral text-neutral-content rounded-box w-40">
 						<li>
 							<a (click)="setDrumType(null, $event)">{{ drumTypeDisplay(null) }}</a>
@@ -69,7 +69,7 @@
 				</div>
 				<!-- Drums Reviewed Dropdown -->
 				<div class="dropdown">
-					<label tabindex="0" class="btn btn-neutral join-item uppercase">{{ drumsReviewedDisplay(drumsReviewed) }}</label>
+					<label tabindex="0" class="btn btn-neutral join-item uppercase">{{ drumsReviewedDisplay(drumsReviewed()) }}</label>
 					<ul tabindex="0" class="menu dropdown-content z-[2] w-40 rounded-box bg-neutral p-2 text-neutral-content shadow">
 						<li>
 							<a (click)="setDrumsReviewed(true, $event)">{{ drumsReviewedDisplay(true) }}</a>
@@ -84,9 +84,9 @@
 		<div class="flex-1 flex-grow-[3] h-0"></div>
 		<!-- Advanced Search -->
 		<div>
-			<button class="btn btn-ghost uppercase gap-2" (click)="setShowAdvanced(!showAdvanced)">
+			<button class="btn btn-ghost uppercase gap-2" (click)="setShowAdvanced(!showAdvanced())">
 				Advanced Search
-				<span class="swap swap-rotate" [class.swap-active]="showAdvanced">
+				<span class="swap swap-rotate" [class.swap-active]="showAdvanced()">
 					<i class="swap-off bi bi-chevron-down"></i>
 					<i class="swap-on bi bi-chevron-up"></i>
 				</span>
@@ -233,8 +233,8 @@
 												placeholder="YYYY/MM/DD"
 												class="input input-bordered join-item input-sm w-32"
 												formControlName="modifiedAfter"
-												(blur)="startValidation = true"
-												[class.input-error]="advancedSearchForm.invalid && startValidation" />
+								(blur)="startValidation.set(true)"
+								[class.input-error]="advancedSearchForm.invalid && startValidation()" />
 										</td>
 									</tr>
 									<tr class="border-b-0">
@@ -388,9 +388,9 @@
 							</div>
 							<button
 								class="btn btn-sm btn-primary uppercase"
-								[disabled]="advancedSearchForm.invalid && startValidation"
+								[disabled]="advancedSearchForm.invalid && startValidation()"
 								(click)="searchAdvanced()">
-								Search{{ advancedSearchForm.invalid && startValidation ? ' ("Modified After" is invalid)' : '' }}
+								Search{{ advancedSearchForm.invalid && startValidation() ? ' ("Modified After" is invalid)' : '' }}
 							</button>
 						</div>
 					</div>

@@ -2,8 +2,7 @@
  * Bridge Video Sync Module - Angular Service
  */
 
-import { Injectable } from '@angular/core'
-import { BehaviorSubject } from 'rxjs'
+import { Injectable, signal } from '@angular/core'
 import {
 	YouTubeSearchResult,
 	VideoDownloadProgress,
@@ -15,13 +14,9 @@ import {
 	providedIn: 'root',
 })
 export class VideoSyncService {
-	private downloadProgressSubject = new BehaviorSubject<VideoDownloadProgress | null>(null)
-	private isDownloadingSubject = new BehaviorSubject<boolean>(false)
-	private toolsAvailableSubject = new BehaviorSubject<{ ytDlp: boolean; ffmpeg: boolean } | null>(null)
-
-	readonly downloadProgress$ = this.downloadProgressSubject.asObservable()
-	readonly isDownloading$ = this.isDownloadingSubject.asObservable()
-	readonly toolsAvailable$ = this.toolsAvailableSubject.asObservable()
+	readonly downloadProgress = signal<VideoDownloadProgress | null>(null)
+	readonly isDownloading = signal<boolean>(false)
+	readonly toolsAvailable = signal<{ ytDlp: boolean; ffmpeg: boolean } | null>(null)
 
 	constructor() {
 		this.setupIpcListeners()
@@ -30,12 +25,12 @@ export class VideoSyncService {
 
 	private setupIpcListeners(): void {
 		window.electron.on.videoDownloadProgress((progress: VideoDownloadProgress) => {
-			this.downloadProgressSubject.next(progress)
+			this.downloadProgress.set(progress)
 
 			if (progress.phase === 'complete' || progress.phase === 'error') {
-				this.isDownloadingSubject.next(false)
+				this.isDownloading.set(false)
 			} else if (progress.phase === 'downloading' || progress.phase === 'converting') {
-				this.isDownloadingSubject.next(true)
+				this.isDownloading.set(true)
 			}
 		})
 	}
@@ -43,12 +38,12 @@ export class VideoSyncService {
 	async checkTools(): Promise<{ ytDlp: boolean; ffmpeg: boolean }> {
 		try {
 			const result = await window.electron.invoke.videoCheckTools()
-			this.toolsAvailableSubject.next(result)
+			this.toolsAvailable.set(result)
 			return result
 		} catch (err) {
 			console.error('Failed to check tools:', err)
 			const result = { ytDlp: false, ffmpeg: false }
-			this.toolsAvailableSubject.next(result)
+			this.toolsAvailable.set(result)
 			return result
 		}
 	}
@@ -72,8 +67,8 @@ export class VideoSyncService {
 	}
 
 	async downloadVideo(options: VideoDownloadOptions): Promise<string> {
-		this.isDownloadingSubject.next(true)
-		this.downloadProgressSubject.next({
+		this.isDownloading.set(true)
+		this.downloadProgress.set({
 			phase: 'downloading',
 			percent: 0,
 			message: 'Starting download...',
@@ -85,7 +80,7 @@ export class VideoSyncService {
 			const result = await window.electron.invoke.videoDownload(options)
 			return result
 		} catch (err) {
-			this.downloadProgressSubject.next({
+			this.downloadProgress.set({
 				phase: 'error',
 				percent: 0,
 				message: `Error: ${err}`,
@@ -94,7 +89,7 @@ export class VideoSyncService {
 			})
 			throw err
 		} finally {
-			this.isDownloadingSubject.next(false)
+			this.isDownloading.set(false)
 		}
 	}
 
@@ -102,8 +97,8 @@ export class VideoSyncService {
 		try {
 			const result = await window.electron.invoke.videoCancelDownload(videoId)
 			if (result) {
-				this.isDownloadingSubject.next(false)
-				this.downloadProgressSubject.next(null)
+				this.isDownloading.set(false)
+				this.downloadProgress.set(null)
 			}
 			return result
 		} catch (err) {
@@ -154,8 +149,8 @@ export class VideoSyncService {
 	 * Download video from any URL supported by yt-dlp
 	 */
 	async downloadFromUrl(options: { chartId: number; url: string; outputPath: string }): Promise<string> {
-		this.isDownloadingSubject.next(true)
-		this.downloadProgressSubject.next({
+		this.isDownloading.set(true)
+		this.downloadProgress.set({
 			phase: 'downloading',
 			percent: 0,
 			message: 'Starting download from URL...',
@@ -166,7 +161,7 @@ export class VideoSyncService {
 			const result = await window.electron.invoke.videoDownloadFromUrl(options)
 			return result
 		} catch (err) {
-			this.downloadProgressSubject.next({
+			this.downloadProgress.set({
 				phase: 'error',
 				percent: 0,
 				message: `Error: ${err}`,
@@ -192,8 +187,8 @@ export class VideoSyncService {
 	 * Import a local video file into the chart folder
 	 */
 	async importLocalVideo(options: { chartId: number; sourcePath: string; outputPath: string }): Promise<string> {
-		this.isDownloadingSubject.next(true)
-		this.downloadProgressSubject.next({
+		this.isDownloading.set(true)
+		this.downloadProgress.set({
 			phase: 'converting',
 			percent: 0,
 			message: 'Importing local video...',
@@ -202,7 +197,7 @@ export class VideoSyncService {
 
 		try {
 			const result = await window.electron.invoke.videoImportLocal(options)
-			this.downloadProgressSubject.next({
+			this.downloadProgress.set({
 				phase: 'complete',
 				percent: 100,
 				message: 'Import complete',
@@ -210,7 +205,7 @@ export class VideoSyncService {
 			})
 			return result
 		} catch (err) {
-			this.downloadProgressSubject.next({
+			this.downloadProgress.set({
 				phase: 'error',
 				percent: 0,
 				message: `Import error: ${err}`,
@@ -218,19 +213,7 @@ export class VideoSyncService {
 			})
 			throw err
 		} finally {
-			this.isDownloadingSubject.next(false)
+			this.isDownloading.set(false)
 		}
-	}
-
-	get toolsAvailable(): { ytDlp: boolean; ffmpeg: boolean } | null {
-		return this.toolsAvailableSubject.value
-	}
-
-	get isDownloading(): boolean {
-		return this.isDownloadingSubject.value
-	}
-
-	get downloadProgress(): VideoDownloadProgress | null {
-		return this.downloadProgressSubject.value
 	}
 }

@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http'
-import { EventEmitter, Injectable, NgZone } from '@angular/core'
-import { FormControl } from '@angular/forms'
+import { Injectable, signal, computed } from '@angular/core'
 
 import _ from 'lodash'
 import { catchError, mergeMap, tap, throwError, timer } from 'rxjs'
@@ -16,83 +15,84 @@ const resultsPerPage = 25
 })
 export class SearchService {
 
-	public searchLoading = false
-	public songsResponse: Partial<SearchResult>
-	public currentPage = 1
-	public newSearch = new EventEmitter<Partial<SearchResult>>()
-	public updateSearch = new EventEmitter<Partial<SearchResult>>()
-	public isDefaultSearch = true
-	public isAdvancedSearch = false
-	public lastAdvancedSearch: AdvancedSearch
+	readonly searchLoading = signal(false)
+	readonly songsResponse = signal<Partial<SearchResult>>({})
+	readonly currentPage = signal(1)
+	readonly isDefaultSearch = signal(true)
+	readonly isAdvancedSearch = signal(false)
+	readonly lastAdvancedSearch = signal<AdvancedSearch | null>(null)
 
-	public groupedSongs: ChartData[][]
+	readonly groupedSongs = signal<ChartData[][]>([])
 
-	public availableIcons: string[]
+	readonly availableIcons = signal<string[]>([])
 
-	public searchControl = new FormControl('', { nonNullable: true })
-	public instrument: FormControl<Instrument | null>
-	public difficulty: FormControl<Difficulty | null>
-	public drumType: FormControl<DrumTypeName | null>
-	public drumsReviewed: FormControl<boolean>
-	public sortDirection: 'asc' | 'desc' = 'asc'
-	public sortColumn: 'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null = null
+	// Form control signals
+	readonly searchValue = signal('')
+	readonly instrument = signal<Instrument | null>(
+		(localStorage.getItem('instrument') === 'null' ? null : localStorage.getItem('instrument')) as Instrument | null
+	)
+	readonly difficulty = signal<Difficulty | null>(
+		(localStorage.getItem('difficulty') === 'null' ? null : localStorage.getItem('difficulty')) as Difficulty | null
+	)
+	readonly drumType = signal<DrumTypeName | null>(
+		(localStorage.getItem('drumType') === 'null' ? null : localStorage.getItem('drumType')) as DrumTypeName | null
+	)
+	readonly drumsReviewed = signal<boolean>((localStorage.getItem('drumsReviewed') ?? 'false') === 'true')
 
-	constructor(
-		private http: HttpClient,
-		private ngZone: NgZone,
-	) {
-		this.instrument = new FormControl<Instrument>(
-			(localStorage.getItem('instrument') === 'null' ? null : localStorage.getItem('instrument')) as Instrument
-		)
-		this.instrument.valueChanges.subscribe(instrument => {
-			localStorage.setItem('instrument', `${instrument}`)
-			if (this.songsResponse.page) {
-				this.search(this.searchControl.value || '*').subscribe()
-			}
-		})
+	readonly sortDirection = signal<'asc' | 'desc'>('asc')
+	readonly sortColumn = signal<'name' | 'artist' | 'album' | 'genre' | 'year' | 'charter' | 'length' | 'modifiedTime' | null>(null)
 
-		this.difficulty = new FormControl<Difficulty>(
-			(localStorage.getItem('difficulty') === 'null' ? null : localStorage.getItem('difficulty')) as Difficulty
-		)
-		this.difficulty.valueChanges.subscribe(difficulty => {
-			localStorage.setItem('difficulty', `${difficulty}`)
-			if (this.songsResponse.page) {
-				this.search(this.searchControl.value || '*').subscribe()
-			}
-		})
+	// Signal for notifying components of search events
+	readonly searchEvent = signal<{ type: 'new' | 'update'; response: Partial<SearchResult> } | null>(null)
 
-		this.drumType = new FormControl<DrumTypeName>(
-			(localStorage.getItem('drumType') === 'null' ? null : localStorage.getItem('drumType')) as DrumTypeName
-		)
-		this.drumType.valueChanges.subscribe(drumType => {
-			localStorage.setItem('drumType', `${drumType}`)
-			if (this.songsResponse.page) {
-				this.search(this.searchControl.value || '*').subscribe()
-			}
-		})
+	readonly areMorePages = computed(() => {
+		const response = this.songsResponse()
+		const songs = this.groupedSongs()
+		return response?.page && songs.length === response.page * resultsPerPage
+	})
 
-		this.drumsReviewed = new FormControl<boolean>((localStorage.getItem('drumsReviewed') ?? 'false') === 'true', { nonNullable: true })
-		this.drumsReviewed.valueChanges.subscribe(drumsReviewed => {
-			localStorage.setItem('drumsReviewed', `${drumsReviewed}`)
-			if (this.songsResponse?.page) {
-				this.search(this.searchControl.value || '*').subscribe()
-			}
-		})
-
+	constructor(private http: HttpClient) {
 		this.http.get<{ "name": string; "sha1": string }[]>('https://clonehero.gitlab.io/sources/icons.json').subscribe(result => {
-			this.availableIcons = result.map(r => r.name)
+			this.availableIcons.set(result.map(r => r.name))
 		})
 
-		// Ensure initial search runs inside Angular's zone for proper change detection
-		// Use setTimeout to defer until after the component tree is initialized
-		this.ngZone.run(() => {
-			setTimeout(() => {
-				this.search().subscribe()
-			}, 0)
-		})
+		// Perform initial search
+		setTimeout(() => {
+			this.search().subscribe()
+		}, 0)
 	}
 
-	get areMorePages() { return this.songsResponse?.page && this.groupedSongs.length === this.songsResponse.page * resultsPerPage }
+	setInstrument(value: Instrument | null) {
+		this.instrument.set(value)
+		localStorage.setItem('instrument', `${value}`)
+		if (this.songsResponse().page) {
+			this.search(this.searchValue() || '*').subscribe()
+		}
+	}
+
+	setDifficulty(value: Difficulty | null) {
+		this.difficulty.set(value)
+		localStorage.setItem('difficulty', `${value}`)
+		if (this.songsResponse().page) {
+			this.search(this.searchValue() || '*').subscribe()
+		}
+	}
+
+	setDrumType(value: DrumTypeName | null) {
+		this.drumType.set(value)
+		localStorage.setItem('drumType', `${value}`)
+		if (this.songsResponse().page) {
+			this.search(this.searchValue() || '*').subscribe()
+		}
+	}
+
+	setDrumsReviewed(value: boolean) {
+		this.drumsReviewed.set(value)
+		localStorage.setItem('drumsReviewed', `${value}`)
+		if (this.songsResponse()?.page) {
+			this.search(this.searchValue() || '*').subscribe()
+		}
+	}
 
 	/**
 	 * General search, uses the `/search?q=` endpoint.
@@ -102,149 +102,145 @@ export class SearchService {
 	 * Leave the search term blank to fetch the songs with charts most recently added.
 	 */
 	public search(search = '*', nextPage = false) {
-		this.searchLoading = true
-		this.isDefaultSearch = search === '*'
-		this.isAdvancedSearch = false
+		this.searchLoading.set(true)
+		this.isDefaultSearch.set(search === '*')
+		this.isAdvancedSearch.set(false)
 
 		if (nextPage) {
-			this.currentPage++
+			this.currentPage.update(p => p + 1)
 		} else {
-			this.currentPage = 1
+			this.currentPage.set(1)
 		}
 
 		let retries = 10
 		return this.http.post<SearchResult>(`${environment.apiUrl}/search`, {
 			search,
 			per_page: resultsPerPage,
-			page: this.currentPage,
-			instrument: this.instrument.value,
-			difficulty: this.difficulty.value,
-			drumType: this.drumType.value,
-			drumsReviewed: this.drumsReviewed.value,
-			sort: this.sortColumn !== null ? { type: this.sortColumn, direction: this.sortDirection } : null,
+			page: this.currentPage(),
+			instrument: this.instrument(),
+			difficulty: this.difficulty(),
+			drumType: this.drumType(),
+			drumsReviewed: this.drumsReviewed(),
+			sort: this.sortColumn() !== null ? { type: this.sortColumn(), direction: this.sortDirection() } : null,
 			source: 'bridge',
 		}).pipe(
 			catchError((err, caught) => {
 				if (err.status === 400 || retries-- <= 0) {
-					this.searchLoading = false
+					this.searchLoading.set(false)
 					console.log(err)
 					return throwError(() => err)
 				} else {
 					return timer(2000).pipe(mergeMap(() => caught))
 				}
 			}),
-		tap(response => {
-			// Ensure response handling runs inside Angular's zone for change detection
-			this.ngZone.run(() => {
-				this.searchLoading = false
+			tap(response => {
+				this.searchLoading.set(false)
 
 				if (!nextPage) {
 					// Don't reload results if they are the same
-					if (this.groupedSongs
-						&& _.xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
-						&& this.songsResponse!.found === response.found) {
+					const currentResponse = this.songsResponse()
+					if (this.groupedSongs().length > 0
+						&& _.xorBy(currentResponse!.data, response.data, r => r.chartId).length === 0
+						&& currentResponse!.found === response.found) {
 						return
 					} else {
-						this.groupedSongs = []
+						this.groupedSongs.set([])
 					}
 				}
-				this.songsResponse = response
+				this.songsResponse.set(response)
 
-				this.groupedSongs.push(
-					..._.chain(response.data)
-						.groupBy(c => c.songId ?? -1 * c.chartId)
-						.values()
-						.value()
-				)
+				const newGroups = _.chain(response.data)
+					.groupBy(c => c.songId ?? -1 * c.chartId)
+					.values()
+					.value()
 
-				if (nextPage) {
-					this.updateSearch.emit(response)
-				} else {
-					this.newSearch.emit(response)
-				}
+				this.groupedSongs.update(songs => [...songs, ...newGroups])
+
+				this.searchEvent.set({
+					type: nextPage ? 'update' : 'new',
+					response,
+				})
 			})
-		})
 		)
 	}
 
 	public advancedSearch(search: AdvancedSearch, nextPage = false) {
-		this.searchLoading = true
-		this.isDefaultSearch = false
-		this.isAdvancedSearch = true
-		this.lastAdvancedSearch = search
+		this.searchLoading.set(true)
+		this.isDefaultSearch.set(false)
+		this.isAdvancedSearch.set(true)
+		this.lastAdvancedSearch.set(search)
 
 		if (nextPage) {
-			this.currentPage++
+			this.currentPage.update(p => p + 1)
 		} else {
-			this.currentPage = 1
+			this.currentPage.set(1)
 		}
 
 		let retries = 10
 		return this.http.post<{ data: SearchResult['data']; found: number }>(`${environment.apiUrl}/search/advanced`, {
 			per_page: resultsPerPage,
-			page: this.currentPage,
+			page: this.currentPage(),
 			...search,
 		}).pipe(
 			catchError((err, caught) => {
 				if (err.status === 400 || retries-- <= 0) {
-					this.searchLoading = false
+					this.searchLoading.set(false)
 					console.log(err)
 					return throwError(() => err)
 				} else {
 					return timer(2000).pipe(mergeMap(() => caught))
 				}
 			}),
-		tap(response => {
-			// Ensure response handling runs inside Angular's zone for change detection
-			this.ngZone.run(() => {
-				this.searchLoading = false
+			tap(response => {
+				this.searchLoading.set(false)
 
 				if (!nextPage) {
 					// Don't reload results if they are the same
-					if (this.groupedSongs
-						&& _.xorBy(this.songsResponse!.data, response.data, r => r.chartId).length === 0
-						&& this.songsResponse!.found === response.found) {
+					const currentResponse = this.songsResponse()
+					if (this.groupedSongs().length > 0
+						&& _.xorBy(currentResponse!.data, response.data, r => r.chartId).length === 0
+						&& currentResponse!.found === response.found) {
 						return
 					} else {
-						this.groupedSongs = []
+						this.groupedSongs.set([])
 					}
 				}
 
-				this.songsResponse = response
+				this.songsResponse.set(response)
 
-				this.groupedSongs.push(
-					..._.chain(response.data)
-						.groupBy(c => c.songId ?? -1 * c.chartId)
-						.values()
-						.value()
-				)
+				const newGroups = _.chain(response.data)
+					.groupBy(c => c.songId ?? -1 * c.chartId)
+					.values()
+					.value()
 
-				if (nextPage) {
-					this.updateSearch.emit(response)
-				} else {
-					this.newSearch.emit(response)
-				}
+				this.groupedSongs.update(songs => [...songs, ...newGroups])
+
+				this.searchEvent.set({
+					type: nextPage ? 'update' : 'new',
+					response,
+				})
 			})
-		})
 		)
 	}
 
 	public getNextSearchPage() {
-		if (this.areMorePages && !this.searchLoading) {
-			if (this.isAdvancedSearch) {
-				this.advancedSearch(this.lastAdvancedSearch, true).subscribe()
+		if (this.areMorePages() && !this.searchLoading()) {
+			if (this.isAdvancedSearch()) {
+				this.advancedSearch(this.lastAdvancedSearch()!, true).subscribe()
 			} else {
-				this.search(this.searchControl.value || '*', true).subscribe()
+				this.search(this.searchValue() || '*', true).subscribe()
 			}
 		}
 	}
 
 	public reloadSearch() {
-		if (this.isAdvancedSearch) {
-			this.lastAdvancedSearch.sort = this.sortColumn !== null ? { type: this.sortColumn, direction: this.sortDirection } : null
-			this.advancedSearch(this.lastAdvancedSearch, false).subscribe()
+		if (this.isAdvancedSearch()) {
+			const lastSearch = this.lastAdvancedSearch()!
+			lastSearch.sort = this.sortColumn() !== null ? { type: this.sortColumn()!, direction: this.sortDirection() } : null
+			this.lastAdvancedSearch.set(lastSearch)
+			this.advancedSearch(lastSearch, false).subscribe()
 		} else {
-			this.search(this.searchControl.value || '*', false).subscribe()
+			this.search(this.searchValue() || '*', false).subscribe()
 		}
 	}
 }

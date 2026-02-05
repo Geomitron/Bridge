@@ -247,17 +247,17 @@
 
 	<div class="absolute bottom-8 right-8 flex gap-6">
 		<div class="join">
-			@if (updateAvailable === 'yes') {
+			@if (updateAvailable() === 'yes') {
 				<button class="join-item btn btn-primary" (click)="downloadUpdate()">
-					<i class="bi text-xl" [ngClass]="updateDownloaded ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>{{ downloadUpdateText }}
+					<i class="bi text-xl" [ngClass]="updateDownloaded() ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>{{ downloadUpdateText() }}
 				</button>
 			}
-			@if (updateAvailable === 'error') {
-				<button class="join-item btn btn-warning" [class.disabled]="updateRetrying" (click)="retryUpdate()">
-					<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying"></i>{{ retryUpdateText }}
+			@if (updateAvailable() === 'error') {
+				<button class="join-item btn btn-warning" [class.disabled]="updateRetrying()" (click)="retryUpdate()">
+					<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying()"></i>{{ retryUpdateText() }}
 				</button>
 			}
-			<button class="join-item btn btn-outline" disabled>{{ currentVersion }}</button>
+			<button class="join-item btn btn-outline" disabled>{{ currentVersion() }}</button>
 		</div>
 
 		<div class="tooltip tooltip-left" data-tip="Toggle developer tools">

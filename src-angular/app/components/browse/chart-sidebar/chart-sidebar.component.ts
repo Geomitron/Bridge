@@ -1,5 +1,6 @@
-import { Component, ElementRef, HostBinding, OnInit, Renderer2, ViewChild } from '@angular/core'
-import { FormControl } from '@angular/forms'
+import { Component, ElementRef, HostBinding, OnInit, Renderer2, ViewChild, signal, computed, inject, effect } from '@angular/core'
+import { ReactiveFormsModule, FormControl } from '@angular/forms'
+import { NgClass, NgStyle } from '@angular/common'
 
 import _ from 'lodash'
 import { Difficulty, Instrument, NotesData } from 'scan-chart'
@@ -10,131 +11,125 @@ import { ChartData } from 'src-shared/interfaces/search.interface'
 import { setlistNames } from 'src-shared/setlist-names'
 import { difficulties, difficultyDisplay, driveLink, hasIssues, instruments, msToRoughTime, removeStyleTags, shortInstrumentDisplay } from 'src-shared/UtilFunctions'
 
+import { RemoveStyleTagsPipe } from '../../../core/pipes/remove-style-tags.pipe'
+import { ChartSidebarInstrumentComponent } from './chart-sidebar-instrument/chart-sidebar-instrument.component'
+import { ChartSidebarMenuComponent } from './chart-sidebar-menu/chart-sidebar-menu.component'
+import { ChartSidebarPreviewComponent } from './chart-sidebar-preview/chart-sidebar-preview.component'
+
 @Component({
 	selector: 'app-chart-sidebar',
+	standalone: true,
+	imports: [
+		ReactiveFormsModule,
+		NgClass,
+		NgStyle,
+		RemoveStyleTagsPipe,
+		ChartSidebarInstrumentComponent,
+		ChartSidebarMenuComponent,
+		ChartSidebarPreviewComponent,
+	],
 	templateUrl: './chart-sidebar.component.html',
-	standalone: false,
 })
 export class ChartSidebarComponent implements OnInit {
+	private renderer = inject(Renderer2)
+	private searchService = inject(SearchService)
+	private downloadService = inject(DownloadService)
+	settingsService = inject(SettingsService)
+
 	@HostBinding('class.contents') contents = true
 
 	@ViewChild('menu') menu: ElementRef
 	@ViewChild('libraryDirectoryErrorModal') libraryDirectoryErrorModal: ElementRef<HTMLDialogElement>
 
-	public shortInstrumentDisplay = shortInstrumentDisplay
-	public difficultyDisplay = difficultyDisplay
+	shortInstrumentDisplay = shortInstrumentDisplay
+	difficultyDisplay = difficultyDisplay
 	private guitarlikeInstruments: Instrument[] = [
 		'guitar', 'guitarcoop', 'rhythm', 'bass', 'keys', 'guitarghl', 'guitarcoopghl', 'rhythmghl', 'bassghl',
 	]
 	private unlisten?: () => void
 
-	albumLoading = true
-	iconLoading = true
-	public menuVisible = false
+	albumLoading = signal(true)
+	iconLoading = signal(true)
+	menuVisible = signal(false)
 
-	selectedChart: ChartData | null = null
-	charts: ChartData[][] | null = null
+	selectedChart = signal<ChartData | null>(null)
+	charts = signal<ChartData[][] | null>(null)
 
-	public instrumentDropdown: FormControl<Instrument>
-	public difficultyDropdown: FormControl<Difficulty>
+	instrumentDropdown: FormControl<Instrument>
+	difficultyDropdown: FormControl<Difficulty>
 
-	constructor(
-		private renderer: Renderer2,
-		private searchService: SearchService,
-		private downloadService: DownloadService,
-		public settingsService: SettingsService
-	) { }
+	// Computed properties
+	albumArtMd5 = computed(() => {
+		const chartsList = this.charts()
+		return _.flatMap(chartsList ?? []).find(c => !!c.albumArtMd5)?.albumArtMd5 || null
+	})
 
-	ngOnInit() {
-		this.searchService.newSearch.subscribe(() => {
-			this.charts = null
-			this.selectedChart = null
-		})
-		this.instrumentDropdown = new FormControl<Instrument>(this.defaultInstrument, { nonNullable: true })
-		this.searchService.instrument.valueChanges.subscribe(instrument => {
-			if (this.instruments.some(i => i === instrument)) {
-				this.instrumentDropdown.setValue(instrument!)
-			}
-		})
-		this.instrumentDropdown.valueChanges.subscribe(() => {
-			if (!this.difficulties.some(d => d === this.difficultyDropdown.value)) {
-				this.difficultyDropdown.setValue(this.defaultDifficulty, { emitEvent: false })
-			}
-		})
-		this.difficultyDropdown = new FormControl<Difficulty>(this.defaultDifficulty, { nonNullable: true })
-		this.searchService.difficulty.valueChanges.subscribe(difficulty => {
-			if (this.difficulties.some(d => d === difficulty)) {
-				this.difficultyDropdown.setValue(difficulty!)
-			}
-		})
-	}
+	hasIcons = computed(() => !!this.searchService.availableIcons().length)
 
-	public get albumArtMd5() {
-		return _.flatMap(this.charts ?? []).find(c => !!c.albumArtMd5)?.albumArtMd5 || null
-	}
-
-	public get hasIcons() { return !!this.searchService.availableIcons }
-	public get icon() {
-		const iconName = (this.selectedChart!.icon || removeStyleTags(this.selectedChart!.charter ?? 'N/A').toLowerCase()) + '.'
+	icon = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return null
+		const iconName = (chart.icon || removeStyleTags(chart.charter ?? 'N/A').toLowerCase()) + '.'
 		if (iconName === 'unknown charter') { return null }
-		return this.searchService.availableIcons?.find(i => i.toLowerCase().startsWith(iconName)) || null
-	}
+		return this.searchService.availableIcons()?.find(i => i.toLowerCase().startsWith(iconName)) || null
+	})
 
-	public get iconTooltip() {
-		if (!this.selectedChart!.icon) {
+	iconTooltip = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart?.icon) {
 			return null
 		}
-		return setlistNames[this.selectedChart!.icon] ?? null
-	}
+		return setlistNames[chart.icon] ?? null
+	})
 
-	public get effectiveLength() {
-		return msToRoughTime(this.selectedChart!.notesData.effectiveLength)
-	}
+	effectiveLength = computed(() => {
+		const chart = this.selectedChart()
+		return chart ? msToRoughTime(chart.notesData.effectiveLength) : ''
+	})
 
-	public get extraLengthSeconds() {
-		return this.selectedChart!.song_length ?
-			_.round((this.selectedChart!.song_length - this.selectedChart!.notesData.effectiveLength) / 1000, 1)
-			: _.round(this.selectedChart!.notesData.effectiveLength / 1000, 1)
-	}
+	extraLengthSeconds = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return 0
+		return chart.song_length ?
+			_.round((chart.song_length - chart.notesData.effectiveLength) / 1000, 1)
+			: _.round(chart.notesData.effectiveLength / 1000, 1)
+	})
 
-	public get hasIssues() {
-		return hasIssues(this.selectedChart!)
-	}
+	hasIssuesComputed = computed(() => {
+		const chart = this.selectedChart()
+		return chart ? hasIssues(chart) : false
+	})
 
-	public get metadataIssues() {
-		return this.selectedChart!.metadataIssues.filter(i => !['extraValue'].includes(i.metadataIssue))
-	}
-	public get folderIssues() {
-		return _.chain(this.selectedChart!.folderIssues)
+	metadataIssues = computed(() => {
+		const chart = this.selectedChart()
+		return chart ? chart.metadataIssues.filter(i => !['extraValue'].includes(i.metadataIssue)) : []
+	})
+
+	folderIssues = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return []
+		return _.chain(chart.folderIssues)
 			.filter(i => !['albumArtSize', 'invalidIni', 'multipleVideo', 'badIniLine'].includes(i.folderIssue))
 			.uniqBy(i => i.folderIssue)
 			.value()
-	}
+	})
 
-	public get globalChartIssues() {
-		return _.chain(this.selectedChart!.notesData.chartIssues)
+	globalChartIssues = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return []
+		return _.chain(chart.notesData.chartIssues)
 			.filter(i => i.instrument === null)
 			.filter(i => i.noteIssue !== 'isDefaultBPM')
 			.groupBy(i => i.noteIssue)
 			.values()
 			.map(issueGroup => this.getGlobalChartIssueText(issueGroup))
 			.value()
-	}
-	private getGlobalChartIssueText(issueGroup: NotesData['chartIssues']) {
-		const one = issueGroup.length === 1
-		const len = issueGroup.length
-		switch (issueGroup[0].noteIssue) {
-			case 'misalignedTimeSignature':
-				return `There ${one ? 'is' : 'are'} ${len} misaligned time signature marker${one ? '' : 's'} in this chart.`
-			case 'badEndEvent':
-				return `There ${one ? 'is' : 'are'} ${len} invalid "end" event${one ? '' : 's'} in this chart.`
-			default:
-				return issueGroup[0].description
-		}
-	}
+	})
 
-	public get trackIssuesGroups() {
-		return _.chain(this.selectedChart!.notesData.chartIssues)
+	trackIssuesGroups = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return []
+		return _.chain(chart.notesData.chartIssues)
 			.filter(g => g.instrument !== null)
 			.sortBy(
 				g => instruments.indexOf(g.instrument!),
@@ -158,7 +153,110 @@ export class ChartSidebarComponent implements OnInit {
 			}))
 			.filter(g => g.issues.length > 0)
 			.value()
+	})
+
+	boolProperties = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return []
+		const notesData = chart.notesData
+		const showGuitarlikeProperties = _.intersection(this.instrumentsList(), this.guitarlikeInstruments).length > 0
+		const showDrumlikeProperties = _.intersection(this.instrumentsList(), ['drums']).length > 0
+		return _.compact([
+			showGuitarlikeProperties ? { value: notesData.hasSoloSections, text: 'Solo Sections' } : null,
+			{ value: notesData.hasLyrics, text: 'Lyrics' },
+			showGuitarlikeProperties ? { value: notesData.hasForcedNotes, text: 'Forced Notes' } : null,
+			showGuitarlikeProperties ? { value: notesData.hasTapNotes, text: 'Tap Notes' } : null,
+			showGuitarlikeProperties ? { value: notesData.hasOpenNotes, text: 'Open Notes' } : null,
+			showDrumlikeProperties ? { value: notesData.has2xKick, text: '2x Kick' } : null,
+			showDrumlikeProperties ? { value: notesData.hasFlexLanes, text: 'Roll Lanes' } : null,
+			{ value: chart.hasVideoBackground, text: 'Video Background' },
+		])
+	})
+
+	instrumentsList = computed((): Instrument[] => {
+		const chart = this.selectedChart()
+		if (!chart) { return [] }
+		return _.chain(chart.notesData.noteCounts)
+			.filter(nc => nc.count > 0)
+			.map(nc => nc.instrument)
+			.uniq()
+			.sortBy(i => instruments.indexOf(i))
+			.value()
+	})
+
+	difficultiesList = computed((): Difficulty[] => {
+		const chart = this.selectedChart()
+		if (!chart) { return [] }
+		return _.chain(chart.notesData.noteCounts)
+			.filter(nc => nc.instrument === this.instrumentDropdown?.value && nc.count > 0)
+			.map(nc => nc.difficulty)
+			.sortBy(d => difficulties.indexOf(d))
+			.value()
+	})
+
+	averageNps = computed(() => {
+		const count = this.noteCount()
+		const chart = this.selectedChart()
+		if (!chart || count < 2) {
+			return 0
+		} else {
+			return _.round(count / (chart.notesData.effectiveLength / 1000), 1)
+		}
+	})
+
+	maximumNps = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return 0
+		const filtered = chart.notesData.maxNps.filter(track =>
+			track.instrument === this.instrumentDropdown?.value && track.difficulty === this.difficultyDropdown?.value
+		)
+		return filtered[0]?.nps ?? 0
+	})
+
+	noteCount = computed(() => {
+		const chart = this.selectedChart()
+		if (!chart) return 0
+		const filtered = chart.notesData.noteCounts.filter(track =>
+			track.instrument === this.instrumentDropdown?.value && track.difficulty === this.difficultyDropdown?.value
+		)
+		return filtered[0]?.count ?? 0
+	})
+
+	constructor() {
+		// Reset on new search
+		effect(() => {
+			const event = this.searchService.searchEvent()
+			if (event?.type === 'new') {
+				this.charts.set(null)
+				this.selectedChart.set(null)
+			}
+		}, { allowSignalWrites: true })
 	}
+
+	ngOnInit() {
+		this.instrumentDropdown = new FormControl<Instrument>(this.getDefaultInstrument(), { nonNullable: true })
+
+		this.instrumentDropdown.valueChanges.subscribe(() => {
+			if (!this.difficultiesList().some(d => d === this.difficultyDropdown.value)) {
+				this.difficultyDropdown.setValue(this.getDefaultDifficulty(), { emitEvent: false })
+			}
+		})
+		this.difficultyDropdown = new FormControl<Difficulty>(this.getDefaultDifficulty(), { nonNullable: true })
+	}
+
+	private getGlobalChartIssueText(issueGroup: NotesData['chartIssues']) {
+		const one = issueGroup.length === 1
+		const len = issueGroup.length
+		switch (issueGroup[0].noteIssue) {
+			case 'misalignedTimeSignature':
+				return `There ${one ? 'is' : 'are'} ${len} misaligned time signature marker${one ? '' : 's'} in this chart.`
+			case 'badEndEvent':
+				return `There ${one ? 'is' : 'are'} ${len} invalid "end" event${one ? '' : 's'} in this chart.`
+			default:
+				return issueGroup[0].description
+		}
+	}
+
 	private getTrackIssueText(issueGroup: NotesData['chartIssues']) {
 		const one = issueGroup.length === 1
 		const len = issueGroup.length
@@ -182,114 +280,79 @@ export class ChartSidebarComponent implements OnInit {
 		}
 	}
 
-	public get boolProperties(): ({ value: boolean; text: string })[] {
-		const notesData = this.selectedChart!.notesData
-		const showGuitarlikeProperties = _.intersection(this.instruments, this.guitarlikeInstruments).length > 0
-		const showDrumlikeProperties = _.intersection(this.instruments, ['drums']).length > 0
-		return _.compact([
-			showGuitarlikeProperties ? { value: notesData.hasSoloSections, text: 'Solo Sections' } : null,
-			{ value: notesData.hasLyrics, text: 'Lyrics' },
-			showGuitarlikeProperties ? { value: notesData.hasForcedNotes, text: 'Forced Notes' } : null,
-			showGuitarlikeProperties ? { value: notesData.hasTapNotes, text: 'Tap Notes' } : null,
-			showGuitarlikeProperties ? { value: notesData.hasOpenNotes, text: 'Open Notes' } : null,
-			showDrumlikeProperties ? { value: notesData.has2xKick, text: '2x Kick' } : null,
-			showDrumlikeProperties ? { value: notesData.hasFlexLanes, text: 'Roll Lanes' } : null,
-			{ value: this.selectedChart!.hasVideoBackground, text: 'Video Background' },
-		])
-	}
-
 	/**
 	 * Displays the information for the selected song.
 	 */
 	async onRowClicked(song: ChartData[]) {
-		this.charts = _.chain(song)
+		const newCharts = _.chain(song)
 			.groupBy(c => c.versionGroupId)
 			.values()
 			.map(versionGroup => _.sortBy(versionGroup, vg => vg.modifiedTime).reverse())
 			.value()
-		if (this.selectedChart?.albumArtMd5 !== this.charts[0][0].albumArtMd5) {
-			this.albumLoading = true
+		const currentChart = this.selectedChart()
+		if (currentChart?.albumArtMd5 !== newCharts[0][0].albumArtMd5) {
+			this.albumLoading.set(true)
 		}
-		if ((this.selectedChart?.icon || this.selectedChart?.charter) !== (this.charts[0][0].icon || this.charts[0][0].charter)) {
-			this.iconLoading = true
+		if ((currentChart?.icon || currentChart?.charter) !== (newCharts[0][0].icon || newCharts[0][0].charter)) {
+			this.iconLoading.set(true)
 		}
-		this.selectedChart = this.charts[0][0]
-		this.instrumentDropdown.setValue(this.defaultInstrument)
-		this.difficultyDropdown.setValue(this.defaultDifficulty)
+		this.charts.set(newCharts)
+		this.selectedChart.set(newCharts[0][0])
+		this.instrumentDropdown.setValue(this.getDefaultInstrument())
+		this.difficultyDropdown.setValue(this.getDefaultDifficulty())
 	}
 
 	onSourceLinkClicked() {
-		window.electron.emit.openUrl(driveLink(this.selectedChart!.applicationDriveId))
-	}
-
-	public get defaultInstrument() {
-		return this.instruments.some(i => i === this.searchService.instrument.value)
-			? this.searchService.instrument.value!
-			: this.instruments[0]
-	}
-	public get instruments(): Instrument[] {
-		if (!this.selectedChart) { return [] }
-		return _.chain(this.selectedChart.notesData.noteCounts)
-			.filter(nc => nc.count > 0)
-			.map(nc => nc.instrument)
-			.uniq()
-			.sortBy(i => instruments.indexOf(i))
-			.value()
-	}
-	public get defaultDifficulty() {
-		return this.difficulties.some(d => d === this.searchService.difficulty.value)
-			? this.searchService.difficulty.value!
-			: this.difficulties[0]
-	}
-	public get difficulties(): Difficulty[] {
-		if (!this.selectedChart) { return [] }
-		return _.chain(this.selectedChart.notesData.noteCounts)
-			.filter(nc => nc.instrument === this.instrumentDropdown.value && nc.count > 0)
-			.map(nc => nc.difficulty)
-			.sortBy(d => difficulties.indexOf(d))
-			.value()
-	}
-
-	public get averageNps() {
-		if (this.noteCount < 2) {
-			return 0
-		} else {
-			return _.round(this.noteCount / (this.selectedChart!.notesData.effectiveLength / 1000), 1)
+		const chart = this.selectedChart()
+		if (chart) {
+			window.electron.emit.openUrl(driveLink(chart.applicationDriveId))
 		}
 	}
 
-	private currentTrackFilter = (track: { instrument: Instrument | null; difficulty: Difficulty | null }) => {
-		return track.instrument === this.instrumentDropdown.value && track.difficulty === this.difficultyDropdown.value
-	}
-	public get maximumNps() {
-		return this.selectedChart!.notesData.maxNps.filter(this.currentTrackFilter)[0].nps
+	getDefaultInstrument(): Instrument {
+		const instList = this.instrumentsList()
+		const searchInst = this.searchService.instrument()
+		return instList.some(i => i === searchInst)
+			? searchInst!
+			: instList[0] || 'guitar'
 	}
 
-	public get noteCount() {
-		return this.selectedChart!.notesData.noteCounts.filter(this.currentTrackFilter)[0].count
+	getDefaultDifficulty(): Difficulty {
+		const diffList = this.difficultiesList()
+		const searchDiff = this.searchService.difficulty()
+		return diffList.some(d => d === searchDiff)
+			? searchDiff!
+			: diffList[0] || 'expert'
 	}
 
 	/**
 	 * Adds the selected chart to the download queue.
 	 */
 	onDownloadClicked() {
+		const chart = this.selectedChart()
 		if (this.settingsService.libraryDirectory) {
-			this.downloadService.addDownload(this.selectedChart!)
+			if (chart) {
+				this.downloadService.addDownload(chart)
+			}
 		} else {
 			this.libraryDirectoryErrorModal.nativeElement.showModal()
 		}
 	}
 
-	public showMenu() {
-		this.menuVisible = true
+	showMenu() {
+		this.menuVisible.set(true)
 		this.unlisten = this.renderer.listen('window', 'click', (e: Event) => {
-			if (this.menuVisible && !(this.menu.nativeElement as HTMLElement).contains(e.target as HTMLElement)) {
-				this.menuVisible = false
+			if (this.menuVisible() && !(this.menu.nativeElement as HTMLElement).contains(e.target as HTMLElement)) {
+				this.menuVisible.set(false)
 				if (this.unlisten) {
 					this.unlisten()
 					this.unlisten = undefined
 				}
 			}
 		})
+	}
+
+	setSelectedChart(chart: ChartData) {
+		this.selectedChart.set(chart)
 	}
 }
