@@ -117,13 +117,18 @@ export class ChartDownload {
 		this.showProgress('Loading settings...')
 		const settings = await getSettings()
 		if (this._canceled) { return }
-		if (!settings.libraryPath) {
+
+		// Get the default library path from libraryFolders, or fallback to legacy libraryPath
+		const defaultFolder = settings.libraryFolders?.find(f => f.isDefault) ?? settings.libraryFolders?.[0]
+		const libraryPath = defaultFolder?.path ?? settings.libraryPath
+
+		if (!libraryPath) {
 			throw { header: 'Library folder not specified', body: 'Please go to the settings to set your library folder.' }
 		}
 
 		try {
 			this.showProgress('Checking library path...')
-			await access(settings.libraryPath, constants.W_OK)
+			await access(libraryPath, constants.W_OK)
 			if (this._canceled) { return }
 		} catch (err) {
 			throw { header: 'Failed to access library folder', body: inspect(err) }
@@ -133,7 +138,7 @@ export class ChartDownload {
 		this.downloadVideos = settings.downloadVideos
 		this.chartFolderPath = resolveChartFolderName(settings.chartFolderName, this.chart) + (this.isSng ? '.sng' : '')
 		this.showProgress('Checking for any duplicate charts...')
-		const destinationPath = join(settings.libraryPath, this.chartFolderPath)
+		const destinationPath = join(libraryPath, this.chartFolderPath)
 		const isDuplicate = await access(destinationPath, constants.F_OK).then(() => true).catch(() => false)
 		if (this._canceled) { return }
 		if (isDuplicate) {
@@ -216,11 +221,15 @@ export class ChartDownload {
 		const settings = await getSettings()
 		if (this._canceled) { return }
 
+		// Get the default library path from libraryFolders, or fallback to legacy libraryPath
+		const defaultFolder = settings.libraryFolders?.find(f => f.isDefault) ?? settings.libraryFolders?.[0]
+		const libraryPath = defaultFolder?.path ?? settings.libraryPath
+
 		this.showProgress('Moving chart to library folder...', 100)
 		await new Promise<void>(resolve => setTimeout(resolve, 200)) // Delay for OS file processing
 		await new Promise<void>((resolve, reject) => {
-			if (settings.libraryPath) {
-				const destinationPath = join(settings.libraryPath, this.chartFolderPath)
+			if (libraryPath) {
+				const destinationPath = join(libraryPath, this.chartFolderPath)
 				move(this.tempPath, destinationPath, { overwrite: true }, err => {
 					if (err) {
 						reject({ header: 'Failed to move chart to library folder', body: inspect(err) })
@@ -241,7 +250,7 @@ export class ChartDownload {
 		}
 
 		this.showProgress.cancel()
-		this.eventEmitter.emit('end', join(settings.libraryPath!, this.chartFolderPath))
+		this.eventEmitter.emit('end', join(libraryPath!, this.chartFolderPath))
 	}
 }
 

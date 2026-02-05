@@ -4,7 +4,7 @@ import _ from 'lodash'
 import { Difficulty, Instrument } from 'scan-chart'
 
 import { ThemeColors } from '../../../../src-shared/interfaces/theme.interface.js'
-import { Settings, themes } from '../../../../src-shared/Settings.js'
+import { LibraryFolder, Settings, themes } from '../../../../src-shared/Settings.js'
 import { colorNames, convertColorFormat } from '../../../../src-shared/UtilFunctions.js'
 
 @Injectable({
@@ -22,6 +22,18 @@ export class SettingsService {
 		console.log('[DEBUG] loadSettings() called, invoking getSettings...')
 		const settings = await window.electron.invoke.getSettings()
 		console.log('[DEBUG] getSettings returned:', settings)
+
+		// Migrate from old single libraryPath to new libraryFolders array
+		if (settings.libraryPath && (!settings.libraryFolders || settings.libraryFolders.length === 0)) {
+			settings.libraryFolders = [{ path: settings.libraryPath, isDefault: true }]
+			settings.libraryPath = undefined
+		}
+
+		// Ensure libraryFolders is initialized
+		if (!settings.libraryFolders) {
+			settings.libraryFolders = []
+		}
+
 		this._settings.set(settings)
 		if (settings.customTheme) {
 			console.log('[DEBUG] Setting custom theme colors')
@@ -34,6 +46,11 @@ export class SettingsService {
 			this.changeTheme(settings.theme)
 		}
 		console.log('[DEBUG] loadSettings() completed successfully')
+
+		// Save migrated settings
+		if (settings.libraryPath === undefined && settings.libraryFolders.length > 0) {
+			this.saveSettings()
+		}
 	}
 
 	private get settings(): Settings {
@@ -64,13 +81,77 @@ export class SettingsService {
 		this.saveSettings()
 	}
 
+	// Library Folders Management
+	get libraryFolders(): LibraryFolder[] {
+		return this.settings.libraryFolders || []
+	}
+
+	get defaultLibraryPath(): string | undefined {
+		const defaultFolder = this.libraryFolders.find(f => f.isDefault)
+		return defaultFolder?.path ?? this.libraryFolders[0]?.path
+	}
+
+	// Keep for backward compatibility with existing code
 	get libraryDirectory() {
-		return this.settings.libraryPath
+		return this.defaultLibraryPath
 	}
 	set libraryDirectory(value: string | undefined) {
-		this._settings.update(s => ({ ...s!, libraryPath: value }))
+		// Legacy setter - adds as default if not exists
+		if (value) {
+			this.addLibraryFolder(value, true)
+		}
+	}
+
+	addLibraryFolder(path: string, setAsDefault: boolean = false) {
+		const existingIndex = this.libraryFolders.findIndex(f => f.path === path)
+		if (existingIndex !== -1) {
+			// Already exists, just set as default if requested
+			if (setAsDefault) {
+				this.setDefaultLibraryFolder(path)
+			}
+			return
+		}
+
+		this._settings.update(s => {
+			const newFolders = [...(s!.libraryFolders || [])]
+			if (setAsDefault) {
+				// Unset current default
+				newFolders.forEach(f => f.isDefault = false)
+			}
+			newFolders.push({ path, isDefault: setAsDefault || newFolders.length === 0 })
+			return { ...s!, libraryFolders: newFolders }
+		})
 		this.saveSettings()
 	}
+
+	removeLibraryFolder(path: string) {
+		const folder = this.libraryFolders.find(f => f.path === path)
+		if (!folder) return
+
+		const wasDefault = folder.isDefault
+
+		this._settings.update(s => {
+			let newFolders = (s!.libraryFolders || []).filter(f => f.path !== path)
+			// If we removed the default, set the first one as new default
+			if (wasDefault && newFolders.length > 0) {
+				newFolders = newFolders.map((f, i) => ({ ...f, isDefault: i === 0 }))
+			}
+			return { ...s!, libraryFolders: newFolders }
+		})
+		this.saveSettings()
+	}
+
+	setDefaultLibraryFolder(path: string) {
+		this._settings.update(s => {
+			const newFolders = (s!.libraryFolders || []).map(f => ({
+				...f,
+				isDefault: f.path === path,
+			}))
+			return { ...s!, libraryFolders: newFolders }
+		})
+		this.saveSettings()
+	}
+
 	get issueScanDirectory() {
 		return this.settings.issueScanPath
 	}

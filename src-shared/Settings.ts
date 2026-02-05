@@ -20,6 +20,14 @@ export const themes = [
 ] as const
 
 /**
+ * Represents a library folder entry.
+ */
+export interface LibraryFolder {
+	path: string       // The path to the library folder
+	isDefault: boolean // Whether this is the default folder for downloads
+}
+
+/**
  * Represents Bridge's user settings.
  */
 export interface Settings {
@@ -27,10 +35,11 @@ export interface Settings {
 	theme: typeof themes[number]              // The name of the currently enabled UI theme
 	customTheme: ThemeColors | null           // The colors of a custom theme
 	customThemePath: string | null            // The last folder that contained the `customTheme`'s file
-	libraryPath: string | undefined           // The path to the user's library
+	libraryPath: string | undefined           // DEPRECATED: Kept for migration, use libraryFolders instead
+	libraryFolders: LibraryFolder[]           // List of library folders, one should be marked as default
 	issueScanPath: string | undefined         // The path to use when scanning for issues
 	spreadsheetOutputPath: string | undefined // The path to use when saving generated issues
-	chartFolderName: string                   // The relative path and name of the chart that is saved in `libraryPath`
+	chartFolderName: string                   // The relative path and name of the chart that is saved in the default library folder
 	isSng: boolean                            // If the chart should be downloaded as a .sng file or as a chart folder
 	isCompactTable: boolean                   // If the search result table should have reduced padding
 	visibleColumns: string[]                  // The search result columns to include
@@ -49,6 +58,7 @@ export const defaultSettings: Settings = {
 	customTheme: null,
 	customThemePath: null,
 	libraryPath: undefined,
+	libraryFolders: [],
 	issueScanPath: undefined,
 	spreadsheetOutputPath: undefined,
 	chartFolderName: '{artist} - {name} ({charter})',

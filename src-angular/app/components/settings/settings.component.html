@@ -1,269 +1,371 @@
-<div class="p-8 flex flex-col gap-3">
-	<label class="form-control w-full">
-		<div class="label">
-			<span class="label-text">Chart library directory</span>
-		</div>
-		<div class="join w-full">
-			<input
-				[value]="settingsService.libraryDirectory || 'No folder selected'"
-				class="join-item input input-bordered cursor-default pointer-events-none flex-1"
-				readonly
-				type="text"
-				placeholder="No directory selected!" />
-			@if (settingsService.libraryDirectory !== undefined) {
-				<button (click)="openLibraryDirectory()" class="join-item btn btn-neutral">Open Folder</button>
-			}
-			<button (click)="getLibraryDirectory()" class="join-item btn btn-primary">Choose</button>
-		</div>
-	</label>
+<div class="absolute inset-0 p-8 pt-12 flex flex-col gap-8 pb-24 overflow-y-auto">
+	<!-- Library Section -->
+	<section class="card bg-base-200 shadow-md">
+		<div class="card-body">
+			<h2 class="card-title text-xl font-bold mb-4">
+				<i class="bi bi-folder2-open mr-2"></i>
+				Library Folders
+			</h2>
+			<p class="text-sm text-base-content/70 mb-4">
+				Manage your chart library folders. Downloads will be saved to the folder marked as default.
+			</p>
 
-	<label class="form-control w-full">
-		<div class="label">
-			<span class="label-text">
-				Chart folder name
-				<button class="btn btn-xs btn-circle btn-ghost" (click)="chartFolderNameModal.showModal()">
-					<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
-				</button>
-				<dialog #chartFolderNameModal class="modal whitespace-normal">
-					<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
-						<form method="dialog">
-							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-								<i class="bi bi-x-lg text-lg"></i>
+			<!-- Library Folders List -->
+			<div class="flex flex-col gap-2 mb-4">
+				@if (settingsService.libraryFolders.length === 0) {
+					<div class="alert alert-warning">
+						<i class="bi bi-exclamation-triangle"></i>
+						<span>No library folders configured. Add a folder to start downloading charts.</span>
+					</div>
+				}
+				@for (folder of settingsService.libraryFolders; track folder.path) {
+					<div class="flex items-center gap-2 bg-base-100 rounded-lg p-3">
+						<div class="flex-1 flex items-center gap-3 min-w-0">
+							<button
+								(click)="setDefaultFolder(folder.path)"
+								class="btn btn-circle btn-sm"
+								[class.btn-primary]="folder.isDefault"
+								[class.btn-ghost]="!folder.isDefault"
+								[attr.data-tip]="folder.isDefault ? 'Default folder' : 'Set as default'">
+								<i class="bi" [ngClass]="folder.isDefault ? 'bi-star-fill' : 'bi-star'"></i>
 							</button>
-						</form>
-						<div class="flex-1">
-							<span class="font-bold text-lg">Chart Folder Name</span>
-							<ul class="list-disc pl-5">
-								<li>Describes where Bridge will put the chart inside the chart library directory</li>
-								<li>Use "/" to describe subfolders</li>
-								<li>Use "{{ '{tag}' }}" as a placeholder for chart-specific properties</li>
-								<br />
-								Available tags:
-								<div class="text-xs">{{ '{name}, {artist}, {album}, {genre}, {year}, {charter}' }}</div>
-								<br />
-								Example:
-								<div class="text-xs">
-									"{{ '{artist}' }}/{{ '{name}' }} ({{ '{charter}' }})" will create chart folders that look like "{{ '{name}' }} ({{ '{charter}' }})"
-									inside subfolders that look like "{{ '{artist}' }}"
-								</div>
-							</ul>
+							<span class="truncate flex-1 font-mono text-sm" [title]="folder.path">{{ folder.path }}</span>
+							@if (folder.isDefault) {
+								<span class="badge badge-primary badge-sm">Default</span>
+							}
+						</div>
+						<div class="flex gap-1">
+							<button (click)="openFolder(folder.path)" class="btn btn-ghost btn-sm btn-square" data-tip="Open folder">
+								<i class="bi bi-folder2-open"></i>
+							</button>
+							<button (click)="removeLibraryFolder(folder.path)" class="btn btn-ghost btn-sm btn-square text-error" data-tip="Remove">
+								<i class="bi bi-trash"></i>
+							</button>
 						</div>
 					</div>
-					<form method="dialog" class="modal-backdrop">
-						<button>close</button>
-					</form>
-				</dialog>
-			</span>
-		</div>
-		<input [formControl]="chartFolderName" class="input input-bordered" type="text" placeholder="{artist} - {name} ({charter})" />
-	</label>
+				}
+			</div>
 
-	<div class="form-control w-full max-w-xs">
-		<div class="label">
-			<span class="label-text">Appearance</span>
+			<button (click)="addLibraryFolder()" class="btn btn-primary btn-sm w-fit">
+				<i class="bi bi-plus-lg"></i>
+				Add Library Folder
+			</button>
 		</div>
-		<div class="flex gap-3 items-center">
-			<div class="join join-vertical">
-				<div class="tooltip tooltip-right" data-tip="Zoom In (ctrl +)">
-					<button class="join-item btn btn-square btn-neutral btn-xs" (click)="settingsService.zoomIn()">
-						<i class="bi bi-zoom-in"></i>
-					</button>
+	</section>
+
+	<!-- Two-column layout for Download and Appearance sections -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+		<!-- Download Settings Section -->
+		<section class="card bg-base-200 shadow-md">
+			<div class="card-body">
+				<h2 class="card-title text-xl font-bold mb-4">
+					<i class="bi bi-download mr-2"></i>
+					Download Settings
+				</h2>
+
+				<!-- Chart Folder Name -->
+				<label class="form-control w-full mb-4">
+					<div class="label justify-start gap-1">
+						<span class="label-text font-medium">Chart folder name</span>
+						<button class="btn btn-xs btn-circle btn-ghost" (click)="chartFolderNameModal.showModal()">
+							<i class="bi bi-info-circle text-sm"></i>
+						</button>
+					</div>
+					<input [formControl]="chartFolderName" class="input input-bordered input-sm" type="text" placeholder="{artist} - {name} ({charter})" />
+				</label>
+
+				<!-- Download Format -->
+				<div class="form-control mb-4">
+					<div class="label justify-start gap-1 pb-3">
+						<span class="label-text font-medium">Download format</span>
+						<button class="btn btn-xs btn-circle btn-ghost" (click)="selectSngModal.showModal()">
+							<i class="bi bi-info-circle text-sm"></i>
+						</button>
+					</div>
+					<div class="flex gap-4">
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="radio" name="isSng" class="radio radio-primary radio-sm" [value]="true" [formControl]="isSng" />
+							<span class="label-text">.sng</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="radio" name="isSng" class="radio radio-primary radio-sm" [value]="false" [formControl]="isSng" />
+							<span class="label-text">Chart Folder</span>
+						</label>
+					</div>
 				</div>
-				<div class="tooltip tooltip-right" data-tip="Zoom Out (ctrl -)">
-					<button class="join-item btn btn-square btn-neutral btn-xs" (click)="settingsService.zoomOut()">
-						<i class="bi bi-zoom-out"></i>
-					</button>
+
+				<!-- Download Videos -->
+				<label class="label cursor-pointer justify-start gap-3">
+					<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="downloadVideos" />
+					<span class="label-text">Download video backgrounds</span>
+				</label>
+			</div>
+		</section>
+
+		<!-- Appearance Section -->
+		<section class="card bg-base-200 shadow-md">
+			<div class="card-body">
+				<h2 class="card-title text-xl font-bold mb-4">
+					<i class="bi bi-palette mr-2"></i>
+					Appearance
+				</h2>
+
+				<div class="flex flex-col gap-4">
+					<!-- Zoom Controls -->
+					<div class="form-control">
+						<div class="label-text font-medium mb-3">Zoom level</div>
+						<div class="flex items-center gap-2">
+							<div class="join">
+								<button class="join-item btn btn-neutral btn-sm" (click)="settingsService.zoomOut()">
+									<i class="bi bi-zoom-out"></i>
+								</button>
+								<button class="join-item btn btn-neutral btn-sm" (click)="settingsService.zoomIn()">
+									<i class="bi bi-zoom-in"></i>
+								</button>
+							</div>
+							<span class="text-sm text-base-content/70">Use Ctrl +/- to adjust</span>
+						</div>
+					</div>
+
+					<!-- Theme Selection -->
+					<div class="form-control">
+						<div class="label-text font-medium mb-3">Theme</div>
+						@if (!settingsService.customTheme) {
+							<div class="flex flex-wrap items-center gap-2">
+								<div class="dropdown dropdown-hover">
+									<label tabindex="0" class="btn btn-neutral btn-sm">{{ capitalize(settingsService.theme) }}</label>
+									<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
+										<li>
+											<h2 class="menu-title text-neutral-content/50">Dark</h2>
+											<ul>
+												<li><a (click)="setTheme('business')">Business</a></li>
+												<li><a (click)="setTheme('dark')">Dark</a></li>
+												<li><a (click)="setTheme('dim')">Dim</a></li>
+												<li><a (click)="setTheme('night')">Night</a></li>
+												<li><a (click)="setTheme('sunset')">Sunset</a></li>
+												<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
+											</ul>
+										</li>
+										<li>
+											<h2 class="menu-title text-neutral-content/50">Light</h2>
+											<ul>
+												<li><a (click)="setTheme('aqua')">Aqua</a></li>
+												<li><a (click)="setTheme('emerald')">Emerald</a></li>
+												<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
+												<li><a (click)="setTheme('nord')">Nord</a></li>
+												<li><a (click)="setTheme('valentine')">Valentine</a></li>
+												<li><a (click)="setTheme('winter')">Winter</a></li>
+											</ul>
+										</li>
+									</ul>
+								</div>
+								<button (click)="getCustomTheme()" class="btn btn-primary btn-sm">Use custom theme</button>
+							</div>
+						} @else {
+							<button (click)="clearCustomTheme()" class="btn btn-neutral btn-sm w-fit">Clear custom theme</button>
+						}
+					</div>
 				</div>
 			</div>
-			@if (!settingsService.customTheme) {
-				<div class="dropdown dropdown-hover">
-					<label tabindex="0" class="btn btn-neutral">{{ capitalize(settingsService.theme) }}</label>
-					<ul tabindex="0" class="dropdown-content z-[2] menu p-2 shadow bg-neutral text-neutral-content rounded-box w-36">
-						<li>
-							<h2 class="menu-title text-neutral-content/50">Dark</h2>
-							<ul>
-								<li><a (click)="setTheme('business')">Business</a></li>
-								<li><a (click)="setTheme('dark')">Dark</a></li>
-								<li><a (click)="setTheme('dim')">Dim</a></li>
-								<li><a (click)="setTheme('night')">Night</a></li>
-								<li><a (click)="setTheme('sunset')">Sunset</a></li>
-								<li><a (click)="setTheme('synthwave')">Synthwave</a></li>
-							</ul>
-						</li>
-						<li>
-							<h2 class="menu-title text-neutral-content/50">Light</h2>
-							<ul>
-								<li><a (click)="setTheme('aqua')">Aqua</a></li>
-								<li><a (click)="setTheme('emerald')">Emerald</a></li>
-								<li><a (click)="setTheme('lemonade')">Lemonade</a></li>
-								<li><a (click)="setTheme('nord')">Nord</a></li>
-								<li><a (click)="setTheme('valentine')">Valentine</a></li>
-								<li><a (click)="setTheme('winter')">Winter</a></li>
-							</ul>
-						</li>
-					</ul>
-				</div>
-				<button (click)="getCustomTheme()" class="btn btn-primary">Use custom theme</button>
-			} @else {
-				<button (click)="clearCustomTheme()" class="btn btn-neutral">Clear custom theme</button>
-			}
-		</div>
+		</section>
 	</div>
 
-	<div class="form-control">
-		<div class="label">
-			<span class="label-text">
-				Download Format
-				<button class="btn btn-xs btn-circle btn-ghost" (click)="selectSngModal.showModal()">
-					<i class="bi bi-info-circle text-sm hover:border-b-secondary-focus"></i>
+	<!-- Table Settings Section -->
+	<section class="card bg-base-200 shadow-md">
+		<div class="card-body">
+			<h2 class="card-title text-xl font-bold mb-4">
+				<i class="bi bi-table mr-2"></i>
+				Table Display
+			</h2>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<!-- Table Layout -->
+				<div class="form-control">
+					<div class="label-text font-medium mb-3">Table layout</div>
+					<div class="flex gap-4">
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="radio" name="isCompactTable" class="radio radio-primary radio-sm" [value]="false" [formControl]="isCompactTable" />
+							<span class="label-text">Default</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="radio" name="isCompactTable" class="radio radio-primary radio-sm" [value]="true" [formControl]="isCompactTable" />
+							<span class="label-text">Compact</span>
+						</label>
+					</div>
+				</div>
+
+				<!-- Visible Columns -->
+				<div class="form-control">
+					<div class="label-text font-medium mb-3">Visible columns</div>
+					<div class="flex flex-wrap gap-x-4 gap-y-2">
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="artistColumn" />
+							<span class="label-text">Artist</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="albumColumn" />
+							<span class="label-text">Album</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="genreColumn" />
+							<span class="label-text">Genre</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="yearColumn" />
+							<span class="label-text">Year</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="charterColumn" />
+							<span class="label-text">Charter</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="lengthColumn" />
+							<span class="label-text">Length</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="difficultyColumn" />
+							<span class="label-text">Difficulty</span>
+						</label>
+						<label class="label cursor-pointer gap-2 p-0">
+							<input type="checkbox" class="checkbox checkbox-primary checkbox-sm" [formControl]="uploadedColumn" />
+							<span class="label-text">Upload Date</span>
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Modals -->
+	<dialog #chartFolderNameModal class="modal whitespace-normal">
+		<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
 				</button>
-				<dialog #selectSngModal class="modal whitespace-normal">
-					<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
-						<form method="dialog">
-							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-								<i class="bi bi-x-lg text-lg"></i>
-							</button>
-						</form>
-						<div class="flex gap-6">
-							<div class="flex-1">
-								<span class="font-bold text-lg">Chart Folder</span>
-								<ul class="list-disc pl-5">
-									<li>Chart files (such as audio and album art) are placed inside a folder</li>
-									<li>Supported across many games</li>
-								</ul>
+			</form>
+			<div class="flex-1">
+				<span class="font-bold text-lg">Chart Folder Name</span>
+				<ul class="list-disc pl-5 mt-2">
+					<li>Describes where Bridge will put the chart inside the chart library directory</li>
+					<li>Use "/" to describe subfolders</li>
+					<li>Use "{{ '{tag}' }}" as a placeholder for chart-specific properties</li>
+				</ul>
+				<div class="mt-4">
+					<span class="font-medium">Available tags:</span>
+					<div class="text-sm font-mono bg-base-200 p-2 rounded mt-1">{{ '{name}, {artist}, {album}, {genre}, {year}, {charter}' }}</div>
+				</div>
+				<div class="mt-4">
+					<span class="font-medium">Examples:</span>
+					<div class="bg-base-200 rounded p-3 mt-2 space-y-3">
+						<div>
+							<div class="font-mono text-sm text-primary">{{ '{artist} - {name} ({charter})' }}</div>
+							<div class="text-xs text-base-content/70 mt-1">
+								Creates: <span class="font-mono">Queen - Bohemian Rhapsody (Harmonix)</span>
 							</div>
-							<div class="flex-1">
-								<span class="font-bold text-lg">.sng (new)</span>
-								<ul class="list-disc pl-5">
-									<li>Single chart file</li>
-									<li>Can be scanned in-game directly without extracting</li>
-									<li>Currently only supported by Clone Hero's current test build and YARG</li>
-								</ul>
-							</div>
+							<div class="text-xs text-base-content/50">All charts are placed directly in your library folder.</div>
 						</div>
-						<br />
-						<div class="text-xs">
-							A program to convert between .sng files and chart folders can be found
-							<a class="link" (click)="openUrl('https://github.com/mdsitton/SngFileFormat/releases')">here</a>.
+						<div class="border-t border-base-300 pt-3">
+							<div class="font-mono text-sm text-primary">{{ '{artist}/{name} ({charter})' }}</div>
+							<div class="text-xs text-base-content/70 mt-1">
+								Creates: <span class="font-mono">Queen/Bohemian Rhapsody (Harmonix)</span>
+							</div>
+							<div class="text-xs text-base-content/50">Charts are organized into subfolders by artist name.</div>
+						</div>
+						<div class="border-t border-base-300 pt-3">
+							<div class="font-mono text-sm text-primary">{{ '{genre}/{artist}/{name}' }}</div>
+							<div class="text-xs text-base-content/70 mt-1">
+								Creates: <span class="font-mono">Rock/Queen/Bohemian Rhapsody</span>
+							</div>
+							<div class="text-xs text-base-content/50">Charts are organized into nested folders by genre, then artist.</div>
 						</div>
 					</div>
-					<form method="dialog" class="modal-backdrop">
-						<button>close</button>
-					</form>
-				</dialog>
-			</span>
+				</div>
+			</div>
 		</div>
-		<div class="flex gap-2">
-			<label class="label cursor-pointer">
-				<input type="radio" name="isSng" class="radio radio-secondary mr-2" [value]="true" [formControl]="isSng" />
-				.sng
-			</label>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
 
-			<label class="label cursor-pointer">
-				<input type="radio" name="isSng" class="radio radio-secondary mr-2" [value]="false" [formControl]="isSng" />
-				Chart Folder
-			</label>
-		</div>
-		<div class="flex">
-			<label class="label cursor-pointer" for="downloadVideos">
-				<input id="downloadVideos" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="downloadVideos" />
-				Download Video Backgrounds
-			</label>
-		</div>
-	</div>
-
-	<div class="form-control">
-		<div class="label">
-			<span class="label-text">Table Layout</span>
-		</div>
-		<div class="flex gap-2">
-			<label class="label cursor-pointer">
-				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="false" [formControl]="isCompactTable" />
-				Default
-			</label>
-
-			<label class="label cursor-pointer">
-				<input type="radio" name="isCompactTable" class="radio radio-secondary mr-2" [value]="true" [formControl]="isCompactTable" />
-				Compact
-			</label>
-		</div>
-	</div>
-
-	<div class="form-control">
-		<div class="label">
-			<span class="label-text">Table Columns</span>
-		</div>
-		<div class="flex gap-2">
-			<label class="label cursor-pointer" for="artistColumn">
-				<input id="artistColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="artistColumn" />
-				Artist
-			</label>
-			<label class="label cursor-pointer" for="albumColumn">
-				<input id="albumColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="albumColumn" />
-				Album
-			</label>
-			<label class="label cursor-pointer" for="genreColumn">
-				<input id="genreColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="genreColumn" />
-				Genre
-			</label>
-			<label class="label cursor-pointer" for="yearColumn">
-				<input id="yearColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="yearColumn" />
-				Year
-			</label>
-		</div>
-		<div class="flex gap-2">
-			<label class="label cursor-pointer" for="charterColumn">
-				<input id="charterColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="charterColumn" />
-				Charter
-			</label>
-			<label class="label cursor-pointer" for="lengthColumn">
-				<input id="lengthColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="lengthColumn" />
-				Length
-			</label>
-			<label class="label cursor-pointer" for="difficultyColumn">
-				<input id="difficultyColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="difficultyColumn" />
-				Difficulty
-			</label>
-			<label class="label cursor-pointer" for="uploadedColumn">
-				<input id="uploadedColumn" type="checkbox" checked="checked" class="checkbox mr-1" [formControl]="uploadedColumn" />
-				Upload Date
-			</label>
-		</div>
-	</div>
-
-	<div class="absolute bottom-8 left-8 flex">
-		<a class="btn btn-link" (click)="openUrl('https://github.com/Geomitron/Bridge')"><i class="bi bi-github text-2xl"></i>Github</a>
-		<a class="btn btn-link" (click)="openUrl('https://discord.gg/cqaUXGm')"><i class="bi bi-discord text-2xl"></i>Discord</a>
-		<a class="btn btn-link" (click)="openUrl('https://www.patreon.com/ChorusEncore701')">
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" id="patreon">
-				<path
-					fill="currentColor"
-					fill-rule="evenodd"
-					d="M0 9.71C0 1.63 10.32-3.476 16.916 2.818c3.532 3.36 4.143 8.902 1.248 12.951-3.591 4.92-8.282 4.193-12.76 4.193v-9.588c.041-2.117.747-3.943 3.324-4.816 2.245-.664 4.863.581 5.653 2.947.832 2.533-.374 4.234-1.787 5.272-1.413 1.039-3.616 1.039-5.07.042v3.279c3.138 1.5 8.105-.303 9.684-4.4 1.08-2.864.332-6.185-1.912-8.26-2.701-2.2-5.653-2.74-8.811-1.204-2.204 1.12-3.741 3.404-4.116 5.894v10.834H.042L0 9.71z"></path>
-			</svg>
-			Patreon
-		</a>
-	</div>
-
-	<div class="absolute bottom-8 right-8 flex gap-6">
-		<div class="join">
-			@if (updateAvailable() === 'yes') {
-				<button class="join-item btn btn-primary" (click)="downloadUpdate()">
-					<i class="bi text-xl" [ngClass]="updateDownloaded() ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>{{ downloadUpdateText() }}
+	<dialog #selectSngModal class="modal whitespace-normal">
+		<div class="modal-box bg-base-100 text-base-content flex flex-col gap-2">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+					<i class="bi bi-x-lg text-lg"></i>
 				</button>
-			}
-			@if (updateAvailable() === 'error') {
-				<button class="join-item btn btn-warning" [class.disabled]="updateRetrying()" (click)="retryUpdate()">
-					<i class="bi bi-arrow-repeat text-xl" [class.loading]="updateRetrying()"></i>{{ retryUpdateText() }}
-				</button>
-			}
-			<button class="join-item btn btn-outline" disabled>{{ currentVersion() }}</button>
+			</form>
+			<div class="flex gap-6">
+				<div class="flex-1">
+					<span class="font-bold text-lg">Chart Folder</span>
+					<ul class="list-disc pl-5 mt-2">
+						<li>Chart files (such as audio and album art) are placed inside a folder</li>
+						<li>Supported across many games</li>
+					</ul>
+				</div>
+				<div class="flex-1">
+					<span class="font-bold text-lg">.sng (new)</span>
+					<ul class="list-disc pl-5 mt-2">
+						<li>Single chart file</li>
+						<li>Can be scanned in-game directly without extracting</li>
+						<li>Currently only supported by Clone Hero's current test build and YARG</li>
+					</ul>
+				</div>
+			</div>
+			<div class="text-xs mt-4">
+				A program to convert between .sng files and chart folders can be found
+				<a class="link" (click)="openUrl('https://github.com/mdsitton/SngFileFormat/releases')">here</a>.
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+
+	<!-- Footer Links -->
+	<div class="fixed bottom-0 left-0 right-0 bg-base-100/95 backdrop-blur border-t border-base-300 px-8 py-4 flex justify-between items-center">
+		<div class="flex gap-2">
+			<a class="btn btn-ghost btn-sm" (click)="openUrl('https://github.com/Geomitron/Bridge')">
+				<i class="bi bi-github text-lg"></i>
+				Github
+			</a>
+			<a class="btn btn-ghost btn-sm" (click)="openUrl('https://discord.gg/cqaUXGm')">
+				<i class="bi bi-discord text-lg"></i>
+				Discord
+			</a>
+			<a class="btn btn-ghost btn-sm" (click)="openUrl('https://www.patreon.com/ChorusEncore701')">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" class="flex-shrink-0">
+					<path
+						fill="currentColor"
+						fill-rule="evenodd"
+						d="M0 9.71C0 1.63 10.32-3.476 16.916 2.818c3.532 3.36 4.143 8.902 1.248 12.951-3.591 4.92-8.282 4.193-12.76 4.193v-9.588c.041-2.117.747-3.943 3.324-4.816 2.245-.664 4.863.581 5.653 2.947.832 2.533-.374 4.234-1.787 5.272-1.413 1.039-3.616 1.039-5.07.042v3.279c3.138 1.5 8.105-.303 9.684-4.4 1.08-2.864.332-6.185-1.912-8.26-2.701-2.2-5.653-2.74-8.811-1.204-2.204 1.12-3.741 3.404-4.116 5.894v10.834H.042L0 9.71z"></path>
+				</svg>
+				Patreon
+			</a>
 		</div>
 
-		<div class="tooltip tooltip-left" data-tip="Toggle developer tools">
-			<button class="btn btn-primary btn-square btn-neutral" (click)="toggleDevTools()">
-				<i class="bi bi-gear text-lg"></i>
-			</button>
+		<div class="flex gap-4 items-center">
+			<div class="join">
+				@if (updateAvailable() === 'yes') {
+					<button class="join-item btn btn-primary btn-sm" (click)="downloadUpdate()">
+						<i class="bi text-lg" [ngClass]="updateDownloaded() ? 'bi-arrow-repeat' : 'bi-cloud-arrow-down'"></i>
+						{{ downloadUpdateText() }}
+					</button>
+				}
+				@if (updateAvailable() === 'error') {
+					<button class="join-item btn btn-warning btn-sm" [class.disabled]="updateRetrying()" (click)="retryUpdate()">
+						<i class="bi bi-arrow-repeat text-lg" [class.loading]="updateRetrying()"></i>
+						{{ retryUpdateText() }}
+					</button>
+				}
+				<button class="join-item btn btn-outline btn-sm" disabled>{{ currentVersion() }}</button>
+			</div>
+
+			<div class="tooltip tooltip-left" data-tip="Toggle developer tools">
+				<button class="btn btn-square btn-neutral btn-sm" (click)="toggleDevTools()">
+					<i class="bi bi-gear"></i>
+				</button>
+			</div>
 		</div>
 	</div>
 </div>

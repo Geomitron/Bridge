@@ -95,16 +95,29 @@ export class SettingsComponent implements OnInit {
 		})
 	}
 
-	async getLibraryDirectory() {
+	async addLibraryFolder() {
 		const result = await window.electron.invoke.showOpenDialog({
 			title: 'Choose library folder',
-			defaultPath: this.settingsService.libraryDirectory || '',
+			defaultPath: this.settingsService.defaultLibraryPath || '',
 			properties: ['openDirectory'],
 		})
 
 		if (result.canceled === false) {
-			this.settingsService.libraryDirectory = result.filePaths[0]
+			const isFirstFolder = this.settingsService.libraryFolders.length === 0
+			this.settingsService.addLibraryFolder(result.filePaths[0], isFirstFolder)
 		}
+	}
+
+	removeLibraryFolder(path: string) {
+		this.settingsService.removeLibraryFolder(path)
+	}
+
+	setDefaultFolder(path: string) {
+		this.settingsService.setDefaultLibraryFolder(path)
+	}
+
+	openFolder(path: string) {
+		window.electron.emit.showFolder(path)
 	}
 
 	async getCustomTheme() {
@@ -132,12 +145,6 @@ export class SettingsComponent implements OnInit {
 
 	clearCustomTheme() {
 		this.settingsService.customTheme = null
-	}
-
-	openLibraryDirectory() {
-		if (this.settingsService.libraryDirectory) {
-			window.electron.emit.showFolder(this.settingsService.libraryDirectory)
-		}
 	}
 
 	openUrl(url: string) {
