@@ -50,25 +50,21 @@ export class SearchBarComponent implements OnInit, AfterViewInit {
 	// Search control with signal
 	searchValue = signal('')
 
-	ngOnInit() {
-		this.initializeAdvancedSearchForm()
-
-		// Watch search value changes
-		effect(() => {
-			const value = this.searchValue()
-			// This will be handled by template binding
-		})
-	}
-
-	ngAfterViewInit() {
-		this.searchInput.nativeElement.focus()
-		this.updateDisabledControls()
-
+	constructor() {
 		// Watch for instrument changes to update disabled controls
 		effect(() => {
 			const _ = this.instrument() // Track the signal
 			this.updateDisabledControls()
 		})
+	}
+
+	ngOnInit() {
+		this.initializeAdvancedSearchForm()
+	}
+
+	ngAfterViewInit() {
+		this.searchInput.nativeElement.focus()
+		this.updateDisabledControls()
 	}
 
 	onSearchInput(value: string) {
