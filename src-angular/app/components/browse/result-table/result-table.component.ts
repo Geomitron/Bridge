@@ -56,10 +56,23 @@ export class ResultTableComponent implements AfterViewChecked {
 				this.lastDataLength = 0
 				this.shouldCheckScrollAfterRender = true
 				this.checkChartsInLibrary()
+				this.selectRequestedChart()
 			} else if (event?.type === 'update') {
 				this.shouldCheckScrollAfterRender = true
 				this.checkChartsInLibrary()
 			}
+		})
+	}
+
+	private selectRequestedChart() {
+		const requestedHash = this.searchService.requestedChartHash
+		if (!requestedHash) return
+
+		// Wait until the parent has connected the row selection output.
+		requestAnimationFrame(() => {
+			const song = this.songs().find(group => group.some(chart => chart.md5 === requestedHash))
+			this.searchService.requestedChartHash = null
+			if (song) this.onRowClicked(song)
 		})
 	}
 

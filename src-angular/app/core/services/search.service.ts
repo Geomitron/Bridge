@@ -20,7 +20,7 @@ export class SearchService {
 	readonly currentPage = signal(1)
 	readonly isDefaultSearch = signal(true)
 	readonly isAdvancedSearch = signal(false)
-	readonly lastAdvancedSearch = signal<AdvancedSearch | null>(null)
+	readonly lastAdvancedSearch = signal<Partial<AdvancedSearch> | null>(null)
 
 	readonly groupedSongs = signal<ChartData[][]>([])
 
@@ -44,6 +44,7 @@ export class SearchService {
 
 	// Signal for notifying components of search events
 	readonly searchEvent = signal<{ type: 'new' | 'update'; response: Partial<SearchResult> } | null>(null)
+	requestedChartHash: string | null = null
 
 	readonly areMorePages = computed(() => {
 		const response = this.songsResponse()
@@ -55,11 +56,15 @@ export class SearchService {
 		this.http.get<{ "name": string; "sha1": string }[]>('https://clonehero.gitlab.io/sources/icons.json').subscribe(result => {
 			this.availableIcons.set(result.map(r => r.name))
 		})
+	}
 
-		// Perform initial search
-		setTimeout(() => {
-			this.search().subscribe()
-		}, 0)
+	public searchByHash(hash: string) {
+		this.requestedChartHash = hash
+		// Ignore saved filters so they cannot hide the linked chart.
+		return this.advancedSearch({
+			source: 'bridge',
+			hash,
+		})
 	}
 
 	setInstrument(value: Instrument | null) {
@@ -164,7 +169,7 @@ export class SearchService {
 		)
 	}
 
-	public advancedSearch(search: AdvancedSearch, nextPage = false) {
+	public advancedSearch(search: Partial<AdvancedSearch>, nextPage = false) {
 		this.searchLoading.set(true)
 		this.isDefaultSearch.set(false)
 		this.isAdvancedSearch.set(true)

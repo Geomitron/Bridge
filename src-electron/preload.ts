@@ -19,6 +19,7 @@ function getListenerAdder<K extends keyof IpcFromMainEmitEvents>(key: K) {
 
 const electronApi: ContextBridgeApi = {
 	invoke: {
+		getPendingChartDeepLink: getInvoker('getPendingChartDeepLink'),
 		getSettings: getInvoker('getSettings'),
 		getCurrentVersion: getInvoker('getCurrentVersion'),
 		getPlatform: getInvoker('getPlatform'),
@@ -97,6 +98,7 @@ const electronApi: ContextBridgeApi = {
 		catalogOpenFolder: getEmitter('catalogOpenFolder'),
 	},
 	on: {
+		chartDeepLink: getListenerAdder('chartDeepLink'),
 		errorLog: getListenerAdder('errorLog'),
 		updateError: getListenerAdder('updateError'),
 		updateAvailable: getListenerAdder('updateAvailable'),

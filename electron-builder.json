@@ -6,6 +6,14 @@
 	"files": [
 		"dist/**/*"
 	],
+	"protocols": [
+		{
+			"name": "Bridge chart link",
+			"schemes": [
+				"bridge"
+			]
+		}
+	],
 	"publish": {
 		"provider": "github",
 		"releaseType": "release"

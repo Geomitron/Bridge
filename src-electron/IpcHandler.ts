@@ -9,8 +9,12 @@ import { getSettings, setSettings } from './ipc/SettingsHandler.ipc.js'
 import { downloadUpdate, getCurrentVersion, getUpdateAvailable, quitAndInstall, retryUpdate } from './ipc/UpdateHandler.ipc.js'
 import { getPlatform, getThemeColors, isMaximized, maximize, minimize, openUrl, quit, restore, showFile, showFolder, showOpenDialog, toggleDevTools } from './ipc/UtilHandlers.ipc.js'
 
-export function getIpcInvokeHandlers(): IpcInvokeHandlers {
+// Injected to avoid importing the main process into the handler registry.
+export function getIpcInvokeHandlers(
+	getPendingChartDeepLink: IpcInvokeHandlers['getPendingChartDeepLink'],
+): IpcInvokeHandlers {
 	return {
+		getPendingChartDeepLink,
 		getSettings,
 		getCurrentVersion,
 		getPlatform,

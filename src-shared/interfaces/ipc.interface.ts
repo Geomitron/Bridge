@@ -20,6 +20,10 @@ export interface ContextBridgeApi {
  * The list of possible async IPC events that return values.
  */
 export interface IpcInvokeEvents {
+	getPendingChartDeepLink: {
+		input: void
+		output: string | null
+	}
 	getSettings: {
 		input: void
 		output: Settings
@@ -282,6 +286,7 @@ export type IpcToMainEmitHandlers = {
  * The list of possible async IPC events sent from the main process that don't return values.
  */
 export interface IpcFromMainEmitEvents {
+	chartDeepLink: string
 	errorLog: string
 	updateError: string
 	updateAvailable: UpdateInfo | null

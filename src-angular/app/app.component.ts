@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core'
-import { RouterOutlet } from '@angular/router'
+import { Router, RouterOutlet } from '@angular/router'
 
 import { ToolbarComponent } from './components/toolbar/toolbar.component'
+import { SearchService } from './core/services/search.service'
 import { SettingsService } from './core/services/settings.service'
 
 @Component({
@@ -13,16 +14,36 @@ import { SettingsService } from './core/services/settings.service'
 })
 export class AppComponent {
 	private settingsService = inject(SettingsService)
+	private searchService = inject(SearchService)
+	private router = inject(Router)
 
 	settingsLoaded = signal(false)
+	private pendingChartDeepLink: string | null = null
 
 	constructor() {
+		window.electron.on.chartDeepLink(chartHash => {
+			this.pendingChartDeepLink = chartHash
+			if (this.settingsLoaded()) {
+				void this.openChartDeepLink()
+			}
+		})
+
 		// Ensure settings are loaded before rendering the application
 		this.settingsService.loadSettings()
-			.then(() => {
+			.then(async () => {
+				// Pull startup links after the renderer listener is ready.
+				const initialChartDeepLink = await window.electron.invoke.getPendingChartDeepLink()
+				if (!this.pendingChartDeepLink) {
+					this.pendingChartDeepLink = initialChartDeepLink
+				}
 				console.log('[DEBUG] Setting settingsLoaded = true')
 				this.settingsLoaded.set(true)
 				console.log('[DEBUG] settingsLoaded:', this.settingsLoaded())
+				if (this.pendingChartDeepLink) {
+					void this.openChartDeepLink()
+				} else {
+					this.searchService.search().subscribe()
+				}
 			})
 			.catch(err => console.error('Failed to load settings:', err))
 
@@ -48,5 +69,14 @@ export class AppComponent {
 				}
 			}
 		})
+	}
+
+	private async openChartDeepLink(): Promise<void> {
+		const chartHash = this.pendingChartDeepLink
+		this.pendingChartDeepLink = null
+		if (!chartHash) return
+
+		await this.router.navigate(['/browse'])
+		this.searchService.searchByHash(chartHash).subscribe()
 	}
 }

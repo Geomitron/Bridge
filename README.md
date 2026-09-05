@@ -24,6 +24,14 @@ Head over to the [Releases](https://github.com/Geomitron/Bridge/releases) page t
 - ✅ Advanced song search.
 - ✅ Chart issue scanner (for people making charts).
 
+## Deep links
+
+Installed copies of Bridge can open an exact chart from another application or website using its MD5 hash:
+
+`bridge://chart/0123456789abcdef0123456789abcdef`
+
+The link opens the chart in Bridge. The user can then review it and download it with their configured library and format settings.
+
 ### What's new in v3.4.0
 
 - Add new "Quality Reviewed" filter for drum charts
