@@ -538,12 +538,19 @@ class NotesManager {
 
 		for (let i = maxNoteEventIndex + 1; this.noteEvents[i] && this.noteEvents[i].msTime < renderEndTimeMs; i++) {
 			const note = this.noteEvents[i]
+			const material = this.noteMaterials.get(note.type)?.get(note.flags)
+			if (!material) {
+				// Skip notes that have no texture: throwing here would stop every later frame and seek from rendering
+				console.warn(`Missing texture for note type ${note.type} with flags ${note.flags}`)
+				continue
+			}
+
 			const noteGroup = new THREE.Group()
 			const scale =
 				note.type === noteTypes.kick ? 0.045
 					: note.type === noteTypes.open && this.instrumentType === instrumentTypes.sixFret ? 0.04
 						: SCALE
-			const sprite = new THREE.Sprite(this.noteMaterials.get(note.type)!.get(note.flags)!)
+			const sprite = new THREE.Sprite(material)
 			noteGroup.add(sprite)
 			sprite.center = new THREE.Vector2(note.type === noteTypes.kick ? 0.62 : 0.5, note.type === noteTypes.kick ? -0.5 : 0)
 			const aspectRatio = sprite.material.map!.image.width / sprite.material.map!.image.height
@@ -723,24 +730,20 @@ async function loadTextures(instrumentType: InstrumentType) {
 					[noteTypes.blue, 'blue'],
 					[noteTypes.orange, 'orange'],
 				])
-				const modifiers = new Map([
-					[noteFlags.strum, '-strum'],
-					[noteFlags.hopo, '-hopo'],
-					[noteFlags.tap, '-tap'],
-				])
 				const spFlags = new Map([
 					[noteFlags.none, ''],
 					[SP_FLAG, '-sp'],
 				])
 
 				for (const [laneKey, laneName] of lanes) {
-					for (let [modifierKey, modifierName] of modifiers) {
-						for (const [spFlagKey, spFlagName] of spFlags) {
-							if (laneKey === noteTypes.open && modifierKey === noteFlags.tap) {
-								modifierName = '-hopo'
-								modifierKey = noteFlags.hopo
-							}
-							addTexture(laneKey, modifierKey | spFlagKey, `5fret-${laneName}${modifierName}${spFlagName}`)
+					for (const [spFlagKey, spFlagName] of spFlags) {
+						const strumTexture = addTexture(laneKey, noteFlags.strum | spFlagKey, `5fret-${laneName}-strum${spFlagName}`)
+						addTexture(laneKey, noteFlags.hopo | spFlagKey, `5fret-${laneName}-hopo${spFlagName}`)
+						if (laneKey === noteTypes.open) {
+							// There is no open tap texture
+							reuseTexture(laneKey, noteFlags.tap | spFlagKey, strumTexture.then(createTapTexture))
+						} else {
+							addTexture(laneKey, noteFlags.tap | spFlagKey, `5fret-${laneName}-tap${spFlagName}`)
 						}
 					}
 				}
@@ -764,6 +767,52 @@ async function loadTextures(instrumentType: InstrumentType) {
 		strikelineTexture,
 		noteTextures,
 	}
+}
+
+/**
+ * Marks `strumTexture` the way the five-fret tap textures mark tap notes: each row of colored pixels is hollowed out,
+ * except for a rim at both ends of the row. With these values, the result closely matches each five-fret tap texture
+ * when this is applied to the matching strum texture.
+ */
+function createTapTexture(strumTexture: THREE.Texture) {
+	const rimPx = 8
+	const rimFadePx = 6
+	const image = strumTexture.image as HTMLImageElement
+	const canvas = document.createElement('canvas')
+	canvas.width = image.width
+	canvas.height = image.height
+	const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+	ctx.drawImage(image, 0, 0)
+	const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+	const pixels = imageData.data
+
+	/** 0 for grey or transparent pixels, rising to 1 for strongly colored pixels. */
+	const colorWeight = (i: number) => {
+		const max = Math.max(pixels[i], pixels[i + 1], pixels[i + 2])
+		const min = Math.min(pixels[i], pixels[i + 1], pixels[i + 2])
+		const saturation = max === 0 ? 0 : (max - min) / max
+		return pixels[i + 3] === 0 ? 0 : _.clamp((saturation - 0.2) / 0.3, 0, 1)
+	}
+
+	for (let y = 0; y < canvas.height; y++) {
+		let runStart = 0
+		for (let x = 0; x <= canvas.width; x++) {
+			if (x < canvas.width && colorWeight((y * canvas.width + x) * 4) > 0) {
+				continue
+			}
+			// Pixels runStart to x - 1 are a run of colored pixels
+			for (let runX = runStart; runX < x; runX++) {
+				const distanceFromEnd = Math.min(runX - runStart, x - 1 - runX) + 1
+				const rim = _.clamp((rimPx + rimFadePx - distanceFromEnd) / rimFadePx, 0, 1)
+				const i = (y * canvas.width + runX) * 4
+				pixels[i + 3] *= 1 - colorWeight(i) * (1 - rim)
+			}
+			runStart = x + 1
+		}
+	}
+
+	ctx.putImageData(imageData, 0, 0)
+	return new THREE.CanvasTexture(canvas)
 }
 
 function adjustParsedChart(parsedChart: ParsedChart, instrument: Instrument, difficulty: Difficulty) {
