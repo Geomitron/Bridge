@@ -19,6 +19,10 @@ export let mainWindow: BrowserWindow
 const args = process.argv.slice(1)
 const isDevBuild = args.some(val => val === '--dev')
 
+// A user reported the window turning white after restoring from minimize. Disabling Chromium's native window
+// occlusion tracking fixed that symptom in another Electron app on multi-monitor setups (https://github.com/openai/codex/issues/58207).
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion')
+
 restrictToSingleInstance()
 handleOSXWindowClosed()
 app.on('ready', async () => {
