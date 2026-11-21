@@ -34,7 +34,7 @@
 		"icon": "dist/angular/browser/assets/images/system/icons/mac/icon.icns"
 	},
 	"linux": {
-		"compression": "maximum",
+		"compression": "normal",
 		"target": [
 			"AppImage",
 			"flatpak"
